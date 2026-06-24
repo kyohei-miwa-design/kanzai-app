@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+  <style>
+body {
+  font-family: sans-serif;
+  background: #f4f6f8;
+  padding: 16px;
+}
+
+h1 {
+  text-align: center;
+}
+
+h2 {
+  border-left: 6px solid #4a90e2;
+  padding-left: 8px;
+  margin-top: 24px;
+}
+
+select, input, button {
+  width: 100%;
+  font-size: 18px;
+  padding: 10px;
+  margin: 6px 0 12px;
+  box-sizing: border-box;
+}
+
+button {
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+}
+
+#status, #todayTarget, #result {
+  background: white;
+  padding: 12px;
+  border-radius: 8px;
+  line-height: 1.8;
+}
+
+.user-card {
+  background: white;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  line-height: 1.8;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+.user-card strong {
+  font-size: 20px;
+}
+
+.target-card {
+  background: #fff3cd;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  line-height: 1.8;
+  border-left: 6px solid #ff9800;
+}
+
+.target-card strong {
+  font-size: 20px;
+}
+
+.history-card {
+  background: white;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  line-height: 1.6;
+  border-left: 5px solid #777;
+}
+
+.rule-delete-btn {
+  width: auto;
+  padding: 2px 8px;
+  margin: 0;
+  font-size: 14px;
+}
+
+
+</style>
+</head>
+
+<body>
+  <h1>緩下剤管理アプリ</h1>
+
+<p>利用者</p>
+<select>
+  <option>A様</option>
+  <option>B様</option>
+  <option>C様</option>
+</select>
+
+<p>排便種類</p>
+<select>
+  <option>なし</option>
+  <option>少1</option>
+  <option>少2</option>
+  <option>普通</option>
+  <option>多量</option>
+</select>
+
+<br><br>
+
+<button onclick="register()">登録</button>
+<p>最終排便日</p>
+<input type="date" id="lastDate">
+<p id="result">現在ポイント：0</p>
+
+<h2>利用者追加</h2>
+<input type="text" id="newUserName" placeholder="例：D様">
+<button onclick="addUser()">追加</button>
+
+<h2>利用者削除</h2>
+<button onclick="deleteUser()">削除</button>
+
+<h2>下剤ルール編集</h2>
+
+<h2>登録済みルール一覧</h2>
+<div id="ruleList">
+まだルールはありません
+</div>
+
+<p>対象利用者</p>
+<select id="ruleUserSelect"></select>
+
+<p>未排便日数</p>
+<input type="number" id="ruleDay" placeholder="例：2">
+
+<p>薬剤・時間</p>
+<input type="text" id="ruleMedicine" placeholder="例：ピコ15滴 朝">
+
+<button onclick="saveRule()">ルール保存</button>
+
+<h2>利用者状況</h2>
+
+<div id="status">
+A様：0点<br>
+B様：0点<br>
+C様：0点
+</div>
+
+<h2>本日の対象者</h2>
+<div id="todayTarget">
+まだ対象者はいません
+</div>
+
+<h2>本日実施済み</h2>
+<div id="completedList">
+まだ実施記録はありません
+</div>
+
+<h2>履歴</h2>
+<button onclick="clearHistory()">履歴を全削除</button>
+<div id="history">
+まだ履歴はありません
+</div>
+
+<script>
+let rules = {
+  "A様": {
+    2: ["ピコ15滴 朝"],
+    3: ["ピコ30滴 朝", "ピコ15滴 夕", "センノシド 夕"],
+    4: ["テレミン 昼", "センノシド 夕"]
+  },
+  "B様": {
+    2: ["センノシド 夕"],
+    3: ["ピコ15滴 朝", "センノシド 夕"],
+    4: ["テレミン 昼"]
+  },
+  "C様": {
+    2: ["ピコ15滴 朝"],
+    3: ["ピコ30滴 朝"],
+    4: ["テレミン 昼", "センノシド 夕"]
+  }
+};
+
+let lastDates = {
+  "A様": "2026-06-18",
+  "B様": "2026-06-19",
+  "C様": "2026-06-20"
+};
+
+let points = {
+  "A様": 0,
+  "B様": 0,
+  "C様": 0
+};
+
+let histories = [];
+
+let checks = {};
+
+let checkDate = "";
+
+function register() {
+  const selects = document.querySelectorAll("select");
+  const user = selects[0].value;
+  const type = selects[1].value;
+  const lastDateInput = document.getElementById("lastDate").value;
+
+  if (lastDateInput !== "") {
+    lastDates[user] = lastDateInput;
+  }
+
+  let addPoint = 0;
+
+  if (type === "少1") addPoint = 1;
+  if (type === "少2") addPoint = 2;
+  if (type === "普通") addPoint = 3;
+  if (type === "多量") addPoint = 3;
+
+  points[user] += addPoint;
+
+  if (points[user] >= 3) {
+  const todayText = new Date().toISOString().slice(0, 10);
+
+  points[user] = 0;
+  lastDates[user] = todayText;
+
+  document.getElementById("lastDate").value = todayText;
+
+  document.getElementById("result").textContent =
+    user + "　排便成立　最終排便日を今日に更新しました";
+}
+
+  document.getElementById("status").innerHTML =
+  getStatusHtml();
+
+  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+
+addHistory(user, type);
+
+saveData();
+}
+
+function getNoBowelDays(user) {
+  const today = new Date();
+  const lastDate = new Date(lastDates[user]);
+
+  const diffTime = today - lastDate;
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  return diffDays;
+}
+
+function getTodayTarget() {
+  let result = "";
+
+  for (let user in lastDates) {
+    const days = getNoBowelDays(user);
+    const medicines = rules[user]?.[days];
+
+    if (medicines) {
+      result +=
+        "<div class='target-card'>" +
+        "<strong>⚠ " + user + "</strong><br>" +
+        "未排便日数：" + days + "日<br><br>";
+
+      for (let medicine of medicines) {
+  const checkKey = user + "_" + days + "_" + medicine;
+  const checkedText = checks[checkKey] ? "checked" : "";
+
+  result +=
+    "<label>" +
+    "<input type='checkbox' " + checkedText + " onchange=\"toggleCheck('" +
+    checkKey +
+    "')\">" +
+    " " + medicine +
+    "</label><br>";
+}
+
+      result += "</div>";
+    }
+  }
+
+  if (result === "") {
+    return "まだ対象者はいません";
+  }
+
+  return result;
+}
+
+
+function saveData() {
+  localStorage.setItem("points", JSON.stringify(points));
+  localStorage.setItem("lastDates", JSON.stringify(lastDates));
+  localStorage.setItem("histories", JSON.stringify(histories));
+  localStorage.setItem("rules", JSON.stringify(rules));
+  localStorage.setItem("checks", JSON.stringify(checks));
+  localStorage.setItem("checkDate", checkDate);
+}
+
+function loadData() {
+  const savedPoints = localStorage.getItem("points");
+  const savedLastDates = localStorage.getItem("lastDates");
+  const savedHistories = localStorage.getItem("histories");
+  const savedRules = localStorage.getItem("rules");
+  const savedChecks = localStorage.getItem("checks");
+  const savedCheckDate = localStorage.getItem("checkDate");
+
+  const todayText = new Date().toISOString().slice(0, 10);
+
+  if (savedCheckDate !== null) {
+    checkDate = savedCheckDate;
+  }
+
+  if (savedChecks !== null) {
+    checks = JSON.parse(savedChecks);
+  }
+
+  if (checkDate !== todayText) {
+    checks = {};
+    checkDate = todayText;
+    saveData();
+  }
+
+  if (savedRules !== null) {
+    rules = JSON.parse(savedRules);
+  }
+
+  if (savedHistories !== null) {
+    histories = JSON.parse(savedHistories);
+  }
+
+  if (savedPoints !== null) {
+    points = JSON.parse(savedPoints);
+  }
+
+  if (savedLastDates !== null) {
+    lastDates = JSON.parse(savedLastDates);
+  }
+
+  document.getElementById("history").innerHTML = getHistoryHtml();
+  document.getElementById("status").innerHTML = getStatusHtml();
+  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+  document.getElementById("ruleList").innerHTML = getRuleListHtml();
+  document.getElementById("completedList").innerHTML = getCompletedListHtml();
+
+  updateUserSelects();
+}
+
+loadData();
+
+function addUser() {
+  const name = document.getElementById("newUserName").value;
+
+  if (name === "") {
+    alert("利用者名を入力してください");
+    return;
+  }
+
+  points[name] = 0;
+  lastDates[name] = new Date().toISOString().slice(0, 10);
+
+  
+
+  document.getElementById("newUserName").value = "";
+
+  document.getElementById("status").innerHTML =
+    getStatusHtml();
+
+  document.getElementById("todayTarget").innerHTML =
+    getTodayTarget();
+
+  updateUserSelects();
+
+  saveData();
+}
+
+function getStatusHtml() {
+  let result = "";
+
+  for (let user in points) {
+    result +=
+      "<div class='user-card'>" +
+      "<strong>" + user + "</strong><br>" +
+      "現在ポイント：" + points[user] + "点<br>" +
+      "未排便日数：" + getNoBowelDays(user) + "日" +
+      "</div>";
+  }
+
+  return result;
+}
+
+
+function deleteUser() {
+  const name = document.querySelectorAll("select")[0].value;
+
+  if (name === "") {
+    alert("削除する利用者名を入力してください");
+    return;
+  }
+
+  if (!(name in points)) {
+    alert("その利用者はいません");
+    return;
+
+  }
+
+  delete points[name];
+  delete lastDates[name];
+
+  const select = document.querySelectorAll("select")[0];
+  for (let i = 0; i < select.options.length; i++) {
+    if (select.options[i].textContent === name) {
+      select.remove(i);
+      break;
+    }
+  }
+
+  document.getElementById("status").innerHTML = getStatusHtml();
+  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+
+  saveData();
+  updateUserSelects();
+}
+
+function updateUserSelects() {
+  const userSelect = document.querySelectorAll("select")[0];
+  const ruleUserSelect = document.getElementById("ruleUserSelect");
+
+  userSelect.innerHTML = "";
+  ruleUserSelect.innerHTML = "";
+
+  for (let user in points) {
+    const option1 = document.createElement("option");
+    option1.textContent = user;
+    userSelect.appendChild(option1);
+
+    const option2 = document.createElement("option");
+    option2.textContent = user;
+    ruleUserSelect.appendChild(option2);
+  }
+}
+
+function addHistory(user, type) {
+  const todayText = new Date().toISOString().slice(0, 10);
+
+  histories.unshift({
+    date: todayText,
+    user: user,
+    type: type,
+    point: points[user]
+  });
+
+  document.getElementById("history").innerHTML = getHistoryHtml();
+}
+
+function getHistoryHtml() {
+  if (histories.length === 0) {
+    return "まだ履歴はありません";
+  }
+
+  let result = "";
+
+  for (let history of histories) {
+    result +=
+      "<div class='history-card'>" +
+      history.date + "<br>" +
+      history.user + "　" + history.type + "<br>" +
+      "現在ポイント：" + history.point + "点" +
+      "</div>";
+  }
+
+  return result;
+}
+
+function saveRule() {
+  const user = document.getElementById("ruleUserSelect").value;
+  const day = document.getElementById("ruleDay").value;
+  const medicine = document.getElementById("ruleMedicine").value;
+
+  if (user === "" || day === "" || medicine === "") {
+    alert("利用者・日数・薬剤を入力してください");
+    return;
+  }
+
+  if (!rules[user]) {
+    rules[user] = {};
+  }
+
+  if (!rules[user][day]) {
+    rules[user][day] = [];
+  }
+
+  rules[user][day].push(medicine);
+
+  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+  document.getElementById("ruleList").innerHTML = getRuleListHtml();
+  
+  saveData();
+
+  alert("ルールを保存しました");
+}
+
+function getRuleListHtml() {
+  let result = "";
+
+  for (let user in rules) {
+    result += "<div class='user-card'>";
+    result += "<strong>" + user + "</strong><br>";
+
+    for (let day in rules[user]) {
+      result += "<br>未排便" + day + "日<br>";
+
+      for (let medicine of rules[user][day]) {
+  result +=
+    "・" + medicine +
+    " <button class='rule-delete-btn' onclick=\"deleteRule('" +
+    user + "','" +
+    day + "','" +
+    medicine +
+    "')\">❌</button><br>";
+}
+    }
+
+    result += "</div>";
+  }
+
+  if (result === "") {
+    return "まだルールはありません";
+  }
+
+  return result;
+}
+
+function deleteRule(user, day, medicine) {
+  rules[user][day] = rules[user][day].filter(
+    item => item !== medicine
+  );
+
+  if (rules[user][day].length === 0) {
+    delete rules[user][day];
+  }
+
+  document.getElementById("ruleList").innerHTML =
+    getRuleListHtml();
+
+  document.getElementById("todayTarget").innerHTML =
+    getTodayTarget();
+
+  saveData();
+}
+
+function toggleCheck(key) {
+  checks[key] = !checks[key];
+
+  document.getElementById("completedList").innerHTML =
+    getCompletedListHtml();
+
+  saveData();
+}
+
+function clearHistory() {
+  const ok = confirm("履歴をすべて削除しますか？");
+
+  if (!ok) {
+    return;
+  }
+
+  histories = [];
+  document.getElementById("history").innerHTML = getHistoryHtml();
+
+  saveData();
+}
+
+function getCompletedListHtml() {
+  let result = "";
+
+  for (let key in checks) {
+    if (checks[key]) {
+      const parts = key.split("_");
+
+      result +=
+        "<div class='history-card'>" +
+        "☑ " + parts[0] + "<br>" +
+        parts[2] +
+        "</div>";
+    }
+  }
+
+  if (result === "") {
+    return "まだ実施記録はありません";
+  }
+
+  return result;
+}
+
+</script>
+</body>
+</html>
