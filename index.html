@@ -116,6 +116,10 @@ button {
 <input type="date" id="lastDate">
 <p id="result">現在ポイント：0</p>
 
+<button onclick="saveUsersToGoogle()">
+Googleへ保存テスト
+</button>
+
 <h2>利用者追加</h2>
 <input type="text" id="newUserName" placeholder="例：D様">
 <button onclick="addUser()">追加</button>
@@ -166,6 +170,8 @@ C様：0点
 </div>
 
 <script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzq9qSuPmvSzAbv_uLFbIrXmVJ3DNHkpdxJKYIExyPgti-N3gU1iT7W1eWa2KRCJurE/exec";
+
 let rules = {
   "A様": {
     2: ["ピコ15滴 朝"],
@@ -245,7 +251,10 @@ saveData();
 
 function getNoBowelDays(user) {
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const lastDate = new Date(lastDates[user]);
+  lastDate.setHours(0, 0, 0, 0);
 
   const diffTime = today - lastDate;
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -349,7 +358,78 @@ function loadData() {
   updateUserSelects();
 }
 
+async function loadUsersFromGoogle() {
+  const response = await fetch(API_URL + "?action=getUsers");
+  const users = await response.json();
+
+  points = {};
+  lastDates = {};
+
+  for (let user of users) {
+    points[user.name] = Number(user.point);
+
+    const date = new Date(user.lastDate);
+    lastDates[user.name] = date.toISOString().slice(0, 10);
+  }
+
+  updateUserSelects();
+  document.getElementById("status").innerHTML = getStatusHtml();
+  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+}
+
+async function loadRulesFromGoogle() {
+  const response = await fetch(API_URL + "?action=getRules");
+  const googleRules = await response.json();
+
+  rules = googleRules;
+
+  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+  document.getElementById("ruleList").innerHTML = getRuleListHtml();
+
+  saveData();
+}
+
+async function saveRulesToGoogle() {
+  const url =
+    API_URL +
+    "?action=saveRules&rules=" +
+    encodeURIComponent(JSON.stringify(rules));
+
+  const response = await fetch(url);
+  const result = await response.text();
+
+  alert(result);
+
+  await loadRulesFromGoogle();
+}
+
+async function saveUsersToGoogle() {
+  const users = [];
+
+  for (let name in points) {
+    users.push({
+      name: name,
+      point: points[name],
+      lastDate: lastDates[name]
+    });
+  }
+
+  const url =
+    API_URL +
+    "?action=saveUsers&users=" +
+    encodeURIComponent(JSON.stringify(users));
+
+  const response = await fetch(url);
+  const result = await response.text();
+
+  alert(result);
+
+  await loadUsersFromGoogle();
+}
+
 loadData();
+loadUsersFromGoogle();
+loadRulesFromGoogle();
 
 function addUser() {
   const name = document.getElementById("newUserName").value;
@@ -475,7 +555,7 @@ function getHistoryHtml() {
   return result;
 }
 
-function saveRule() {
+async function saveRule() {
   const user = document.getElementById("ruleUserSelect").value;
   const day = document.getElementById("ruleDay").value;
   const medicine = document.getElementById("ruleMedicine").value;
@@ -499,6 +579,8 @@ function saveRule() {
   document.getElementById("ruleList").innerHTML = getRuleListHtml();
   
   saveData();
+
+  await saveRulesToGoogle();
 
   alert("ルールを保存しました");
 }
