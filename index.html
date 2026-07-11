@@ -269,27 +269,46 @@ function getTodayTarget() {
     const days = getNoBowelDays(user);
     const medicines = rules[user]?.[days];
 
-    if (medicines) {
+    if (!medicines) {
+      continue;
+    }
+
+    // まだ実施していない薬だけ残す
+    const remaining = medicines.filter(medicine => {
+      const checkKey = user + "_" + days + "_" + medicine;
+      return !checks[checkKey];
+    });
+
+    // 全部実施済みならこの利用者は表示しない
+    if (remaining.length === 0) {
+      continue;
+    }
+
+    result +=
+      "<div class='target-card'>" +
+      "<strong>⚠ " + user + "</strong><br>" +
+      "未排便日数：" + days + "日<br><br>";
+
+    for (let medicine of remaining) {
+      const checkKey = user + "_" + days + "_" + medicine;
+
       result +=
-        "<div class='target-card'>" +
-        "<strong>⚠ " + user + "</strong><br>" +
-        "未排便日数：" + days + "日<br><br>";
+        "<label>" +
+        "<input type='checkbox' onchange=\"toggleCheck('" +
+        checkKey +
+        "')\">" +
+        " " + medicine +
+        "</label><br>";
+    }
 
-      for (let medicine of medicines) {
-  const checkKey = user + "_" + days + "_" + medicine;
-
-  // 実施済みなら「本日の対象者」には表示しない
-  if (checks[checkKey]) {
-    continue;
+    result += "</div>";
   }
 
-  result +=
-    "<label>" +
-    "<input type='checkbox' onchange=\"toggleCheck('" +
-    checkKey +
-    "')\">" +
-    " " + medicine +
-    "</label><br>";
+  if (result === "") {
+    return "🎉 本日の対象者はいません";
+  }
+
+  return result;
 }
 
       result += "</div>";
@@ -674,9 +693,11 @@ async function toggleCheck(key) {
 
   checks[key] = !previousValue;
 
+  // ここで対象者一覧をすぐ更新
   document.getElementById("todayTarget").innerHTML =
     getTodayTarget();
 
+  // 実施済み一覧も更新
   document.getElementById("completedList").innerHTML =
     getCompletedListHtml();
 
