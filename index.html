@@ -277,11 +277,15 @@ function getTodayTarget() {
 
       for (let medicine of medicines) {
   const checkKey = user + "_" + days + "_" + medicine;
-  const checkedText = checks[checkKey] ? "checked" : "";
+
+  // 実施済みなら「本日の対象者」には表示しない
+  if (checks[checkKey]) {
+    continue;
+  }
 
   result +=
     "<label>" +
-    "<input type='checkbox' " + checkedText + " onchange=\"toggleCheck('" +
+    "<input type='checkbox' onchange=\"toggleCheck('" +
     checkKey +
     "')\">" +
     " " + medicine +
@@ -670,6 +674,9 @@ async function toggleCheck(key) {
 
   checks[key] = !previousValue;
 
+  document.getElementById("todayTarget").innerHTML =
+    getTodayTarget();
+
   document.getElementById("completedList").innerHTML =
     getCompletedListHtml();
 
@@ -678,7 +685,6 @@ async function toggleCheck(key) {
   try {
     await saveChecksToGoogle();
   } catch (error) {
-    // 保存に失敗した場合は、チェック状態を元に戻す
     checks[key] = previousValue;
 
     document.getElementById("todayTarget").innerHTML =
