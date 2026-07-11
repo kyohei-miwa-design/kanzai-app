@@ -389,6 +389,17 @@ async function loadRulesFromGoogle() {
   saveData();
 }
 
+async function loadChecksFromGoogle() {
+  const response = await fetch(API_URL + "?action=getChecks");
+  checks = await response.json();
+
+  document.getElementById("todayTarget").innerHTML =
+    getTodayTarget();
+
+  document.getElementById("completedList").innerHTML =
+    getCompletedListHtml();
+}
+
 async function saveRulesToGoogle() {
   const url =
     API_URL +
@@ -427,9 +438,29 @@ async function saveUsersToGoogle() {
   await loadUsersFromGoogle();
 }
 
+async function saveChecksToGoogle() {
+  const url =
+    API_URL +
+    "?action=saveChecks&checks=" +
+    encodeURIComponent(JSON.stringify(checks));
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error("実施チェックの保存に失敗しました");
+  }
+
+  const result = await response.text();
+
+  if (result !== "OK") {
+    throw new Error(result);
+  }
+}
+
 loadData();
 loadUsersFromGoogle();
 loadRulesFromGoogle();
+loadChecksFromGoogle();
 
 function addUser() {
   const name = document.getElementById("newUserName").value;
@@ -634,13 +665,32 @@ function deleteRule(user, day, medicine) {
   saveData();
 }
 
-function toggleCheck(key) {
-  checks[key] = !checks[key];
+async function toggleCheck(key) {
+  const previousValue = Boolean(checks[key]);
+
+  checks[key] = !previousValue;
 
   document.getElementById("completedList").innerHTML =
     getCompletedListHtml();
 
   saveData();
+
+  try {
+    await saveChecksToGoogle();
+  } catch (error) {
+    // 保存に失敗した場合は、チェック状態を元に戻す
+    checks[key] = previousValue;
+
+    document.getElementById("todayTarget").innerHTML =
+      getTodayTarget();
+
+    document.getElementById("completedList").innerHTML =
+      getCompletedListHtml();
+
+    saveData();
+
+    alert(error.message);
+  }
 }
 
 function clearHistory() {
