@@ -480,12 +480,17 @@ async function saveChecksToGoogle() {
   }
 }
 
-loadData();
-loadUsersFromGoogle();
-loadRulesFromGoogle();
-loadChecksFromGoogle();
+async function initialize() {
+  loadData();
 
-function addUser() {
+  await loadUsersFromGoogle();
+  await loadRulesFromGoogle();
+  await loadChecksFromGoogle();
+}
+
+initialize();
+
+async function addUser() {
   const name = document.getElementById("newUserName").value;
 
   if (name === "") {
@@ -509,6 +514,10 @@ function addUser() {
   updateUserSelects();
 
   saveData();
+
+  await saveUsersToGoogle();
+
+  await loadUsersFromGoogle();
 }
 
 function getStatusHtml() {
