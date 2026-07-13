@@ -540,7 +540,7 @@ function getStatusHtml() {
 }
 
 
-function deleteUser() {
+async function deleteUser() {
   const name = document.querySelectorAll("select")[0].value;
 
   if (name === "") {
@@ -569,7 +569,12 @@ function deleteUser() {
   document.getElementById("todayTarget").innerHTML = getTodayTarget();
 
   saveData();
-  updateUserSelects();
+
+await saveUsersToGoogle();
+
+await loadUsersFromGoogle();
+
+updateUserSelects();
 }
 
 function updateUserSelects() {
