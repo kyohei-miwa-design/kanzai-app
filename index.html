@@ -474,12 +474,25 @@ async function saveChecksToGoogle() {
 async function initialize() {
   loadData();
 
-  await loadUsersFromGoogle();
-  await loadRulesFromGoogle();
-  await loadChecksFromGoogle();
+  await refreshFromGoogle();
+
+  // 30秒ごとにGoogleの最新データを読み込む
+  setInterval(refreshFromGoogle, 30000);
 }
 
 initialize();
+
+async function refreshFromGoogle() {
+  try {
+    await loadUsersFromGoogle();
+    await loadRulesFromGoogle();
+    await loadChecksFromGoogle();
+
+    console.log("Googleの最新データを読み込みました");
+  } catch (error) {
+    console.error("自動更新に失敗しました", error);
+  }
+}
 
 async function addUser() {
   const name = document.getElementById("newUserName").value;
