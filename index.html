@@ -212,6 +212,8 @@ let lastDates = {
   "C様": "2026-06-20"
 };
 
+let userUnits = {};
+
 let points = {
   "A様": 0,
   "B様": 0,
@@ -428,9 +430,11 @@ async function loadUsersFromGoogle() {
 
   points = {};
   lastDates = {};
+  userUnits = {};
 
   for (let user of users) {
     points[user.name] = Number(user.point);
+    userUnits[user.name] = String(user.unit || "1");
 
     const date = new Date(user.lastDate);
     lastDates[user.name] = date.toISOString().slice(0, 10);
@@ -483,10 +487,11 @@ async function saveUsersToGoogle() {
 
   for (let name in points) {
     users.push({
-      name: name,
-      point: points[name],
-      lastDate: lastDates[name]
-    });
+  name: name,
+  unit: userUnits[name],
+  point: points[name],
+  lastDate: lastDates[name]
+});
   }
 
   const url =
