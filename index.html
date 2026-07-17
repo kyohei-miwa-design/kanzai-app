@@ -529,6 +529,7 @@ async function refreshFromGoogle() {
     await loadUsersFromGoogle();
     await loadRulesFromGoogle();
     await loadChecksFromGoogle();
+    await loadHistoriesFromGoogle();
 
     console.log("Googleの最新データを読み込みました");
   } catch (error) {
