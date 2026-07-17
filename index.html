@@ -208,7 +208,7 @@ let checks = {};
 
 let checkDate = "";
 
-function register() {
+async function register() {
   const selects = document.querySelectorAll("select");
   const user = selects[0].value;
   const type = selects[1].value;
@@ -243,6 +243,12 @@ function register() {
   getStatusHtml();
 
   document.getElementById("todayTarget").innerHTML = getTodayTarget();
+
+ await addHistoryToGoogle({
+  user: user,
+  type: type,
+  point: points[user]
+});
 
 addHistory(user, type);
 
@@ -468,6 +474,42 @@ async function saveChecksToGoogle() {
 
   if (result !== "OK") {
     throw new Error(result);
+  }
+}
+
+async function loadHistoriesFromGoogle() {
+  try {
+    const response = await fetch(
+      GAS_URL + "?action=getHistories"
+    );
+
+    histories = await response.json();
+
+    updateHistory();
+  } catch (error) {
+    console.error("履歴読込エラー", error);
+  }
+}
+
+async function addHistoryToGoogle(history) {
+  try {
+    await fetch(
+      GAS_URL +
+        "?action=addHistory&history=" +
+        encodeURIComponent(JSON.stringify(history))
+    );
+  } catch (error) {
+    console.error("履歴保存エラー", error);
+  }
+}
+
+async function clearHistoriesFromGoogle() {
+  try {
+    await fetch(
+      GAS_URL + "?action=clearHistories"
+    );
+  } catch (error) {
+    console.error("履歴削除エラー", error);
   }
 }
 
