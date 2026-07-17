@@ -480,12 +480,14 @@ async function saveChecksToGoogle() {
 async function loadHistoriesFromGoogle() {
   try {
     const response = await fetch(
-      GAS_URL + "?action=getHistories"
+      API_URL + "?action=getHistories"
     );
 
     histories = await response.json();
 
-    updateHistory();
+    document.getElementById("history").innerHTML =
+      getHistoryHtml();
+
   } catch (error) {
     console.error("履歴読込エラー", error);
   }
