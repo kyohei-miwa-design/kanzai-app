@@ -494,7 +494,7 @@ async function loadHistoriesFromGoogle() {
 async function addHistoryToGoogle(history) {
   try {
     await fetch(
-      GAS_URL +
+      API_URL +
         "?action=addHistory&history=" +
         encodeURIComponent(JSON.stringify(history))
     );
