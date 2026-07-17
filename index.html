@@ -250,7 +250,7 @@ async function register() {
   point: points[user]
 });
 
-addHistory(user, type);
+await loadHistoriesFromGoogle();
 
 saveData();
 }
