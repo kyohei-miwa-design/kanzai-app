@@ -86,12 +86,28 @@ button {
   font-size: 14px;
 }
 
+#newDataMessage {
+  display: none;
+  position: fixed;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 16px;
+  z-index: 9999;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
 
 </style>
 </head>
 
 <body>
   <h1>緩下剤管理アプリ</h1>
+
+  <div id="newDataMessage"></div>
 
 <p>利用者</p>
 <select>
@@ -207,6 +223,34 @@ let histories = [];
 let checks = {};
 
 let checkDate = "";
+
+let initialSyncFinished = false;
+let newDataMessageTimer = null;
+
+function getAppDataSnapshot() {
+  return JSON.stringify({
+    points: points,
+    lastDates: lastDates,
+    rules: rules,
+    checks: checks,
+    histories: histories
+  });
+}
+
+function showNewDataMessage() {
+  const message = document.getElementById("newDataMessage");
+
+  message.textContent = "✨ 新しいデータを受信しました";
+  message.style.display = "block";
+
+  if (newDataMessageTimer !== null) {
+    clearTimeout(newDataMessageTimer);
+  }
+
+  newDataMessageTimer = setTimeout(() => {
+    message.style.display = "none";
+  }, 3000);
+}
 
 async function register() {
   const selects = document.querySelectorAll("select");
@@ -528,12 +572,23 @@ initialize();
 
 async function refreshFromGoogle() {
   try {
+    const beforeData = getAppDataSnapshot();
+
     await loadUsersFromGoogle();
     await loadRulesFromGoogle();
     await loadChecksFromGoogle();
     await loadHistoriesFromGoogle();
 
+    const afterData = getAppDataSnapshot();
+
+    if (initialSyncFinished && beforeData !== afterData) {
+      showNewDataMessage();
+    }
+
+    initialSyncFinished = true;
+
     console.log("Googleの最新データを読み込みました");
+
   } catch (error) {
     console.error("自動更新に失敗しました", error);
   }
