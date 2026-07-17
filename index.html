@@ -552,7 +552,7 @@ async function addHistoryToGoogle(history) {
 async function clearHistoriesFromGoogle() {
   try {
     await fetch(
-      GAS_URL + "?action=clearHistories"
+      API_URL + "?action=clearHistories"
     );
   } catch (error) {
     console.error("履歴削除エラー", error);
