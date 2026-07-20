@@ -487,11 +487,11 @@ async function saveUsersToGoogle() {
 
   for (let name in points) {
     users.push({
-  name: name,
-  unit: userUnits[name],
-  point: points[name],
-  lastDate: lastDates[name]
-});
+     name: name,
+     unit: userUnits[name],
+     point: points[name],
+     lastDate: lastDates[name]
+    });
   }
 
   const url =
