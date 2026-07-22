@@ -691,7 +691,7 @@ await loadUsersFromGoogle();
 updateUserSelects();
 }
 
-function updateUserSelects() {
+function updateUserSelects(){
   const userSelect = document.querySelectorAll("select")[0];
   const ruleUserSelect = document.getElementById("ruleUserSelect");
 
@@ -699,6 +699,11 @@ function updateUserSelects() {
   ruleUserSelect.innerHTML = "";
 
   for (let user in points) {
+
+    if (userUnits[user] !== currentUnit) {
+      continue;
+    }
+
     const option1 = document.createElement("option");
     option1.textContent = user;
     userSelect.appendChild(option1);
