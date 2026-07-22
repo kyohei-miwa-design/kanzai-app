@@ -636,6 +636,7 @@ function getStatusHtml() {
   let result = "";
 
   for (let user in points) {
+    console.log(user, userUnits[user], currentUnit);
 
   if (userUnits[user] !== currentUnit) {
     continue;
