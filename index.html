@@ -695,10 +695,21 @@ function updateUserSelects(){
   const userSelect = document.querySelectorAll("select")[0];
   const ruleUserSelect = document.getElementById("ruleUserSelect");
 
+  console.log("updateUserSelects実行");
+  console.log("currentUnit:", currentUnit);
+  console.log("userUnits:", userUnits);
+
   userSelect.innerHTML = "";
   ruleUserSelect.innerHTML = "";
 
   for (let user in points) {
+    console.log(
+      "判定:",
+      user,
+      userUnits[user],
+      currentUnit,
+      userUnits[user] === currentUnit
+    );
 
     if (userUnits[user] !== currentUnit) {
       continue;
