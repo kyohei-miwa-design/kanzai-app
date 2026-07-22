@@ -214,6 +214,8 @@ let lastDates = {
 
 let userUnits = {};
 
+let currentUnit = "1";
+
 let points = {
   "A様": 0,
   "B様": 0,
@@ -634,13 +636,18 @@ function getStatusHtml() {
   let result = "";
 
   for (let user in points) {
-    result +=
-      "<div class='user-card'>" +
-      "<strong>" + user + "</strong><br>" +
-      "現在ポイント：" + points[user] + "点<br>" +
-      "未排便日数：" + getNoBowelDays(user) + "日" +
-      "</div>";
+
+  if (userUnits[user] !== currentUnit) {
+    continue;
   }
+
+  result +=
+    "<div class='user-card'>" +
+    "<strong>" + user + "</strong><br>" +
+    "現在ポイント：" + points[user] + "点<br>" +
+    "未排便日数：" + getNoBowelDays(user) + "日" +
+    "</div>";
+ }
 
   return result;
 }
