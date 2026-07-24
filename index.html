@@ -214,7 +214,7 @@ let lastDates = {
 
 let userUnits = {};
 
-let currentUnit = "1";
+let currentUnit = "1".trim();
 
 let points = {
   "A様": 0,
@@ -436,7 +436,7 @@ async function loadUsersFromGoogle() {
 
   for (let user of users) {
     points[user.name] = Number(user.point);
-    userUnits[user.name] = String(user.unit || "1");
+    userUnits[user.name] = String(user.unit || "1").trim();
 
     const date = new Date(user.lastDate);
     lastDates[user.name] = date.toISOString().slice(0, 10);
@@ -636,11 +636,13 @@ function getStatusHtml() {
   let result = "";
 
   for (let user in points) {
-    console.log(user, userUnits[user], currentUnit);
 
   if (userUnits[user] !== currentUnit) {
+    console.log("除外:", user);
     continue;
   }
+
+  console.log("表示:", user);
 
   result +=
     "<div class='user-card'>" +
@@ -648,7 +650,7 @@ function getStatusHtml() {
     "現在ポイント：" + points[user] + "点<br>" +
     "未排便日数：" + getNoBowelDays(user) + "日" +
     "</div>";
- }
+}
 
   return result;
 }
@@ -670,6 +672,7 @@ async function deleteUser() {
 
   delete points[name];
   delete lastDates[name];
+  delete userUnits[name];
 
   const select = document.querySelectorAll("select")[0];
   for (let i = 0; i < select.options.length; i++) {
