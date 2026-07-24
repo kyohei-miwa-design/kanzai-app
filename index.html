@@ -136,6 +136,7 @@ button {
 Googleへ保存テスト
 </button>
 
+<div id="adminArea">
 <h2>利用者追加</h2>
 <input type="text" id="newUserName" placeholder="例：D様">
 <button onclick="addUser()">追加</button>
@@ -144,6 +145,7 @@ Googleへ保存テスト
 <button onclick="deleteUser()">削除</button>
 
 <h2>下剤ルール編集</h2>
+</div>
 
 <h2>登録済みルール一覧</h2>
 <div id="ruleList">
@@ -215,6 +217,7 @@ let lastDates = {
 let userUnits = {};
 
 let currentUnit = "1".trim();
+let currentRole = "care";
 
 let points = {
   "A様": 0,
@@ -320,6 +323,9 @@ function getTodayTarget() {
   let result = "";
 
   for (let user in lastDates) {
+    if (userUnits[user] !== currentUnit) {
+   continue;
+   }
     const days = getNoBowelDays(user);
     const medicines = rules[user]?.[days];
 
@@ -357,6 +363,8 @@ function getTodayTarget() {
 
     result += "</div>";
   }
+
+ 
 
   if (result === "") {
     return "🎉 本日の対象者はいません";
@@ -424,6 +432,7 @@ function loadData() {
   document.getElementById("completedList").innerHTML = getCompletedListHtml();
 
   updateUserSelects();
+  updateRoleUI();
 }
 
 async function loadUsersFromGoogle() {
@@ -728,6 +737,16 @@ function updateUserSelects(){
   }
 }
 
+function updateRoleUI() {
+  const adminArea = document.getElementById("adminArea");
+
+  if (currentRole === "admin") {
+    adminArea.style.display = "block";
+  } else {
+    adminArea.style.display = "none";
+  }
+}
+
 function addHistory(user, type) {
   const todayText = new Date().toISOString().slice(0, 10);
 
@@ -794,6 +813,9 @@ function getRuleListHtml() {
   let result = "";
 
   for (let user in rules) {
+    if (userUnits[user] !== currentUnit) {
+   continue;
+   }
     result += "<div class='user-card'>";
     result += "<strong>" + user + "</strong><br>";
 
