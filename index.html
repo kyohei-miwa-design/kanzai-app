@@ -105,19 +105,48 @@ button {
 </head>
 
 <body>
+
+<div id="loginArea">
+
+  <h1>ログイン</h1>
+
+  <p>ユーザーID</p>
+<input
+  type="text"
+  id="loginUserId"
+  placeholder="例：care01"
+>
+
+<p>パスワード</p>
+<input
+  type="password"
+  id="loginPassword"
+  placeholder="パスワード"
+>
+
+<p id="loginMessage"></p>
+
+<button onclick="login()">ログイン</button>
+
+  <button onclick="login()">ログイン</button>
+
+</div>
+
+<div id="appArea" style="display:none;">
+
   <h1>緩下剤管理アプリ</h1>
 
   <div id="newDataMessage"></div>
 
 <p>利用者</p>
-<select>
+<select id="userSelect">
   <option>A様</option>
   <option>B様</option>
   <option>C様</option>
 </select>
 
 <p>排便種類</p>
-<select>
+<select id="bowelTypeSelect">
   <option>なし</option>
   <option>少1</option>
   <option>少2</option>
@@ -276,9 +305,8 @@ function showNewDataMessage() {
 }
 
 async function register() {
-  const selects = document.querySelectorAll("select");
-  const user = selects[0].value;
-  const type = selects[1].value;
+  const user = document.getElementById("userSelect").value;
+  const type = document.getElementById("bowelTypeSelect").value;
   const lastDateInput = document.getElementById("lastDate").value;
 
   if (lastDateInput !== "") {
@@ -339,7 +367,7 @@ function getTodayTarget() {
   let result = "";
 
   for (let user in lastDates) {
-    if (userUnits[user] !== currentUnit) {
+    if (currentUnit !== "all" && userUnits[user] !== currentUnit) {
    continue;
    }
     const days = getNoBowelDays(user);
@@ -662,7 +690,7 @@ function getStatusHtml() {
 
   for (let user in points) {
 
-  if (userUnits[user] !== currentUnit) {
+  if (currentUnit !== "all" && userUnits[user] !== currentUnit) {
     console.log("除外:", user);
     continue;
   }
@@ -682,7 +710,7 @@ function getStatusHtml() {
 
 
 async function deleteUser() {
-  const name = document.querySelectorAll("select")[0].value;
+  const name = document.getElementById("userSelect").value;
 
   if (name === "") {
     alert("削除する利用者名を入力してください");
@@ -699,7 +727,7 @@ async function deleteUser() {
   delete lastDates[name];
   delete userUnits[name];
 
-  const select = document.querySelectorAll("select")[0];
+  const select = document.getElementById("userSelect");
   for (let i = 0; i < select.options.length; i++) {
     if (select.options[i].textContent === name) {
       select.remove(i);
@@ -720,7 +748,7 @@ updateUserSelects();
 }
 
 function updateUserSelects() {
-  const userSelect = document.querySelectorAll("select")[0];
+  const userSelect = document.getElementById("userSelect");
   const ruleUserSelect = document.getElementById("ruleUserSelect");
   const unitUserSelect = document.getElementById("unitUserSelect");
 
@@ -736,7 +764,7 @@ function updateUserSelects() {
     unitUserSelect.appendChild(option3);
 
     // ここから下は現在のユニットだけ表示
-    if (userUnits[user] !== currentUnit) {
+    if (currentUnit !== "all" && userUnits[user] !== currentUnit) {
       continue;
     }
 
@@ -790,6 +818,71 @@ function updateRoleUI() {
   } else {
     registerButton.disabled = false;
     registerButton.textContent = "登録";
+  }
+}
+
+async function login() {
+  const userId =
+    document.getElementById("loginUserId").value.trim();
+
+  const password =
+    document.getElementById("loginPassword").value.trim();
+
+  const loginMessage =
+    document.getElementById("loginMessage");
+
+  if (userId === "" || password === "") {
+    loginMessage.textContent =
+      "ユーザーIDとパスワードを入力してください";
+    return;
+  }
+
+  loginMessage.textContent = "ログイン確認中...";
+
+  try {
+    const url =
+      API_URL +
+      "?action=login" +
+      "&userId=" + encodeURIComponent(userId) +
+      "&password=" + encodeURIComponent(password);
+
+    const response = await fetch(url);
+    const result = await response.json();
+
+    if (!result.success) {
+      loginMessage.textContent =
+        result.message || "IDまたはパスワードが違います";
+      return;
+    }
+
+    currentRole = String(result.role).trim();
+    currentUnit = String(result.unit).trim();
+
+    document.getElementById("loginArea").style.display =
+      "none";
+
+    document.getElementById("appArea").style.display =
+      "block";
+
+    updateRoleUI();
+    updateUserSelects();
+
+    document.getElementById("status").innerHTML =
+      getStatusHtml();
+
+    document.getElementById("todayTarget").innerHTML =
+      getTodayTarget();
+
+    document.getElementById("ruleList").innerHTML =
+      getRuleListHtml();
+
+    alert(result.name + "としてログインしました");
+
+  } catch (error) {
+    console.error("ログインエラー", error);
+
+    loginMessage.textContent =
+      "ログイン処理に失敗しました";
   }
 }
 
@@ -859,7 +952,7 @@ function getRuleListHtml() {
   let result = "";
 
   for (let user in rules) {
-    if (userUnits[user] !== currentUnit) {
+    if (currentUnit !== "all" && userUnits[user] !== currentUnit) {
    continue;
    }
     result += "<div class='user-card'>";
@@ -975,5 +1068,6 @@ function getCompletedListHtml() {
 }
 
 </script>
+</div>
 </body>
 </html>
