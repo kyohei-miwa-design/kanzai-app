@@ -127,7 +127,7 @@ button {
 
 <br><br>
 
-<button onclick="register()">登録</button>
+<button id="registerButton" onclick="register()">登録</button>
 <p>最終排便日</p>
 <input type="date" id="lastDate">
 <p id="result">現在ポイント：0</p>
@@ -142,7 +142,23 @@ Googleへ保存テスト
 <button onclick="addUser()">追加</button>
 
 <h2>利用者削除</h2>
+
 <button onclick="deleteUser()">削除</button>
+
+<h2>所属ユニット変更</h2>
+
+<p>対象利用者</p>
+<select id="unitUserSelect"></select>
+
+<p>所属ユニット</p>
+<select id="unitSelect">
+  <option value="1">1ユニット</option>
+  <option value="2">2ユニット</option>
+  <option value="3">3ユニット</option>
+  <option value="4">4ユニット</option>
+</select>
+
+<button onclick="changeUserUnit()">ユニット変更</button>
 
 <h2>下剤ルール編集</h2>
 </div>
@@ -217,7 +233,7 @@ let lastDates = {
 let userUnits = {};
 
 let currentUnit = "1".trim();
-let currentRole = "care";
+let currentRole = "admin";
 
 let points = {
   "A様": 0,
@@ -703,26 +719,23 @@ await loadUsersFromGoogle();
 updateUserSelects();
 }
 
-function updateUserSelects(){
+function updateUserSelects() {
   const userSelect = document.querySelectorAll("select")[0];
   const ruleUserSelect = document.getElementById("ruleUserSelect");
-
-  console.log("updateUserSelects実行");
-  console.log("currentUnit:", currentUnit);
-  console.log("userUnits:", userUnits);
+  const unitUserSelect = document.getElementById("unitUserSelect");
 
   userSelect.innerHTML = "";
   ruleUserSelect.innerHTML = "";
+  unitUserSelect.innerHTML = "";
 
   for (let user in points) {
-    console.log(
-      "判定:",
-      user,
-      userUnits[user],
-      currentUnit,
-      userUnits[user] === currentUnit
-    );
 
+    // ユニット変更用は全利用者を表示
+    const option3 = document.createElement("option");
+    option3.textContent = user;
+    unitUserSelect.appendChild(option3);
+
+    // ここから下は現在のユニットだけ表示
     if (userUnits[user] !== currentUnit) {
       continue;
     }
@@ -737,13 +750,46 @@ function updateUserSelects(){
   }
 }
 
+async function changeUserUnit() {
+  const user = document.getElementById("unitUserSelect").value;
+  const newUnit = document.getElementById("unitSelect").value;
+
+  if (user === "") {
+    alert("利用者を選択してください");
+    return;
+  }
+
+  userUnits[user] = newUnit;
+
+  await saveUsersToGoogle();
+
+  document.getElementById("status").innerHTML = getStatusHtml();
+  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+  document.getElementById("ruleList").innerHTML = getRuleListHtml();
+
+  updateUserSelects();
+
+  alert(user + "を" + newUnit + "ユニットに変更しました");
+}
+
 function updateRoleUI() {
   const adminArea = document.getElementById("adminArea");
+  const registerButton = document.getElementById("registerButton");
 
+  // 管理者メニュー
   if (currentRole === "admin") {
     adminArea.style.display = "block";
   } else {
     adminArea.style.display = "none";
+  }
+
+  // 排便登録
+  if (currentRole === "nurse") {
+    registerButton.disabled = true;
+    registerButton.textContent = "看護師は登録できません";
+  } else {
+    registerButton.disabled = false;
+    registerButton.textContent = "登録";
   }
 }
 
