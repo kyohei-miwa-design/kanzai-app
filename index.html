@@ -135,6 +135,8 @@ button {
 
   <h1>緩下剤管理アプリ</h1>
 
+  <button onclick="logout()">ログアウト</button>
+
   <div id="newDataMessage"></div>
 
 <p>利用者</p>
@@ -189,6 +191,15 @@ Googleへ保存テスト
 <button onclick="changeUserUnit()">ユニット変更</button>
 
 <h2>下剤ルール編集</h2>
+
+<h2>投薬報告</h2>
+
+<button onclick="createMedicineReport()">
+投薬報告を作成
+</button>
+
+<div id="medicineReport"></div>
+
 </div>
 
 <h2>登録済みルール一覧</h2>
@@ -623,7 +634,8 @@ async function initialize() {
 
   await refreshFromGoogle();
 
-  // 30秒ごとにGoogleの最新データを読み込む
+  restoreLogin();
+
   setInterval(refreshFromGoogle, 30000);
 }
 
@@ -857,6 +869,10 @@ async function login() {
     currentRole = String(result.role).trim();
     currentUnit = String(result.unit).trim();
 
+    localStorage.setItem("loginRole", currentRole);
+    localStorage.setItem("loginUnit", currentUnit);
+    localStorage.setItem("loginName", String(result.name || "").trim());
+
     document.getElementById("loginArea").style.display =
       "none";
 
@@ -883,6 +899,36 @@ async function login() {
     loginMessage.textContent =
       "ログイン処理に失敗しました";
   }
+}
+
+function restoreLogin() {
+  const savedRole = localStorage.getItem("loginRole");
+  const savedUnit = localStorage.getItem("loginUnit");
+
+  if (!savedRole || !savedUnit) {
+    return;
+  }
+
+  currentRole = savedRole;
+  currentUnit = savedUnit;
+
+  document.getElementById("loginArea").style.display =
+    "none";
+
+  document.getElementById("appArea").style.display =
+    "block";
+
+  updateRoleUI();
+  updateUserSelects();
+
+  document.getElementById("status").innerHTML =
+    getStatusHtml();
+
+  document.getElementById("todayTarget").innerHTML =
+    getTodayTarget();
+
+  document.getElementById("ruleList").innerHTML =
+    getRuleListHtml();
 }
 
 function addHistory(user, type) {
@@ -1064,6 +1110,113 @@ function getCompletedListHtml() {
   }
 
   return result;
+}
+
+function logout() {
+  const ok = confirm("ログアウトしますか？");
+
+  if (!ok) {
+    return;
+  }
+
+  localStorage.removeItem("loginRole");
+  localStorage.removeItem("loginUnit");
+  localStorage.removeItem("loginName");
+
+  currentRole = "";
+  currentUnit = "";
+
+  document.getElementById("appArea").style.display =
+    "none";
+
+  document.getElementById("loginArea").style.display =
+    "block";
+
+  document.getElementById("loginPassword").value = "";
+  document.getElementById("loginMessage").textContent = "";
+}
+
+function createMedicineReport() {
+
+  let morningList = {};
+  let eveningList = {};
+  
+
+  for (let user in lastDates) {
+
+    if (currentUnit !== "all" && userUnits[user] !== currentUnit) {
+      continue;
+    }
+
+    const days = getNoBowelDays(user);
+    const medicines = rules[user]?.[days];
+
+    if (!medicines) continue;
+
+    for (let medicine of medicines) {
+
+      if (medicine.includes("朝")) {
+        if (!morningList[user]) {
+          morningList[user] = [];
+         }
+
+          morningList[user].push(
+          medicine.replace(" 朝", "")
+        );
+      }
+
+      if (medicine.includes("夕")) {
+        if (!eveningList[user]) {
+         eveningList[user] = [];
+         }
+
+           eveningList[user].push(
+           medicine.replace(" 夕", "")
+          );
+      }
+
+    }
+  }
+
+  let eveningHtml = "";
+
+for (let user in eveningList) {
+
+  eveningHtml += `<strong>${user}</strong><br>`;
+
+  for (let medicine of eveningList[user]) {
+    eveningHtml += `・${medicine}<br>`;
+  }
+
+  eveningHtml += "<br>";
+ }
+
+ let morningHtml = "";
+
+ for (let user in morningList) {
+
+  morningHtml += `<strong>${user}</strong><br>`;
+
+  for (let medicine of morningList[user]) {
+    morningHtml += `・${medicine}<br>`;
+  }
+
+  morningHtml += "<br>";
+ }
+
+ document.getElementById("medicineReport").innerHTML = `
+ <div class="user-card">
+
+ <h3>本日夕方</h3>
+ ${eveningHtml || "対象者なし"}
+
+ <hr>
+
+ <h3>翌日朝</h3>
+ ${morningHtml || "対象者なし"}
+
+ </div>
+ `;
 }
 
 </script>
