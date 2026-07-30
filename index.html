@@ -1182,7 +1182,7 @@ function createMedicineReport() {
 
   let eveningHtml = "";
 
-for (let user in eveningList) {
+ for (let user in eveningList) {
 
   eveningHtml += `<strong>${user}</strong><br>`;
 
@@ -1206,19 +1206,42 @@ for (let user in eveningList) {
   morningHtml += "<br>";
  }
 
- document.getElementById("medicineReport").innerHTML = `
- <div class="user-card">
+  document.getElementById("medicineReport").innerHTML = `
+  <div class="user-card">
 
- <h3>本日夕方</h3>
- ${eveningHtml || "対象者なし"}
+  <h3>本日夕方</h3>
+  ${eveningHtml || "対象者なし"}
 
- <hr>
+  <hr>
 
- <h3>翌日朝</h3>
- ${morningHtml || "対象者なし"}
+  <h3>翌日朝</h3>
+  ${morningHtml || "対象者なし"}
 
- </div>
- `;
+  <button onclick="copyMedicineReport()">
+  📋 投薬報告をコピー
+  </button>
+
+  </div>
+  `;
+}
+
+function copyMedicineReport() {
+
+  const report =
+    document.getElementById("medicineReport");
+
+  const text = report.innerText
+    .replace("📋 投薬報告をコピー", "")
+    .trim();
+
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      alert("投薬報告をコピーしました！");
+    })
+    .catch(error => {
+      console.error("コピー失敗", error);
+      alert("コピーに失敗しました");
+    });
 }
 
 </script>
