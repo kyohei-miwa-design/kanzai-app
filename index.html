@@ -1206,23 +1206,36 @@ function createMedicineReport() {
   morningHtml += "<br>";
  }
 
+ const today = new Date();
+
+ const tomorrow = new Date(today);
+ tomorrow.setDate(today.getDate() + 1);
+
+ const todayText =
+  (today.getMonth() + 1) + "月" +
+  today.getDate() + "日";
+
+ const tomorrowText =
+  (tomorrow.getMonth() + 1) + "月" +
+  tomorrow.getDate() + "日";
+
   document.getElementById("medicineReport").innerHTML = `
-  <div class="user-card">
+ <div class="user-card">
 
-  <h3>本日夕方</h3>
-  ${eveningHtml || "対象者なし"}
+ <h3>${todayText} 夕方</h3>
+ ${eveningHtml || "対象者なし"}
 
-  <hr>
+ <hr>
 
-  <h3>翌日朝</h3>
-  ${morningHtml || "対象者なし"}
+ <h3>${tomorrowText} 朝</h3>
+ ${morningHtml || "対象者なし"}
 
-  <button onclick="copyMedicineReport()">
-  📋 投薬報告をコピー
-  </button>
+ <button onclick="copyMedicineReport()">
+📋 投薬報告をコピー
+ </button>
 
-  </div>
-  `;
+ </div>
+ `;
 }
 
 function copyMedicineReport() {
