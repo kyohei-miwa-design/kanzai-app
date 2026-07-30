@@ -342,7 +342,7 @@ async function register() {
 
   document.getElementById("result").textContent =
     user + "　排便成立　最終排便日を今日に更新しました";
-}
+ }
 
   document.getElementById("status").innerHTML =
   getStatusHtml();
@@ -353,11 +353,11 @@ async function register() {
   user: user,
   type: type,
   point: points[user]
-});
+ });
+ await saveUsersToGoogle(false);
+ await loadHistoriesFromGoogle();
 
-await loadHistoriesFromGoogle();
-
-saveData();
+ saveData();
 }
 
 function getNoBowelDays(user) {
@@ -547,7 +547,7 @@ async function saveRulesToGoogle() {
   await loadRulesFromGoogle();
 }
 
-async function saveUsersToGoogle() {
+async function saveUsersToGoogle(showAlert = true) {
   const users = [];
 
   for (let name in points) {
@@ -567,7 +567,9 @@ async function saveUsersToGoogle() {
   const response = await fetch(url);
   const result = await response.text();
 
+  if (showAlert) {
   alert(result);
+  }
 
   await loadUsersFromGoogle();
 }
