@@ -1313,19 +1313,73 @@ function checkTodayBowelStatus() {
 
   if (unregisteredUsers.length > 0) {
 
-    for (let user of unregisteredUsers) {
-      html += `・${user}<br>`;
-    }
-
-  } else {
-    html += "なし<br>";
+  for (let user of unregisteredUsers) {
+    html += `
+      <label>
+        <input
+          type="checkbox"
+          class="noBowelCheck"
+          value="${user}"
+          checked
+        >
+        ${user}
+      </label>
+      <br>
+    `;
   }
+
+  html += `
+    <br>
+    <button onclick="confirmNoBowelUsers()">
+      未入力者を「排便なし」で確定
+    </button>
+  `;
+
+} else {
+  html += "なし<br>";
+}
 
   html += `</div>`;
 
   document.getElementById(
     "bowelCheckResult"
   ).innerHTML = html;
+}
+
+async function confirmNoBowelUsers() {
+
+  const checkedUsers = Array.from(
+    document.querySelectorAll(".noBowelCheck:checked")
+  ).map(input => input.value);
+
+  if (checkedUsers.length === 0) {
+    alert("対象者が選択されていません");
+    return;
+  }
+
+  const ok = confirm(
+    checkedUsers.join("、") +
+    " を「排便なし」で確定しますか？"
+  );
+
+  if (!ok) {
+    return;
+  }
+
+  for (let user of checkedUsers) {
+
+    await addHistoryToGoogle({
+      user: user,
+      type: "なし",
+      point: points[user]
+    });
+  }
+
+  await loadHistoriesFromGoogle();
+
+  checkTodayBowelStatus();
+
+  alert("排便なしで確定しました");
 }
 
 function copyMedicineReport() {
