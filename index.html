@@ -1149,8 +1149,51 @@ function logout() {
 function createMedicineReport() {
 
   let morningList = {};
-  let eveningList = {};
-  
+  let eveningList = {}; 
+  let bowelHtml = "";
+
+  for (let user in points) {
+
+  // 自分のユニットだけ
+  if (
+    currentUnit !== "all" &&
+    userUnits[user] !== currentUnit
+  ) {
+    continue;
+  }
+
+  // 今日のこの利用者の履歴だけ取得
+  const todayHistories = histories.filter(history => {
+
+    const historyDate =
+      String(history.date).slice(0, 10);
+
+    const today = new Date();
+
+    const todayText =
+      today.getFullYear() + "-" +
+      String(today.getMonth() + 1).padStart(2, "0") + "-" +
+      String(today.getDate()).padStart(2, "0");
+
+    return (
+      history.user === user &&
+      historyDate === todayText
+    );
+  });
+
+  if (todayHistories.length === 0) {
+
+    bowelHtml +=
+      `<strong>${user}</strong>：未確認<br>`;
+
+  } else {
+
+    const types = todayHistories.map(history => history.type);
+
+    bowelHtml +=
+      `<strong>${user}</strong>：${types.join("、")}<br>`;
+  }
+}
 
   for (let user in lastDates) {
 
@@ -1229,6 +1272,11 @@ function createMedicineReport() {
 
   document.getElementById("medicineReport").innerHTML = `
  <div class="user-card">
+
+ <h3>${todayText} 排便状況</h3>
+ ${bowelHtml || "対象者なし"}
+
+ <hr>
 
  <h3>${todayText} 夕方</h3>
  ${eveningHtml || "対象者なし"}
