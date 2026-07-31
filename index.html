@@ -192,6 +192,14 @@ Googleへ保存テスト
 
 <h2>下剤ルール編集</h2>
 
+<h2>排便確認</h2>
+
+<button onclick="checkTodayBowelStatus()">
+  今日の排便状況を集計
+</button>
+
+<div id="bowelCheckResult"></div>
+
 <h2>投薬報告</h2>
 
 <button onclick="createMedicineReport()">
@@ -1236,6 +1244,88 @@ function createMedicineReport() {
 
  </div>
  `;
+}
+
+function checkTodayBowelStatus() {
+
+  const today = new Date();
+
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  const todayText = `${year}-${month}-${day}`;
+
+  let registeredUsers = [];
+  let unregisteredUsers = [];
+
+  for (let user in points) {
+
+    // 自分のユニットだけ
+    if (
+      currentUnit !== "all" &&
+      userUnits[user] !== currentUnit
+    ) {
+      continue;
+    }
+
+    // 今日この利用者の排便登録があるか確認
+    const hasTodayHistory = histories.some(history => {
+
+      const historyDate =
+        String(history.date).slice(0, 10);
+
+      return (
+        history.user === user &&
+        historyDate === todayText
+      );
+    });
+
+    if (hasTodayHistory) {
+      registeredUsers.push(user);
+    } else {
+      unregisteredUsers.push(user);
+    }
+  }
+
+  let html = `
+    <div class="user-card">
+
+      <h3>本日の排便確認</h3>
+
+      <strong>登録済み</strong><br>
+  `;
+
+  if (registeredUsers.length > 0) {
+
+    for (let user of registeredUsers) {
+      html += `✓ ${user}<br>`;
+    }
+
+  } else {
+    html += "なし<br>";
+  }
+
+  html += `
+      <br>
+      <strong>未入力</strong><br>
+  `;
+
+  if (unregisteredUsers.length > 0) {
+
+    for (let user of unregisteredUsers) {
+      html += `・${user}<br>`;
+    }
+
+  } else {
+    html += "なし<br>";
+  }
+
+  html += `</div>`;
+
+  document.getElementById(
+    "bowelCheckResult"
+  ).innerHTML = html;
 }
 
 function copyMedicineReport() {
