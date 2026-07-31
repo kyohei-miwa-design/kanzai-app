@@ -158,8 +158,14 @@ button {
 <br><br>
 
 <button id="registerButton" onclick="register()">登録</button>
+
 <p>最終排便日</p>
 <input type="date" id="lastDate">
+
+<button onclick="changeLastDate()">
+  最終排便日を変更
+</button>
+
 <p id="result">現在ポイント：0</p>
 
 <button onclick="saveUsersToGoogle()">
@@ -362,11 +368,6 @@ function showNewDataMessage() {
 async function register() {
   const user = document.getElementById("userSelect").value;
   const type = document.getElementById("bowelTypeSelect").value;
-  const lastDateInput = document.getElementById("lastDate").value;
-
-  if (lastDateInput !== "") {
-    lastDates[user] = lastDateInput;
-  }
 
   let addPoint = 0;
 
@@ -1593,6 +1594,53 @@ async function loadDailyConfirmStatus() {
     ).innerHTML =
       "集計状況の読み込みに失敗しました";
   }
+}
+
+async function changeLastDate() {
+
+  const user =
+    document.getElementById("userSelect").value;
+
+  const newDate =
+    document.getElementById("lastDate").value;
+
+  if (user === "") {
+    alert("利用者を選択してください");
+    return;
+  }
+
+  if (newDate === "") {
+    alert("日付を選択してください");
+    return;
+  }
+
+  const ok = confirm(
+    user +
+    "の最終排便日を\n" +
+    newDate +
+    "に変更しますか？"
+  );
+
+  if (!ok) {
+    return;
+  }
+
+  lastDates[user] = newDate;
+
+  await saveUsersToGoogle(false);
+
+  document.getElementById("status").innerHTML =
+    getStatusHtml();
+
+  document.getElementById("todayTarget").innerHTML =
+    getTodayTarget();
+
+  saveData();
+
+  alert(
+    user +
+    "の最終排便日を変更しました"
+  );
 }
 
 </script>
