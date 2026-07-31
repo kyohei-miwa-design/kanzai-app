@@ -101,6 +101,61 @@ button {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
+/* 本日の対象者チェック用 */
+.target-card label {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  background: white;
+  padding: 14px 16px;
+  margin: 10px 0;
+
+  border: 1px solid #ddd;
+  border-radius: 10px;
+
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* checkboxだけ100%幅を解除 */
+.target-card input[type="checkbox"] {
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  flex-shrink: 0;
+
+  cursor: pointer;
+}
+
+.medicine-name {
+  flex: 1;
+}
+
+.medicine-time {
+  min-width: 40px;
+  text-align: center;
+
+  padding: 4px 8px;
+  border-radius: 7px;
+
+  font-weight: bold;
+}
+
+/* 朝 */
+.medicine-time.morning {
+  color: #1976d2;
+  background: #eaf4ff;
+  border: 1px solid #90caf9;
+}
+
+/* 夕 */
+.medicine-time.evening {
+  color: #188038;
+  background: #eaf7ec;
+  border: 1px solid #81c995;
+}
+
 </style>
 </head>
 
@@ -423,9 +478,15 @@ function getTodayTarget() {
   let result = "";
 
   for (let user in lastDates) {
-    if (currentUnit !== "all" && userUnits[user] !== currentUnit) {
-   continue;
-   }
+
+    // 現在のユニット以外は表示しない
+    if (
+      currentUnit !== "all" &&
+      userUnits[user] !== currentUnit
+    ) {
+      continue;
+    }
+
     const days = getNoBowelDays(user);
     const medicines = rules[user]?.[days];
 
@@ -435,36 +496,78 @@ function getTodayTarget() {
 
     // まだ実施していない薬だけ残す
     const remaining = medicines.filter(medicine => {
-      const checkKey = user + "_" + days + "_" + medicine;
+
+      const checkKey =
+        user + "_" + days + "_" + medicine;
+
       return !checks[checkKey];
     });
 
-    // 全部実施済みならこの利用者は表示しない
+    // 全部実施済みなら利用者ごと非表示
     if (remaining.length === 0) {
       continue;
     }
 
+
+    // 利用者カード開始
     result +=
       "<div class='target-card'>" +
       "<strong>⚠ " + user + "</strong><br>" +
-      "未排便日数：" + days + "日<br><br>";
+      "未排便日数：" + days + "日";
 
+
+    // 薬を1つずつ表示
     for (let medicine of remaining) {
-      const checkKey = user + "_" + days + "_" + medicine;
+
+      const checkKey =
+        user + "_" + days + "_" + medicine;
+
+
+      // 朝・夕を判定
+      const timing =
+        medicine.includes("朝")
+          ? "朝"
+          : medicine.includes("夕")
+          ? "夕"
+          : "";
+
+
+      // 「テスト薬 朝」→「テスト薬」
+      const medicineName =
+        medicine
+          .replace(" 朝", "")
+          .replace(" 夕", "");
+
 
       result +=
         "<label>" +
+
         "<input type='checkbox' onchange=\"toggleCheck('" +
         checkKey +
         "')\">" +
-        " " + medicine +
-        "</label><br>";
+
+        "<span class='medicine-name'>" +
+        medicineName +
+        "</span>" +
+
+        "<span class='medicine-time " +
+        (timing === "朝"
+          ? "morning"
+          : timing === "夕"
+          ? "evening"
+          : "") +
+        "'>" +
+        timing +
+        "</span>" +
+
+        "</label>";
     }
 
+
+    // 利用者カード終了
     result += "</div>";
   }
 
- 
 
   if (result === "") {
     return "🎉 本日の対象者はいません";
