@@ -1425,9 +1425,47 @@ async function confirmNoBowelUsers() {
 
   await loadHistoriesFromGoogle();
 
-  checkTodayBowelStatus();
+ // ★このユニットの排便確認完了をGoogleへ記録
+ const confirmSaved =
+  await saveDailyConfirmToGoogle();
 
+ checkTodayBowelStatus();
+
+ if (confirmSaved) {
   alert("排便なしで確定しました");
+ } else {
+  alert(
+    "排便登録は完了しましたが、集計完了の記録に失敗しました"
+  );
+ }
+}
+
+async function saveDailyConfirmToGoogle() {
+
+  const loginName =
+    localStorage.getItem("loginName") || "不明";
+
+  const url =
+    API_URL +
+    "?action=saveDailyConfirm" +
+    "&unit=" + encodeURIComponent(currentUnit) +
+    "&name=" + encodeURIComponent(loginName);
+
+  try {
+
+    const response = await fetch(url);
+    const result = await response.text();
+
+    console.log("排便集計確定:", result);
+
+    return true;
+
+  } catch (error) {
+
+    console.error("排便集計確定エラー", error);
+
+    return false;
+  }
 }
 
 function copyMedicineReport() {
