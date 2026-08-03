@@ -297,6 +297,22 @@ Googleへ保存テスト
 </div>
 
 
+<div id="nightConfirmArea">
+
+  <h2>🌙 夜勤帯の排便確認</h2>
+
+  <p>
+    対象時間：前日16:00 ～ 本日8:00
+  </p>
+
+  <button onclick="checkNightBowelStatus()">
+    夜勤帯の排便状況を集計
+  </button>
+
+  <div id="nightBowelCheckResult"></div>
+
+</div>
+
 <h2>排便確認</h2>
 
 <button onclick="checkTodayBowelStatus()">
@@ -1610,13 +1626,14 @@ async function saveDailyConfirmToGoogle() {
   const loginName =
     localStorage.getItem("loginName") || "不明";
 
-  const url =
-    API_URL +
-    "?action=saveDailyConfirm" +
-    "&unit=" + encodeURIComponent(currentUnit) +
-    "&name=" + encodeURIComponent(loginName);
+   const url =
+   API_URL +
+   "?action=saveDailyConfirm" +
+   "&unit=" + encodeURIComponent(currentUnit) +
+   "&type=day" +
+   "&name=" + encodeURIComponent(loginName);
 
-  try {
+   try {
 
     const response = await fetch(url);
     const result = await response.text();
@@ -1625,7 +1642,7 @@ async function saveDailyConfirmToGoogle() {
 
     return true;
 
-  } catch (error) {
+   } catch (error) {
 
     console.error("排便集計確定エラー", error);
 
@@ -1746,6 +1763,122 @@ async function changeLastDate() {
   alert(
     user +
     "の最終排便日を変更しました"
+  );
+}
+
+function checkNightBowelStatus() {
+
+  const now = new Date();
+
+  // 本日8:00
+  const nightEnd = new Date(now);
+  nightEnd.setHours(8, 0, 0, 0);
+
+  // 前日16:00
+  const nightStart = new Date(nightEnd);
+  nightStart.setDate(nightStart.getDate() - 1);
+  nightStart.setHours(16, 0, 0, 0);
+
+  let registeredUsers = [];
+  let unregisteredUsers = [];
+
+  for (let user in points) {
+
+    // 現在のユニットだけ
+    if (
+      currentUnit !== "all" &&
+      userUnits[user] !== currentUnit
+    ) {
+      continue;
+    }
+
+    const nightHistories = histories.filter(history => {
+
+      if (history.user !== user) {
+        return false;
+      }
+
+      // "2026-08-03 05:30:00" をDateへ変換
+      const historyDate = new Date(
+        String(history.date).replace(" ", "T")
+      );
+
+      return (
+        historyDate >= nightStart &&
+        historyDate < nightEnd
+      );
+    });
+
+    if (nightHistories.length > 0) {
+      registeredUsers.push({
+        user: user,
+        histories: nightHistories
+      });
+    } else {
+      unregisteredUsers.push(user);
+    }
+  }
+
+  let html = `
+    <div class="user-card">
+
+      <h3>🌙 夜勤帯の排便確認</h3>
+
+      <p>
+        対象：
+        ${formatDateTime(nightStart)}
+        ～
+        ${formatDateTime(nightEnd)}
+      </p>
+
+      <strong>登録済み</strong><br>
+  `;
+
+  if (registeredUsers.length > 0) {
+
+    for (let item of registeredUsers) {
+
+      const types = item.histories.map(
+        history => history.type
+      );
+
+      html +=
+        `✓ ${item.user}：${types.join("、")}<br>`;
+    }
+
+  } else {
+    html += "なし<br>";
+  }
+
+  html += `
+      <br>
+      <strong>未入力</strong><br>
+  `;
+
+  if (unregisteredUsers.length > 0) {
+
+    for (let user of unregisteredUsers) {
+      html += `・${user}<br>`;
+    }
+
+  } else {
+    html += "なし<br>";
+  }
+
+  html += `</div>`;
+
+  document.getElementById(
+    "nightBowelCheckResult"
+  ).innerHTML = html;
+}
+
+function formatDateTime(date) {
+
+  return (
+    (date.getMonth() + 1) + "/" +
+    date.getDate() + " " +
+    String(date.getHours()).padStart(2, "0") + ":" +
+    String(date.getMinutes()).padStart(2, "0")
   );
 }
 
