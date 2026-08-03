@@ -156,6 +156,37 @@ button {
   border: 1px solid #81c995;
 }
 
+.night-no-bowel-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  background: #f7f9fc;
+  border: 1px solid #d8dee8;
+  border-radius: 10px;
+
+  padding: 12px 14px;
+  margin: 8px 0;
+
+  font-size: 17px;
+}
+
+.night-no-bowel-item input[type="checkbox"] {
+  width: 25px;
+  height: 25px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.night-no-bowel-item span:nth-of-type(1) {
+  flex: 1;
+  font-weight: bold;
+}
+
+.night-no-bowel-item span:nth-of-type(2) {
+  color: #555;
+}
+
 </style>
 </head>
 
@@ -1857,15 +1888,45 @@ function checkNightBowelStatus() {
 
   if (unregisteredUsers.length > 0) {
 
-    for (let user of unregisteredUsers) {
-      html += `・${user}<br>`;
-    }
+  html += `
+    <p>
+      夜勤帯に排便がなかったことを確認してください。
+    </p>
+  `;
 
-  } else {
-    html += "なし<br>";
+  for (let user of unregisteredUsers) {
+
+    html += `
+      <label class="night-no-bowel-item">
+
+        <input
+          type="checkbox"
+          class="nightNoBowelCheck"
+          value="${user}"
+          checked
+        >
+
+        <span>${user}</span>
+        <span>排便なし</span>
+
+      </label>
+    `;
   }
 
-  html += `</div>`;
+} else {
+
+  html += "全利用者に排便記録があります<br>";
+}
+
+html += `
+  <br>
+
+  <button onclick="confirmNightShift()">
+    🌙 夜勤帯の確認を確定
+  </button>
+
+</div>
+`;
 
   document.getElementById(
     "nightBowelCheckResult"
@@ -1880,6 +1941,94 @@ function formatDateTime(date) {
     String(date.getHours()).padStart(2, "0") + ":" +
     String(date.getMinutes()).padStart(2, "0")
   );
+}
+
+async function saveNightConfirmToGoogle() {
+
+  const loginName =
+    localStorage.getItem("loginName") || "不明";
+
+  const url =
+    API_URL +
+    "?action=saveDailyConfirm" +
+    "&unit=" + encodeURIComponent(currentUnit) +
+    "&type=night" +
+    "&name=" + encodeURIComponent(loginName);
+
+  try {
+
+    const response = await fetch(url);
+    const result = await response.text();
+
+    console.log("夜勤帯確定:", result);
+
+    return (
+      result === "OK" ||
+      result === "UPDATED"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "夜勤帯確定エラー",
+      error
+    );
+
+    return false;
+  }
+}
+
+async function confirmNightShift() {
+
+  const allChecks = Array.from(
+    document.querySelectorAll(
+      ".nightNoBowelCheck"
+    )
+  );
+
+  const uncheckedUsers = allChecks
+    .filter(input => !input.checked)
+    .map(input => input.value);
+
+  if (uncheckedUsers.length > 0) {
+
+    alert(
+      "次の利用者が未確認です。\n\n" +
+      uncheckedUsers.join("、")
+    );
+
+    return;
+  }
+
+  const ok = confirm(
+    "前日16時から本日8時までの\n" +
+    "夜勤帯排便状況を確定しますか？\n\n" +
+    "記録のない利用者は、夜勤帯に排便なしとして確認したものとします。"
+  );
+
+  if (!ok) {
+    return;
+  }
+
+  const saved =
+    await saveNightConfirmToGoogle();
+
+  if (!saved) {
+
+    alert(
+      "夜勤帯の確定記録を保存できませんでした"
+    );
+
+    return;
+  }
+
+  alert(
+    "夜勤帯の排便確認を確定しました"
+  );
+
+  await loadDailyConfirmStatus();
+
+  checkNightBowelStatus();
 }
 
 </script>
