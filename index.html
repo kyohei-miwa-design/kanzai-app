@@ -934,7 +934,7 @@ async function initialize() {
   // ログインしている時だけ通信
   if (currentRole !== "") {
 
-    await refreshFromGoogle();
+    await loadInitialDateFromGoogle();
 
     setInterval(
       refreshFromGoogle,
@@ -949,7 +949,6 @@ initialize();
 
 async function refreshFromGoogle() {
 
-  // 前の更新中なら、新しい更新を開始しない
   if (isRefreshing) {
     console.log("更新中のため今回の自動更新をスキップ");
     return;
@@ -960,8 +959,7 @@ async function refreshFromGoogle() {
   try {
     const beforeData = getAppDataSnapshot();
 
-    await loadUsersFromGoogle();
-    await loadRulesFromGoogle();
+    // 頻繁に変わるデータだけ自動更新
     await loadChecksFromGoogle();
     await loadHistoriesFromGoogle();
     await loadDailyConfirmStatus();
@@ -977,20 +975,12 @@ async function refreshFromGoogle() {
 
     initialSyncFinished = true;
 
-    console.log(
-      "Googleの最新データを読み込みました"
-    );
+    console.log("Googleの最新データを読み込みました");
 
   } catch (error) {
-
-    console.error(
-      "自動更新に失敗しました",
-      error
-    );
+    console.error("自動更新に失敗しました", error);
 
   } finally {
-
-    // 成功・失敗に関係なく更新中を解除
     isRefreshing = false;
   }
 }
@@ -1241,7 +1231,7 @@ async function login() {
     document.getElementById("ruleList").innerHTML =
       getRuleListHtml();
 
-     await refreshFromGoogle();
+     await loadInitialDateFromGoogle();
 
     alert(result.name + "としてログインしました");
 
@@ -1281,6 +1271,16 @@ function restoreLogin() {
 
   document.getElementById("ruleList").innerHTML =
     getRuleListHtml();
+}
+
+async function loadInitialDataFromGoogle() {
+
+  await loadUsersFromGoogle();
+  await loadRulesFromGoogle();
+  await loadChecksFromGoogle();
+  await loadHistoriesFromGoogle();
+  await loadDailyConfirmStatus();
+
 }
 
 function addHistory(user, type) {
