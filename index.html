@@ -521,8 +521,8 @@ let lastDates = {
 
 let userUnits = {};
 
-let currentUnit = "1".trim();
-let currentRole = "admin";
+let currentUnit = "";
+let currentRole = "";
 
 let points = {
   "A様": 0,
@@ -538,6 +538,7 @@ let checkDate = "";
 
 let initialSyncFinished = false;
 let newDataMessageTimer = null;
+let isRefreshing = false;
 
 function getAppDataSnapshot() {
   return JSON.stringify({
@@ -947,6 +948,15 @@ async function initialize() {
 initialize();
 
 async function refreshFromGoogle() {
+
+  // 前の更新中なら、新しい更新を開始しない
+  if (isRefreshing) {
+    console.log("更新中のため今回の自動更新をスキップ");
+    return;
+  }
+
+  isRefreshing = true;
+
   try {
     const beforeData = getAppDataSnapshot();
 
@@ -958,16 +968,30 @@ async function refreshFromGoogle() {
 
     const afterData = getAppDataSnapshot();
 
-    if (initialSyncFinished && beforeData !== afterData) {
+    if (
+      initialSyncFinished &&
+      beforeData !== afterData
+    ) {
       showNewDataMessage();
     }
 
     initialSyncFinished = true;
 
-    console.log("Googleの最新データを読み込みました");
+    console.log(
+      "Googleの最新データを読み込みました"
+    );
 
   } catch (error) {
-    console.error("自動更新に失敗しました", error);
+
+    console.error(
+      "自動更新に失敗しました",
+      error
+    );
+
+  } finally {
+
+    // 成功・失敗に関係なく更新中を解除
+    isRefreshing = false;
   }
 }
 
