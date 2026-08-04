@@ -1802,14 +1802,23 @@ async function loadDailyConfirmStatus() {
   try {
 
     const response = await fetch(
-      API_URL + "?action=getDailyConfirms"
-    );
+    API_URL +
+    "?action=getDailyConfirms" +
+    "&timestamp=" + Date.now(),
+   {
+    cache: "no-store"
+   }
+  );
+
+if (!response.ok) {
+  throw new Error(
+    "集計状況の取得に失敗しました"
+  );
+}
 
     const confirms = await response.json();
 
     let html = "";
-
-    hideNightAlert();
 
     const now = new Date();
 
@@ -1822,15 +1831,15 @@ async function loadDailyConfirmStatus() {
     for (let unit = 1; unit <= 4; unit++) {
 
       const dayConfirm = confirms.find(
-        item =>
-          String(item.unit) === String(unit) &&
-          item.type === "day"
+      item =>
+      String(item.unit).trim() === String(unit) &&
+      String(item.type).trim().toLowerCase() === "day"
       );
 
       const nightConfirm = confirms.find(
-        item =>
-          String(item.unit) === String(unit) &&
-          item.type === "night"
+      item =>
+      String(item.unit).trim() === String(unit) &&
+      String(item.type).trim().toLowerCase() === "night"
       );
 
       html += `
@@ -1938,28 +1947,32 @@ async function loadDailyConfirmStatus() {
     }
     
     if (
-  after8 &&
-  nightNotConfirmed.length > 0
-) {
+     after8 &&
+     nightNotConfirmed.length > 0
+     ) {
 
-  showNightAlert(
-  `
-  夜勤帯の排便確認が未完了です<br><br>
+     showNightAlert(
+     `
+     夜勤帯の排便確認が未完了です<br><br>
 
-  <div class="night-alert-units">
-    ${nightNotConfirmed.join("<br>")}
-  </div>
+     <div class="night-alert-units">
+      ${nightNotConfirmed.join("<br>")}
+     </div>
 
-  <br>
+     <br>
 
-  朝食時の緩下剤判断に<br>
-  影響する可能性があります。<br><br>
+     朝食時の緩下剤判断に<br>
+     影響する可能性があります。<br><br>
 
-  夜勤者へ確認してください。
-  `
- );
+     夜勤者へ確認してください。
+     `
+    );
 
-}
+    } else {
+
+     hideNightAlert();
+
+    }
 
     document.getElementById(
       "dailyConfirmStatus"
