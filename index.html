@@ -347,9 +347,6 @@ button {
 
 <p id="result">現在ポイント：0</p>
 
-<button onclick="saveUsersToGoogle()">
-Googleへ保存テスト
-</button>
 
 <div id="adminArea">
 
@@ -457,6 +454,13 @@ Googleへ保存テスト
 <div id="dailyConfirmArea">
 
   <h2>本日の排便集計状況</h2>
+
+<button
+  id="dailyConfirmRefreshButton"
+  onclick="manualRefreshDailyConfirm()"
+>
+  🔄 集計状況を更新
+</button>
 
   <div id="dailyConfirmStatus">
   読み込み中...
@@ -2267,6 +2271,48 @@ function showNightAlert(message) {
 function hideNightAlert() {
 
   document.getElementById("nightAlertArea").innerHTML = "";
+}
+
+async function manualRefreshDailyConfirm() {
+
+  const button =
+    document.getElementById(
+      "dailyConfirmRefreshButton"
+    );
+
+  button.disabled = true;
+  button.textContent = "更新中...";
+
+  try {
+
+    await loadDailyConfirmStatus();
+
+    button.textContent = "✅ 更新しました";
+
+    setTimeout(() => {
+      button.textContent =
+        "🔄 集計状況を更新";
+
+      button.disabled = false;
+    }, 1500);
+
+  } catch (error) {
+
+    console.error(
+      "手動更新エラー",
+      error
+    );
+
+    button.textContent =
+      "更新に失敗しました";
+
+    setTimeout(() => {
+      button.textContent =
+        "🔄 集計状況を更新";
+
+      button.disabled = false;
+    }, 2000);
+  }
 }
 
 </script>
