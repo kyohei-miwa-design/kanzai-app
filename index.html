@@ -783,7 +783,7 @@ function loadData() {
 }
 
 async function loadUsersFromGoogle() {
-  const response = await fetch(API_URL + "?action=getUsers");
+  const response = await fetchApi(API_URL + "?action=getUsers");
   const users = await response.json();
 
   points = {};
@@ -804,7 +804,7 @@ async function loadUsersFromGoogle() {
 }
 
 async function loadRulesFromGoogle() {
-  const response = await fetch(API_URL + "?action=getRules");
+  const response = await fetchApi(API_URL + "?action=getRules");
   const googleRules = await response.json();
 
   rules = googleRules;
@@ -816,7 +816,7 @@ async function loadRulesFromGoogle() {
 }
 
 async function loadChecksFromGoogle() {
-  const response = await fetch(API_URL + "?action=getChecks");
+  const response = await fetchApi(API_URL + "?action=getChecks");
   checks = await response.json();
 
   document.getElementById("todayTarget").innerHTML =
@@ -832,7 +832,7 @@ async function saveRulesToGoogle() {
     "?action=saveRules&rules=" +
     encodeURIComponent(JSON.stringify(rules));
 
-  const response = await fetch(url);
+  const response = await fetchApi(url);
   const result = await response.text();
 
   alert(result);
@@ -857,7 +857,7 @@ async function saveUsersToGoogle(showAlert = true) {
     "?action=saveUsers&users=" +
     encodeURIComponent(JSON.stringify(users));
 
-  const response = await fetch(url);
+  const response = await fetchApi(url);
   const result = await response.text();
 
   if (showAlert) {
@@ -873,7 +873,7 @@ async function saveChecksToGoogle() {
     "?action=saveChecks&checks=" +
     encodeURIComponent(JSON.stringify(checks));
 
-  const response = await fetch(url);
+  const response = await fetchApi(url);
 
   if (!response.ok) {
     throw new Error("実施チェックの保存に失敗しました");
@@ -888,7 +888,7 @@ async function saveChecksToGoogle() {
 
 async function loadHistoriesFromGoogle() {
   try {
-    const response = await fetch(
+    const response = await fetchApi(
       API_URL + "?action=getHistories"
     );
 
@@ -904,7 +904,7 @@ async function loadHistoriesFromGoogle() {
 
 async function addHistoryToGoogle(history) {
   try {
-    await fetch(
+    await fetchApi(
       API_URL +
         "?action=addHistory&history=" +
         encodeURIComponent(JSON.stringify(history))
@@ -916,7 +916,7 @@ async function addHistoryToGoogle(history) {
 
 async function clearHistoriesFromGoogle() {
   try {
-    await fetch(
+    await fetchApi(
       API_URL + "?action=clearHistories"
     );
   } catch (error) {
@@ -928,13 +928,20 @@ async function initialize() {
 
   loadData();
 
-  // ★先にログイン状態を復元
   restoreLogin();
 
-  // そのあとGoogleの最新データを取得
-  await refreshFromGoogle();
+  // ログインしている時だけ通信
+  if (currentRole !== "") {
 
-  setInterval(refreshFromGoogle, 30000);
+    await refreshFromGoogle();
+
+    setInterval(
+      refreshFromGoogle,
+      30000
+    );
+
+  }
+
 }
 
 initialize();
@@ -1176,7 +1183,7 @@ async function login() {
       "&userId=" + encodeURIComponent(userId) +
       "&password=" + encodeURIComponent(password);
 
-    const response = await fetch(url);
+    const response = await fetchApi(url);
     const result = await response.json();
 
     if (!result.success) {
@@ -1209,6 +1216,8 @@ async function login() {
 
     document.getElementById("ruleList").innerHTML =
       getRuleListHtml();
+
+     await refreshFromGoogle();
 
     alert(result.name + "としてログインしました");
 
@@ -1763,7 +1772,7 @@ async function saveDailyConfirmToGoogle() {
 
    try {
 
-    const response = await fetch(url);
+    const response = await fetchApi(url);
     const result = await response.text();
 
     console.log("排便集計確定:", result);
@@ -1801,14 +1810,11 @@ async function loadDailyConfirmStatus() {
 
   try {
 
-    const response = await fetch(
+    const response = await fetchApi(
     API_URL +
     "?action=getDailyConfirms" +
-    "&timestamp=" + Date.now(),
-   {
-    cache: "no-store"
-   }
-  );
+    "&timestamp=" + Date.now()
+    );
 
 if (!response.ok) {
   throw new Error(
@@ -2199,7 +2205,7 @@ async function saveNightConfirmToGoogle() {
 
   try {
 
-    const response = await fetch(url);
+    const response = await fetchApi(url);
     const result = await response.text();
 
     console.log("夜勤帯確定:", result);
@@ -2326,6 +2332,70 @@ async function manualRefreshDailyConfirm() {
       button.disabled = false;
     }, 2000);
   }
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchApi(url, retries = 3) {
+
+  let lastError;
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+
+    try {
+      const separator = url.includes("?") ? "&" : "?";
+
+      const response = await fetch(
+        url + separator + "_=" + Date.now(),
+        {
+          cache: "no-store"
+        }
+      );
+
+      const text = await response.text();
+
+      if (!response.ok) {
+        throw new Error(
+          "HTTP " + response.status
+        );
+      }
+
+      // Googleの404ページなどHTMLが返った場合
+      if (
+        text.trim().startsWith("<!DOCTYPE") ||
+        text.trim().startsWith("<html")
+      ) {
+        throw new Error(
+          "APIからHTMLが返されました"
+        );
+      }
+
+      return {
+      ok: true,
+
+      text: async () => text,
+
+      json: async () => JSON.parse(text)
+      };
+
+    } catch (error) {
+
+      lastError = error;
+
+      console.warn(
+        `通信失敗 ${attempt}/${retries}`,
+        error
+      );
+
+      if (attempt < retries) {
+        await wait(1000 * attempt);
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 </script>
