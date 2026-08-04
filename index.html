@@ -187,6 +187,99 @@ button {
   color: #555;
 }
 
+.night-alert {
+  background: #ffebee;
+  border: 4px solid #d32f2f;
+  color: #b71c1c;
+
+  padding: 20px;
+  margin: 20px 0;
+
+  border-radius: 12px;
+
+  text-align: center;
+
+  font-size: 22px;
+  font-weight: bold;
+
+  animation: nightBlink 1.5s infinite;
+}
+
+@keyframes nightBlink {
+
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.confirm-block{
+
+  background:#f8f9fa;
+
+  border-radius:10px;
+
+  padding:12px;
+
+  margin:10px 0;
+
+}
+
+.confirm-title{
+
+  font-size:18px;
+
+  font-weight:bold;
+
+  margin-bottom:8px;
+
+}
+
+.confirm-ok{
+
+  color:#2e7d32;
+
+  font-weight:bold;
+
+}
+
+.confirm-ng{
+
+  color:#d32f2f;
+
+  font-weight:bold;
+
+}
+
+.confirm-info{
+
+  color:#555;
+
+  margin-top:4px;
+
+}
+
+.night-alert-units {
+  background: white;
+  border: 2px solid #d32f2f;
+  border-radius: 10px;
+
+  padding: 12px;
+  margin: 8px auto;
+
+  max-width: 360px;
+
+  font-size: 24px;
+  line-height: 1.7;
+}
+
 </style>
 </head>
 
@@ -224,7 +317,7 @@ button {
   <button onclick="logout()">ログアウト</button>
 
   <div id="newDataMessage"></div>
-
+  <div id="nightAlertArea"></div>
 <p>利用者</p>
 <select id="userSelect">
   <option>A様</option>
@@ -1703,6 +1796,7 @@ function copyMedicineReport() {
 async function loadDailyConfirmStatus() {
 
   try {
+
     const response = await fetch(
       API_URL + "?action=getDailyConfirms"
     );
@@ -1711,37 +1805,168 @@ async function loadDailyConfirmStatus() {
 
     let html = "";
 
+    hideNightAlert();
+
+    const now = new Date();
+
+    const after8 =
+    now.getHours() >= 8;
+
+    // 未確定ユニット
+    let nightNotConfirmed = [];
+
     for (let unit = 1; unit <= 4; unit++) {
 
-      const found = confirms.find(
-        item => String(item.unit) === String(unit)
+      const dayConfirm = confirms.find(
+        item =>
+          String(item.unit) === String(unit) &&
+          item.type === "day"
       );
 
-      if (found) {
+      const nightConfirm = confirms.find(
+        item =>
+          String(item.unit) === String(unit) &&
+          item.type === "night"
+      );
+
+      html += `
+        <div class="user-card">
+
+        <strong>${unit}ユニット</strong><br><br>
+      `;
+
+      // 夜勤
+      if (nightConfirm) {
+
         html += `
-          <div class="user-card">
-            <strong>${unit}ユニット</strong><br>
-            ✅ 確定済み<br>
-            ${found.time}<br>
-            ${found.name}
-          </div>
-        `;
+        <div class="confirm-block">
+
+        <div class="confirm-title">
+        🌙 夜勤
+        </div>
+
+        <div class="confirm-ok">
+        ✅ 確定済み
+        </div>
+
+        <div class="confirm-info">
+       ${nightConfirm.time}
+       </div>
+
+       <div class="confirm-info">
+       ${nightConfirm.name}
+       </div>
+
+       </div>
+       `;
+
       } else {
+
         html += `
-          <div class="user-card">
-            <strong>${unit}ユニット</strong><br>
-            ⚠️ 未確定
-          </div>
-        `;
+        <div class="confirm-block">
+
+        <div class="confirm-title">
+        🌙 夜勤
+        </div>
+
+        <div class="confirm-ng">
+        ⚠ 未確定
+        </div>
+
+        </div>
+       `;
+
+        // 朝8時以降だけ警告
+        if (after8) {
+
+       nightNotConfirmed.push(
+       unit + "ユニット"
+       );
+
+       }
+
       }
+
+      // 日勤
+      if (dayConfirm) {
+
+      html += `
+      <div class="confirm-block">
+
+      <div class="confirm-title">
+        ☀ 日勤
+      </div>
+
+      <div class="confirm-ok">
+        ✅ 確定済み
+      </div>
+
+      <div class="confirm-info">
+        ${dayConfirm.time}
+      </div>
+
+      <div class="confirm-info">
+        ${dayConfirm.name}
+      </div>
+
+      </div>
+     `;
+
+    } else {
+
+     html += `
+     <div class="confirm-block">
+
+     <div class="confirm-title">
+        ☀ 日勤
+      </div>
+
+      <div class="confirm-ng">
+        ⚠ 未確定
+      </div>
+
+    </div>
+  `;
+
+}
+
+      html += "</div>";
     }
+    
+    if (
+  after8 &&
+  nightNotConfirmed.length > 0
+) {
+
+  showNightAlert(
+  `
+  夜勤帯の排便確認が未完了です<br><br>
+
+  <div class="night-alert-units">
+    ${nightNotConfirmed.join("<br>")}
+  </div>
+
+  <br>
+
+  朝食時の緩下剤判断に<br>
+  影響する可能性があります。<br><br>
+
+  夜勤者へ確認してください。
+  `
+ );
+
+}
 
     document.getElementById(
       "dailyConfirmStatus"
     ).innerHTML = html;
 
   } catch (error) {
-    console.error("集計状況読込エラー", error);
+
+    console.error(
+      "集計状況読込エラー",
+      error
+    );
 
     document.getElementById(
       "dailyConfirmStatus"
@@ -2027,8 +2252,21 @@ async function confirmNightShift() {
   );
 
   await loadDailyConfirmStatus();
+}
 
-  checkNightBowelStatus();
+function showNightAlert(message) {
+
+  document.getElementById("nightAlertArea").innerHTML = `
+    <div class="night-alert">
+      🚨<br><br>
+      ${message}
+    </div>
+  `;
+}
+
+function hideNightAlert() {
+
+  document.getElementById("nightAlertArea").innerHTML = "";
 }
 
 </script>
