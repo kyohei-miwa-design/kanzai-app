@@ -934,7 +934,7 @@ async function initialize() {
   // ログインしている時だけ通信
   if (currentRole !== "") {
 
-    await loadInitialDateFromGoogle();
+    await loadInitialDataFromGoogle();
 
     setInterval(
       refreshFromGoogle,
@@ -1231,7 +1231,7 @@ async function login() {
     document.getElementById("ruleList").innerHTML =
       getRuleListHtml();
 
-     await loadInitialDateFromGoogle();
+     await loadInitialDataFromGoogle();
 
     alert(result.name + "としてログインしました");
 
