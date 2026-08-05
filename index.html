@@ -361,6 +361,38 @@ button {
   font-weight: bold;
 }
 
+.history-card {
+  position: relative;
+  padding-right: 56px;
+}
+
+.history-menu-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  margin: 0;
+
+  border-radius: 50%;
+
+  background: #f1f3f4;
+  color: #333;
+
+  font-size: 26px;
+  line-height: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.history-menu-button:hover {
+  background: #e0e0e0;
+}
+
 </style>
 </head>
 
@@ -1490,7 +1522,7 @@ function getHistoryHtml() {
 function getHistoryCardHtml(history, group) {
 
   const isCancelled =
-    history.status === "cancelled";
+    String(history.status).trim() === "cancelled";
 
   let cardClass =
     group === "today"
@@ -1501,20 +1533,28 @@ function getHistoryCardHtml(history, group) {
     cardClass += " history-card-cancelled";
   }
 
-  const clickAction =
-    history.id
-      ? `onclick="openHistoryMenu('${history.id}')"`
-      : "";
-
   return `
-    <div
-      class="history-card ${cardClass}"
-      ${clickAction}
-    >
-      ${history.date}<br>
+    <div class="history-card ${cardClass}">
 
-      <strong>${history.user}</strong>
+      ${
+        history.id && !isCancelled
+          ? `
+            <button
+              class="history-menu-button"
+              onclick="openHistoryMenu('${history.id}')"
+              aria-label="履歴メニューを開く"
+            >
+              ⋮
+            </button>
+          `
+          : ""
+      }
+
+      <strong>${history.user}</strong><br>
+
       ${history.type}<br>
+
+      ${history.date}<br>
 
       現在ポイント：${history.point}点
 
@@ -1528,14 +1568,29 @@ function getHistoryCardHtml(history, group) {
           `
           : ""
       }
+
     </div>
   `;
 }
 
 function openHistoryMenu(recordId) {
-  console.log(
-    "選択した履歴ID:",
-    recordId
+
+  const history = histories.find(
+    item => String(item.id) === String(recordId)
+  );
+
+  if (!history) {
+    alert("対象の履歴が見つかりません");
+    return;
+  }
+
+  console.log("選択した履歴:", history);
+
+  alert(
+    "履歴メニューのテスト\n\n" +
+    "利用者：" + history.user + "\n" +
+    "排便種類：" + history.type + "\n" +
+    "日時：" + history.date
   );
 }
 
