@@ -393,6 +393,86 @@ button {
   background: #e0e0e0;
 }
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 18px;
+  box-sizing: border-box;
+
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+
+  background: white;
+  border-radius: 16px;
+  padding: 18px;
+
+  box-sizing: border-box;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.modal-header h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 21px;
+}
+
+.modal-close-icon {
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+
+  border-radius: 50%;
+  background: #eeeeee;
+  color: #333;
+
+  font-size: 27px;
+  line-height: 1;
+}
+
+#commonModalBody {
+  padding: 18px 2px;
+  line-height: 1.8;
+}
+
+#commonModalButtons {
+  display: grid;
+  gap: 10px;
+}
+
+.modal-action-edit {
+  background: #1976d2;
+}
+
+.modal-action-cancel {
+  background: #d32f2f;
+}
+
+.modal-action-close {
+  background: #757575;
+}
+
 </style>
 </head>
 
@@ -632,6 +712,40 @@ C様：0点
 
   </div>
 
+</div>
+
+<div
+  id="commonModal"
+  class="modal-overlay"
+  style="display:none;"
+  onclick="closeCommonModalByOverlay(event)"
+>
+  <div
+    class="modal-content"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="commonModalTitle"
+  >
+
+    <div class="modal-header">
+      <h3 id="commonModalTitle">
+        詳細
+      </h3>
+
+      <button
+        class="modal-close-icon"
+        onclick="closeCommonModal()"
+        aria-label="閉じる"
+      >
+        ×
+      </button>
+    </div>
+
+    <div id="commonModalBody"></div>
+
+    <div id="commonModalButtons"></div>
+
+  </div>
 </div>
 
 <script>
@@ -1576,7 +1690,8 @@ function getHistoryCardHtml(history, group) {
 function openHistoryMenu(recordId) {
 
   const history = histories.find(
-    item => String(item.id) === String(recordId)
+    item =>
+      String(item.id) === String(recordId)
   );
 
   if (!history) {
@@ -1584,14 +1699,59 @@ function openHistoryMenu(recordId) {
     return;
   }
 
-  console.log("選択した履歴:", history);
+  const safeRecordId =
+    String(history.id).replace(/'/g, "\\'");
 
-  alert(
-    "履歴メニューのテスト\n\n" +
-    "利用者：" + history.user + "\n" +
-    "排便種類：" + history.type + "\n" +
-    "日時：" + history.date
-  );
+  openCommonModal({
+
+    title: "排便記録",
+
+    bodyHtml: `
+      <div class="history-modal-detail">
+
+        <strong style="font-size:22px;">
+          ${history.user}
+        </strong>
+
+        <br><br>
+
+        排便種類：
+        <strong>${history.type}</strong>
+
+        <br>
+
+        日時：${history.date}
+
+        <br>
+
+        現在ポイント：${history.point}点
+
+      </div>
+    `,
+
+    buttonsHtml: `
+      <button
+        class="modal-action-edit"
+        onclick="startEditHistory('${safeRecordId}')"
+      >
+        ✏ 修正
+      </button>
+
+      <button
+        class="modal-action-cancel"
+        onclick="startCancelHistory('${safeRecordId}')"
+      >
+        ❌ 取消
+      </button>
+
+      <button
+        class="modal-action-close"
+        onclick="closeCommonModal()"
+      >
+        閉じる
+      </button>
+    `
+  });
 }
 
 async function saveRule() {
@@ -2719,6 +2879,79 @@ function toggleHistory() {
     historyArea.style.display = "none";
     button.textContent = "▼ 履歴を表示";
   }
+}
+
+function openCommonModal({
+  title = "詳細",
+  bodyHtml = "",
+  buttonsHtml = ""
+}) {
+
+  document.getElementById(
+    "commonModalTitle"
+  ).textContent = title;
+
+  document.getElementById(
+    "commonModalBody"
+  ).innerHTML = bodyHtml;
+
+  document.getElementById(
+    "commonModalButtons"
+  ).innerHTML = buttonsHtml;
+
+  document.getElementById(
+    "commonModal"
+  ).style.display = "flex";
+
+  document.body.style.overflow = "hidden";
+}
+
+function closeCommonModal() {
+
+  document.getElementById(
+    "commonModal"
+  ).style.display = "none";
+
+  document.getElementById(
+    "commonModalBody"
+  ).innerHTML = "";
+
+  document.getElementById(
+    "commonModalButtons"
+  ).innerHTML = "";
+
+  document.body.style.overflow = "";
+}
+
+function closeCommonModalByOverlay(event) {
+
+  if (event.target.id === "commonModal") {
+    closeCommonModal();
+  }
+}
+
+function startEditHistory(recordId) {
+
+  console.log(
+    "修正対象の履歴ID:",
+    recordId
+  );
+
+  alert(
+    "次のステップで修正画面を作ります"
+  );
+}
+
+function startCancelHistory(recordId) {
+
+  console.log(
+    "取消対象の履歴ID:",
+    recordId
+  );
+
+  alert(
+    "次のステップで取消処理を作ります"
+  );
 }
 
 </script>
