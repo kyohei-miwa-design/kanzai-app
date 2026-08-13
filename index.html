@@ -3051,10 +3051,10 @@ function startEditHistory(recordId) {
             <input
               type="radio"
               name="editHistoryType"
-              value="中"
-              ${history.type === "中" ? "checked" : ""}
+              value="普通"
+              ${history.type === "普通" ? "checked" : ""}
             >
-            中
+            普通
           </label>
 
           <label>
@@ -3132,6 +3132,90 @@ function saveEditedHistory(recordId) {
   alert(
     "修正テスト\n\n" +
     "修正後：" + selected.value
+  );
+}
+
+function recalculateBowelStatus(user) {
+
+  // 対象利用者の「有効な記録」だけ取得
+  const userHistories = histories
+    .filter(history =>
+      history.user === user &&
+      history.status !== "cancelled"
+    )
+    .sort((a, b) =>
+      new Date(a.date) - new Date(b.date)
+    );
+
+  let currentPoint = 0;
+  let lastBowelDate = "";
+
+  for (const history of userHistories) {
+
+    let addPoint = 0;
+
+    if (history.type === "少1") addPoint = 1;
+    if (history.type === "少2") addPoint = 2;
+    if (history.type === "普通") addPoint = 3;
+    if (history.type === "多量") addPoint = 3;
+
+    currentPoint += addPoint;
+
+    // 3点以上で排便成立
+    if (currentPoint >= 3) {
+
+      currentPoint = 0;
+
+      // yyyy-MM-dd HH:mm:ss → yyyy-MM-dd
+      lastBowelDate =
+        String(history.date).slice(0, 10);
+    }
+  }
+
+  return {
+    point: currentPoint,
+    lastDate: lastBowelDate
+  };
+}
+
+function applyRecalculatedBowelStatus(user) {
+
+  const result =
+    recalculateBowelStatus(user);
+
+  // 再計算結果をアプリ内データへ反映
+  points[user] = result.point;
+
+  if (result.lastDate) {
+    lastDates[user] = result.lastDate;
+  }
+
+  console.log(
+    "再計算結果を反映:",
+    user,
+    result
+  );
+
+  return result;
+}
+
+function testRecalculateBowelStatus(user) {
+
+  const result =
+    recalculateBowelStatus(user);
+
+  console.log(
+    "再計算結果:",
+    user,
+    result
+  );
+
+  alert(
+    "再計算テスト\n\n" +
+    "利用者：" + user + "\n" +
+    "現在ポイント：" + result.point + "\n" +
+    "最終排便日：" +
+    (result.lastDate || "なし")
   );
 }
 
