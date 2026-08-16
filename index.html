@@ -3107,32 +3107,140 @@ function startCancelHistory(recordId) {
   );
 }
 
-function saveEditedHistory(recordId) {
+async function saveEditedHistory(recordId) {
 
-  const selected =
-    document.querySelector(
-      'input[name="editHistoryType"]:checked'
-    );
+  const selected = document.querySelector(
+    'input[name="editHistoryType"]:checked'
+  );
 
   if (!selected) {
     alert("排便量を選択してください");
     return;
   }
 
-  console.log(
-    "修正対象ID:",
-    recordId
-  );
+  const newType = selected.value;
 
-  console.log(
-    "修正後:",
-    selected.value
-  );
+  // 二重押し防止
+  const buttons =
+    document.getElementById("commonModalButtons");
 
-  alert(
-    "修正テスト\n\n" +
-    "修正後：" + selected.value
-  );
+  if (buttons) {
+    buttons.style.pointerEvents = "none";
+    buttons.style.opacity = "0.6";
+  }
+
+  try {
+
+    // ① Googleシートの履歴を修正
+    const url =
+      API_URL +
+      "?action=editHistory" +
+      "&recordId=" + encodeURIComponent(recordId) +
+      "&newType=" + encodeURIComponent(newType);
+
+    const response = await fetchApi(url);
+    const result = await response.text();
+
+    console.log("履歴修正結果:", result);
+
+    if (result !== "OK") {
+
+      if (result === "NOT_FOUND") {
+        throw new Error(
+          "修正対象の記録が見つかりません"
+        );
+      }
+
+      if (result === "ALREADY_CANCELLED") {
+        throw new Error(
+          "この記録はすでに取消されています"
+        );
+      }
+
+      if (result === "INVALID_TYPE") {
+        throw new Error(
+          "排便量が正しくありません"
+        );
+      }
+
+      throw new Error(
+        "履歴の修正に失敗しました：" + result
+      );
+    }
+
+    // ② 最新の履歴を取得
+    await loadHistoriesFromGoogle();
+
+    // ③ 履歴から利用者の状態を再計算
+    const history = histories.find(
+      item =>
+        String(item.id) === String(recordId)
+    );
+
+    /*
+      元記録はcancelledになっているので、
+      そこから利用者名を取得する
+    */
+    if (!history) {
+      throw new Error(
+        "修正後の履歴を取得できませんでした"
+      );
+    }
+
+    const user = history.user;
+
+    const recalculated =
+      applyRecalculatedBowelStatus(user);
+
+    console.log(
+      "修正後の再計算:",
+      user,
+      recalculated
+    );
+
+    // ④ 再計算した利用者状態をGoogleへ保存
+    await saveUsersToGoogle(false);
+
+    // ⑤ 画面を更新
+    document.getElementById(
+      "status"
+    ).innerHTML = getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML = getTodayTarget();
+
+    document.getElementById(
+      "history"
+    ).innerHTML = getHistoryHtml();
+
+    saveData();
+
+    closeCommonModal();
+
+    alert(
+      "排便記録を修正しました"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "排便記録修正エラー:",
+      error
+    );
+
+    alert(
+      "修正に失敗しました。\n\n" +
+      error.message
+    );
+
+  } finally {
+
+    if (buttons) {
+      buttons.style.pointerEvents = "";
+      buttons.style.opacity = "";
+    }
+  }
 }
 
 function recalculateBowelStatus(user) {
