@@ -535,6 +535,60 @@ button {
   font-size: 13px;
   line-height: 1.6;
 }
+
+.history-cancel-form {
+  display: grid;
+  gap: 14px;
+}
+
+.cancel-history-user {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.cancel-history-date {
+  color: #666;
+  font-size: 14px;
+}
+
+.cancel-history-type {
+  padding: 12px;
+
+  background: #f5f5f5;
+  border-radius: 8px;
+
+  font-size: 18px;
+}
+
+.cancel-history-warning {
+  margin-top: 8px;
+  padding: 14px;
+
+  background: #fff3f3;
+  border: 1px solid #e57373;
+  border-radius: 8px;
+
+  color: #b71c1c;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.modal-action-cancel-history {
+  width: 100%;
+  padding: 14px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #d32f2f;
+  color: white;
+
+  font-size: 16px;
+  font-weight: bold;
+
+  cursor: pointer;
+}
+
 </style>
 </head>
 
@@ -3097,14 +3151,69 @@ function startEditHistory(recordId) {
 
 function startCancelHistory(recordId) {
 
-  console.log(
-    "取消対象の履歴ID:",
-    recordId
+  const history = histories.find(
+    item => String(item.id) === String(recordId)
   );
 
-  alert(
-    "次のステップで取消処理を作ります"
-  );
+  if (!history) {
+    alert("取消対象の履歴が見つかりません");
+    return;
+  }
+
+  // すでに取消済みなら処理しない
+  if (history.status === "cancelled") {
+    alert("この記録はすでに取消されています");
+    return;
+  }
+
+  const safeRecordId =
+    String(history.id).replace(/'/g, "\\'");
+
+  openCommonModal({
+
+    title: "排便記録を取消",
+
+    bodyHtml: `
+      <div class="history-cancel-form">
+
+        <div class="cancel-history-user">
+          ${history.user}
+        </div>
+
+        <div class="cancel-history-date">
+          ${history.date}
+        </div>
+
+        <div class="cancel-history-type">
+          排便量：<strong>${history.type}</strong>
+        </div>
+
+        <div class="cancel-history-warning">
+          ⚠ この記録を取り消しますか？<br><br>
+
+          取消後、排便状況と緩下剤の
+          対象判定が再計算されます。
+        </div>
+
+      </div>
+    `,
+
+    buttonsHtml: `
+      <button
+        class="modal-action-cancel-history"
+        onclick="confirmCancelHistory('${safeRecordId}')"
+      >
+        記録を取り消す
+      </button>
+
+      <button
+        class="modal-action-close"
+        onclick="openHistoryMenu('${safeRecordId}')"
+      >
+        戻る
+      </button>
+    `
+  });
 }
 
 async function saveEditedHistory(recordId) {
@@ -3324,6 +3433,19 @@ function testRecalculateBowelStatus(user) {
     "現在ポイント：" + result.point + "\n" +
     "最終排便日：" +
     (result.lastDate || "なし")
+  );
+}
+
+function confirmCancelHistory(recordId) {
+
+  console.log(
+    "取消対象ID:",
+    recordId
+  );
+
+  alert(
+    "取消テスト\n\n" +
+    "記録ID：" + recordId
   );
 }
 
