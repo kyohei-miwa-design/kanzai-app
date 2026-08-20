@@ -3458,6 +3458,9 @@ async function confirmCancelHistory(recordId) {
     return;
   }
 
+  const previousLastDate =
+  history.previousLastDate || "";
+
   const user = history.user;
 
   const buttons =
@@ -3506,6 +3509,22 @@ async function confirmCancelHistory(recordId) {
     // 有効な履歴だけで状態を再計算
     const recalculated =
       applyRecalculatedBowelStatus(user);
+
+     // 有効履歴だけでは最終排便日を復元できなかった場合、
+     // 取消対象記録の「登録前最終排便日」へ戻す
+     if (
+       !recalculated.lastDate &&
+       previousLastDate
+      ) {
+
+     lastDates[user] =
+      String(previousLastDate).slice(0, 10);
+
+     console.log(
+       "取消前の最終排便日を復元:",
+       lastDates[user]
+      );
+ }
 
     console.log(
       "取消後の再計算:",
