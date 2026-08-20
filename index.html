@@ -3357,30 +3357,48 @@ async function saveEditedHistory(recordId) {
 
 function recalculateBowelStatus(user) {
 
-  // 対象利用者の有効な記録だけ取得
-  const userHistories = histories
+  // この利用者の履歴を全部取得
+  // cancelledも含める
+  const allUserHistories = histories
     .filter(history =>
-      history.user === user &&
-      history.status !== "cancelled"
+      history.user === user
     )
     .sort((a, b) =>
       new Date(a.date) - new Date(b.date)
     );
 
-  let currentPoint = 0;
+  // ポイント計算に使うのはactiveだけ
+  const activeHistories =
+    allUserHistories.filter(
+      history =>
+        history.status !== "cancelled"
+    );
 
-  // 最終排便日の初期値
+  let currentPoint = 0;
   let lastBowelDate = "";
 
-  // 有効履歴がある場合は、
-  // 最初の記録が持っている「登録前最終排便日」を基準にする
-  if (userHistories.length > 0) {
+  /*
+    最終排便日の「スタート地点」は、
+    cancelledを含めた履歴から探す。
 
-    lastBowelDate =
-      userHistories[0].previousLastDate || "";
+    取消した記録のpreviousLastDateも
+    消さずに基準情報として利用する。
+  */
+  for (const history of allUserHistories) {
+
+    if (history.previousLastDate) {
+
+      lastBowelDate =
+        String(
+          history.previousLastDate
+        ).slice(0, 10);
+
+      break;
+    }
   }
 
-  for (const history of userHistories) {
+  // 実際の排便ポイント計算はactiveだけ
+  for (const history of activeHistories) {
 
     let addPoint = 0;
 
@@ -3391,7 +3409,6 @@ function recalculateBowelStatus(user) {
 
     currentPoint += addPoint;
 
-    // 3点以上で排便成立
     if (currentPoint >= 3) {
 
       currentPoint = 0;
