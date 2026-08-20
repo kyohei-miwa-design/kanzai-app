@@ -940,6 +940,8 @@ function showNewDataMessage() {
 async function register() {
   const user = document.getElementById("userSelect").value;
   const type = document.getElementById("bowelTypeSelect").value;
+  // 登録する直前の最終排便日を保存しておく
+  const previousLastDate = lastDates[user];
 
   let addPoint = 0;
 
@@ -970,8 +972,9 @@ async function register() {
  await addHistoryToGoogle({
   user: user,
   type: type,
-  point: points[user]
- });
+  point: points[user],
+  previousLastDate: previousLastDate
+});
  await saveUsersToGoogle(false);
  await loadHistoriesFromGoogle();
 
@@ -3354,7 +3357,7 @@ async function saveEditedHistory(recordId) {
 
 function recalculateBowelStatus(user) {
 
-  // 対象利用者の「有効な記録」だけ取得
+  // 対象利用者の有効な記録だけ取得
   const userHistories = histories
     .filter(history =>
       history.user === user &&
@@ -3365,7 +3368,17 @@ function recalculateBowelStatus(user) {
     );
 
   let currentPoint = 0;
+
+  // 最終排便日の初期値
   let lastBowelDate = "";
+
+  // 有効履歴がある場合は、
+  // 最初の記録が持っている「登録前最終排便日」を基準にする
+  if (userHistories.length > 0) {
+
+    lastBowelDate =
+      userHistories[0].previousLastDate || "";
+  }
 
   for (const history of userHistories) {
 
@@ -3383,7 +3396,6 @@ function recalculateBowelStatus(user) {
 
       currentPoint = 0;
 
-      // yyyy-MM-dd HH:mm:ss → yyyy-MM-dd
       lastBowelDate =
         String(history.date).slice(0, 10);
     }
@@ -3400,7 +3412,6 @@ function applyRecalculatedBowelStatus(user) {
   const result =
     recalculateBowelStatus(user);
 
-  // 再計算結果をアプリ内データへ反映
   points[user] = result.point;
 
   if (result.lastDate) {
