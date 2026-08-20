@@ -941,7 +941,11 @@ async function register() {
   const user = document.getElementById("userSelect").value;
   const type = document.getElementById("bowelTypeSelect").value;
   // 登録する直前の最終排便日を保存しておく
-  const previousLastDate = lastDates[user];
+  const previousLastDate =
+  lastDates[user];
+
+  const previousPoint =
+  points[user];
 
   let addPoint = 0;
 
@@ -969,14 +973,15 @@ async function register() {
 
   document.getElementById("todayTarget").innerHTML = getTodayTarget();
 
- await addHistoryToGoogle({
-  user: user,
-  type: type,
-  point: points[user],
-  previousLastDate: previousLastDate
-});
- await saveUsersToGoogle(false);
- await loadHistoriesFromGoogle();
+  await addHistoryToGoogle({
+   user: user,
+   type: type,
+   point: points[user],
+   previousLastDate: previousLastDate,
+   previousPoint: previousPoint
+  });
+  await saveUsersToGoogle(false);
+  await loadHistoriesFromGoogle();
 
  saveData();
 }
@@ -3357,8 +3362,8 @@ async function saveEditedHistory(recordId) {
 
 function recalculateBowelStatus(user) {
 
-  // この利用者の履歴を全部取得
-  // cancelledも含める
+  // 対象利用者の履歴をすべて取得
+  // cancelled も「元の状態を知るため」に残す
   const allUserHistories = histories
     .filter(history =>
       history.user === user
@@ -3367,48 +3372,60 @@ function recalculateBowelStatus(user) {
       new Date(a.date) - new Date(b.date)
     );
 
-  // ポイント計算に使うのはactiveだけ
+  // 履歴が1件もない場合
+  if (allUserHistories.length === 0) {
+    return {
+      point: points[user] || 0,
+      lastDate: lastDates[user] || ""
+    };
+  }
+
+  /*
+    一番古い履歴の「登録前状態」を
+    再計算のスタート地点にする
+  */
+  const firstHistory =
+    allUserHistories[0];
+
+  let currentPoint =
+    Number(firstHistory.previousPoint || 0);
+
+  let lastBowelDate =
+    firstHistory.previousLastDate || "";
+
+  /*
+    実際の再計算では
+    cancelled の記録は無視する
+  */
   const activeHistories =
     allUserHistories.filter(
       history =>
         history.status !== "cancelled"
     );
 
-  let currentPoint = 0;
-  let lastBowelDate = "";
-
-  /*
-    最終排便日の「スタート地点」は、
-    cancelledを含めた履歴から探す。
-
-    取消した記録のpreviousLastDateも
-    消さずに基準情報として利用する。
-  */
-  for (const history of allUserHistories) {
-
-    if (history.previousLastDate) {
-
-      lastBowelDate =
-        String(
-          history.previousLastDate
-        ).slice(0, 10);
-
-      break;
-    }
-  }
-
-  // 実際の排便ポイント計算はactiveだけ
   for (const history of activeHistories) {
 
     let addPoint = 0;
 
-    if (history.type === "少1") addPoint = 1;
-    if (history.type === "少2") addPoint = 2;
-    if (history.type === "普通") addPoint = 3;
-    if (history.type === "多量") addPoint = 3;
+    if (history.type === "少1") {
+      addPoint = 1;
+    }
+
+    if (history.type === "少2") {
+      addPoint = 2;
+    }
+
+    if (history.type === "普通") {
+      addPoint = 3;
+    }
+
+    if (history.type === "多量") {
+      addPoint = 3;
+    }
 
     currentPoint += addPoint;
 
+    // 3点以上で排便成立
     if (currentPoint >= 3) {
 
       currentPoint = 0;
@@ -3429,10 +3446,12 @@ function applyRecalculatedBowelStatus(user) {
   const result =
     recalculateBowelStatus(user);
 
-  points[user] = result.point;
+  points[user] =
+    result.point;
 
   if (result.lastDate) {
-    lastDates[user] = result.lastDate;
+    lastDates[user] =
+      result.lastDate;
   }
 
   console.log(
