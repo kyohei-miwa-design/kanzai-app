@@ -3518,6 +3518,12 @@ async function confirmCancelHistory(recordId) {
       "history"
     ).innerHTML = getHistoryHtml();
 
+    document.getElementById(
+      "result"
+    ).textContent =
+    user + "　現在ポイント：" +
+    points[user] + "点";
+
     saveData();
 
     closeCommonModal();
