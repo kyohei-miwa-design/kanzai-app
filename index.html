@@ -953,7 +953,7 @@ async function register() {
   points[user] += addPoint;
 
   if (points[user] >= 3) {
-  const todayText = new Date().toISOString().slice(0, 10);
+  const todayText = getTodayText();
 
   points[user] = 0;
   lastDates[user] = todayText;
@@ -3562,6 +3562,23 @@ async function confirmCancelHistory(recordId) {
       buttons.style.opacity = "";
     }
   }
+}
+
+function getTodayText() {
+
+  const today = new Date();
+
+  const year = today.getFullYear();
+
+  const month =
+    String(today.getMonth() + 1)
+      .padStart(2, "0");
+
+  const day =
+    String(today.getDate())
+      .padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 </script>
