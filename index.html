@@ -3585,21 +3585,16 @@ async function confirmCancelHistory(recordId) {
       復元できなかった場合は、
       取消対象履歴のH列を使用する
     */
-    if (
-      !recalculated.lastDate &&
-      previousLastDate
-    ) {
+    if (previousLastDate) {
 
-      lastDates[user] =
-        String(
-          previousLastDate
-        ).slice(0, 10);
+  lastDates[user] =
+    String(previousLastDate).slice(0, 10);
 
-      console.log(
-        "H列から最終排便日を復元:",
-        lastDates[user]
-      );
-    }
+  console.log(
+    "取消対象のH列から最終排便日を復元:",
+    lastDates[user]
+  );
+}
 
     // ★ Google保存直前の値
     console.log(
