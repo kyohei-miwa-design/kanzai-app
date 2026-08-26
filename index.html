@@ -1970,12 +1970,142 @@ function restoreLogin() {
 
 async function loadInitialDataFromGoogle() {
 
-  await loadUsersFromGoogle();
-  await loadRulesFromGoogle();
-  await loadChecksFromGoogle();
-  await loadHistoriesFromGoogle();
-  await loadDailyConfirmStatus();
+  console.time("初期データ一括取得");
 
+  try {
+
+    const response =
+      await fetchApi(
+        API_URL +
+        "?action=getInitialData"
+      );
+
+    const data =
+      await response.json();
+
+    if (data.error) {
+      throw new Error(
+        data.message ||
+        "初期データの取得に失敗しました"
+      );
+    }
+
+    // =========================
+    // users
+    // =========================
+
+    points = {};
+    lastDates = {};
+    userUnits = {};
+
+    for (const user of data.users) {
+
+      points[user.name] =
+        Number(user.point || 0);
+
+      userUnits[user.name] =
+        String(
+          user.unit || "1"
+        ).trim();
+
+      /*
+        GAS側ですでに
+        yyyy-MM-dd形式になっているので、
+        Dateへ変換しない
+      */
+      lastDates[user.name] =
+        user.lastDate
+          ? String(
+              user.lastDate
+            ).slice(0, 10)
+          : "";
+    }
+
+    // =========================
+    // rules
+    // =========================
+
+    rules =
+      data.rules || {};
+
+    // =========================
+    // checks
+    // =========================
+
+    checks =
+      data.checks || {};
+
+    // =========================
+    // histories
+    // =========================
+
+    histories =
+      data.histories || [];
+
+    // =========================
+    // 画面をまとめて更新
+    // =========================
+
+    updateUserSelects();
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    document.getElementById(
+      "ruleList"
+    ).innerHTML =
+      getRuleListHtml();
+
+    document.getElementById(
+      "history"
+    ).innerHTML =
+      getHistoryHtml();
+
+    document.getElementById(
+      "completedList"
+    ).innerHTML =
+      getCompletedListHtml();
+
+    saveData();
+
+    console.timeEnd(
+      "初期データ一括取得"
+    );
+
+    /*
+      夜勤・日勤確定状態だけは、
+      今は既存処理をそのまま使用する。
+    */
+    console.time(
+      "集計状況取得"
+    );
+
+    await loadDailyConfirmStatus();
+
+    console.timeEnd(
+      "集計状況取得"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "初期データ一括取得エラー:",
+      error
+    );
+
+    console.timeEnd(
+      "初期データ一括取得"
+    );
+
+    throw error;
+  }
 }
 
 function addHistory(user, type) {
