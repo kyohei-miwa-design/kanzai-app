@@ -1171,29 +1171,31 @@ async function register() {
     // ③ Googleへ保存
     // =========================
 
-    await addHistoryToGoogle({
+    console.time("① 履歴保存");
 
-      user: user,
+await addHistoryToGoogle({
+  user: user,
+  type: type,
+  point: points[user],
+  previousLastDate: previousLastDate,
+  previousPoint: previousPoint
+});
 
-      type: type,
+console.timeEnd("① 履歴保存");
 
-      point: points[user],
 
-      previousLastDate:
-        previousLastDate,
+console.time("② users保存");
 
-      previousPoint:
-        previousPoint
+await saveUsersToGoogle(false);
 
-    });
+console.timeEnd("② users保存");
 
-    await saveUsersToGoogle(false);
 
-    // =========================
-    // ④ 最新履歴を取得
-    // =========================
+console.time("③ 履歴再取得");
 
-    await loadHistoriesFromGoogle();
+await loadHistoriesFromGoogle();
+
+console.timeEnd("③ 履歴再取得");
 
     // =========================
     // ⑤ 保存完了
