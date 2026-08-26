@@ -3123,10 +3123,10 @@ function startEditHistory(recordId) {
             <input
               type="radio"
               name="editHistoryType"
-              value="多"
-              ${history.type === "多" ? "checked" : ""}
+              value="多量"
+              ${history.type === "多量" ? "checked" : ""}
             >
-            多
+            多量
           </label>
 
         </div>
@@ -3362,17 +3362,16 @@ async function saveEditedHistory(recordId) {
 
 function recalculateBowelStatus(user) {
 
-  // 対象利用者の履歴をすべて取得
-  // cancelled も「元の状態を知るため」に残す
+  // 対象利用者の履歴を取得
   const allUserHistories = histories
     .filter(history =>
       history.user === user
     )
-    .sort((a, b) =>
-      new Date(a.date) - new Date(b.date)
-    );
+    .sort((a, b) => {
+      return new Date(a.date) - new Date(b.date);
+    });
 
-  // 履歴が1件もない場合
+  // 履歴がない場合は現在値をそのまま返す
   if (allUserHistories.length === 0) {
     return {
       point: points[user] || 0,
@@ -3381,26 +3380,26 @@ function recalculateBowelStatus(user) {
   }
 
   /*
-    一番古い履歴の「登録前状態」を
+    最古の履歴の「登録前状態」を
     再計算のスタート地点にする
   */
-  const firstHistory =
-    allUserHistories[0];
+  const firstHistory = allUserHistories[0];
 
   let currentPoint =
     Number(firstHistory.previousPoint || 0);
 
   let lastBowelDate =
-    firstHistory.previousLastDate || "";
+    firstHistory.previousLastDate
+      ? String(firstHistory.previousLastDate).slice(0, 10)
+      : "";
 
   /*
-    実際の再計算では
-    cancelled の記録は無視する
+    cancelled は計算しない。
+    修正後に新しく作られた active 記録だけ計算対象になる。
   */
   const activeHistories =
-    allUserHistories.filter(
-      history =>
-        history.status !== "cancelled"
+    allUserHistories.filter(history =>
+      String(history.status || "").trim() !== "cancelled"
     );
 
   for (const history of activeHistories) {
@@ -3425,7 +3424,12 @@ function recalculateBowelStatus(user) {
 
     currentPoint += addPoint;
 
-    // 3点以上で排便成立
+    /*
+      3点以上で排便成立。
+
+      ここでポイントを0にして、
+      その記録の日付を最終排便日にする。
+    */
     if (currentPoint >= 3) {
 
       currentPoint = 0;
@@ -3447,20 +3451,32 @@ function applyRecalculatedBowelStatus(user) {
     recalculateBowelStatus(user);
 
   points[user] =
-    result.point;
+    Number(result.point || 0);
 
-  if (result.lastDate) {
-    lastDates[user] =
-      result.lastDate;
-  }
+  /*
+    再計算結果を必ず反映する。
+
+    result.lastDate が空の場合も、
+    古い最終排便日を残さない。
+  */
+  lastDates[user] =
+    result.lastDate
+      ? String(result.lastDate).slice(0, 10)
+      : "";
 
   console.log(
     "再計算結果を反映:",
     user,
-    result
+    {
+      point: points[user],
+      lastDate: lastDates[user]
+    }
   );
 
-  return result;
+  return {
+    point: points[user],
+    lastDate: lastDates[user]
+  };
 }
 
 function testRecalculateBowelStatus(user) {
