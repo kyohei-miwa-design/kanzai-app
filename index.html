@@ -92,13 +92,46 @@ button {
   top: 15px;
   left: 50%;
   transform: translateX(-50%);
-  background: #333;
-  color: white;
-  padding: 12px 18px;
+
+  min-width: 240px;
+  max-width: calc(100% - 32px);
+
+  padding: 13px 20px;
   border-radius: 10px;
+
+  color: white;
   font-size: 16px;
-  z-index: 9999;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  text-align: center;
+
+  z-index: 20000;
+
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.25);
+
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+
+/* 通常 */
+#newDataMessage.toast-info {
+  background: #333;
+}
+
+/* 保存中 */
+#newDataMessage.toast-saving {
+  background: #1976d2;
+}
+
+/* 成功 */
+#newDataMessage.toast-success {
+  background: #2e7d32;
+}
+
+/* 失敗 */
+#newDataMessage.toast-error {
+  background: #d32f2f;
 }
 
 /* 本日の対象者チェック用 */
@@ -922,19 +955,121 @@ function getAppDataSnapshot() {
   });
 }
 
-function showNewDataMessage() {
-  const message = document.getElementById("newDataMessage");
+function showToast(
+  message,
+  type = "info",
+  duration = 2000
+) {
 
-  message.textContent = "✨ 新しいデータを受信しました";
-  message.style.display = "block";
+  const toast =
+    document.getElementById(
+      "newDataMessage"
+    );
 
-  if (newDataMessageTimer !== null) {
-    clearTimeout(newDataMessageTimer);
+  if (!toast) {
+    return;
   }
 
-  newDataMessageTimer = setTimeout(() => {
-    message.style.display = "none";
-  }, 3000);
+  /*
+    前回の自動非表示タイマーを解除
+  */
+  if (newDataMessageTimer !== null) {
+
+    clearTimeout(
+      newDataMessageTimer
+    );
+
+    newDataMessageTimer = null;
+  }
+
+  /*
+    表示内容
+  */
+  toast.textContent = message;
+
+  /*
+    クラスを一旦リセット
+  */
+  toast.className = "";
+
+  if (type === "saving") {
+
+    toast.classList.add(
+      "toast-saving"
+    );
+
+  } else if (type === "success") {
+
+    toast.classList.add(
+      "toast-success"
+    );
+
+  } else if (type === "error") {
+
+    toast.classList.add(
+      "toast-error"
+    );
+
+  } else {
+
+    toast.classList.add(
+      "toast-info"
+    );
+  }
+
+  toast.style.display = "block";
+
+  /*
+    duration = 0 の場合は
+    自動では消さない。
+
+    「保存中…」などで使う。
+  */
+  if (duration > 0) {
+
+    newDataMessageTimer =
+      setTimeout(() => {
+
+        toast.style.display =
+          "none";
+
+        newDataMessageTimer =
+          null;
+
+      }, duration);
+  }
+}
+
+function hideToast() {
+
+  const toast =
+    document.getElementById(
+      "newDataMessage"
+    );
+
+  if (!toast) {
+    return;
+  }
+
+  if (newDataMessageTimer !== null) {
+
+    clearTimeout(
+      newDataMessageTimer
+    );
+
+    newDataMessageTimer = null;
+  }
+
+  toast.style.display = "none";
+}
+
+function showNewDataMessage() {
+
+  showToast(
+    "✨ 新しいデータを受信しました",
+    "info",
+    3000
+  );
 }
 
 async function register() {
