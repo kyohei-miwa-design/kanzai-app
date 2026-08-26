@@ -3226,9 +3226,10 @@ function startCancelHistory(recordId) {
 
 async function saveEditedHistory(recordId) {
 
-  const selected = document.querySelector(
-    'input[name="editHistoryType"]:checked'
-  );
+  const selected =
+    document.querySelector(
+      'input[name="editHistoryType"]:checked'
+    );
 
   if (!selected) {
     alert("排便量を選択してください");
@@ -3237,9 +3238,34 @@ async function saveEditedHistory(recordId) {
 
   const newType = selected.value;
 
-  // 二重押し防止
+  /*
+    ★ 修正前の履歴を、
+    Googleへ修正を送る前に保存しておく。
+
+    API実行後はこの記録が
+    cancelledになるため重要。
+  */
+  const originalHistory =
+    histories.find(
+      item =>
+        String(item.id) ===
+        String(recordId)
+    );
+
+  if (!originalHistory) {
+    alert(
+      "修正対象の履歴が見つかりません"
+    );
+    return;
+  }
+
+  const user =
+    originalHistory.user;
+
   const buttons =
-    document.getElementById("commonModalButtons");
+    document.getElementById(
+      "commonModalButtons"
+    );
 
   if (buttons) {
     buttons.style.pointerEvents = "none";
@@ -3252,13 +3278,21 @@ async function saveEditedHistory(recordId) {
     const url =
       API_URL +
       "?action=editHistory" +
-      "&recordId=" + encodeURIComponent(recordId) +
-      "&newType=" + encodeURIComponent(newType);
+      "&recordId=" +
+      encodeURIComponent(recordId) +
+      "&newType=" +
+      encodeURIComponent(newType);
 
-    const response = await fetchApi(url);
-    const result = await response.text();
+    const response =
+      await fetchApi(url);
 
-    console.log("履歴修正結果:", result);
+    const result =
+      await response.text();
+
+    console.log(
+      "履歴修正結果:",
+      result
+    );
 
     if (result !== "OK") {
 
@@ -3268,7 +3302,10 @@ async function saveEditedHistory(recordId) {
         );
       }
 
-      if (result === "ALREADY_CANCELLED") {
+      if (
+        result ===
+        "ALREADY_CANCELLED"
+      ) {
         throw new Error(
           "この記録はすでに取消されています"
         );
@@ -3281,55 +3318,102 @@ async function saveEditedHistory(recordId) {
       }
 
       throw new Error(
-        "履歴の修正に失敗しました：" + result
+        "履歴の修正に失敗しました：" +
+        result
       );
     }
 
-    // ② 最新の履歴を取得
+    // ② 最新履歴を取得
     await loadHistoriesFromGoogle();
 
-    // ③ 履歴から利用者の状態を再計算
-    const history = histories.find(
-      item =>
-        String(item.id) === String(recordId)
+    /*
+      ③ 今回作られた修正版を探す。
+
+      G列（originalId）が
+      元記録IDになっていて、
+      状態がactiveのもの。
+    */
+    const revisedHistory =
+      histories.find(
+        item =>
+          String(item.originalId) ===
+            String(recordId) &&
+          String(item.status).trim() !==
+            "cancelled"
+      );
+
+    if (!revisedHistory) {
+      throw new Error(
+        "修正版の履歴を取得できませんでした"
+      );
+    }
+
+    console.log(
+      "修正前履歴:",
+      originalHistory
+    );
+
+    console.log(
+      "修正版履歴:",
+      revisedHistory
     );
 
     /*
-      元記録はcancelledになっているので、
-      そこから利用者名を取得する
+      ④ 元記録のH/Iを起点として
+      修正版以降だけ再計算
     */
-    if (!history) {
-      throw new Error(
-        "修正後の履歴を取得できませんでした"
-      );
-    }
-
-    const user = history.user;
-
     const recalculated =
-      applyRecalculatedBowelStatus(user);
+      recalculateBowelStatusFromHistory(
+        originalHistory,
+        revisedHistory
+      );
+
+    // アプリ内状態へ反映
+    points[user] =
+      Number(recalculated.point || 0);
+
+    lastDates[user] =
+      recalculated.lastDate
+        ? String(
+            recalculated.lastDate
+          ).slice(0, 10)
+        : "";
 
     console.log(
       "修正後の再計算:",
       user,
-      recalculated
+      {
+        point: points[user],
+        lastDate: lastDates[user]
+      }
     );
 
-    // ④ 再計算した利用者状態をGoogleへ保存
+    // ⑤ Googleへ現在状態を保存
     await saveUsersToGoogle(false);
 
-    // ⑤ 画面を更新
+    // ⑥ 画面更新
     document.getElementById(
       "status"
-    ).innerHTML = getStatusHtml();
+    ).innerHTML =
+      getStatusHtml();
 
     document.getElementById(
       "todayTarget"
-    ).innerHTML = getTodayTarget();
+    ).innerHTML =
+      getTodayTarget();
 
     document.getElementById(
       "history"
-    ).innerHTML = getHistoryHtml();
+    ).innerHTML =
+      getHistoryHtml();
+
+    document.getElementById(
+      "result"
+    ).textContent =
+      user +
+      "　現在ポイント：" +
+      points[user] +
+      "点";
 
     saveData();
 
@@ -3429,6 +3513,123 @@ function recalculateBowelStatus(user) {
 
       ここでポイントを0にして、
       その記録の日付を最終排便日にする。
+    */
+    if (currentPoint >= 3) {
+
+      currentPoint = 0;
+
+      lastBowelDate =
+        String(history.date).slice(0, 10);
+    }
+  }
+
+  return {
+    point: currentPoint,
+    lastDate: lastBowelDate
+  };
+}
+
+function recalculateBowelStatusFromHistory(
+  originalHistory,
+  revisedHistory
+) {
+
+  const user = originalHistory.user;
+
+  /*
+    修正対象を登録する直前の状態を
+    再計算のスタート地点にする
+  */
+  let currentPoint =
+    Number(originalHistory.previousPoint || 0);
+
+  let lastBowelDate =
+    originalHistory.previousLastDate
+      ? String(
+          originalHistory.previousLastDate
+        ).slice(0, 10)
+      : "";
+
+  const baseDate =
+    new Date(originalHistory.date);
+
+  /*
+    修正版より「後」に登録された
+    active履歴を取得する。
+
+    修正版そのものは revisedHistory を
+    先頭に直接入れる。
+  */
+  const laterHistories = histories
+    .filter(history => {
+
+      if (history.user !== user) {
+        return false;
+      }
+
+      if (
+        String(history.status).trim() ===
+        "cancelled"
+      ) {
+        return false;
+      }
+
+      // 修正版自身は後で直接追加する
+      if (
+        String(history.id) ===
+        String(revisedHistory.id)
+      ) {
+        return false;
+      }
+
+      const historyDate =
+        new Date(history.date);
+
+      return historyDate > baseDate;
+    })
+    .sort((a, b) =>
+      new Date(a.date) -
+      new Date(b.date)
+    );
+
+  /*
+    修正版
+      ↓
+    その後の記録
+
+    の順番で再計算する
+  */
+  const historiesToCalculate = [
+    revisedHistory,
+    ...laterHistories
+  ];
+
+  for (
+    const history of historiesToCalculate
+  ) {
+
+    let addPoint = 0;
+
+    if (history.type === "少1") {
+      addPoint = 1;
+    }
+
+    if (history.type === "少2") {
+      addPoint = 2;
+    }
+
+    if (history.type === "普通") {
+      addPoint = 3;
+    }
+
+    if (history.type === "多量") {
+      addPoint = 3;
+    }
+
+    currentPoint += addPoint;
+
+    /*
+      3点以上で排便成立
     */
     if (currentPoint >= 3) {
 
