@@ -1975,13 +1975,33 @@ async function loadInitialDataFromGoogle() {
   try {
 
     const response =
-      await fetchApi(
-        API_URL +
-        "?action=getInitialData"
-      );
+  await fetch(
+    API_URL,
+    {
+      method: "POST",
 
-    const data =
-      await response.json();
+      headers: {
+        "Content-Type":
+          "text/plain;charset=utf-8"
+      },
+
+      body: JSON.stringify({
+        action: "getInitialData"
+      }),
+
+      cache: "no-store"
+    }
+  );
+
+if (!response.ok) {
+  throw new Error(
+    "初期データ取得失敗：HTTP " +
+    response.status
+  );
+}
+
+const data =
+  await response.json();
 
     if (data.error) {
       throw new Error(
