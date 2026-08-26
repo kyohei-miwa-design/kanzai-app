@@ -3508,14 +3508,18 @@ async function saveEditedHistory(recordId) {
     );
 
   if (!selected) {
-    alert("排便量を選択してください");
+    showToast(
+      "⚠ 排便量を選択してください",
+      "error",
+      3000
+    );
     return;
   }
 
   const newType = selected.value;
 
   /*
-    ★ 修正前の履歴を、
+    修正前の履歴を、
     Googleへ修正を送る前に保存しておく。
 
     API実行後はこの記録が
@@ -3529,8 +3533,10 @@ async function saveEditedHistory(recordId) {
     );
 
   if (!originalHistory) {
-    alert(
-      "修正対象の履歴が見つかりません"
+    showToast(
+      "⚠ 修正対象の履歴が見つかりません",
+      "error",
+      3000
     );
     return;
   }
@@ -3543,14 +3549,49 @@ async function saveEditedHistory(recordId) {
       "commonModalButtons"
     );
 
+  /*
+    修正ボタンを取得
+  */
+  const saveButton =
+    buttons
+      ? buttons.querySelector("button")
+      : null;
+
+  /*
+    元のボタン文字を保存
+  */
+  const originalButtonText =
+    saveButton
+      ? saveButton.textContent
+      : "";
+
+  /*
+    二重操作防止＋処理中表示
+  */
   if (buttons) {
     buttons.style.pointerEvents = "none";
     buttons.style.opacity = "0.6";
   }
 
+  if (saveButton) {
+    saveButton.textContent = "修正中…";
+  }
+
+  /*
+    画面上部にも処理状態を表示
+  */
+  showToast(
+    "修正内容を保存中…",
+    "saving",
+    0
+  );
+
   try {
 
+    // =========================
     // ① Googleシートの履歴を修正
+    // =========================
+
     const url =
       API_URL +
       "?action=editHistory" +
@@ -3599,7 +3640,10 @@ async function saveEditedHistory(recordId) {
       );
     }
 
+    // =========================
     // ② 最新履歴を取得
+    // =========================
+
     await loadHistoriesFromGoogle();
 
     /*
@@ -3634,17 +3678,16 @@ async function saveEditedHistory(recordId) {
       revisedHistory
     );
 
-    /*
-      ④ 元記録のH/Iを起点として
-      修正版以降だけ再計算
-    */
+    // =========================
+    // ④ 元記録のH/Iを起点に再計算
+    // =========================
+
     const recalculated =
       recalculateBowelStatusFromHistory(
         originalHistory,
         revisedHistory
       );
 
-    // アプリ内状態へ反映
     points[user] =
       Number(recalculated.point || 0);
 
@@ -3664,10 +3707,16 @@ async function saveEditedHistory(recordId) {
       }
     );
 
+    // =========================
     // ⑤ Googleへ現在状態を保存
+    // =========================
+
     await saveUsersToGoogle(false);
 
+    // =========================
     // ⑥ 画面更新
+    // =========================
+
     document.getElementById(
       "status"
     ).innerHTML =
@@ -3693,10 +3742,20 @@ async function saveEditedHistory(recordId) {
 
     saveData();
 
+    // =========================
+    // ⑦ 成功したらモーダルを閉じる
+    // =========================
+
     closeCommonModal();
 
-    alert(
-      "排便記録を修正しました"
+    // =========================
+    // ⑧ 完了トースト
+    // =========================
+
+    showToast(
+      "✓ 排便記録を修正しました",
+      "success",
+      2000
     );
 
   } catch (error) {
@@ -3706,16 +3765,31 @@ async function saveEditedHistory(recordId) {
       error
     );
 
-    alert(
-      "修正に失敗しました。\n\n" +
-      error.message
+    /*
+      失敗時はモーダルを閉じない。
+      内容を確認して再試行できるようにする。
+    */
+    showToast(
+      "⚠ 修正に失敗しました：" +
+      error.message,
+      "error",
+      4000
     );
 
   } finally {
 
+    /*
+      モーダルが残っている場合に備えて
+      ボタンを元へ戻す
+    */
     if (buttons) {
       buttons.style.pointerEvents = "";
       buttons.style.opacity = "";
+    }
+
+    if (saveButton) {
+      saveButton.textContent =
+        originalButtonText;
     }
   }
 }
