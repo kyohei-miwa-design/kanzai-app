@@ -1073,52 +1073,193 @@ function showNewDataMessage() {
 }
 
 async function register() {
-  const user = document.getElementById("userSelect").value;
-  const type = document.getElementById("bowelTypeSelect").value;
-  // 登録する直前の最終排便日を保存しておく
+
+  const user =
+    document.getElementById("userSelect").value;
+
+  const type =
+    document.getElementById("bowelTypeSelect").value;
+
+  // 二重登録防止
+  const registerButton =
+    document.querySelector(
+      'button[onclick="register()"]'
+    );
+
+  if (registerButton) {
+    registerButton.disabled = true;
+    registerButton.style.opacity = "0.6";
+  }
+
+  // 登録直前の状態を保存
   const previousLastDate =
-  lastDates[user];
+    lastDates[user];
 
   const previousPoint =
-  points[user];
+    points[user];
 
-  let addPoint = 0;
+  try {
 
-  if (type === "少1") addPoint = 1;
-  if (type === "少2") addPoint = 2;
-  if (type === "普通") addPoint = 3;
-  if (type === "多量") addPoint = 3;
+    // =========================
+    // ① まず画面側を即時更新
+    // =========================
 
-  points[user] += addPoint;
+    let addPoint = 0;
 
-  if (points[user] >= 3) {
-  const todayText = getTodayText();
+    if (type === "少1") addPoint = 1;
+    if (type === "少2") addPoint = 2;
+    if (type === "普通") addPoint = 3;
+    if (type === "多量") addPoint = 3;
 
-  points[user] = 0;
-  lastDates[user] = todayText;
+    points[user] += addPoint;
 
-  document.getElementById("lastDate").value = todayText;
+    if (points[user] >= 3) {
 
-  document.getElementById("result").textContent =
-    user + "　排便成立　最終排便日を今日に更新しました";
- }
+      const todayText =
+        getTodayText();
 
-  document.getElementById("status").innerHTML =
-  getStatusHtml();
+      points[user] = 0;
 
-  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+      lastDates[user] =
+        todayText;
 
-  await addHistoryToGoogle({
-   user: user,
-   type: type,
-   point: points[user],
-   previousLastDate: previousLastDate,
-   previousPoint: previousPoint
-  });
-  await saveUsersToGoogle(false);
-  await loadHistoriesFromGoogle();
+      document.getElementById(
+        "lastDate"
+      ).value = todayText;
 
- saveData();
+      document.getElementById(
+        "result"
+      ).textContent =
+        user +
+        "　排便成立　最終排便日を今日に更新しました";
+
+    } else {
+
+      document.getElementById(
+        "result"
+      ).textContent =
+        user +
+        "　現在ポイント：" +
+        points[user] +
+        "点";
+    }
+
+    // 即座に表示更新
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    saveData();
+
+    // =========================
+    // ② 保存中トースト
+    // =========================
+
+    showToast(
+      "保存中…",
+      "saving",
+      0
+    );
+
+    // =========================
+    // ③ Googleへ保存
+    // =========================
+
+    await addHistoryToGoogle({
+
+      user: user,
+
+      type: type,
+
+      point: points[user],
+
+      previousLastDate:
+        previousLastDate,
+
+      previousPoint:
+        previousPoint
+
+    });
+
+    await saveUsersToGoogle(false);
+
+    // =========================
+    // ④ 最新履歴を取得
+    // =========================
+
+    await loadHistoriesFromGoogle();
+
+    // =========================
+    // ⑤ 保存完了
+    // =========================
+
+    showToast(
+      "✓ 登録しました",
+      "success",
+      2000
+    );
+
+  } catch (error) {
+
+    console.error(
+      "排便登録エラー:",
+      error
+    );
+
+    /*
+      Google保存に失敗した場合は、
+      画面上のポイントと最終排便日を
+      登録前の状態へ戻す
+    */
+
+    points[user] =
+      Number(previousPoint || 0);
+
+    lastDates[user] =
+      previousLastDate || "";
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    document.getElementById(
+      "lastDate"
+    ).value =
+      lastDates[user] || "";
+
+    document.getElementById(
+      "result"
+    ).textContent =
+      "登録に失敗しました";
+
+    saveData();
+
+    showToast(
+      "⚠ 保存に失敗しました",
+      "error",
+      4000
+    );
+
+  } finally {
+
+    // 登録ボタンを再び押せるようにする
+    if (registerButton) {
+      registerButton.disabled = false;
+      registerButton.style.opacity = "";
+    }
+  }
 }
 
 function getNoBowelDays(user) {
