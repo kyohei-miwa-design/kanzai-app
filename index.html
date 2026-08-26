@@ -1500,30 +1500,67 @@ async function saveRulesToGoogle() {
 }
 
 async function saveUsersToGoogle(showAlert = true) {
+
   const users = [];
 
   for (let name in points) {
+
     users.push({
-     name: name,
-     unit: userUnits[name],
-     point: points[name],
-     lastDate: lastDates[name]
+      name: name,
+      unit: userUnits[name],
+      point: points[name],
+      lastDate: lastDates[name]
     });
   }
 
-  const url =
-    API_URL +
-    "?action=saveUsers&users=" +
-    encodeURIComponent(JSON.stringify(users));
+  const response = await fetch(
+    API_URL,
+    {
+      method: "POST",
 
-  const response = await fetchApi(url);
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+
+      body: JSON.stringify({
+        action: "saveUsers",
+        users: users
+      }),
+
+      cache: "no-store"
+    }
+  );
+
   const result = await response.text();
 
-  if (showAlert) {
-  alert(result);
+  if (!response.ok) {
+    throw new Error(
+      "users保存失敗：HTTP " +
+      response.status
+    );
   }
 
-  await loadUsersFromGoogle();
+  if (result !== "OK") {
+    throw new Error(
+      "users保存失敗：" +
+      result
+    );
+  }
+
+  if (showAlert) {
+    alert(result);
+  }
+
+  /*
+    ★ここ重要
+
+    保存した内容はすでに
+    points / lastDates に入っているので、
+    Googleから再取得する必要はない。
+
+    await loadUsersFromGoogle();
+    は削除。
+  */
 }
 
 async function saveChecksToGoogle() {
