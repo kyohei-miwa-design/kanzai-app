@@ -3808,6 +3808,10 @@ async function saveEditedHistory(recordId) {
 
   const newType = selected.value;
 
+  // =========================
+  // 修正対象の元履歴
+  // =========================
+
   const originalHistory =
     histories.find(
       item =>
@@ -3824,47 +3828,51 @@ async function saveEditedHistory(recordId) {
     return;
   }
 
-  const user = originalHistory.user;
+  const user =
+    originalHistory.user;
 
-  /*
-    失敗した時に戻せるよう、
-    現在状態を保存
-  */
+
+  // =========================
+  // 失敗時の復元用バックアップ
+  // =========================
+
   const backupPoint =
-    points[user];
+    Number(points[user] || 0);
 
   const backupLastDate =
-    lastDates[user];
+    lastDates[user] || "";
 
   const backupHistories =
     JSON.parse(
       JSON.stringify(histories)
     );
 
-  /*
-    仮の修正版履歴を作る
-    Google側の本物のUUIDは後で取得する
-  */
-  const temporaryHistory = {
-    ...originalHistory,
-
-    id:
-      "temp-" + Date.now(),
-
-    type:
-      newType,
-
-    status:
-      "active",
-
-    originalId:
-      recordId
-  };
 
   try {
 
     // =========================
-    // ① まず端末側で即時反映
+    // ① 仮の修正版履歴を作る
+    // =========================
+
+    const temporaryHistory = {
+      ...originalHistory,
+
+      id:
+        "temp-" + Date.now(),
+
+      type:
+        newType,
+
+      status:
+        "active",
+
+      originalId:
+        recordId
+    };
+
+
+    // =========================
+    // ② 既存ロジックで再計算
     // =========================
 
     const recalculated =
@@ -3885,35 +3893,42 @@ async function saveEditedHistory(recordId) {
           ).slice(0, 10)
         : "";
 
-    /*
-      元記録を画面上だけ一旦取消扱い
-    */
+
+    // =========================
+    // ③ 元履歴を画面上で取消扱い
+    // =========================
+
     histories =
-      histories.map(history => {
+      histories.map(
+        history => {
 
-        if (
-          String(history.id) ===
-          String(recordId)
-        ) {
+          if (
+            String(history.id) ===
+            String(recordId)
+          ) {
 
-          return {
-            ...history,
-            status: "cancelled"
-          };
+            return {
+              ...history,
+              status: "cancelled"
+            };
+          }
+
+          return history;
         }
+      );
 
-        return history;
-      });
 
-    /*
-      仮の修正版を履歴へ表示
-    */
+    // =========================
+    // ④ 仮の修正版を画面へ追加
+    // =========================
+
     histories.unshift(
       temporaryHistory
     );
 
+
     // =========================
-    // ② 画面を即時更新
+    // ⑤ 画面を即時更新
     // =========================
 
     document.getElementById(
@@ -3941,9 +3956,8 @@ async function saveEditedHistory(recordId) {
 
     saveData();
 
-    /*
-      モーダルはここですぐ閉じる
-    */
+
+    // モーダルはすぐ閉じる
     closeCommonModal();
 
     showToast(
@@ -3952,64 +3966,127 @@ async function saveEditedHistory(recordId) {
       0
     );
 
+
     // =========================
-    // ③ Googleへ履歴修正
+    // ⑥ Googleへ1回だけPOST
     // =========================
 
-    const url =
-      API_URL +
-      "?action=editHistory" +
-      "&recordId=" +
-      encodeURIComponent(recordId) +
-      "&newType=" +
-      encodeURIComponent(newType);
+    console.time(
+      "履歴修正一括保存"
+    );
 
     const response =
-      await fetchApi(url);
+      await fetch(
+        API_URL,
+        {
+          method: "POST",
 
-    const result =
-      await response.text();
+          headers: {
+            "Content-Type":
+              "text/plain;charset=utf-8"
+          },
 
-    if (result !== "OK") {
+          body: JSON.stringify({
 
-      if (result === "NOT_FOUND") {
-        throw new Error(
-          "修正対象の記録が見つかりません"
-        );
-      }
+            action:
+              "editHistoryFast",
 
-      if (
-        result ===
-        "ALREADY_CANCELLED"
-      ) {
-        throw new Error(
-          "この記録はすでに取消されています"
-        );
-      }
+            recordId:
+              recordId,
 
-      if (result === "INVALID_TYPE") {
-        throw new Error(
-          "排便量が正しくありません"
-        );
-      }
+            newType:
+              newType,
+
+            /*
+              再計算後の現在状態
+            */
+            point:
+              points[user],
+
+            lastDate:
+              lastDates[user] || "",
+
+            /*
+              修正版履歴のE列に
+              保存するポイント
+            */
+            historyPoint:
+              Number(
+                temporaryHistory.point || 0
+              )
+          }),
+
+          cache: "no-store"
+        }
+      );
+
+
+    if (!response.ok) {
 
       throw new Error(
-        "履歴の修正に失敗しました：" +
-        result
+        "履歴修正失敗：HTTP " +
+        response.status
       );
     }
 
+
+    const result =
+      await response.json();
+
+
+    if (!result.ok) {
+
+      throw new Error(
+        result.message ||
+        "履歴の修正に失敗しました"
+      );
+    }
+
+
+    console.timeEnd(
+      "履歴修正一括保存"
+    );
+
+
     // =========================
-    // ④ 現在状態をGoogleへ保存
+    // ⑦ 仮履歴を本物へ交換
     // =========================
 
-    await saveUsersToGoogle(false);
+    histories =
+      histories.filter(
+        history =>
+          String(history.id) !==
+          String(temporaryHistory.id)
+      );
+
+    if (result.history) {
+
+      histories.unshift(
+        result.history
+      );
+    }
+
 
     // =========================
-    // ⑤ 本物の履歴へ入れ替える
+    // ⑧ Google側の確定値を反映
     // =========================
 
-    await loadHistoriesFromGoogle();
+    points[user] =
+      Number(
+        result.point || 0
+      );
+
+    lastDates[user] =
+      result.lastDate
+        ? String(
+            result.lastDate
+          ).slice(0, 10)
+        : "";
+
+
+    // =========================
+    // ⑨ 最終画面更新
+    // =========================
 
     document.getElementById(
       "status"
@@ -4026,10 +4103,19 @@ async function saveEditedHistory(recordId) {
     ).innerHTML =
       getHistoryHtml();
 
+    document.getElementById(
+      "result"
+    ).textContent =
+      user +
+      "　現在ポイント：" +
+      points[user] +
+      "点";
+
     saveData();
 
+
     // =========================
-    // ⑥ 完了
+    // ⑩ 完了
     // =========================
 
     showToast(
@@ -4038,6 +4124,7 @@ async function saveEditedHistory(recordId) {
       2000
     );
 
+
   } catch (error) {
 
     console.error(
@@ -4045,10 +4132,11 @@ async function saveEditedHistory(recordId) {
       error
     );
 
-    /*
-      保存失敗時は
-      操作前の状態へ戻す
-    */
+
+    // =========================
+    // 保存失敗 → 元へ戻す
+    // =========================
+
     points[user] =
       backupPoint;
 
@@ -4058,6 +4146,7 @@ async function saveEditedHistory(recordId) {
     histories =
       backupHistories;
 
+
     document.getElementById(
       "status"
     ).innerHTML =
@@ -4083,8 +4172,10 @@ async function saveEditedHistory(recordId) {
 
     saveData();
 
+
     showToast(
-      "⚠ 修正を保存できませんでした",
+      "⚠ 修正を保存できませんでした：" +
+      error.message,
       "error",
       4000
     );
