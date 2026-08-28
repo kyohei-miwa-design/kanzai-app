@@ -4440,156 +4440,111 @@ function testRecalculateBowelStatus(user) {
 
 async function confirmCancelHistory(recordId) {
 
-  // 取消対象の履歴を取得
-  const history = histories.find(
-    item => String(item.id) === String(recordId)
-  );
+  // =========================
+  // 取消対象を取得
+  // =========================
+
+  const history =
+    histories.find(
+      item =>
+        String(item.id) ===
+        String(recordId)
+    );
 
   if (!history) {
-    alert("取消対象の履歴が見つかりません");
+
+    showToast(
+      "⚠ 取消対象の履歴が見つかりません",
+      "error",
+      3000
+    );
+
     return;
   }
 
-  const user = history.user;
+  const user =
+    history.user;
 
-  // H列「登録前最終排便日」
   const previousLastDate =
     history.previousLastDate || "";
 
-  // ★ 原因調査用
-  console.log("===== 取消処理開始 =====");
-  console.log("取消対象:", history);
-  console.log(
-    "取消前最終排便日(H列):",
-    previousLastDate
-  );
-  console.log(
-    "取消処理前のlastDates:",
-    lastDates[user]
-  );
-  console.log(
-    "取消処理前のpoints:",
-    points[user]
-  );
 
-  const buttons =
-    document.getElementById(
-      "commonModalButtons"
+  // =========================
+  // 失敗時の復元用バックアップ
+  // =========================
+
+  const backupPoint =
+    Number(points[user] || 0);
+
+  const backupLastDate =
+    lastDates[user] || "";
+
+  const backupHistories =
+    JSON.parse(
+      JSON.stringify(histories)
     );
 
-  if (buttons) {
-    buttons.style.pointerEvents = "none";
-    buttons.style.opacity = "0.6";
-  }
 
   try {
 
-    // Googleへ取消要求
-    const url =
-      API_URL +
-      "?action=cancelHistory" +
-      "&recordId=" +
-      encodeURIComponent(recordId);
+    // =========================
+    // ① 画面上で先に取消扱い
+    // =========================
 
-    const response =
-      await fetchApi(url);
+    histories =
+      histories.map(
+        item => {
 
-    const result =
-      await response.text();
+          if (
+            String(item.id) ===
+            String(recordId)
+          ) {
 
-    console.log(
-      "履歴取消結果:",
-      result
-    );
+            return {
+              ...item,
+              status: "cancelled"
+            };
+          }
 
-    if (result !== "OK") {
-
-      if (result === "NOT_FOUND") {
-        throw new Error(
-          "取消対象の記録が見つかりません"
-        );
-      }
-
-      if (
-        result ===
-        "ALREADY_CANCELLED"
-      ) {
-        throw new Error(
-          "この記録はすでに取消されています"
-        );
-      }
-
-      throw new Error(
-        "履歴の取消に失敗しました：" +
-        result
+          return item;
+        }
       );
-    }
 
-    // 最新履歴を取得
-    await loadHistoriesFromGoogle();
 
-    console.log(
-      "履歴再取得後:",
-      histories
-    );
+    // =========================
+    // ② 有効履歴だけで再計算
+    // =========================
 
-    // active履歴だけで再計算
     const recalculated =
       applyRecalculatedBowelStatus(
         user
       );
 
-    console.log(
-      "再計算結果:",
-      recalculated
-    );
-
-    console.log(
-      "再計算直後のlastDates:",
-      lastDates[user]
-    );
-
-    console.log(
-      "再計算直後のpoints:",
-      points[user]
-    );
 
     /*
-      再計算によって最終排便日を
-      復元できなかった場合は、
-      取消対象履歴のH列を使用する
+      有効履歴だけでは
+      最終排便日を復元できなかった場合、
+
+      取消対象記録の
+      「登録前最終排便日」へ戻す。
     */
-    if (previousLastDate) {
 
-  lastDates[user] =
-    String(previousLastDate).slice(0, 10);
+    if (
+      !recalculated.lastDate &&
+      previousLastDate
+    ) {
 
-  console.log(
-    "取消対象のH列から最終排便日を復元:",
-    lastDates[user]
-  );
-}
+      lastDates[user] =
+        String(
+          previousLastDate
+        ).slice(0, 10);
+    }
 
-    // ★ Google保存直前の値
-    console.log(
-      "Google保存直前のlastDates:",
-      lastDates[user]
-    );
 
-    console.log(
-      "Google保存直前のpoints:",
-      points[user]
-    );
+    // =========================
+    // ③ 画面を即時更新
+    // =========================
 
-    // points / lastDatesをGoogleへ保存
-    await saveUsersToGoogle(false);
-
-    console.log(
-      "Google保存完了後のlastDates:",
-      lastDates[user]
-    );
-
-    // 表示更新
     document.getElementById(
       "status"
     ).innerHTML =
@@ -4615,25 +4570,145 @@ async function confirmCancelHistory(recordId) {
 
     saveData();
 
+
+    // モーダルは即閉じる
     closeCommonModal();
 
-    console.log(
-      "取消処理終了時のlastDates:",
-      lastDates[user]
+
+    showToast(
+      "取消を保存中…",
+      "saving",
+      0
     );
 
-    console.log(
-      "取消処理終了時の未排便日数:",
-      getNoBowelDays(user)
+
+    // =========================
+    // ④ Googleへ1回だけPOST
+    // =========================
+
+    console.time(
+      "履歴取消一括保存"
     );
 
-    console.log(
-      "===== 取消処理終了 ====="
+
+    const response =
+      await fetch(
+        API_URL,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "text/plain;charset=utf-8"
+          },
+
+          body: JSON.stringify({
+
+            action:
+              "cancelHistoryFast",
+
+            recordId:
+              recordId,
+
+            point:
+              Number(
+                points[user] || 0
+              ),
+
+            lastDate:
+              lastDates[user] || ""
+
+          }),
+
+          cache: "no-store"
+        }
+      );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "履歴取消失敗：HTTP " +
+        response.status
+      );
+    }
+
+
+    const result =
+      await response.json();
+
+
+    if (!result.ok) {
+
+      throw new Error(
+        result.message ||
+        "履歴の取消に失敗しました"
+      );
+    }
+
+
+    console.timeEnd(
+      "履歴取消一括保存"
     );
 
-    alert(
-      "排便記録を取り消しました"
+
+    // =========================
+    // ⑤ Google側の確定値を反映
+    // =========================
+
+    points[user] =
+      Number(
+        result.point || 0
+      );
+
+    lastDates[user] =
+      result.lastDate
+        ? String(
+            result.lastDate
+          ).slice(0, 10)
+        : "";
+
+
+    // =========================
+    // ⑥ 最終画面更新
+    // =========================
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    document.getElementById(
+      "history"
+    ).innerHTML =
+      getHistoryHtml();
+
+    document.getElementById(
+      "result"
+    ).textContent =
+      user +
+      "　現在ポイント：" +
+      points[user] +
+      "点";
+
+    saveData();
+
+
+    // =========================
+    // ⑦ 完了
+    // =========================
+
+    showToast(
+      "✓ 排便記録を取り消しました",
+      "success",
+      2000
     );
+
 
   } catch (error) {
 
@@ -4642,17 +4717,53 @@ async function confirmCancelHistory(recordId) {
       error
     );
 
-    alert(
-      "取消に失敗しました。\n\n" +
-      error.message
+
+    // =========================
+    // 保存失敗 → 操作前へ復元
+    // =========================
+
+    points[user] =
+      backupPoint;
+
+    lastDates[user] =
+      backupLastDate;
+
+    histories =
+      backupHistories;
+
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    document.getElementById(
+      "history"
+    ).innerHTML =
+      getHistoryHtml();
+
+    document.getElementById(
+      "result"
+    ).textContent =
+      user +
+      "　現在ポイント：" +
+      points[user] +
+      "点";
+
+    saveData();
+
+
+    showToast(
+      "⚠ 取消を保存できませんでした：" +
+      error.message,
+      "error",
+      4000
     );
-
-  } finally {
-
-    if (buttons) {
-      buttons.style.pointerEvents = "";
-      buttons.style.opacity = "";
-    }
   }
 }
 
