@@ -1091,12 +1091,15 @@ async function register() {
     registerButton.style.opacity = "0.6";
   }
 
+  // =========================
   // 登録直前の状態を保存
+  // =========================
+
   const previousLastDate =
-    lastDates[user];
+    lastDates[user] || "";
 
   const previousPoint =
-    points[user];
+    Number(points[user] || 0);
 
   try {
 
@@ -1111,7 +1114,8 @@ async function register() {
     if (type === "普通") addPoint = 3;
     if (type === "多量") addPoint = 3;
 
-    points[user] += addPoint;
+    points[user] =
+      previousPoint + addPoint;
 
     if (points[user] >= 3) {
 
@@ -1144,7 +1148,7 @@ async function register() {
         "点";
     }
 
-    // 即座に表示更新
+    // 画面はGoogle通信を待たず更新
     document.getElementById(
       "status"
     ).innerHTML =
@@ -1157,48 +1161,145 @@ async function register() {
 
     saveData();
 
-    // =========================
-    // ② 保存中トースト
-    // =========================
-
     showToast(
       "保存中…",
       "saving",
       0
     );
 
-    // =========================
-    // ③ Googleへ保存
-    // =========================
-
-    console.time("① 履歴保存");
-
-await addHistoryToGoogle({
-  user: user,
-  type: type,
-  point: points[user],
-  previousLastDate: previousLastDate,
-  previousPoint: previousPoint
-});
-
-console.timeEnd("① 履歴保存");
-
-
-console.time("② users保存");
-
-await saveUsersToGoogle(false);
-
-console.timeEnd("② users保存");
-
-
-console.time("③ 履歴再取得");
-
-await loadHistoriesFromGoogle();
-
-console.timeEnd("③ 履歴再取得");
 
     // =========================
-    // ⑤ 保存完了
+    // ② Googleへ1回だけPOST
+    // =========================
+
+    console.time(
+      "排便登録一括保存"
+    );
+
+    const response =
+      await fetch(
+        API_URL,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "text/plain;charset=utf-8"
+          },
+
+          body: JSON.stringify({
+
+            action:
+              "registerBowel",
+
+            user:
+              user,
+
+            type:
+              type,
+
+            // 登録後の状態
+            point:
+              points[user],
+
+            lastDate:
+              lastDates[user] || "",
+
+            // 修正・取消時の復元用
+            previousLastDate:
+              previousLastDate,
+
+            previousPoint:
+              previousPoint
+          }),
+
+          cache: "no-store"
+        }
+      );
+
+    if (!response.ok) {
+
+      throw new Error(
+        "排便登録失敗：HTTP " +
+        response.status
+      );
+    }
+
+    const result =
+      await response.json();
+
+    if (!result.ok) {
+
+      throw new Error(
+        result.message ||
+        "排便登録に失敗しました"
+      );
+    }
+
+    console.timeEnd(
+      "排便登録一括保存"
+    );
+
+
+    // =========================
+    // ③ Googleから返ってきた履歴を
+    //    そのままローカル履歴へ追加
+    // =========================
+
+    if (result.history) {
+
+      /*
+        getHistories() は
+        新しい履歴 → 古い履歴
+        の順なので先頭へ追加
+      */
+      histories.unshift(
+        result.history
+      );
+    }
+
+
+    // =========================
+    // ④ Google側の確定値を反映
+    // =========================
+
+    points[user] =
+      Number(
+        result.point || 0
+      );
+
+    lastDates[user] =
+      result.lastDate
+        ? String(
+            result.lastDate
+          ).slice(0, 10)
+        : "";
+
+
+    // =========================
+    // ⑤ 履歴表示を即更新
+    // =========================
+
+    document.getElementById(
+      "history"
+    ).innerHTML =
+      getHistoryHtml();
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    saveData();
+
+
+    // =========================
+    // ⑥ 完了
     // =========================
 
     showToast(
@@ -1206,6 +1307,7 @@ console.timeEnd("③ 履歴再取得");
       "success",
       2000
     );
+
 
   } catch (error) {
 
@@ -1215,16 +1317,15 @@ console.timeEnd("③ 履歴再取得");
     );
 
     /*
-      Google保存に失敗した場合は、
-      画面上のポイントと最終排便日を
-      登録前の状態へ戻す
+      保存失敗時は、
+      操作前の状態へ戻す
     */
 
     points[user] =
-      Number(previousPoint || 0);
+      previousPoint;
 
     lastDates[user] =
-      previousLastDate || "";
+      previousLastDate;
 
     document.getElementById(
       "status"
@@ -1239,7 +1340,7 @@ console.timeEnd("③ 履歴再取得");
     document.getElementById(
       "lastDate"
     ).value =
-      lastDates[user] || "";
+      previousLastDate || "";
 
     document.getElementById(
       "result"
@@ -1254,9 +1355,9 @@ console.timeEnd("③ 履歴再取得");
       4000
     );
 
+
   } finally {
 
-    // 登録ボタンを再び押せるようにする
     if (registerButton) {
       registerButton.disabled = false;
       registerButton.style.opacity = "";
