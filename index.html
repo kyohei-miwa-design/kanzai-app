@@ -4384,6 +4384,146 @@ function recalculateBowelStatusFromHistory(
   };
 }
 
+function recalculateBowelStatusAfterCancel(
+  cancelledHistory
+) {
+
+  const user =
+    cancelledHistory.user;
+
+  /*
+    取消対象を登録する直前の状態を
+    スタート地点にする。
+
+    H列 = previousLastDate
+    I列 = previousPoint
+  */
+  let currentPoint =
+    Number(
+      cancelledHistory.previousPoint || 0
+    );
+
+  let lastBowelDate =
+    cancelledHistory.previousLastDate
+      ? String(
+          cancelledHistory.previousLastDate
+        ).slice(0, 10)
+      : "";
+
+  const baseDate =
+    new Date(
+      cancelledHistory.date
+    );
+
+
+  /*
+    取消対象より「後」に登録された
+    active履歴だけ取得する。
+  */
+  const laterHistories =
+    histories
+      .filter(history => {
+
+        if (
+          history.user !== user
+        ) {
+          return false;
+        }
+
+        if (
+          String(
+            history.status
+          ).trim() ===
+          "cancelled"
+        ) {
+          return false;
+        }
+
+        /*
+          今回取り消す記録自身は除外
+        */
+        if (
+          String(history.id) ===
+          String(cancelledHistory.id)
+        ) {
+          return false;
+        }
+
+        const historyDate =
+          new Date(
+            history.date
+          );
+
+        return (
+          historyDate > baseDate
+        );
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.date) -
+          new Date(b.date)
+      );
+
+
+  /*
+    取消対象の直前状態
+        ↓
+    取消対象より後のactive履歴
+
+    の順で再計算
+  */
+  for (
+    const history of laterHistories
+  ) {
+
+    let addPoint = 0;
+
+    if (history.type === "少1") {
+      addPoint = 1;
+    }
+
+    if (history.type === "少2") {
+      addPoint = 2;
+    }
+
+    if (history.type === "普通") {
+      addPoint = 3;
+    }
+
+    if (history.type === "多量") {
+      addPoint = 3;
+    }
+
+    currentPoint += addPoint;
+
+
+    /*
+      3点以上で排便成立
+    */
+    if (
+      currentPoint >= 3
+    ) {
+
+      currentPoint = 0;
+
+      lastBowelDate =
+        String(
+          history.date
+        ).slice(0, 10);
+    }
+  }
+
+
+  return {
+
+    point:
+      currentPoint,
+
+    lastDate:
+      lastBowelDate
+  };
+}
+
 function applyRecalculatedBowelStatus(user) {
 
   const result =
@@ -4516,30 +4656,21 @@ async function confirmCancelHistory(recordId) {
     // =========================
 
     const recalculated =
-      applyRecalculatedBowelStatus(
-        user
-      );
+     recalculateBowelStatusAfterCancel(
+     history
+     );
 
+     points[user] =
+     Number(
+     recalculated.point || 0
+     );
 
-    /*
-      有効履歴だけでは
-      最終排便日を復元できなかった場合、
-
-      取消対象記録の
-      「登録前最終排便日」へ戻す。
-    */
-
-    if (
-      !recalculated.lastDate &&
-      previousLastDate
-    ) {
-
-      lastDates[user] =
-        String(
-          previousLastDate
-        ).slice(0, 10);
-    }
-
+     lastDates[user] =
+     recalculated.lastDate
+     ? String(
+        recalculated.lastDate
+      ).slice(0, 10)
+     : "";
 
     // =========================
     // ③ 画面を即時更新
