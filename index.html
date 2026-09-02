@@ -674,10 +674,11 @@ button {
 <p>排便種類</p>
 <select id="bowelTypeSelect">
   <option>なし</option>
+  <option>少</option>
   <option>少1</option>
   <option>少2</option>
   <option>普通</option>
-  <option>多量</option>
+  
 </select>
 
 <br><br>
@@ -1080,16 +1081,52 @@ async function register() {
   const type =
     document.getElementById("bowelTypeSelect").value;
 
+
+  // =========================
+  // 入力チェック
+  // =========================
+
+  if (!user) {
+
+    showToast(
+      "⚠ 利用者を選択してください",
+      "error",
+      3000
+    );
+
+    return;
+  }
+
+
+  if (type === "なし") {
+
+    showToast(
+      "⚠ 排便量を選択してください",
+      "error",
+      3000
+    );
+
+    return;
+  }
+
+
+  // =========================
   // 二重登録防止
+  // =========================
+
   const registerButton =
-    document.querySelector(
-      'button[onclick="register()"]'
+    document.getElementById(
+      "registerButton"
     );
 
   if (registerButton) {
+
     registerButton.disabled = true;
-    registerButton.style.opacity = "0.6";
+
+    registerButton.style.opacity =
+      "0.6";
   }
+
 
   // =========================
   // 登録直前の状態を保存
@@ -1099,25 +1136,30 @@ async function register() {
     lastDates[user] || "";
 
   const previousPoint =
-    Number(points[user] || 0);
+    Number(
+      points[user] || 0
+    );
+
 
   try {
 
     // =========================
-    // ① まず画面側を即時更新
+    // ① 新ポイント方式で加算
     // =========================
 
-    let addPoint = 0;
-
-    if (type === "少1") addPoint = 1;
-    if (type === "少2") addPoint = 2;
-    if (type === "普通") addPoint = 3;
-    if (type === "多量") addPoint = 3;
+    const addPoint =
+      getBowelPoint(type);
 
     points[user] =
-      previousPoint + addPoint;
+      previousPoint +
+      addPoint;
 
-    if (points[user] >= 3) {
+
+    // =========================
+    // ② 内部9以上で排便成立
+    // =========================
+
+    if (points[user] >= 9) {
 
       const todayText =
         getTodayText();
@@ -1129,7 +1171,8 @@ async function register() {
 
       document.getElementById(
         "lastDate"
-      ).value = todayText;
+      ).value =
+        todayText;
 
       document.getElementById(
         "result"
@@ -1144,11 +1187,16 @@ async function register() {
       ).textContent =
         user +
         "　現在ポイント：" +
-        points[user] +
-        "点";
+        getBowelPointText(
+          points[user]
+        );
     }
 
-    // 画面はGoogle通信を待たず更新
+
+    // =========================
+    // ③ 画面を即時更新
+    // =========================
+
     document.getElementById(
       "status"
     ).innerHTML =
@@ -1161,6 +1209,7 @@ async function register() {
 
     saveData();
 
+
     showToast(
       "保存中…",
       "saving",
@@ -1169,12 +1218,13 @@ async function register() {
 
 
     // =========================
-    // ② Googleへ1回だけPOST
+    // ④ Googleへ1回だけPOST
     // =========================
 
     console.time(
       "排便登録一括保存"
     );
+
 
     const response =
       await fetch(
@@ -1198,7 +1248,7 @@ async function register() {
             type:
               type,
 
-            // 登録後の状態
+            // 新内部ポイント
             point:
               points[user],
 
@@ -1217,6 +1267,7 @@ async function register() {
         }
       );
 
+
     if (!response.ok) {
 
       throw new Error(
@@ -1225,8 +1276,10 @@ async function register() {
       );
     }
 
+
     const result =
       await response.json();
+
 
     if (!result.ok) {
 
@@ -1236,23 +1289,18 @@ async function register() {
       );
     }
 
+
     console.timeEnd(
       "排便登録一括保存"
     );
 
 
     // =========================
-    // ③ Googleから返ってきた履歴を
-    //    そのままローカル履歴へ追加
+    // ⑤ 返ってきた履歴を追加
     // =========================
 
     if (result.history) {
 
-      /*
-        getHistories() は
-        新しい履歴 → 古い履歴
-        の順なので先頭へ追加
-      */
       histories.unshift(
         result.history
       );
@@ -1260,7 +1308,7 @@ async function register() {
 
 
     // =========================
-    // ④ Google側の確定値を反映
+    // ⑥ Google側の確定値を反映
     // =========================
 
     points[user] =
@@ -1277,7 +1325,7 @@ async function register() {
 
 
     // =========================
-    // ⑤ 履歴表示を即更新
+    // ⑦ 画面を最終更新
     // =========================
 
     document.getElementById(
@@ -1299,7 +1347,7 @@ async function register() {
 
 
     // =========================
-    // ⑥ 完了
+    // ⑧ 完了
     // =========================
 
     showToast(
@@ -1316,16 +1364,17 @@ async function register() {
       error
     );
 
-    /*
-      保存失敗時は、
-      操作前の状態へ戻す
-    */
+
+    // =========================
+    // 保存失敗 → 登録前へ復元
+    // =========================
 
     points[user] =
       previousPoint;
 
     lastDates[user] =
       previousLastDate;
+
 
     document.getElementById(
       "status"
@@ -1349,6 +1398,7 @@ async function register() {
 
     saveData();
 
+
     showToast(
       "⚠ 保存に失敗しました",
       "error",
@@ -1359,8 +1409,12 @@ async function register() {
   } finally {
 
     if (registerButton) {
-      registerButton.disabled = false;
-      registerButton.style.opacity = "";
+
+      registerButton.disabled =
+        false;
+
+      registerButton.style.opacity =
+        "";
     }
   }
 }
@@ -1825,11 +1879,13 @@ function getStatusHtml() {
   console.log("表示:", user);
 
   result +=
-    "<div class='user-card'>" +
-    "<strong>" + user + "</strong><br>" +
-    "現在ポイント：" + points[user] + "点<br>" +
-    "未排便日数：" + getNoBowelDays(user) + "日" +
-    "</div>";
+     "<div class='user-card'>" +
+     "<strong>" + user + "</strong><br>" +
+     "現在ポイント：" +
+     getBowelPointText(points[user]) +
+     "<br>" +
+     "未排便日数：" + getNoBowelDays(user) + "日" +
+     "</div>";
 }
 
   return result;
@@ -3659,6 +3715,16 @@ function startEditHistory(recordId) {
             <input
               type="radio"
               name="editHistoryType"
+              value="少"
+              ${history.type === "少" ? "checked" : ""}
+            >
+            少
+          </label>
+
+          <label>
+            <input
+              type="radio"
+              name="editHistoryType"
               value="少1"
               ${history.type === "少1" ? "checked" : ""}
             >
@@ -3683,16 +3749,6 @@ function startEditHistory(recordId) {
               ${history.type === "普通" ? "checked" : ""}
             >
             普通
-          </label>
-
-          <label>
-            <input
-              type="radio"
-              name="editHistoryType"
-              value="多量"
-              ${history.type === "多量" ? "checked" : ""}
-            >
-            多量
           </label>
 
         </div>
@@ -4277,9 +4333,14 @@ function recalculateBowelStatusFromHistory(
   /*
     修正対象を登録する直前の状態を
     再計算のスタート地点にする
+
+    previousPointも新しい内部ポイント
+    （少=1、少1=3、少2=6）で保持する
   */
   let currentPoint =
-    Number(originalHistory.previousPoint || 0);
+    Number(
+      originalHistory.previousPoint || 0
+    );
 
   let lastBowelDate =
     originalHistory.previousLastDate
@@ -4289,99 +4350,184 @@ function recalculateBowelStatusFromHistory(
       : "";
 
   const baseDate =
-    new Date(originalHistory.date);
+    new Date(
+      originalHistory.date
+    );
 
   /*
     修正版より「後」に登録された
-    active履歴を取得する。
-
-    修正版そのものは revisedHistory を
-    先頭に直接入れる。
+    active履歴を取得
   */
-  const laterHistories = histories
-    .filter(history => {
+  const laterHistories =
+    histories
+      .filter(history => {
 
-      if (history.user !== user) {
-        return false;
-      }
+        if (
+          history.user !== user
+        ) {
+          return false;
+        }
 
-      if (
-        String(history.status).trim() ===
-        "cancelled"
-      ) {
-        return false;
-      }
+        if (
+          String(
+            history.status
+          ).trim() === "cancelled"
+        ) {
+          return false;
+        }
 
-      // 修正版自身は後で直接追加する
-      if (
-        String(history.id) ===
-        String(revisedHistory.id)
-      ) {
-        return false;
-      }
+        // 修正版自身は後で直接追加
+        if (
+          String(history.id) ===
+          String(revisedHistory.id)
+        ) {
+          return false;
+        }
 
-      const historyDate =
-        new Date(history.date);
+        const historyDate =
+          new Date(
+            history.date
+          );
 
-      return historyDate > baseDate;
-    })
-    .sort((a, b) =>
-      new Date(a.date) -
-      new Date(b.date)
-    );
+        return (
+          historyDate > baseDate
+        );
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.date) -
+          new Date(b.date)
+      );
+
 
   /*
     修正版
       ↓
     その後の記録
 
-    の順番で再計算する
+    の順番で再計算
   */
   const historiesToCalculate = [
     revisedHistory,
     ...laterHistories
   ];
 
+
   for (
     const history of historiesToCalculate
   ) {
 
-    let addPoint = 0;
+    // ★ 共通ポイント換算を使用
+    const addPoint =
+      getBowelPoint(
+        history.type
+      );
 
-    if (history.type === "少1") {
-      addPoint = 1;
-    }
+    currentPoint +=
+      addPoint;
 
-    if (history.type === "少2") {
-      addPoint = 2;
-    }
-
-    if (history.type === "普通") {
-      addPoint = 3;
-    }
-
-    if (history.type === "多量") {
-      addPoint = 3;
-    }
-
-    currentPoint += addPoint;
 
     /*
-      3点以上で排便成立
+      ★ 内部9以上で排便成立
     */
-    if (currentPoint >= 3) {
+    if (
+      currentPoint >= 9
+    ) {
 
       currentPoint = 0;
 
       lastBowelDate =
-        String(history.date).slice(0, 10);
+        String(
+          history.date
+        ).slice(0, 10);
     }
   }
 
+
   return {
-    point: currentPoint,
-    lastDate: lastBowelDate
+    point:
+      currentPoint,
+
+    lastDate:
+      lastBowelDate
   };
+}
+
+// =========================
+// 排便量 → 内部ポイント変換
+// =========================
+
+function getBowelPoint(type) {
+
+  if (type === "少") {
+    return 1;
+  }
+
+  if (type === "少1") {
+    return 3;
+  }
+
+  if (type === "少2") {
+    return 6;
+  }
+
+  if (type === "普通") {
+    return 9;
+  }
+
+  /*
+    旧データ互換用。
+    新規登録では使用しない。
+  */
+  if (type === "多量") {
+    return 9;
+  }
+
+  return 0;
+}
+
+
+// =========================
+// 内部ポイント → 表示文字列
+// =========================
+
+function getBowelPointText(point) {
+
+  const value =
+    Number(point || 0);
+
+  const normalPoint =
+    Math.floor(value / 3);
+
+  const smallCount =
+    value % 3;
+
+  if (
+    normalPoint === 0 &&
+    smallCount === 0
+  ) {
+    return "0点";
+  }
+
+  if (
+    normalPoint > 0 &&
+    smallCount === 0
+  ) {
+    return normalPoint + "点";
+  }
+
+  if (
+    normalPoint === 0
+  ) {
+    return "0点＋少" +
+      smallCount +
+      "回";
+  }
+
+  return normalPoint +
+    "点＋少" +
+    smallCount +
+    "回";
 }
 
 function recalculateBowelStatusAfterCancel(
@@ -4417,8 +4563,8 @@ function recalculateBowelStatusAfterCancel(
 
 
   /*
-    取消対象より「後」に登録された
-    active履歴だけ取得する。
+    取消対象より後に登録された
+    active履歴だけ取得
   */
   const laterHistories =
     histories
@@ -4433,15 +4579,12 @@ function recalculateBowelStatusAfterCancel(
         if (
           String(
             history.status
-          ).trim() ===
-          "cancelled"
+          ).trim() === "cancelled"
         ) {
           return false;
         }
 
-        /*
-          今回取り消す記録自身は除外
-        */
+        // 今回取り消す記録自身は除外
         if (
           String(history.id) ===
           String(cancelledHistory.id)
@@ -4470,38 +4613,27 @@ function recalculateBowelStatusAfterCancel(
         ↓
     取消対象より後のactive履歴
 
-    の順で再計算
+    の順番で再計算
   */
   for (
     const history of laterHistories
   ) {
 
-    let addPoint = 0;
+    // ★ 共通ポイント換算
+    const addPoint =
+      getBowelPoint(
+        history.type
+      );
 
-    if (history.type === "少1") {
-      addPoint = 1;
-    }
-
-    if (history.type === "少2") {
-      addPoint = 2;
-    }
-
-    if (history.type === "普通") {
-      addPoint = 3;
-    }
-
-    if (history.type === "多量") {
-      addPoint = 3;
-    }
-
-    currentPoint += addPoint;
+    currentPoint +=
+      addPoint;
 
 
     /*
-      3点以上で排便成立
+      ★ 内部9以上で排便成立
     */
     if (
-      currentPoint >= 3
+      currentPoint >= 9
     ) {
 
       currentPoint = 0;
@@ -4515,7 +4647,6 @@ function recalculateBowelStatusAfterCancel(
 
 
   return {
-
     point:
       currentPoint,
 
