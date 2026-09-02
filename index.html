@@ -1881,7 +1881,7 @@ function getStatusHtml() {
   result +=
      "<div class='user-card'>" +
      "<strong>" + user + "</strong><br>" +
-     "現在ポイント：" +
+     "　現在ポイント：" +
      getBowelPointText(points[user]) +
      "<br>" +
      "未排便日数：" + getNoBowelDays(user) + "日" +
@@ -2416,7 +2416,7 @@ function getHistoryCardHtml(history, group) {
 
       ${history.date}<br>
 
-      現在ポイント：${history.point}点
+      現在ポイント：${getBowelPointText(history.point)}
 
       ${
         isCancelled
@@ -2470,7 +2470,7 @@ function openHistoryMenu(recordId) {
 
         <br>
 
-        現在ポイント：${history.point}点
+        現在ポイント：${getBowelPointText(history.point)}
 
       </div>
     `,
@@ -4003,14 +4003,13 @@ async function saveEditedHistory(recordId) {
       getHistoryHtml();
 
     document.getElementById(
-      "result"
-    ).textContent =
-      user +
-      "　現在ポイント：" +
-      points[user] +
-      "点";
+     "result"
+     ).textContent =
+     user +
+     "　現在ポイント：" +
+     getBowelPointText(points[user]);
 
-    saveData();
+     saveData();
 
 
     // モーダルはすぐ閉じる
@@ -4160,12 +4159,11 @@ async function saveEditedHistory(recordId) {
       getHistoryHtml();
 
     document.getElementById(
-      "result"
-    ).textContent =
-      user +
-      "　現在ポイント：" +
-      points[user] +
-      "点";
+     "result"
+     ).textContent =
+     user +
+     "　現在ポイント：" +
+     getBowelPointText(points[user]);
 
     saveData();
 
@@ -4223,8 +4221,7 @@ async function saveEditedHistory(recordId) {
     ).textContent =
       user +
       "　現在ポイント：" +
-      points[user] +
-      "点";
+     getBowelPointText(points[user]);
 
     saveData();
 
@@ -4240,86 +4237,94 @@ async function saveEditedHistory(recordId) {
 
 function recalculateBowelStatus(user) {
 
-  // 対象利用者の履歴を取得
-  const allUserHistories = histories
-    .filter(history =>
-      history.user === user
-    )
-    .sort((a, b) => {
-      return new Date(a.date) - new Date(b.date);
-    });
+  /*
+    現在の状態を0から再計算する
+  */
+  let currentPoint = 0;
 
-  // 履歴がない場合は現在値をそのまま返す
-  if (allUserHistories.length === 0) {
-    return {
-      point: points[user] || 0,
-      lastDate: lastDates[user] || ""
-    };
-  }
+  let lastBowelDate = "";
+
 
   /*
-    最古の履歴の「登録前状態」を
-    再計算のスタート地点にする
+    対象利用者のactive履歴だけ取得
   */
-  const firstHistory = allUserHistories[0];
+  const userHistories =
+    histories
+      .filter(history => {
 
-  let currentPoint =
-    Number(firstHistory.previousPoint || 0);
+        if (
+          history.user !== user
+        ) {
+          return false;
+        }
 
-  let lastBowelDate =
-    firstHistory.previousLastDate
-      ? String(firstHistory.previousLastDate).slice(0, 10)
-      : "";
+        if (
+          String(
+            history.status
+          ).trim() === "cancelled"
+        ) {
+          return false;
+        }
+
+        return true;
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.date) -
+          new Date(b.date)
+      );
+
 
   /*
-    cancelled は計算しない。
-    修正後に新しく作られた active 記録だけ計算対象になる。
+    古い履歴から順番に再計算
   */
-  const activeHistories =
-    allUserHistories.filter(history =>
-      String(history.status || "").trim() !== "cancelled"
-    );
-
-  for (const history of activeHistories) {
-
-    let addPoint = 0;
-
-    if (history.type === "少1") {
-      addPoint = 1;
-    }
-
-    if (history.type === "少2") {
-      addPoint = 2;
-    }
-
-    if (history.type === "普通") {
-      addPoint = 3;
-    }
-
-    if (history.type === "多量") {
-      addPoint = 3;
-    }
-
-    currentPoint += addPoint;
+  for (
+    const history of userHistories
+  ) {
 
     /*
-      3点以上で排便成立。
+      新ポイント方式
 
-      ここでポイントを0にして、
-      その記録の日付を最終排便日にする。
+      少   = 1
+      少1  = 3
+      少2  = 6
+      普通 = 9
+
+      旧データの「多量」も
+      getBowelPoint() 内で9として扱う
     */
-    if (currentPoint >= 3) {
+    const addPoint =
+      getBowelPoint(
+        history.type
+      );
+
+    currentPoint +=
+      addPoint;
+
+
+    /*
+      内部ポイント9以上で排便成立
+    */
+    if (
+      currentPoint >= 9
+    ) {
 
       currentPoint = 0;
 
       lastBowelDate =
-        String(history.date).slice(0, 10);
+        String(
+          history.date
+        ).slice(0, 10);
     }
   }
 
+
   return {
-    point: currentPoint,
-    lastDate: lastBowelDate
+    point:
+      currentPoint,
+
+    lastDate:
+      lastBowelDate
   };
 }
 
@@ -4703,7 +4708,7 @@ function testRecalculateBowelStatus(user) {
   alert(
     "再計算テスト\n\n" +
     "利用者：" + user + "\n" +
-    "現在ポイント：" + result.point + "\n" +
+    "　現在ポイント：" + getBowelPointText(result.point) + "\n" +
     "最終排便日：" +
     (result.lastDate || "なし")
   );
@@ -4826,9 +4831,8 @@ async function confirmCancelHistory(recordId) {
       "result"
     ).textContent =
       user +
-      "　現在ポイント：" +
-      points[user] +
-      "点";
+     "　現在ポイント：" +
+     getBowelPointText(points[user]);
 
     saveData();
 
@@ -4954,9 +4958,8 @@ async function confirmCancelHistory(recordId) {
       "result"
     ).textContent =
       user +
-      "　現在ポイント：" +
-      points[user] +
-      "点";
+    "　現在ポイント：" +
+    getBowelPointText(points[user]);
 
     saveData();
 
@@ -5013,9 +5016,8 @@ async function confirmCancelHistory(recordId) {
       "result"
     ).textContent =
       user +
-      "　現在ポイント：" +
-      points[user] +
-      "点";
+     "　現在ポイント：" +
+      getBowelPointText(points[user]);
 
     saveData();
 
