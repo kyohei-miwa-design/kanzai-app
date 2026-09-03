@@ -735,248 +735,498 @@ button {
 
 <div id="appArea" style="display:none;">
 
-  <h1>緩下剤管理アプリ</h1>
+  <!-- =========================
+       アプリヘッダー
+  ========================== -->
+  <header class="app-header">
 
-　<p class="app-version">
-  Ver.0.7.0
-　</p>
+    <div>
+      <h1>緩下剤管理アプリ</h1>
+      <p class="app-version">Ver.0.8.0</p>
+    </div>
 
-  <button onclick="logout()">ログアウト</button>
+    <button
+      class="logout-button"
+      onclick="logout()"
+    >
+      ログアウト
+    </button>
 
+  </header>
+
+
+  <!-- 通知領域 -->
   <div id="newDataMessage"></div>
   <div id="nightAlertArea"></div>
-<p>利用者</p>
-<select id="userSelect">
-  <option>A様</option>
-  <option>B様</option>
-  <option>C様</option>
-</select>
-
-<p>排便種類</p>
-<select id="bowelTypeSelect">
-  <option>なし</option>
-  <option>少</option>
-  <option>少1</option>
-  <option>少2</option>
-  <option>普通</option>
-  
-</select>
-
-<br><br>
-
-<button id="registerButton" onclick="register()">登録</button>
-
-<p>最終排便日</p>
-<input type="date" id="lastDate">
-
-<button onclick="changeLastDate()">
-  最終排便日を変更
-</button>
-
-<p id="result">現在ポイント：0</p>
 
 
-<div id="adminArea">
-
-  <h2>利用者追加</h2>
-  <input
-    type="text"
-    id="newUserName"
-    placeholder="例：D様"
-  >
-  <button onclick="addUser()">
-    追加
-  </button>
-
-
-  <h2>利用者削除</h2>
-
-  <button onclick="deleteUser()">
-    削除
-  </button>
-
-
-  <h2>所属ユニット変更</h2>
-
-  <p>対象利用者</p>
-  <select id="unitUserSelect"></select>
-
-  <p>所属ユニット</p>
-  <select id="unitSelect">
-    <option value="1">1ユニット</option>
-    <option value="2">2ユニット</option>
-    <option value="3">3ユニット</option>
-    <option value="4">4ユニット</option>
-  </select>
-
-  <button onclick="changeUserUnit()">
-    ユニット変更
-  </button>
-
-
-  <h2>下剤ルール編集</h2>
-
-  <h2>登録済みルール一覧</h2>
-
-  <div id="ruleList">
-    まだルールはありません
-  </div>
-
-  <p>対象利用者</p>
-  <select id="ruleUserSelect"></select>
-
-  <p>未排便日数</p>
-  <input
-    type="number"
-    id="ruleDay"
-    placeholder="例：2"
+  <!-- =========================
+       ホーム
+  ========================== -->
+  <section
+    id="homePage"
+    class="app-page active"
   >
 
-  <p>薬剤・時間</p>
-  <input
-    type="text"
-    id="ruleMedicine"
-    placeholder="例：ピコ15滴 朝"
-  >
+    <h2>ホーム</h2>
 
-  <button onclick="saveRule()">
-    ルール保存
-  </button>
-
-</div>
-
-
-<div id="nightConfirmArea">
-
-  <h2>🌙 夜勤帯の排便確認</h2>
-
-  <p>
-    対象時間：前日16:00 ～ 本日8:00
-  </p>
-
-  <button onclick="checkNightBowelStatus()">
-    夜勤帯の排便状況を集計
-  </button>
-
-  <div id="nightBowelCheckResult"></div>
-
-</div>
-
-<h2>排便確認</h2>
-
-<button onclick="checkTodayBowelStatus()">
-  今日の排便状況を集計
-</button>
-
-<div id="bowelCheckResult"></div>
-
-
-<h2>投薬報告</h2>
-
-<button onclick="createMedicineReport()">
-  投薬報告を作成
-</button>
-
-<div id="medicineReport"></div>
-
-<div id="dailyConfirmArea">
-
-  <h2>本日の排便集計状況</h2>
-
-<button
-  id="dailyConfirmRefreshButton"
-  onclick="manualRefreshDailyConfirm()"
->
-  🔄 集計状況を更新
-</button>
-
-  <div id="dailyConfirmStatus">
-  読み込み中...
-  </div>
-
-</div>
-
-<h2>利用者状況</h2>
-
-<div id="status">
-A様：0点<br>
-B様：0点<br>
-C様：0点
-</div>
-
-<h2>本日の対象者</h2>
-<div id="todayTarget">
-まだ対象者はいません
-</div>
-
-<h2>本日実施済み</h2>
-<div id="completedList">
-まだ実施記録はありません
-</div>
-
-<div class="history-section">
-
-  <div class="history-header">
-    <h2>履歴</h2>
-
-    <button
-      id="historyToggleButton"
-      class="history-toggle-button"
-      onclick="toggleHistory()"
-    >
-      ▼ 履歴を表示
-    </button>
-  </div>
-
-  <div id="historyArea" style="display:none;">
-
-    <button
-      class="history-clear-button"
-      onclick="clearHistory()"
-    >
-      履歴を全削除
-    </button>
-
-    <div id="history">
-      まだ履歴はありません
+    <div class="home-unit-card">
+      <strong id="homeUnitName">
+        現在のユニット
+      </strong>
     </div>
 
-  </div>
 
-</div>
+    <h2>排便確認の状況</h2>
 
-<div
-  id="commonModal"
-  class="modal-overlay"
-  style="display:none;"
-  onclick="closeCommonModalByOverlay(event)"
->
-  <div
-    class="modal-content"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="commonModalTitle"
-  >
-
-    <div class="modal-header">
-      <h3 id="commonModalTitle">
-        詳細
-      </h3>
+    <div class="home-status-grid">
 
       <button
-        class="modal-close-icon"
-        onclick="closeCommonModal()"
-        aria-label="閉じる"
+        class="home-status-card"
+        onclick="openPage('bowelPage'); checkTodayBowelStatus();"
       >
-        ×
+        <span class="home-status-icon">☀️</span>
+
+        <span>
+          <strong>日中帯</strong><br>
+          <small>8:00 ～ 16:00</small>
+        </span>
+
+        <span>確認する ›</span>
       </button>
+
+
+      <button
+        class="home-status-card"
+        onclick="openPage('bowelPage'); checkNightBowelStatus();"
+      >
+        <span class="home-status-icon">🌙</span>
+
+        <span>
+          <strong>夜勤帯</strong><br>
+          <small>16:00 ～ 翌8:00</small>
+        </span>
+
+        <span>確認する ›</span>
+      </button>
+
     </div>
 
-    <div id="commonModalBody"></div>
 
-    <div id="commonModalButtons"></div>
+    <h2>投薬の状況</h2>
+
+    <div id="homeMedicineStatus">
+      本日の投薬状況を確認しています...
+    </div>
+
+
+    <div class="home-action-grid">
+
+      <button
+        class="home-action-button bowel"
+        onclick="openPage('bowelPage')"
+      >
+        💩
+        <span>排便を入力</span>
+      </button>
+
+      <button
+        class="home-action-button medicine"
+        onclick="openPage('medicinePage')"
+      >
+        💊
+        <span>投薬対象を確認</span>
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- =========================
+       排便
+  ========================== -->
+  <section
+    id="bowelPage"
+    class="app-page"
+  >
+
+    <h2>排便を入力</h2>
+
+    <div class="user-card">
+
+      <p>利用者</p>
+
+      <select id="userSelect">
+        <option>A様</option>
+        <option>B様</option>
+        <option>C様</option>
+      </select>
+
+
+      <p>排便種類</p>
+
+      <select id="bowelTypeSelect">
+        <option>なし</option>
+        <option>少</option>
+        <option>少1</option>
+        <option>少2</option>
+        <option>普通</option>
+      </select>
+
+      <br><br>
+
+      <button
+        id="registerButton"
+        onclick="register()"
+      >
+        排便を登録
+      </button>
+
+
+      <p>最終排便日</p>
+
+      <input
+        type="date"
+        id="lastDate"
+      >
+
+      <button onclick="changeLastDate()">
+        最終排便日を変更
+      </button>
+
+      <p id="result">
+        現在ポイント：0
+      </p>
+
+    </div>
+
+
+    <h2>勤務帯の排便確認</h2>
+
+
+    <!-- 日中 -->
+    <div class="summary-card">
+
+      <h3>☀️ 日中帯</h3>
+
+      <p>8:00 ～ 16:00</p>
+
+      <button onclick="checkTodayBowelStatus()">
+        日中帯の排便状況を確認
+      </button>
+
+      <div id="bowelCheckResult"></div>
+
+    </div>
+
+
+    <!-- 夜勤 -->
+    <div
+      id="nightConfirmArea"
+      class="summary-card"
+    >
+
+      <h3>🌙 夜勤帯</h3>
+
+      <p>
+        16:00 ～ 翌8:00
+      </p>
+
+      <button onclick="checkNightBowelStatus()">
+        夜勤帯の排便状況を確認
+      </button>
+
+      <div id="nightBowelCheckResult"></div>
+
+    </div>
+
+
+    <!-- 集計状況 -->
+    <div id="dailyConfirmArea">
+
+      <h2>排便確認状況</h2>
+
+      <button
+        id="dailyConfirmRefreshButton"
+        onclick="manualRefreshDailyConfirm()"
+      >
+        🔄 更新
+      </button>
+
+      <div id="dailyConfirmStatus">
+        読み込み中...
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =========================
+       投薬
+  ========================== -->
+  <section
+    id="medicinePage"
+    class="app-page"
+  >
+
+    <h2>本日の投薬対象者</h2>
+
+    <div id="todayTarget">
+      まだ対象者はいません
+    </div>
+
+
+    <h2>本日実施済み</h2>
+
+    <div id="completedList">
+      まだ実施記録はありません
+    </div>
+
+
+    <h2>投薬報告</h2>
+
+    <button onclick="createMedicineReport()">
+      投薬報告を作成
+    </button>
+
+    <div id="medicineReport"></div>
+
+  </section>
+
+
+  <!-- =========================
+       履歴
+  ========================== -->
+  <section
+    id="historyPage"
+    class="app-page"
+  >
+
+    <h2>履歴</h2>
+
+    <div class="history-section">
+
+      <button
+        class="history-clear-button"
+        onclick="clearHistory()"
+      >
+        履歴を全削除
+      </button>
+
+      <div id="history">
+        まだ履歴はありません
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =========================
+       その他
+  ========================== -->
+  <section
+    id="otherPage"
+    class="app-page"
+  >
+
+    <h2>利用者状況</h2>
+
+    <div id="status">
+      A様：0点<br>
+      B様：0点<br>
+      C様：0点
+    </div>
+
+
+    <!-- 管理者機能 -->
+    <div id="adminArea">
+
+      <h2>管理者設定</h2>
+
+
+      <h3>利用者追加</h3>
+
+      <input
+        type="text"
+        id="newUserName"
+        placeholder="例：D様"
+      >
+
+      <button onclick="addUser()">
+        追加
+      </button>
+
+
+      <h3>利用者削除</h3>
+
+      <button onclick="deleteUser()">
+        削除
+      </button>
+
+
+      <h3>所属ユニット変更</h3>
+
+      <p>対象利用者</p>
+
+      <select id="unitUserSelect"></select>
+
+
+      <p>所属ユニット</p>
+
+      <select id="unitSelect">
+        <option value="1">1ユニット</option>
+        <option value="2">2ユニット</option>
+        <option value="3">3ユニット</option>
+        <option value="4">4ユニット</option>
+      </select>
+
+      <button onclick="changeUserUnit()">
+        ユニット変更
+      </button>
+
+
+      <h3>下剤ルール編集</h3>
+
+
+      <h3>登録済みルール一覧</h3>
+
+      <div id="ruleList">
+        まだルールはありません
+      </div>
+
+
+      <p>対象利用者</p>
+
+      <select id="ruleUserSelect"></select>
+
+
+      <p>未排便日数</p>
+
+      <input
+        type="number"
+        id="ruleDay"
+        placeholder="例：2"
+      >
+
+
+      <p>薬剤・時間</p>
+
+      <input
+        type="text"
+        id="ruleMedicine"
+        placeholder="例：ピコ15滴 朝"
+      >
+
+      <button onclick="saveRule()">
+        ルール保存
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- =========================
+       下部ナビ
+  ========================== -->
+  <nav class="bottom-nav">
+
+    <button
+      class="nav-button active"
+      data-page="homePage"
+      onclick="openPage('homePage')"
+    >
+      <span>⌂</span>
+      <small>ホーム</small>
+    </button>
+
+
+    <button
+      class="nav-button"
+      data-page="bowelPage"
+      onclick="openPage('bowelPage')"
+    >
+      <span>💩</span>
+      <small>排便</small>
+    </button>
+
+
+    <button
+      class="nav-button"
+      data-page="medicinePage"
+      onclick="openPage('medicinePage')"
+    >
+      <span>💊</span>
+      <small>投薬</small>
+    </button>
+
+
+    <button
+      class="nav-button"
+      data-page="historyPage"
+      onclick="openPage('historyPage')"
+    >
+      <span>◷</span>
+      <small>履歴</small>
+    </button>
+
+
+    <button
+      class="nav-button"
+      data-page="otherPage"
+      onclick="openPage('otherPage')"
+    >
+      <span>☰</span>
+      <small>その他</small>
+    </button>
+
+  </nav>
+
+
+  <!-- =========================
+       共通モーダル
+  ========================== -->
+  <div
+    id="commonModal"
+    class="modal-overlay"
+    style="display:none;"
+    onclick="closeCommonModalByOverlay(event)"
+  >
+
+    <div
+      class="modal-content"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="commonModalTitle"
+    >
+
+      <div class="modal-header">
+
+        <h3 id="commonModalTitle">
+          詳細
+        </h3>
+
+        <button
+          class="modal-close-icon"
+          onclick="closeCommonModal()"
+          aria-label="閉じる"
+        >
+          ×
+        </button>
+
+      </div>
+
+      <div id="commonModalBody"></div>
+
+      <div id="commonModalButtons"></div>
+
+    </div>
 
   </div>
+
 </div>
 
 <script>
@@ -5707,6 +5957,51 @@ function getTodayText() {
       .padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+}
+
+function openPage(pageId) {
+
+  // 全ページを非表示
+  document
+    .querySelectorAll(".app-page")
+    .forEach(page => {
+      page.classList.remove("active");
+    });
+
+
+  // 指定ページを表示
+  const targetPage =
+    document.getElementById(pageId);
+
+  if (targetPage) {
+    targetPage.classList.add("active");
+  }
+
+
+  // ナビの選択状態を解除
+  document
+    .querySelectorAll(".nav-button")
+    .forEach(button => {
+      button.classList.remove("active");
+    });
+
+
+  // 現在ページのナビを選択状態にする
+  const activeButton =
+    document.querySelector(
+      `.nav-button[data-page="${pageId}"]`
+    );
+
+  if (activeButton) {
+    activeButton.classList.add("active");
+  }
+
+
+  // ページ切替時は上へ
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
 }
 
 </script>
