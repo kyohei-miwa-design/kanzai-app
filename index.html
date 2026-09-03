@@ -1644,6 +1644,150 @@ h3 {
   white-space: nowrap;
 }
 
+/* =========================
+   ホーム：投薬状況カード
+========================= */
+
+#homeMedicineStatus {
+  padding: 0;
+  overflow: hidden;
+
+  background: #ffffff;
+
+  border:
+    1px solid #e4e9ed;
+
+  border-radius: 16px;
+
+  box-shadow:
+    0 3px 10px
+    rgba(0, 0, 0, 0.04);
+}
+
+
+/* =========================
+   投薬状況 共通
+========================= */
+
+.home-medicine-summary {
+  padding: 18px;
+}
+
+.home-medicine-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+
+  align-items: center;
+
+  font-size: 15px;
+}
+
+.home-medicine-counts span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  color: #546e7a;
+}
+
+.home-medicine-counts strong {
+  color: #263238;
+  font-size: 17px;
+}
+
+
+/* =========================
+   未実施あり
+========================= */
+
+.home-medicine-remaining {
+  color: #e53935 !important;
+}
+
+.home-medicine-remaining strong {
+  color: #e53935;
+}
+
+.home-medicine-warning {
+  margin-top: 14px;
+
+  padding:
+    12px
+    14px;
+
+  background: #fff3f3;
+
+  border:
+    1px solid #ffcdd2;
+
+  border-left:
+    5px solid #e53935;
+
+  border-radius: 10px;
+
+  color: #d32f2f;
+
+  font-weight: 700;
+}
+
+
+/* =========================
+   全実施済み
+========================= */
+
+.home-medicine-complete {
+  margin-top: 12px;
+
+  padding:
+    12px
+    14px;
+
+  background: #edf8f3;
+
+  border:
+    1px solid #b7e4cf;
+
+  border-left:
+    5px solid #00897b;
+
+  border-radius: 10px;
+
+  color: #00796b;
+
+  font-weight: 700;
+}
+
+
+/* =========================
+   対象なし
+========================= */
+
+.home-medicine-all-clear {
+  padding: 18px;
+
+  background: #f5faf8;
+
+  color: #00796b;
+
+  font-weight: 700;
+}
+
+
+/* =========================
+   スマホ
+========================= */
+
+@media (max-width: 600px) {
+
+  .home-medicine-counts {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+}
+
 </style>
 </head>
 
@@ -2944,9 +3088,23 @@ function updateHomeMedicineStatus() {
     area.innerHTML = `
       <div class="home-medicine-summary">
 
-        <div>
-          本日の対象
-          <strong>${targetUsers.size}名</strong>
+        <div class="home-medicine-counts">
+
+          <span>
+            対象者
+            <strong>${targetUsers.size}名</strong>
+          </span>
+
+          <span>
+            💊 投薬予定
+            <strong>${totalCount}件</strong>
+          </span>
+
+          <span>
+            ✅ 実施済み
+            <strong>${completedCount}件</strong>
+          </span>
+
         </div>
 
         <div class="home-medicine-complete">
@@ -2970,8 +3128,13 @@ function updateHomeMedicineStatus() {
       <div class="home-medicine-counts">
 
         <span>
-          本日の対象
+          対象者
           <strong>${targetUsers.size}名</strong>
+        </span>
+
+        <span>
+          💊 投薬予定
+          <strong>${totalCount}件</strong>
         </span>
 
         <span>
@@ -3049,8 +3212,7 @@ function loadData() {
   document.getElementById("ruleList").innerHTML = getRuleListHtml();
   document.getElementById("completedList").innerHTML = getCompletedListHtml();
 
-  updateHomeMedicineStatus();
-  
+
   updateUserSelects();
   updateRoleUI();
 }
@@ -3276,38 +3438,77 @@ initialize();
 async function refreshFromGoogle() {
 
   if (isRefreshing) {
-    console.log("更新中のため今回の自動更新をスキップ");
+    console.log(
+      "更新中のため今回の自動更新をスキップ"
+    );
     return;
   }
 
   isRefreshing = true;
 
   try {
-    const beforeData = getAppDataSnapshot();
 
-    // 頻繁に変わるデータだけ自動更新
-    await loadChecksFromGoogle();
-    await loadHistoriesFromGoogle();
-    await loadDailyConfirmStatus();
+    const beforeData =
+      getAppDataSnapshot();
 
-    const afterData = getAppDataSnapshot();
+
+    // =========================
+    // Googleデータを並列取得
+    // =========================
+
+    await Promise.all([
+
+      loadChecksFromGoogle(),
+
+      loadHistoriesFromGoogle(),
+
+      loadDailyConfirmStatus()
+
+    ]);
+
+
+    // =========================
+    // 全取得完了後に
+    // ホームを最終更新
+    // =========================
+
+    updateHomeMedicineStatus();
+
+
+    const afterData =
+      getAppDataSnapshot();
+
 
     if (
       initialSyncFinished &&
       beforeData !== afterData
     ) {
+
       showNewDataMessage();
+
     }
+
 
     initialSyncFinished = true;
 
-    console.log("Googleの最新データを読み込みました");
+
+    console.log(
+      "Googleの最新データを読み込みました"
+    );
+
 
   } catch (error) {
-    console.error("自動更新に失敗しました", error);
+
+    console.error(
+      "自動更新に失敗しました",
+      error
+    );
+
 
   } finally {
+
     isRefreshing = false;
+
   }
 }
 
@@ -6187,6 +6388,7 @@ async function saveEditedHistory(recordId) {
 
   const newType = selected.value;
 
+
   // =========================
   // 修正対象の元履歴
   // =========================
@@ -6307,7 +6509,7 @@ async function saveEditedHistory(recordId) {
 
 
     // =========================
-    // ⑤ 画面を即時更新
+    // ⑤ 基本画面を即時更新
     // =========================
 
     document.getElementById(
@@ -6326,13 +6528,51 @@ async function saveEditedHistory(recordId) {
       getHistoryHtml();
 
     document.getElementById(
-     "result"
-     ).textContent =
-     user +
-     "　現在ポイント：" +
-     getBowelPointText(points[user]);
+      "result"
+    ).textContent =
+      user +
+      "　現在ポイント：" +
+      getBowelPointText(points[user]);
 
-     saveData();
+
+    // =========================
+    // ★ 排便集計をリアルタイム更新
+    // =========================
+
+    const dayResult =
+      document.getElementById(
+        "bowelCheckResult"
+      );
+
+    if (
+      dayResult &&
+      dayResult.innerHTML.trim() !== ""
+    ) {
+      checkTodayBowelStatus();
+    }
+
+
+    const nightResult =
+      document.getElementById(
+        "nightBowelCheckResult"
+      );
+
+    if (
+      nightResult &&
+      nightResult.innerHTML.trim() !== ""
+    ) {
+      checkNightBowelStatus();
+    }
+
+
+    // =========================
+    // ★ ホーム投薬状況を更新
+    // =========================
+
+    updateHomeMedicineStatus();
+
+
+    saveData();
 
 
     // モーダルはすぐ閉じる
@@ -6482,11 +6722,33 @@ async function saveEditedHistory(recordId) {
       getHistoryHtml();
 
     document.getElementById(
-     "result"
-     ).textContent =
-     user +
-     "　現在ポイント：" +
-     getBowelPointText(points[user]);
+      "result"
+    ).textContent =
+      user +
+      "　現在ポイント：" +
+      getBowelPointText(points[user]);
+
+
+    // =========================
+    // ★ Google確定後にも再更新
+    // =========================
+
+    if (
+      dayResult &&
+      dayResult.innerHTML.trim() !== ""
+    ) {
+      checkTodayBowelStatus();
+    }
+
+    if (
+      nightResult &&
+      nightResult.innerHTML.trim() !== ""
+    ) {
+      checkNightBowelStatus();
+    }
+
+    updateHomeMedicineStatus();
+
 
     saveData();
 
@@ -6544,7 +6806,40 @@ async function saveEditedHistory(recordId) {
     ).textContent =
       user +
       "　現在ポイント：" +
-     getBowelPointText(points[user]);
+      getBowelPointText(points[user]);
+
+
+    // =========================
+    // ★ 失敗時も表示を元へ戻す
+    // =========================
+
+    const dayResult =
+      document.getElementById(
+        "bowelCheckResult"
+      );
+
+    if (
+      dayResult &&
+      dayResult.innerHTML.trim() !== ""
+    ) {
+      checkTodayBowelStatus();
+    }
+
+
+    const nightResult =
+      document.getElementById(
+        "nightBowelCheckResult"
+      );
+
+    if (
+      nightResult &&
+      nightResult.innerHTML.trim() !== ""
+    ) {
+      checkNightBowelStatus();
+    }
+
+
+    updateHomeMedicineStatus();
 
     saveData();
 
