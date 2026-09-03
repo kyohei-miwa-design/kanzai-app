@@ -2940,13 +2940,21 @@ function checkTodayBowelStatus() {
   const today = new Date();
 
   const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
+  const month =
+    String(today.getMonth() + 1).padStart(2, "0");
+  const day =
+    String(today.getDate()).padStart(2, "0");
 
-  const todayText = `${year}-${month}-${day}`;
+  const todayText =
+    `${year}-${month}-${day}`;
 
   let registeredUsers = [];
   let unregisteredUsers = [];
+
+
+  // =========================
+  // 利用者ごとに判定
+  // =========================
 
   for (let user in points) {
 
@@ -2958,25 +2966,42 @@ function checkTodayBowelStatus() {
       continue;
     }
 
-    // 今日この利用者の排便登録があるか確認
-    const hasTodayHistory = histories.some(history => {
 
-      const historyDate =
-        String(history.date).slice(0, 10);
+    // 今日の「有効な」履歴だけ取得
+    const todayHistories =
+      histories.filter(history => {
 
-      return (
-        history.user === user &&
-        historyDate === todayText
-      );
-    });
+        const historyDate =
+          String(history.date).slice(0, 10);
 
-    if (hasTodayHistory) {
-      registeredUsers.push(user);
+        return (
+          history.user === user &&
+          historyDate === todayText &&
+          String(
+            history.status || ""
+          ).trim() !== "cancelled"
+        );
+      });
+
+
+    if (todayHistories.length > 0) {
+
+      registeredUsers.push({
+        user: user,
+        histories: todayHistories
+      });
+
     } else {
+
       unregisteredUsers.push(user);
+
     }
   }
 
+
+  // =========================
+  // HTML作成
+  // =========================
 
   let html = `
     <div class="user-card">
@@ -2993,42 +3018,33 @@ function checkTodayBowelStatus() {
 
   if (registeredUsers.length > 0) {
 
-    for (let user of registeredUsers) {
+    for (let item of registeredUsers) {
 
-      const todayHistories = histories.filter(history => {
+      const types =
+        item.histories.map(history => {
 
-      const historyDate =
-      String(history.date).slice(0, 10);
+          if (history.type === "なし") {
+            return "排便なし";
+          }
 
-      return (
-      history.user === user &&
-      historyDate === todayText &&
-      String(history.status).trim() !== "cancelled"
-    );
-  });
+          return history.type || "";
 
-      let bowelText = "";
+        });
 
-      if (todayHistory) {
-
-        if (todayHistory.type === "なし") {
-          bowelText = "排便なし";
-
-        } else {
-          bowelText = todayHistory.type || "";
-        }
-
-      }
 
       html += `
         <div class="day-registered-item">
 
-          <span>
-            ✓ ${user}
+          <span class="day-registered-check">
+            ✓
           </span>
 
-          <span>
-            ${bowelText}
+          <span class="day-registered-name">
+            ${item.user}
+          </span>
+
+          <span class="day-registered-type">
+            ${types.join("、")}
           </span>
 
         </div>
@@ -3037,7 +3053,11 @@ function checkTodayBowelStatus() {
 
   } else {
 
-    html += "なし<br>";
+    html += `
+      <div class="day-empty-message">
+        なし
+      </div>
+    `;
 
   }
 
@@ -3064,7 +3084,6 @@ function checkTodayBowelStatus() {
             type="checkbox"
             class="noBowelCheck"
             value="${user}"
-            checked
           >
 
           <span>${user}</span>
@@ -3088,17 +3107,20 @@ function checkTodayBowelStatus() {
 
   } else {
 
-    html += "なし<br>";
+    html += `
+      <div class="day-empty-message">
+        なし
+      </div>
+    `;
 
   }
 
 
   // =========================
-  // 閉じるボタン
+  // 閉じる
   // =========================
 
   html += `
-
       <br>
 
       <button
