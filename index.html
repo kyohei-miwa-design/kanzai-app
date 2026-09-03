@@ -5040,21 +5040,22 @@ async function confirmCancelHistory(recordId) {
     // =========================
 
     const recalculated =
-     recalculateBowelStatusAfterCancel(
-     history
-     );
+      recalculateBowelStatusAfterCancel(
+        history
+      );
 
-     points[user] =
-     Number(
-     recalculated.point || 0
-     );
+    points[user] =
+      Number(
+        recalculated.point || 0
+      );
 
-     lastDates[user] =
-     recalculated.lastDate
-     ? String(
-        recalculated.lastDate
-      ).slice(0, 10)
-     : "";
+    lastDates[user] =
+      recalculated.lastDate
+        ? String(
+            recalculated.lastDate
+          ).slice(0, 10)
+        : "";
+
 
     // =========================
     // ③ 画面を即時更新
@@ -5079,8 +5080,10 @@ async function confirmCancelHistory(recordId) {
       "result"
     ).textContent =
       user +
-     "　現在ポイント：" +
-     getBowelPointText(points[user]);
+      "　現在ポイント：" +
+      getBowelPointText(
+        points[user]
+      );
 
     saveData();
 
@@ -5206,8 +5209,45 @@ async function confirmCancelHistory(recordId) {
       "result"
     ).textContent =
       user +
-    "　現在ポイント：" +
-    getBowelPointText(points[user]);
+      "　現在ポイント：" +
+      getBowelPointText(
+        points[user]
+      );
+
+
+    // =========================
+    // ⑥-2 開いている集計画面を更新
+    // =========================
+
+    const dayResult =
+      document.getElementById(
+        "bowelCheckResult"
+      );
+
+    if (
+      dayResult &&
+      dayResult.innerHTML.trim() !== ""
+    ) {
+
+      checkTodayBowelStatus();
+
+    }
+
+
+    const nightResult =
+      document.getElementById(
+        "nightBowelCheckResult"
+      );
+
+    if (
+      nightResult &&
+      nightResult.innerHTML.trim() !== ""
+    ) {
+
+      checkNightBowelStatus();
+
+    }
+
 
     saveData();
 
@@ -5264,8 +5304,46 @@ async function confirmCancelHistory(recordId) {
       "result"
     ).textContent =
       user +
-     "　現在ポイント：" +
-      getBowelPointText(points[user]);
+      "　現在ポイント：" +
+      getBowelPointText(
+        points[user]
+      );
+
+
+    // =========================
+    // 失敗時も開いている集計を
+    // 元の状態で再描画
+    // =========================
+
+    const dayResult =
+      document.getElementById(
+        "bowelCheckResult"
+      );
+
+    if (
+      dayResult &&
+      dayResult.innerHTML.trim() !== ""
+    ) {
+
+      checkTodayBowelStatus();
+
+    }
+
+
+    const nightResult =
+      document.getElementById(
+        "nightBowelCheckResult"
+      );
+
+    if (
+      nightResult &&
+      nightResult.innerHTML.trim() !== ""
+    ) {
+
+      checkNightBowelStatus();
+
+    }
+
 
     saveData();
 
