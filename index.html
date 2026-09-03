@@ -3815,7 +3815,9 @@ async function login() {
 }
 
 function restoreLogin() {
+
   const savedRole = localStorage.getItem("loginRole");
+
   const savedUnit = localStorage.getItem("loginUnit");
 
   if (!savedRole || !savedUnit) {
@@ -3832,6 +3834,7 @@ function restoreLogin() {
     "block";
 
   updateRoleUI();
+
   updateUserSelects();
 
   document.getElementById("status").innerHTML =
@@ -3842,6 +3845,9 @@ function restoreLogin() {
 
   document.getElementById("ruleList").innerHTML =
     getRuleListHtml();
+
+  // ★ ホームの投薬状況を更新
+  updateHomeMedicineStatus();
 }
 
 async function loadInitialDataFromGoogle() {
@@ -3969,7 +3975,10 @@ const data =
     ).innerHTML =
       getCompletedListHtml();
 
-    saveData();
+// ★ 初期データ取得後にホーム投薬状況を更新
+updateHomeMedicineStatus();
+
+saveData();
 
     console.timeEnd(
       "初期データ一括取得"
