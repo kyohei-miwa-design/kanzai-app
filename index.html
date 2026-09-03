@@ -3,7 +3,5225 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, ini<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+  <style>
+body {
+  font-family: sans-serif;
+  background: #f4f6f8;
+  padding: 16px;
+}
+
+h1 {
+  text-align: center;
+}
+
+h2 {
+  border-left: 6px solid #4a90e2;
+  padding-left: 8px;
+  margin-top: 24px;
+}
+
+select, input, button {
+  width: 100%;
+  font-size: 18px;
+  padding: 10px;
+  margin: 6px 0 12px;
+  box-sizing: border-box;
+}
+
+button {
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+}
+
+#status, #todayTarget, #result {
+  background: white;
+  padding: 12px;
+  border-radius: 8px;
+  line-height: 1.8;
+}
+
+.user-card {
+  background: white;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  line-height: 1.8;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+.user-card strong {
+  font-size: 20px;
+}
+
+.target-card {
+  background: #fff3cd;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  line-height: 1.8;
+  border-left: 6px solid #ff9800;
+}
+
+.target-card strong {
+  font-size: 20px;
+}
+
+.history-card {
+  background: white;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  line-height: 1.6;
+  border-left: 5px solid #777;
+}
+
+.rule-delete-btn {
+  width: auto;
+  padding: 2px 8px;
+  margin: 0;
+  font-size: 14px;
+}
+
+#newDataMessage {
+  display: none;
+  position: fixed;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  min-width: 240px;
+  max-width: calc(100% - 32px);
+
+  padding: 13px 20px;
+  border-radius: 10px;
+
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+
+  z-index: 20000;
+
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.25);
+
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+
+/* 通常 */
+#newDataMessage.toast-info {
+  background: #333;
+}
+
+/* 保存中 */
+#newDataMessage.toast-saving {
+  background: #1976d2;
+}
+
+/* 成功 */
+#newDataMessage.toast-success {
+  background: #2e7d32;
+}
+
+/* 失敗 */
+#newDataMessage.toast-error {
+  background: #d32f2f;
+}
+
+/* 本日の対象者チェック用 */
+.target-card label {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  background: white;
+  padding: 14px 16px;
+  margin: 10px 0;
+
+  border: 1px solid #ddd;
+  border-radius: 10px;
+
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* checkboxだけ100%幅を解除 */
+.target-card input[type="checkbox"] {
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  flex-shrink: 0;
+
+  cursor: pointer;
+}
+
+.medicine-name {
+  flex: 1;
+}
+
+.medicine-time {
+  min-width: 40px;
+  text-align: center;
+
+  padding: 4px 8px;
+  border-radius: 7px;
+
+  font-weight: bold;
+}
+
+/* 朝 */
+.medicine-time.morning {
+  color: #1976d2;
+  background: #eaf4ff;
+  border: 1px solid #90caf9;
+}
+
+/* 夕 */
+.medicine-time.evening {
+  color: #188038;
+  background: #eaf7ec;
+  border: 1px solid #81c995;
+}
+
+.night-no-bowel-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  background: #f7f9fc;
+  border: 1px solid #d8dee8;
+  border-radius: 10px;
+
+  padding: 12px 14px;
+  margin: 8px 0;
+
+  font-size: 17px;
+}
+
+.night-no-bowel-item input[type="checkbox"] {
+  width: 25px;
+  height: 25px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.night-no-bowel-item span:nth-of-type(1) {
+  flex: 1;
+  font-weight: bold;
+}
+
+.night-no-bowel-item span:nth-of-type(2) {
+  color: #555;
+}
+
+.night-alert {
+  background: #ffebee;
+  border: 4px solid #d32f2f;
+  color: #b71c1c;
+
+  padding: 20px;
+  margin: 20px 0;
+
+  border-radius: 12px;
+
+  text-align: center;
+
+  font-size: 22px;
+  font-weight: bold;
+
+  animation: nightBlink 1.5s infinite;
+}
+
+@keyframes nightBlink {
+
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.confirm-block{
+
+  background:#f8f9fa;
+
+  border-radius:10px;
+
+  padding:12px;
+
+  margin:10px 0;
+
+}
+
+.confirm-title{
+
+  font-size:18px;
+
+  font-weight:bold;
+
+  margin-bottom:8px;
+
+}
+
+.confirm-ok{
+
+  color:#2e7d32;
+
+  font-weight:bold;
+
+}
+
+.confirm-ng{
+
+  color:#d32f2f;
+
+  font-weight:bold;
+
+}
+
+.confirm-info{
+
+  color:#555;
+
+  margin-top:4px;
+
+}
+
+.night-alert-units {
+  background: white;
+  border: 2px solid #d32f2f;
+  border-radius: 10px;
+
+  padding: 12px;
+  margin: 8px auto;
+
+  max-width: 360px;
+
+  font-size: 24px;
+  line-height: 1.7;
+}
+
+.app-version {
+  text-align: center;
+  color: #777;
+  font-size: 14px;
+  margin-top: -10px;
+  margin-bottom: 18px;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.history-header h2 {
+  flex: 1;
+  margin: 0;
+}
+
+.history-toggle-button {
+  width: auto;
+  min-width: 145px;
+  margin: 0;
+  padding: 9px 12px;
+  font-size: 15px;
+}
+
+.history-clear-button {
+  background: #757575;
+  margin-top: 14px;
+}
+
+.history-group-title {
+  margin: 18px 0 10px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.history-card {
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+
+.history-card:active {
+  transform: scale(0.98);
+}
+
+.history-card-today {
+  background: #eef7ff;
+  border-left-color: #1976d2;
+}
+
+.history-card-past {
+  background: #ffffff;
+  border-left-color: #9e9e9e;
+  opacity: 0.9;
+}
+
+.history-card-cancelled {
+  background: #f3f3f3;
+  border-left-color: #d32f2f;
+  color: #777;
+  text-decoration: line-through;
+  opacity: 0.75;
+}
+
+.history-status {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #ffebee;
+  color: #b71c1c;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.history-card {
+  position: relative;
+  padding-right: 56px;
+}
+
+.history-menu-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  margin: 0;
+
+  border-radius: 50%;
+
+  background: #f1f3f4;
+  color: #333;
+
+  font-size: 26px;
+  line-height: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.history-menu-button:hover {
+  background: #e0e0e0;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 18px;
+  box-sizing: border-box;
+
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+
+  background: white;
+  border-radius: 16px;
+  padding: 18px;
+
+  box-sizing: border-box;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.modal-header h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 21px;
+}
+
+.modal-close-icon {
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+
+  border-radius: 50%;
+  background: #eeeeee;
+  color: #333;
+
+  font-size: 27px;
+  line-height: 1;
+}
+
+#commonModalBody {
+  padding: 18px 2px;
+  line-height: 1.8;
+}
+
+#commonModalButtons {
+  display: grid;
+  gap: 10px;
+}
+
+.modal-action-edit {
+  background: #1976d2;
+}
+
+.modal-action-cancel {
+  background: #d32f2f;
+}
+
+.modal-action-close {
+  background: #757575;
+}
+
+
+.history-edit-form {
+  display: grid;
+  gap: 14px;
+}
+
+.edit-history-user {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.edit-history-date {
+  color: #666;
+  font-size: 14px;
+}
+
+.edit-history-label {
+  margin-top: 8px;
+  font-size: 17px;
+  font-weight: bold;
+}
+
+.edit-history-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.edit-history-options label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-height: 52px;
+  padding: 8px;
+
+  border: 2px solid #ddd;
+  border-radius: 10px;
+
+  font-size: 18px;
+  font-weight: bold;
+
+  cursor: pointer;
+}
+
+.edit-history-options input {
+  width: 20px;
+  height: 20px;
+}
+
+.edit-history-note {
+  margin-top: 8px;
+  padding: 10px;
+
+  background: #fff8e1;
+  border-radius: 8px;
+
+  color: #6d4c00;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.history-cancel-form {
+  display: grid;
+  gap: 14px;
+}
+
+.cancel-history-user {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.cancel-history-date {
+  color: #666;
+  font-size: 14px;
+}
+
+.cancel-history-type {
+  padding: 12px;
+
+  background: #f5f5f5;
+  border-radius: 8px;
+
+  font-size: 18px;
+}
+
+.cancel-history-warning {
+  margin-top: 8px;
+  padding: 14px;
+
+  background: #fff3f3;
+  border: 1px solid #e57373;
+  border-radius: 8px;
+
+  color: #b71c1c;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.modal-action-cancel-history {
+  width: 100%;
+  padding: 14px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #d32f2f;
+  color: white;
+
+  font-size: 16px;
+  font-weight: bold;
+
+  cursor: pointer;
+}
+
+/* =========================
+   日勤 排便なし確認
+========================= */
+
+.day-no-bowel-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  background: #f7f9fc;
+  border: 1px solid #d8dee8;
+  border-radius: 10px;
+
+  padding: 12px 14px;
+  margin: 8px 0;
+
+  font-size: 17px;
+}
+
+/* 共通inputの width:100% を解除 */
+.day-no-bowel-item input[type="checkbox"] {
+  width: 25px;
+  height: 25px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* 利用者名 */
+.day-no-bowel-item span:nth-of-type(1) {
+  flex: 1;
+  font-weight: bold;
+}
+
+/* 「排便なし」 */
+.day-no-bowel-item span:nth-of-type(2) {
+  color: #555;
+}
+
+/* =========================
+   日勤 登録済み
+========================= */
+
+.day-registered-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 14px;
+  margin: 6px 0;
+
+  background: #f1f8f3;
+  border: 1px solid #c8e6c9;
+  border-radius: 10px;
+}
+
+.day-registered-check {
+  color: #198754;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.day-registered-name {
+  flex: 1;
+  font-weight: bold;
+}
+
+.day-registered-type {
+  color: #444;
+  font-weight: bold;
+}
+
+.day-empty-message {
+  color: #666;
+  padding: 8px 0;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="loginArea">
+
+  <h1>ログイン</h1>
+
+  <p>ユーザーID</p>
+<input
+  type="text"
+  id="loginUserId"
+  placeholder="例：care01"
+>
+
+<p>パスワード</p>
+<input
+  type="password"
+  id="loginPassword"
+  placeholder="パスワード"
+>
+
+<p id="loginMessage"></p>
+
+<button onclick="login()">ログイン</button>
+
+
+</div>
+
+<div id="appArea" style="display:none;">
+
+  <h1>緩下剤管理アプリ</h1>
+
+　<p class="app-version">
+  Ver.0.7.0
+　</p>
+
+  <button onclick="logout()">ログアウト</button>
+
+  <div id="newDataMessage"></div>
+  <div id="nightAlertArea"></div>
+<p>利用者</p>
+<select id="userSelect">
+  <option>A様</option>
+  <option>B様</option>
+  <option>C様</option>
+</select>
+
+<p>排便種類</p>
+<select id="bowelTypeSelect">
+  <option>なし</option>
+  <option>少</option>
+  <option>少1</option>
+  <option>少2</option>
+  <option>普通</option>
+  
+</select>
+
+<br><br>
+
+<button id="registerButton" onclick="register()">登録</button>
+
+<p>最終排便日</p>
+<input type="date" id="lastDate">
+
+<button onclick="changeLastDate()">
+  最終排便日を変更
+</button>
+
+<p id="result">現在ポイント：0</p>
+
+
+<div id="adminArea">
+
+  <h2>利用者追加</h2>
+  <input
+    type="text"
+    id="newUserName"
+    placeholder="例：D様"
+  >
+  <button onclick="addUser()">
+    追加
+  </button>
+
+
+  <h2>利用者削除</h2>
+
+  <button onclick="deleteUser()">
+    削除
+  </button>
+
+
+  <h2>所属ユニット変更</h2>
+
+  <p>対象利用者</p>
+  <select id="unitUserSelect"></select>
+
+  <p>所属ユニット</p>
+  <select id="unitSelect">
+    <option value="1">1ユニット</option>
+    <option value="2">2ユニット</option>
+    <option value="3">3ユニット</option>
+    <option value="4">4ユニット</option>
+  </select>
+
+  <button onclick="changeUserUnit()">
+    ユニット変更
+  </button>
+
+
+  <h2>下剤ルール編集</h2>
+
+  <h2>登録済みルール一覧</h2>
+
+  <div id="ruleList">
+    まだルールはありません
+  </div>
+
+  <p>対象利用者</p>
+  <select id="ruleUserSelect"></select>
+
+  <p>未排便日数</p>
+  <input
+    type="number"
+    id="ruleDay"
+    placeholder="例：2"
+  >
+
+  <p>薬剤・時間</p>
+  <input
+    type="text"
+    id="ruleMedicine"
+    placeholder="例：ピコ15滴 朝"
+  >
+
+  <button onclick="saveRule()">
+    ルール保存
+  </button>
+
+</div>
+
+
+<div id="nightConfirmArea">
+
+  <h2>🌙 夜勤帯の排便確認</h2>
+
+  <p>
+    対象時間：前日16:00 ～ 本日8:00
+  </p>
+
+  <button onclick="checkNightBowelStatus()">
+    夜勤帯の排便状況を集計
+  </button>
+
+  <div id="nightBowelCheckResult"></div>
+
+</div>
+
+<h2>排便確認</h2>
+
+<button onclick="checkTodayBowelStatus()">
+  今日の排便状況を集計
+</button>
+
+<div id="bowelCheckResult"></div>
+
+
+<h2>投薬報告</h2>
+
+<button onclick="createMedicineReport()">
+  投薬報告を作成
+</button>
+
+<div id="medicineReport"></div>
+
+<div id="dailyConfirmArea">
+
+  <h2>本日の排便集計状況</h2>
+
+<button
+  id="dailyConfirmRefreshButton"
+  onclick="manualRefreshDailyConfirm()"
+>
+  🔄 集計状況を更新
+</button>
+
+  <div id="dailyConfirmStatus">
+  読み込み中...
+  </div>
+
+</div>
+
+<h2>利用者状況</h2>
+
+<div id="status">
+A様：0点<br>
+B様：0点<br>
+C様：0点
+</div>
+
+<h2>本日の対象者</h2>
+<div id="todayTarget">
+まだ対象者はいません
+</div>
+
+<h2>本日実施済み</h2>
+<div id="completedList">
+まだ実施記録はありません
+</div>
+
+<div class="history-section">
+
+  <div class="history-header">
+    <h2>履歴</h2>
+
+    <button
+      id="historyToggleButton"
+      class="history-toggle-button"
+      onclick="toggleHistory()"
+    >
+      ▼ 履歴を表示
+    </button>
+  </div>
+
+  <div id="historyArea" style="display:none;">
+
+    <button
+      class="history-clear-button"
+      onclick="clearHistory()"
+    >
+      履歴を全削除
+    </button>
+
+    <div id="history">
+      まだ履歴はありません
+    </div>
+
+  </div>
+
+</div>
+
+<div
+  id="commonModal"
+  class="modal-overlay"
+  style="display:none;"
+  onclick="closeCommonModalByOverlay(event)"
+>
+  <div
+    class="modal-content"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="commonModalTitle"
+  >
+
+    <div class="modal-header">
+      <h3 id="commonModalTitle">
+        詳細
+      </h3>
+
+      <button
+        class="modal-close-icon"
+        onclick="closeCommonModal()"
+        aria-label="閉じる"
+      >
+        ×
+      </button>
+    </div>
+
+    <div id="commonModalBody"></div>
+
+    <div id="commonModalButtons"></div>
+
+  </div>
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzq9qSuPmvSzAbv_uLFbIrXmVJ3DNHkpdxJKYIExyPgti-N3gU1iT7W1eWa2KRCJurE/exec";
+
+let rules = {
+  "A様": {
+    2: ["ピコ15滴 朝"],
+    3: ["ピコ30滴 朝", "ピコ15滴 夕", "センノシド 夕"],
+    4: ["テレミン 昼", "センノシド 夕"]
+  },
+  "B様": {
+    2: ["センノシド 夕"],
+    3: ["ピコ15滴 朝", "センノシド 夕"],
+    4: ["テレミン 昼"]
+  },
+  "C様": {
+    2: ["ピコ15滴 朝"],
+    3: ["ピコ30滴 朝"],
+    4: ["テレミン 昼", "センノシド 夕"]
+  }
+};
+
+let lastDates = {
+  "A様": "2026-06-18",
+  "B様": "2026-06-19",
+  "C様": "2026-06-20"
+};
+
+let userUnits = {};
+
+let currentUnit = "";
+let currentRole = "";
+
+let points = {
+  "A様": 0,
+  "B様": 0,
+  "C様": 0
+};
+
+let histories = [];
+
+let checks = {};
+
+let checkDate = "";
+
+let initialSyncFinished = false;
+let newDataMessageTimer = null;
+let isRefreshing = false;
+
+function getAppDataSnapshot() {
+  return JSON.stringify({
+    points: points,
+    lastDates: lastDates,
+    rules: rules,
+    checks: checks,
+    histories: histories
+  });
+}
+
+function showToast(
+  message,
+  type = "info",
+  duration = 2000
+) {
+
+  const toast =
+    document.getElementById(
+      "newDataMessage"
+    );
+
+  if (!toast) {
+    return;
+  }
+
+  /*
+    前回の自動非表示タイマーを解除
+  */
+  if (newDataMessageTimer !== null) {
+
+    clearTimeout(
+      newDataMessageTimer
+    );
+
+    newDataMessageTimer = null;
+  }
+
+  /*
+    表示内容
+  */
+  toast.textContent = message;
+
+  /*
+    クラスを一旦リセット
+  */
+  toast.className = "";
+
+  if (type === "saving") {
+
+    toast.classList.add(
+      "toast-saving"
+    );
+
+  } else if (type === "success") {
+
+    toast.classList.add(
+      "toast-success"
+    );
+
+  } else if (type === "error") {
+
+    toast.classList.add(
+      "toast-error"
+    );
+
+  } else {
+
+    toast.classList.add(
+      "toast-info"
+    );
+  }
+
+  toast.style.display = "block";
+
+  /*
+    duration = 0 の場合は
+    自動では消さない。
+
+    「保存中…」などで使う。
+  */
+  if (duration > 0) {
+
+    newDataMessageTimer =
+      setTimeout(() => {
+
+        toast.style.display =
+          "none";
+
+        newDataMessageTimer =
+          null;
+
+      }, duration);
+  }
+}
+
+function hideToast() {
+
+  const toast =
+    document.getElementById(
+      "newDataMessage"
+    );
+
+  if (!toast) {
+    return;
+  }
+
+  if (newDataMessageTimer !== null) {
+
+    clearTimeout(
+      newDataMessageTimer
+    );
+
+    newDataMessageTimer = null;
+  }
+
+  toast.style.display = "none";
+}
+
+function showNewDataMessage() {
+
+  showToast(
+    "✨ 新しいデータを受信しました",
+    "info",
+    3000
+  );
+}
+
+async function register() {
+
+  const user =
+    document.getElementById("userSelect").value;
+
+  const type =
+    document.getElementById("bowelTypeSelect").value;
+
+
+  // =========================
+  // 入力チェック
+  // =========================
+
+  if (!user) {
+
+    showToast(
+      "⚠ 利用者を選択してください",
+      "error",
+      3000
+    );
+
+    return;
+  }
+
+
+  if (type === "なし") {
+
+    showToast(
+      "⚠ 排便量を選択してください",
+      "error",
+      3000
+    );
+
+    return;
+  }
+
+
+  // =========================
+  // 二重登録防止
+  // =========================
+
+  const registerButton =
+    document.getElementById(
+      "registerButton"
+    );
+
+  if (registerButton) {
+
+    registerButton.disabled = true;
+
+    registerButton.style.opacity =
+      "0.6";
+  }
+
+
+  // =========================
+  // 登録直前の状態を保存
+  // =========================
+
+  const previousLastDate =
+    lastDates[user] || "";
+
+  const previousPoint =
+    Number(
+      points[user] || 0
+    );
+
+
+  try {
+
+    // =========================
+    // ① 新ポイント方式で加算
+    // =========================
+
+    const addPoint =
+      getBowelPoint(type);
+
+    points[user] =
+      previousPoint +
+      addPoint;
+
+
+    // =========================
+    // ② 内部9以上で排便成立
+    // =========================
+
+    if (points[user] >= 9) {
+
+      const todayText =
+        getTodayText();
+
+      points[user] = 0;
+
+      lastDates[user] =
+        todayText;
+
+      document.getElementById(
+        "lastDate"
+      ).value =
+        todayText;
+
+      document.getElementById(
+        "result"
+      ).textContent =
+        user +
+        "　排便成立　最終排便日を今日に更新しました";
+
+    } else {
+
+      document.getElementById(
+        "result"
+      ).textContent =
+        user +
+        "　現在ポイント：" +
+        getBowelPointText(
+          points[user]
+        );
+    }
+
+
+    // =========================
+    // ③ 画面を即時更新
+    // =========================
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    saveData();
+
+
+    showToast(
+      "保存中…",
+      "saving",
+      0
+    );
+
+
+    // =========================
+    // ④ Googleへ1回だけPOST
+    // =========================
+
+    console.time(
+      "排便登録一括保存"
+    );
+
+
+    const response =
+      await fetch(
+        API_URL,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "text/plain;charset=utf-8"
+          },
+
+          body: JSON.stringify({
+
+            action:
+              "registerBowel",
+
+            user:
+              user,
+
+            type:
+              type,
+
+            // 新内部ポイント
+            point:
+              points[user],
+
+            lastDate:
+              lastDates[user] || "",
+
+            // 修正・取消時の復元用
+            previousLastDate:
+              previousLastDate,
+
+            previousPoint:
+              previousPoint
+          }),
+
+          cache: "no-store"
+        }
+      );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "排便登録失敗：HTTP " +
+        response.status
+      );
+    }
+
+
+    const result =
+      await response.json();
+
+
+    if (!result.ok) {
+
+      throw new Error(
+        result.message ||
+        "排便登録に失敗しました"
+      );
+    }
+
+
+    console.timeEnd(
+      "排便登録一括保存"
+    );
+
+
+    // =========================
+    // ⑤ 返ってきた履歴を追加
+    // =========================
+
+    if (result.history) {
+
+      histories.unshift(
+        result.history
+      );
+    }
+
+
+    // =========================
+    // ⑥ Google側の確定値を反映
+    // =========================
+
+    points[user] =
+      Number(
+        result.point || 0
+      );
+
+    lastDates[user] =
+      result.lastDate
+        ? String(
+            result.lastDate
+          ).slice(0, 10)
+        : "";
+
+
+    // =========================
+    // ⑦ 画面を最終更新
+    // =========================
+
+    document.getElementById(
+      "history"
+    ).innerHTML =
+      getHistoryHtml();
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    saveData();
+
+
+    // =========================
+    // ⑧ 完了
+    // =========================
+
+    showToast(
+      "✓ 登録しました",
+      "success",
+      2000
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "排便登録エラー:",
+      error
+    );
+
+
+    // =========================
+    // 保存失敗 → 登録前へ復元
+    // =========================
+
+    points[user] =
+      previousPoint;
+
+    lastDates[user] =
+      previousLastDate;
+
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    document.getElementById(
+      "lastDate"
+    ).value =
+      previousLastDate || "";
+
+    document.getElementById(
+      "result"
+    ).textContent =
+      "登録に失敗しました";
+
+    saveData();
+
+
+    showToast(
+      "⚠ 保存に失敗しました",
+      "error",
+      4000
+    );
+
+
+  } finally {
+
+    if (registerButton) {
+
+      registerButton.disabled =
+        false;
+
+      registerButton.style.opacity =
+        "";
+    }
+  }
+}
+
+function getNoBowelDays(user) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const lastDate = new Date(lastDates[user]);
+  lastDate.setHours(0, 0, 0, 0);
+
+  const diffTime = today - lastDate;
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  return diffDays;
+}
+
+function getTodayTarget() {
+  let result = "";
+
+  for (let user in lastDates) {
+
+    // 現在のユニット以外は表示しない
+    if (
+      currentUnit !== "all" &&
+      userUnits[user] !== currentUnit
+    ) {
+      continue;
+    }
+
+    const days = getNoBowelDays(user);
+    const medicines = rules[user]?.[days];
+
+    if (!medicines) {
+      continue;
+    }
+
+    // まだ実施していない薬だけ残す
+    const remaining = medicines.filter(medicine => {
+
+      const checkKey =
+        user + "_" + days + "_" + medicine;
+
+      return !checks[checkKey];
+    });
+
+    // 全部実施済みなら利用者ごと非表示
+    if (remaining.length === 0) {
+      continue;
+    }
+
+
+    // 利用者カード開始
+    result +=
+      "<div class='target-card'>" +
+      "<strong>⚠ " + user + "</strong><br>" +
+      "未排便日数：" + days + "日";
+
+
+    // 薬を1つずつ表示
+    for (let medicine of remaining) {
+
+      const checkKey =
+        user + "_" + days + "_" + medicine;
+
+
+      // 朝・夕を判定
+      const timing =
+        medicine.includes("朝")
+          ? "朝"
+          : medicine.includes("夕")
+          ? "夕"
+          : "";
+
+
+      // 「テスト薬 朝」→「テスト薬」
+      const medicineName =
+        medicine
+          .replace(" 朝", "")
+          .replace(" 夕", "");
+
+
+      result +=
+        "<label>" +
+
+        "<input type='checkbox' onchange=\"toggleCheck('" +
+        checkKey +
+        "')\">" +
+
+        "<span class='medicine-name'>" +
+        medicineName +
+        "</span>" +
+
+        "<span class='medicine-time " +
+        (timing === "朝"
+          ? "morning"
+          : timing === "夕"
+          ? "evening"
+          : "") +
+        "'>" +
+        timing +
+        "</span>" +
+
+        "</label>";
+    }
+
+
+    // 利用者カード終了
+    result += "</div>";
+  }
+
+
+  if (result === "") {
+    return "🎉 本日の対象者はいません";
+  }
+
+  return result;
+}
+
+      
+
+
+function saveData() {
+  localStorage.setItem("points", JSON.stringify(points));
+  localStorage.setItem("lastDates", JSON.stringify(lastDates));
+  localStorage.setItem("histories", JSON.stringify(histories));
+  localStorage.setItem("rules", JSON.stringify(rules));
+  localStorage.setItem("checks", JSON.stringify(checks));
+  localStorage.setItem("checkDate", checkDate);
+}
+
+function loadData() {
+  const savedPoints = localStorage.getItem("points");
+  const savedLastDates = localStorage.getItem("lastDates");
+  const savedHistories = localStorage.getItem("histories");
+  const savedRules = localStorage.getItem("rules");
+  const savedChecks = localStorage.getItem("checks");
+  const savedCheckDate = localStorage.getItem("checkDate");
+
+  const todayText = new Date().toISOString().slice(0, 10);
+
+  if (savedCheckDate !== null) {
+    checkDate = savedCheckDate;
+  }
+
+  if (savedChecks !== null) {
+    checks = JSON.parse(savedChecks);
+  }
+
+  if (checkDate !== todayText) {
+    checks = {};
+    checkDate = todayText;
+    saveData();
+  }
+
+  if (savedRules !== null) {
+    rules = JSON.parse(savedRules);
+  }
+
+  if (savedHistories !== null) {
+    histories = JSON.parse(savedHistories);
+  }
+
+  if (savedPoints !== null) {
+    points = JSON.parse(savedPoints);
+  }
+
+  if (savedLastDates !== null) {
+    lastDates = JSON.parse(savedLastDates);
+  }
+
+  document.getElementById("history").innerHTML = getHistoryHtml();
+  document.getElementById("status").innerHTML = getStatusHtml();
+  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+  document.getElementById("ruleList").innerHTML = getRuleListHtml();
+  document.getElementById("completedList").innerHTML = getCompletedListHtml();
+
+  updateUserSelects();
+  updateRoleUI();
+}
+
+async function loadUsersFromGoogle() {
+  const response = await fetchApi(API_URL + "?action=getUsers");
+  const users = await response.json();
+
+  points = {};
+  lastDates = {};
+  userUnits = {};
+
+  for (let user of users) {
+    points[user.name] = Number(user.point);
+    userUnits[user.name] = String(user.unit || "1").trim();
+
+    const date = new Date(user.lastDate);
+    lastDates[user.name] = date.toISOString().slice(0, 10);
+  }
+
+  updateUserSelects();
+  document.getElementById("status").innerHTML = getStatusHtml();
+  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+}
+
+async function loadRulesFromGoogle() {
+  const response = await fetchApi(API_URL + "?action=getRules");
+  const googleRules = await response.json();
+
+  rules = googleRules;
+
+  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+  document.getElementById("ruleList").innerHTML = getRuleListHtml();
+
+  saveData();
+}
+
+async function loadChecksFromGoogle() {
+  const response = await fetchApi(API_URL + "?action=getChecks");
+  checks = await response.json();
+
+  document.getElementById("todayTarget").innerHTML =
+    getTodayTarget();
+
+  document.getElementById("completedList").innerHTML =
+    getCompletedListHtml();
+}
+
+async function saveRulesToGoogle() {
+  const url =
+    API_URL +
+    "?action=saveRules&rules=" +
+    encodeURIComponent(JSON.stringify(rules));
+
+  const response = await fetchApi(url);
+  const result = await response.text();
+
+  alert(result);
+
+  await loadRulesFromGoogle();
+}
+
+async function saveUsersToGoogle(showAlert = true) {
+
+  const users = [];
+
+  for (let name in points) {
+
+    users.push({
+      name: name,
+      unit: userUnits[name],
+      point: points[name],
+      lastDate: lastDates[name]
+    });
+  }
+
+  const response = await fetch(
+    API_URL,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+
+      body: JSON.stringify({
+        action: "saveUsers",
+        users: users
+      }),
+
+      cache: "no-store"
+    }
+  );
+
+  const result = await response.text();
+
+  if (!response.ok) {
+    throw new Error(
+      "users保存失敗：HTTP " +
+      response.status
+    );
+  }
+
+  if (result !== "OK") {
+    throw new Error(
+      "users保存失敗：" +
+      result
+    );
+  }
+
+  if (showAlert) {
+    alert(result);
+  }
+
+  /*
+    ★ここ重要
+
+    保存した内容はすでに
+    points / lastDates に入っているので、
+    Googleから再取得する必要はない。
+
+    await loadUsersFromGoogle();
+    は削除。
+  */
+}
+
+async function saveChecksToGoogle() {
+  const url =
+    API_URL +
+    "?action=saveChecks&checks=" +
+    encodeURIComponent(JSON.stringify(checks));
+
+  const response = await fetchApi(url);
+
+  if (!response.ok) {
+    throw new Error("実施チェックの保存に失敗しました");
+  }
+
+  const result = await response.text();
+
+  if (result !== "OK") {
+    throw new Error(result);
+  }
+}
+
+async function loadHistoriesFromGoogle() {
+  try {
+    const response = await fetchApi(
+      API_URL + "?action=getHistories"
+    );
+
+    histories = await response.json();
+
+    document.getElementById("history").innerHTML =
+      getHistoryHtml();
+
+  } catch (error) {
+    console.error("履歴読込エラー", error);
+  }
+}
+
+async function addHistoryToGoogle(history) {
+  try {
+    await fetchApi(
+      API_URL +
+        "?action=addHistory&history=" +
+        encodeURIComponent(JSON.stringify(history))
+    );
+  } catch (error) {
+    console.error("履歴保存エラー", error);
+  }
+}
+
+async function clearHistoriesFromGoogle() {
+  try {
+    await fetchApi(
+      API_URL + "?action=clearHistories"
+    );
+  } catch (error) {
+    console.error("履歴削除エラー", error);
+  }
+}
+
+async function initialize() {
+
+  loadData();
+
+  restoreLogin();
+
+  // ログインしている時だけ通信
+  if (currentRole !== "") {
+
+    await loadInitialDataFromGoogle();
+
+    setInterval(
+      refreshFromGoogle,
+      30000
+    );
+
+  }
+
+}
+
+initialize();
+
+async function refreshFromGoogle() {
+
+  if (isRefreshing) {
+    console.log("更新中のため今回の自動更新をスキップ");
+    return;
+  }
+
+  isRefreshing = true;
+
+  try {
+    const beforeData = getAppDataSnapshot();
+
+    // 頻繁に変わるデータだけ自動更新
+    await loadChecksFromGoogle();
+    await loadHistoriesFromGoogle();
+    await loadDailyConfirmStatus();
+
+    const afterData = getAppDataSnapshot();
+
+    if (
+      initialSyncFinished &&
+      beforeData !== afterData
+    ) {
+      showNewDataMessage();
+    }
+
+    initialSyncFinished = true;
+
+    console.log("Googleの最新データを読み込みました");
+
+  } catch (error) {
+    console.error("自動更新に失敗しました", error);
+
+  } finally {
+    isRefreshing = false;
+  }
+}
+
+async function addUser() {
+  const name = document.getElementById("newUserName").value;
+
+  if (name === "") {
+    alert("利用者名を入力してください");
+    return;
+  }
+
+  points[name] = 0;
+  userUnits[name] = "1";
+  lastDates[name] = new Date().toISOString().slice(0, 10);
+
+  
+
+  document.getElementById("newUserName").value = "";
+
+  document.getElementById("status").innerHTML =
+    getStatusHtml();
+
+  document.getElementById("todayTarget").innerHTML =
+    getTodayTarget();
+
+  updateUserSelects();
+
+  saveData();
+
+  await saveUsersToGoogle();
+
+  await loadUsersFromGoogle();
+}
+
+function getStatusHtml() {
+  let result = "";
+
+  for (let user in points) {
+
+  if (currentUnit !== "all" && userUnits[user] !== currentUnit) {
+    console.log("除外:", user);
+    continue;
+  }
+
+  console.log("表示:", user);
+
+  result +=
+     "<div class='user-card'>" +
+     "<strong>" + user + "</strong><br>" +
+     "　現在ポイント：" +
+     getBowelPointText(points[user]) +
+     "<br>" +
+     "未排便日数：" + getNoBowelDays(user) + "日" +
+     "</div>";
+}
+
+  return result;
+}
+
+
+async function deleteUser() {
+  const name = document.getElementById("userSelect").value;
+
+  if (name === "") {
+    alert("削除する利用者名を入力してください");
+    return;
+  }
+
+  if (!(name in points)) {
+    alert("その利用者はいません");
+    return;
+
+  }
+
+  delete points[name];
+  delete lastDates[name];
+  delete userUnits[name];
+
+  const select = document.getElementById("userSelect");
+  for (let i = 0; i < select.options.length; i++) {
+    if (select.options[i].textContent === name) {
+      select.remove(i);
+      break;
+    }
+  }
+
+  document.getElementById("status").innerHTML = getStatusHtml();
+  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+
+  saveData();
+
+await saveUsersToGoogle();
+
+await loadUsersFromGoogle();
+
+updateUserSelects();
+}
+
+function updateUserSelects() {
+  const userSelect = document.getElementById("userSelect");
+  const ruleUserSelect = document.getElementById("ruleUserSelect");
+  const unitUserSelect = document.getElementById("unitUserSelect");
+
+  userSelect.innerHTML = "";
+  ruleUserSelect.innerHTML = "";
+  unitUserSelect.innerHTML = "";
+
+  for (let user in points) {
+
+    // ユニット変更用は全利用者を表示
+    const option3 = document.createElement("option");
+    option3.textContent = user;
+    unitUserSelect.appendChild(option3);
+
+    // ここから下は現在のユニットだけ表示
+    if (currentUnit !== "all" && userUnits[user] !== currentUnit) {
+      continue;
+    }
+
+    const option1 = document.createElement("option");
+    option1.textContent = user;
+    userSelect.appendChild(option1);
+
+    const option2 = document.createElement("option");
+    option2.textContent = user;
+    ruleUserSelect.appendChild(option2);
+  }
+}
+
+async function changeUserUnit() {
+  const user = document.getElementById("unitUserSelect").value;
+  const newUnit = document.getElementById("unitSelect").value;
+
+  if (user === "") {
+    alert("利用者を選択してください");
+    return;
+  }
+
+  userUnits[user] = newUnit;
+
+  await saveUsersToGoogle();
+
+  document.getElementById("status").innerHTML = getStatusHtml();
+  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+  document.getElementById("ruleList").innerHTML = getRuleListHtml();
+
+  updateUserSelects();
+
+  alert(user + "を" + newUnit + "ユニットに変更しました");
+}
+
+function updateRoleUI() {
+  const adminArea =
+    document.getElementById("adminArea");
+
+  const registerButton =
+    document.getElementById("registerButton");
+
+  const dailyConfirmArea =
+    document.getElementById("dailyConfirmArea");
+
+
+  // 管理者メニュー
+  if (currentRole === "admin") {
+    adminArea.style.display = "block";
+  } else {
+    adminArea.style.display = "none";
+  }
+
+
+  // 排便登録
+  if (currentRole === "nurse") {
+    registerButton.disabled = true;
+    registerButton.textContent =
+      "看護師は登録できません";
+  } else {
+    registerButton.disabled = false;
+    registerButton.textContent = "登録";
+  }
+
+
+  // 本日の排便集計状況
+  if (
+    currentRole === "nurse" ||
+    currentRole === "admin"
+  ) {
+    dailyConfirmArea.style.display = "block";
+  } else {
+    dailyConfirmArea.style.display = "none";
+  }
+}
+
+async function login() {
+  const userId =
+    document.getElementById("loginUserId").value.trim();
+
+  const password =
+    document.getElementById("loginPassword").value.trim();
+
+  const loginMessage =
+    document.getElementById("loginMessage");
+
+  if (userId === "" || password === "") {
+    loginMessage.textContent =
+      "ユーザーIDとパスワードを入力してください";
+    return;
+  }
+
+  loginMessage.textContent = "ログイン確認中...";
+
+  try {
+    const url =
+      API_URL +
+      "?action=login" +
+      "&userId=" + encodeURIComponent(userId) +
+      "&password=" + encodeURIComponent(password);
+
+    const response = await fetchApi(url);
+    const result = await response.json();
+
+    if (!result.success) {
+      loginMessage.textContent =
+        result.message || "IDまたはパスワードが違います";
+      return;
+    }
+
+    currentRole = String(result.role).trim();
+    currentUnit = String(result.unit).trim();
+
+    localStorage.setItem("loginRole", currentRole);
+    localStorage.setItem("loginUnit", currentUnit);
+    localStorage.setItem("loginName", String(result.name || "").trim());
+
+    document.getElementById("loginArea").style.display =
+      "none";
+
+    document.getElementById("appArea").style.display =
+      "block";
+
+    updateRoleUI();
+    updateUserSelects();
+
+    document.getElementById("status").innerHTML =
+      getStatusHtml();
+
+    document.getElementById("todayTarget").innerHTML =
+      getTodayTarget();
+
+    document.getElementById("ruleList").innerHTML =
+      getRuleListHtml();
+
+     await loadInitialDataFromGoogle();
+
+    alert(result.name + "としてログインしました");
+
+  } catch (error) {
+    console.error("ログインエラー", error);
+
+    loginMessage.textContent =
+      "ログイン処理に失敗しました";
+  }
+}
+
+function restoreLogin() {
+  const savedRole = localStorage.getItem("loginRole");
+  const savedUnit = localStorage.getItem("loginUnit");
+
+  if (!savedRole || !savedUnit) {
+    return;
+  }
+
+  currentRole = savedRole;
+  currentUnit = savedUnit;
+
+  document.getElementById("loginArea").style.display =
+    "none";
+
+  document.getElementById("appArea").style.display =
+    "block";
+
+  updateRoleUI();
+  updateUserSelects();
+
+  document.getElementById("status").innerHTML =
+    getStatusHtml();
+
+  document.getElementById("todayTarget").innerHTML =
+    getTodayTarget();
+
+  document.getElementById("ruleList").innerHTML =
+    getRuleListHtml();
+}
+
+async function loadInitialDataFromGoogle() {
+
+  console.time("初期データ一括取得");
+
+  try {
+
+    const response =
+  await fetch(
+    API_URL,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type":
+          "text/plain;charset=utf-8"
+      },
+
+      body: JSON.stringify({
+        action: "getInitialData"
+      }),
+
+      cache: "no-store"
+    }
+  );
+
+if (!response.ok) {
+  throw new Error(
+    "初期データ取得失敗：HTTP " +
+    response.status
+  );
+}
+
+const data =
+  await response.json();
+
+    if (data.error) {
+      throw new Error(
+        data.message ||
+        "初期データの取得に失敗しました"
+      );
+    }
+
+    // =========================
+    // users
+    // =========================
+
+    points = {};
+    lastDates = {};
+    userUnits = {};
+
+    for (const user of data.users) {
+
+      points[user.name] =
+        Number(user.point || 0);
+
+      userUnits[user.name] =
+        String(
+          user.unit || "1"
+        ).trim();
+
+      /*
+        GAS側ですでに
+        yyyy-MM-dd形式になっているので、
+        Dateへ変換しない
+      */
+      lastDates[user.name] =
+        user.lastDate
+          ? String(
+              user.lastDate
+            ).slice(0, 10)
+          : "";
+    }
+
+    // =========================
+    // rules
+    // =========================
+
+    rules =
+      data.rules || {};
+
+    // =========================
+    // checks
+    // =========================
+
+    checks =
+      data.checks || {};
+
+    // =========================
+    // histories
+    // =========================
+
+    histories =
+      data.histories || [];
+
+    // =========================
+    // 画面をまとめて更新
+    // =========================
+
+    updateUserSelects();
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    document.getElementById(
+      "ruleList"
+    ).innerHTML =
+      getRuleListHtml();
+
+    document.getElementById(
+      "history"
+    ).innerHTML =
+      getHistoryHtml();
+
+    document.getElementById(
+      "completedList"
+    ).innerHTML =
+      getCompletedListHtml();
+
+    saveData();
+
+    console.timeEnd(
+      "初期データ一括取得"
+    );
+
+    /*
+      夜勤・日勤確定状態だけは、
+      今は既存処理をそのまま使用する。
+    */
+    console.time(
+      "集計状況取得"
+    );
+
+    await loadDailyConfirmStatus();
+
+    console.timeEnd(
+      "集計状況取得"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "初期データ一括取得エラー:",
+      error
+    );
+
+    console.timeEnd(
+      "初期データ一括取得"
+    );
+
+    throw error;
+  }
+}
+
+function addHistory(user, type) {
+  const todayText = new Date().toISOString().slice(0, 10);
+
+  histories.unshift({
+    date: todayText,
+    user: user,
+    type: type,
+    point: points[user]
+  });
+
+  document.getElementById("history").innerHTML = getHistoryHtml();
+}
+
+function getHistoryHtml() {
+
+  if (histories.length === 0) {
+    return "まだ履歴はありません";
+  }
+
+  const now = new Date();
+
+  const todayText =
+    now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2, "0") + "-" +
+    String(now.getDate()).padStart(2, "0");
+
+  const todayHistories = [];
+  const pastHistories = [];
+
+  for (let history of histories) {
+
+    const historyDate =
+      String(history.date).slice(0, 10);
+
+    if (historyDate === todayText) {
+      todayHistories.push(history);
+    } else {
+      pastHistories.push(history);
+    }
+  }
+
+  let html = "";
+
+  html += `
+    <div class="history-group-title">
+      📅 今日の記録
+    </div>
+  `;
+
+  if (todayHistories.length === 0) {
+
+    html += `
+      <div class="user-card">
+        今日の記録はありません
+      </div>
+    `;
+
+  } else {
+
+    for (let history of todayHistories) {
+      html += getHistoryCardHtml(
+        history,
+        "today"
+      );
+    }
+  }
+
+  html += `
+    <div class="history-group-title">
+      🗂 過去の記録
+    </div>
+  `;
+
+  if (pastHistories.length === 0) {
+
+    html += `
+      <div class="user-card">
+        過去の記録はありません
+      </div>
+    `;
+
+  } else {
+
+    for (let history of pastHistories) {
+      html += getHistoryCardHtml(
+        history,
+        "past"
+      );
+    }
+  }
+
+  return html;
+}
+
+function getHistoryCardHtml(history, group) {
+
+  const isCancelled =
+    String(history.status).trim() === "cancelled";
+
+  let cardClass =
+    group === "today"
+      ? "history-card-today"
+      : "history-card-past";
+
+  if (isCancelled) {
+    cardClass += " history-card-cancelled";
+  }
+
+  return `
+    <div class="history-card ${cardClass}">
+
+      ${
+        history.id && !isCancelled
+          ? `
+            <button
+              class="history-menu-button"
+              onclick="openHistoryMenu('${history.id}')"
+              aria-label="履歴メニューを開く"
+            >
+              ⋮
+            </button>
+          `
+          : ""
+      }
+
+      <strong>${history.user}</strong><br>
+
+      ${history.type}<br>
+
+      ${history.date}<br>
+
+      現在ポイント：${getBowelPointText(history.point)}
+
+      ${
+        isCancelled
+          ? `
+            <br>
+            <span class="history-status">
+              取消済み
+            </span>
+          `
+          : ""
+      }
+
+    </div>
+  `;
+}
+
+function openHistoryMenu(recordId) {
+
+  const history = histories.find(
+    item =>
+      String(item.id) === String(recordId)
+  );
+
+  if (!history) {
+    alert("対象の履歴が見つかりません");
+    return;
+  }
+
+  const safeRecordId =
+    String(history.id).replace(/'/g, "\\'");
+
+  openCommonModal({
+
+    title: "排便記録",
+
+    bodyHtml: `
+      <div class="history-modal-detail">
+
+        <strong style="font-size:22px;">
+          ${history.user}
+        </strong>
+
+        <br><br>
+
+        排便種類：
+        <strong>${history.type}</strong>
+
+        <br>
+
+        日時：${history.date}
+
+        <br>
+
+        現在ポイント：${getBowelPointText(history.point)}
+
+      </div>
+    `,
+
+    buttonsHtml: `
+      <button
+        class="modal-action-edit"
+        onclick="startEditHistory('${safeRecordId}')"
+      >
+        ✏ 修正
+      </button>
+
+      <button
+        class="modal-action-cancel"
+        onclick="startCancelHistory('${safeRecordId}')"
+      >
+        ❌ 取消
+      </button>
+
+      <button
+        class="modal-action-close"
+        onclick="closeCommonModal()"
+      >
+        閉じる
+      </button>
+    `
+  });
+}
+
+async function saveRule() {
+  const user = document.getElementById("ruleUserSelect").value;
+  const day = document.getElementById("ruleDay").value;
+  const medicine = document.getElementById("ruleMedicine").value;
+
+  if (user === "" || day === "" || medicine === "") {
+    alert("利用者・日数・薬剤を入力してください");
+    return;
+  }
+
+  if (!rules[user]) {
+    rules[user] = {};
+  }
+
+  if (!rules[user][day]) {
+    rules[user][day] = [];
+  }
+
+  rules[user][day].push(medicine);
+
+  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+  document.getElementById("ruleList").innerHTML = getRuleListHtml();
+  
+  saveData();
+
+  await saveRulesToGoogle();
+
+  alert("ルールを保存しました");
+}
+
+function getRuleListHtml() {
+  let result = "";
+
+  for (let user in rules) {
+    if (currentUnit !== "all" && userUnits[user] !== currentUnit) {
+   continue;
+   }
+    result += "<div class='user-card'>";
+    result += "<strong>" + user + "</strong><br>";
+
+    for (let day in rules[user]) {
+      result += "<br>未排便" + day + "日<br>";
+
+      for (let medicine of rules[user][day]) {
+  result +=
+    "・" + medicine +
+    " <button class='rule-delete-btn' onclick=\"deleteRule('" +
+    user + "','" +
+    day + "','" +
+    medicine +
+    "')\">❌</button><br>";
+}
+    }
+
+    result += "</div>";
+  }
+
+  if (result === "") {
+    return "まだルールはありません";
+  }
+
+  return result;
+}
+
+function deleteRule(user, day, medicine) {
+  rules[user][day] = rules[user][day].filter(
+    item => item !== medicine
+  );
+
+  if (rules[user][day].length === 0) {
+    delete rules[user][day];
+  }
+
+  document.getElementById("ruleList").innerHTML =
+    getRuleListHtml();
+
+  document.getElementById("todayTarget").innerHTML =
+    getTodayTarget();
+
+  saveData();
+}
+
+async function toggleCheck(key) {
+  const previousValue = Boolean(checks[key]);
+
+  checks[key] = !previousValue;
+
+  // ここで対象者一覧をすぐ更新
+  document.getElementById("todayTarget").innerHTML =
+    getTodayTarget();
+
+  // 実施済み一覧も更新
+  document.getElementById("completedList").innerHTML =
+    getCompletedListHtml();
+
+  saveData();
+
+  try {
+    await saveChecksToGoogle();
+  } catch (error) {
+    checks[key] = previousValue;
+
+    document.getElementById("todayTarget").innerHTML =
+      getTodayTarget();
+
+    document.getElementById("completedList").innerHTML =
+      getCompletedListHtml();
+
+    saveData();
+
+    alert(error.message);
+  }
+}
+
+function clearHistory() {
+  const ok = confirm("履歴をすべて削除しますか？");
+
+  if (!ok) {
+    return;
+  }
+
+  histories = [];
+  document.getElementById("history").innerHTML = getHistoryHtml();
+
+  saveData();
+}
+
+function getCompletedListHtml() {
+  let result = "";
+
+  for (let key in checks) {
+    if (checks[key]) {
+      const parts = key.split("_");
+
+      result +=
+        "<div class='history-card'>" +
+        "☑ " + parts[0] + "<br>" +
+        parts[2] +
+        "</div>";
+    }
+  }
+
+  if (result === "") {
+    return "まだ実施記録はありません";
+  }
+
+  return result;
+}
+
+function logout() {
+  const ok = confirm("ログアウトしますか？");
+
+  if (!ok) {
+    return;
+  }
+
+  localStorage.removeItem("loginRole");
+  localStorage.removeItem("loginUnit");
+  localStorage.removeItem("loginName");
+
+  currentRole = "";
+  currentUnit = "";
+
+  document.getElementById("appArea").style.display =
+    "none";
+
+  document.getElementById("loginArea").style.display =
+    "block";
+
+  document.getElementById("loginPassword").value = "";
+  document.getElementById("loginMessage").textContent = "";
+}
+
+function createMedicineReport() {
+
+  let morningList = {};
+  let eveningList = {}; 
+  let bowelHtml = "";
+
+  for (let user in points) {
+
+  // 自分のユニットだけ
+  if (
+    currentUnit !== "all" &&
+    userUnits[user] !== currentUnit
+  ) {
+    continue;
+  }
+
+  // 今日のこの利用者の履歴だけ取得
+  const todayHistories = histories.filter(history => {
+
+    const historyDate =
+      String(history.date).slice(0, 10);
+
+    const today = new Date();
+
+    const todayText =
+      today.getFullYear() + "-" +
+      String(today.getMonth() + 1).padStart(2, "0") + "-" +
+      String(today.getDate()).padStart(2, "0");
+
+    return (
+      history.user === user &&
+      historyDate === todayText
+    );
+  });
+
+  if (todayHistories.length === 0) {
+
+    bowelHtml +=
+      `<strong>${user}</strong>：未確認<br>`;
+
+  } else {
+
+    const types = todayHistories.map(history => history.type);
+
+    bowelHtml +=
+      `<strong>${user}</strong>：${types.join("、")}<br>`;
+  }
+}
+
+  for (let user in lastDates) {
+
+    if (currentUnit !== "all" && userUnits[user] !== currentUnit) {
+      continue;
+    }
+
+    const days = getNoBowelDays(user);
+    const medicines = rules[user]?.[days];
+
+    if (!medicines) continue;
+
+    for (let medicine of medicines) {
+
+      if (medicine.includes("朝")) {
+        if (!morningList[user]) {
+          morningList[user] = [];
+         }
+
+          morningList[user].push(
+          medicine.replace(" 朝", "")
+        );
+      }
+
+      if (medicine.includes("夕")) {
+        if (!eveningList[user]) {
+         eveningList[user] = [];
+         }
+
+           eveningList[user].push(
+           medicine.replace(" 夕", "")
+          );
+      }
+
+    }
+  }
+
+  let eveningHtml = "";
+
+ for (let user in eveningList) {
+
+  eveningHtml += `<strong>${user}</strong><br>`;
+
+  for (let medicine of eveningList[user]) {
+    eveningHtml += `・${medicine}<br>`;
+  }
+
+  eveningHtml += "<br>";
+ }
+
+ let morningHtml = "";
+
+ for (let user in morningList) {
+
+  morningHtml += `<strong>${user}</strong><br>`;
+
+  for (let medicine of morningList[user]) {
+    morningHtml += `・${medicine}<br>`;
+  }
+
+  morningHtml += "<br>";
+ }
+
+ const today = new Date();
+
+ const tomorrow = new Date(today);
+ tomorrow.setDate(today.getDate() + 1);
+
+ const todayText =
+  (today.getMonth() + 1) + "月" +
+  today.getDate() + "日";
+
+ const tomorrowText =
+  (tomorrow.getMonth() + 1) + "月" +
+  tomorrow.getDate() + "日";
+
+  document.getElementById("medicineReport").innerHTML = `
+ <div class="user-card">
+
+ <h3>${todayText} 排便状況</h3>
+ ${bowelHtml || "対象者なし"}
+
+ <hr>
+
+ <h3>${todayText} 夕方</h3>
+ ${eveningHtml || "対象者なし"}
+
+ <hr>
+
+ <h3>${tomorrowText} 朝</h3>
+ ${morningHtml || "対象者なし"}
+
+ <button onclick="copyMedicineReport()">
+📋 投薬報告をコピー
+ </button>
+
+ </div>
+ `;
+}
+
+function checkTodayBowelStatus() {
+
+  const today = new Date();
+
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  const todayText = `${year}-${month}-${day}`;
+
+  let registeredUsers = [];
+  let unregisteredUsers = [];
+
+  for (let user in points) {
+
+    // 自分のユニットだけ
+    if (
+      currentUnit !== "all" &&
+      userUnits[user] !== currentUnit
+    ) {
+      continue;
+    }
+
+    // 今日この利用者の排便登録があるか確認
+    const hasTodayHistory = histories.some(history => {
+
+      const historyDate =
+        String(history.date).slice(0, 10);
+
+      return (
+        history.user === user &&
+        historyDate === todayText
+      );
+    });
+
+    if (hasTodayHistory) {
+      registeredUsers.push(user);
+    } else {
+      unregisteredUsers.push(user);
+    }
+  }
+
+
+  let html = `
+    <div class="user-card">
+
+      <h3>本日の排便確認</h3>
+
+      <strong>登録済み</strong><br>
+  `;
+
+
+  // =========================
+  // 登録済み
+  // =========================
+
+  if (registeredUsers.length > 0) {
+
+    for (let user of registeredUsers) {
+
+      const todayHistory = histories.find(history => {
+
+        const historyDate =
+          String(history.date).slice(0, 10);
+
+        return (
+          history.user === user &&
+          historyDate === todayText
+        );
+      });
+
+      let bowelText = "";
+
+      if (todayHistory) {
+
+        if (todayHistory.type === "なし") {
+          bowelText = "排便なし";
+
+        } else {
+          bowelText = todayHistory.type || "";
+        }
+
+      }
+
+      html += `
+        <div class="day-registered-item">
+
+          <span>
+            ✓ ${user}
+          </span>
+
+          <span>
+            ${bowelText}
+          </span>
+
+        </div>
+      `;
+    }
+
+  } else {
+
+    html += "なし<br>";
+
+  }
+
+
+  html += `
+      <br>
+
+      <strong>未入力</strong><br>
+  `;
+
+
+  // =========================
+  // 未入力
+  // =========================
+
+  if (unregisteredUsers.length > 0) {
+
+    for (let user of unregisteredUsers) {
+
+      html += `
+        <label class="day-no-bowel-item">
+
+          <input
+            type="checkbox"
+            class="noBowelCheck"
+            value="${user}"
+            checked
+          >
+
+          <span>${user}</span>
+
+          <span>
+            排便なし
+          </span>
+
+        </label>
+      `;
+    }
+
+
+    html += `
+      <br>
+
+      <button onclick="confirmNoBowelUsers()">
+        未入力者を「排便なし」で確定
+      </button>
+    `;
+
+  } else {
+
+    html += "なし<br>";
+
+  }
+
+
+  // =========================
+  // 閉じるボタン
+  // =========================
+
+  html += `
+
+      <br>
+
+      <button
+        class="close-summary-button"
+        onclick="closeTodayBowelStatus()"
+      >
+        ▲ 閉じる
+      </button>
+
+    </div>
+  `;
+
+
+  document.getElementById(
+    "bowelCheckResult"
+  ).innerHTML = html;
+}
+
+function closeTodayBowelStatus() {
+
+  document.getElementById(
+    "bowelCheckResult"
+  ).innerHTML = "";
+
+}
+
+async function confirmNoBowelUsers() {
+
+  const checkedUsers = Array.from(
+    document.querySelectorAll(".noBowelCheck:checked")
+  ).map(input => input.value);
+
+  if (checkedUsers.length === 0) {
+    alert("対象者が選択されていません");
+    return;
+  }
+
+  const ok = confirm(
+    checkedUsers.join("、") +
+    " を「排便なし」で確定しますか？"
+  );
+
+  if (!ok) {
+    return;
+  }
+
+  for (let user of checkedUsers) {
+
+    await addHistoryToGoogle({
+      user: user,
+      type: "なし",
+      point: points[user]
+    });
+  }
+
+  await loadHistoriesFromGoogle();
+
+ // ★このユニットの排便確認完了をGoogleへ記録
+ const confirmSaved =
+  await saveDailyConfirmToGoogle();
+
+ checkTodayBowelStatus();
+
+ if (confirmSaved) {
+  alert("排便なしで確定しました");
+ } else {
+  alert(
+    "排便登録は完了しましたが、集計完了の記録に失敗しました"
+  );
+ }
+}
+
+async function saveDailyConfirmToGoogle() {
+
+  const loginName =
+    localStorage.getItem("loginName") || "不明";
+
+   const url =
+   API_URL +
+   "?action=saveDailyConfirm" +
+   "&unit=" + encodeURIComponent(currentUnit) +
+   "&type=day" +
+   "&name=" + encodeURIComponent(loginName);
+
+   try {
+
+    const response = await fetchApi(url);
+    const result = await response.text();
+
+    console.log("排便集計確定:", result);
+
+    return true;
+
+   } catch (error) {
+
+    console.error("排便集計確定エラー", error);
+
+    return false;
+  }
+}
+
+function copyMedicineReport() {
+
+  const report =
+    document.getElementById("medicineReport");
+
+  const text = report.innerText
+    .replace("📋 投薬報告をコピー", "")
+    .trim();
+
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      alert("投薬報告をコピーしました！");
+    })
+    .catch(error => {
+      console.error("コピー失敗", error);
+      alert("コピーに失敗しました");
+    });
+}
+
+async function loadDailyConfirmStatus() {
+
+  try {
+
+    const response = await fetchApi(
+    API_URL +
+    "?action=getDailyConfirms" +
+    "&timestamp=" + Date.now()
+    );
+
+if (!response.ok) {
+  throw new Error(
+    "集計状況の取得に失敗しました"
+  );
+}
+
+    const confirms = await response.json();
+
+    let html = "";
+
+    const now = new Date();
+
+    const after8 =
+    now.getHours() >= 8;
+
+    // 未確定ユニット
+    let nightNotConfirmed = [];
+
+    for (let unit = 1; unit <= 4; unit++) {
+
+      const dayConfirm = confirms.find(
+      item =>
+      String(item.unit).trim() === String(unit) &&
+      String(item.type).trim().toLowerCase() === "day"
+      );
+
+      const nightConfirm = confirms.find(
+      item =>
+      String(item.unit).trim() === String(unit) &&
+      String(item.type).trim().toLowerCase() === "night"
+      );
+
+      html += `
+        <div class="user-card">
+
+        <strong>${unit}ユニット</strong><br><br>
+      `;
+
+      // 夜勤
+      if (nightConfirm) {
+
+        html += `
+        <div class="confirm-block">
+
+        <div class="confirm-title">
+        🌙 夜勤
+        </div>
+
+        <div class="confirm-ok">
+        ✅ 確定済み
+        </div>
+
+        <div class="confirm-info">
+       ${nightConfirm.time}
+       </div>
+
+       <div class="confirm-info">
+       ${nightConfirm.name}
+       </div>
+
+       </div>
+       `;
+
+      } else {
+
+        html += `
+        <div class="confirm-block">
+
+        <div class="confirm-title">
+        🌙 夜勤
+        </div>
+
+        <div class="confirm-ng">
+        ⚠ 未確定
+        </div>
+
+        </div>
+       `;
+
+        // 朝8時以降だけ警告
+        if (after8) {
+
+       nightNotConfirmed.push(
+       unit + "ユニット"
+       );
+
+       }
+
+      }
+
+      // 日勤
+      if (dayConfirm) {
+
+      html += `
+      <div class="confirm-block">
+
+      <div class="confirm-title">
+        ☀ 日勤
+      </div>
+
+      <div class="confirm-ok">
+        ✅ 確定済み
+      </div>
+
+      <div class="confirm-info">
+        ${dayConfirm.time}
+      </div>
+
+      <div class="confirm-info">
+        ${dayConfirm.name}
+      </div>
+
+      </div>
+     `;
+
+    } else {
+
+     html += `
+     <div class="confirm-block">
+
+     <div class="confirm-title">
+        ☀ 日勤
+      </div>
+
+      <div class="confirm-ng">
+        ⚠ 未確定
+      </div>
+
+    </div>
+  `;
+
+}
+
+      html += "</div>";
+    }
+    
+    if (
+     after8 &&
+     nightNotConfirmed.length > 0
+     ) {
+
+     showNightAlert(
+     `
+     夜勤帯の排便確認が未完了です<br><br>
+
+     <div class="night-alert-units">
+      ${nightNotConfirmed.join("<br>")}
+     </div>
+
+     <br>
+
+     朝食時の緩下剤判断に<br>
+     影響する可能性があります。<br><br>
+
+     夜勤者へ確認してください。
+     `
+    );
+
+    } else {
+
+     hideNightAlert();
+
+    }
+
+    document.getElementById(
+      "dailyConfirmStatus"
+    ).innerHTML = html;
+
+  } catch (error) {
+
+    console.error(
+      "集計状況読込エラー",
+      error
+    );
+
+    document.getElementById(
+      "dailyConfirmStatus"
+    ).innerHTML =
+      "集計状況の読み込みに失敗しました";
+  }
+}
+
+async function changeLastDate() {
+
+  const user =
+    document.getElementById("userSelect").value;
+
+  const newDate =
+    document.getElementById("lastDate").value;
+
+  if (user === "") {
+    alert("利用者を選択してください");
+    return;
+  }
+
+  if (newDate === "") {
+    alert("日付を選択してください");
+    return;
+  }
+
+  const ok = confirm(
+    user +
+    "の最終排便日を\n" +
+    newDate +
+    "に変更しますか？"
+  );
+
+  if (!ok) {
+    return;
+  }
+
+  lastDates[user] = newDate;
+
+  await saveUsersToGoogle(false);
+
+  document.getElementById("status").innerHTML =
+    getStatusHtml();
+
+  document.getElementById("todayTarget").innerHTML =
+    getTodayTarget();
+
+  saveData();
+
+  alert(
+    user +
+    "の最終排便日を変更しました"
+  );
+}
+
+function checkNightBowelStatus() {
+
+  const now = new Date();
+
+  // 本日8:00
+  const nightEnd = new Date(now);
+  nightEnd.setHours(8, 0, 0, 0);
+
+  // 前日16:00
+  const nightStart = new Date(nightEnd);
+  nightStart.setDate(nightStart.getDate() - 1);
+  nightStart.setHours(16, 0, 0, 0);
+
+  let registeredUsers = [];
+  let unregisteredUsers = [];
+
+  for (let user in points) {
+
+    // 現在のユニットだけ
+    if (
+      currentUnit !== "all" &&
+      userUnits[user] !== currentUnit
+    ) {
+      continue;
+    }
+
+    const nightHistories = histories.filter(history => {
+
+      if (history.user !== user) {
+        return false;
+      }
+
+      // "2026-08-03 05:30:00" をDateへ変換
+      const historyDate = new Date(
+        String(history.date).replace(" ", "T")
+      );
+
+      return (
+        historyDate >= nightStart &&
+        historyDate < nightEnd
+      );
+    });
+
+    if (nightHistories.length > 0) {
+      registeredUsers.push({
+        user: user,
+        histories: nightHistories
+      });
+    } else {
+      unregisteredUsers.push(user);
+    }
+  }
+
+  let html = `
+    <div class="user-card">
+
+      <h3>🌙 夜勤帯の排便確認</h3>
+
+      <p>
+        対象：
+        ${formatDateTime(nightStart)}
+        ～
+        ${formatDateTime(nightEnd)}
+      </p>
+
+      <strong>登録済み</strong><br>
+  `;
+
+  if (registeredUsers.length > 0) {
+
+    for (let item of registeredUsers) {
+
+      const types = item.histories.map(
+        history => history.type
+      );
+
+      html +=
+        `✓ ${item.user}：${types.join("、")}<br>`;
+    }
+
+  } else {
+    html += "なし<br>";
+  }
+
+  html += `
+      <br>
+      <strong>未入力</strong><br>
+  `;
+
+  if (unregisteredUsers.length > 0) {
+
+  html += `
+    <p>
+      夜勤帯に排便がなかったことを確認してください。
+    </p>
+  `;
+
+  for (let user of unregisteredUsers) {
+
+    html += `
+      <label class="night-no-bowel-item">
+
+        <input
+          type="checkbox"
+          class="nightNoBowelCheck"
+          value="${user}"
+          checked
+        >
+
+        <span>${user}</span>
+        <span>排便なし</span>
+
+      </label>
+    `;
+  }
+
+} else {
+
+  html += "全利用者に排便記録があります<br>";
+}
+
+html += `
+  <br>
+
+  <button onclick="confirmNightShift()">
+    🌙 夜勤帯の確認を確定
+  </button>
+
+</div>
+`;
+
+  document.getElementById(
+    "nightBowelCheckResult"
+  ).innerHTML = html;
+}
+
+function formatDateTime(date) {
+
+  return (
+    (date.getMonth() + 1) + "/" +
+    date.getDate() + " " +
+    String(date.getHours()).padStart(2, "0") + ":" +
+    String(date.getMinutes()).padStart(2, "0")
+  );
+}
+
+async function saveNightConfirmToGoogle() {
+
+  const loginName =
+    localStorage.getItem("loginName") || "不明";
+
+  const url =
+    API_URL +
+    "?action=saveDailyConfirm" +
+    "&unit=" + encodeURIComponent(currentUnit) +
+    "&type=night" +
+    "&name=" + encodeURIComponent(loginName);
+
+  try {
+
+    const response = await fetchApi(url);
+    const result = await response.text();
+
+    console.log("夜勤帯確定:", result);
+
+    return (
+      result === "OK" ||
+      result === "UPDATED"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "夜勤帯確定エラー",
+      error
+    );
+
+    return false;
+  }
+}
+
+async function confirmNightShift() {
+
+  const allChecks = Array.from(
+    document.querySelectorAll(
+      ".nightNoBowelCheck"
+    )
+  );
+
+  const uncheckedUsers = allChecks
+    .filter(input => !input.checked)
+    .map(input => input.value);
+
+  if (uncheckedUsers.length > 0) {
+
+    alert(
+      "次の利用者が未確認です。\n\n" +
+      uncheckedUsers.join("、")
+    );
+
+    return;
+  }
+
+  const ok = confirm(
+    "前日16時から本日8時までの\n" +
+    "夜勤帯排便状況を確定しますか？\n\n" +
+    "記録のない利用者は、夜勤帯に排便なしとして確認したものとします。"
+  );
+
+  if (!ok) {
+    return;
+  }
+
+  const saved =
+    await saveNightConfirmToGoogle();
+
+  if (!saved) {
+
+    alert(
+      "夜勤帯の確定記録を保存できませんでした"
+    );
+
+    return;
+  }
+
+  alert(
+    "夜勤帯の排便確認を確定しました"
+  );
+
+  await loadDailyConfirmStatus();
+}
+
+function showNightAlert(message) {
+
+  document.getElementById("nightAlertArea").innerHTML = `
+    <div class="night-alert">
+      🚨<br><br>
+      ${message}
+    </div>
+  `;
+}
+
+function hideNightAlert() {
+
+  document.getElementById("nightAlertArea").innerHTML = "";
+}
+
+async function manualRefreshDailyConfirm() {
+
+  const button =
+    document.getElementById(
+      "dailyConfirmRefreshButton"
+    );
+
+  button.disabled = true;
+  button.textContent = "更新中...";
+
+  try {
+
+    await loadDailyConfirmStatus();
+
+    button.textContent = "✅ 更新しました";
+
+    setTimeout(() => {
+      button.textContent =
+        "🔄 集計状況を更新";
+
+      button.disabled = false;
+    }, 1500);
+
+  } catch (error) {
+
+    console.error(
+      "手動更新エラー",
+      error
+    );
+
+    button.textContent =
+      "更新に失敗しました";
+
+    setTimeout(() => {
+      button.textContent =
+        "🔄 集計状況を更新";
+
+      button.disabled = false;
+    }, 2000);
+  }
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchApi(url, retries = 3) {
+
+  let lastError;
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+
+    try {
+      const separator = url.includes("?") ? "&" : "?";
+
+      const response = await fetch(
+        url + separator + "_=" + Date.now(),
+        {
+          cache: "no-store"
+        }
+      );
+
+      const text = await response.text();
+
+      if (!response.ok) {
+        throw new Error(
+          "HTTP " + response.status
+        );
+      }
+
+      // Googleの404ページなどHTMLが返った場合
+      if (
+        text.trim().startsWith("<!DOCTYPE") ||
+        text.trim().startsWith("<html")
+      ) {
+        throw new Error(
+          "APIからHTMLが返されました"
+        );
+      }
+
+      return {
+      ok: true,
+
+      text: async () => text,
+
+      json: async () => JSON.parse(text)
+      };
+
+    } catch (error) {
+
+      lastError = error;
+
+      console.warn(
+        `通信失敗 ${attempt}/${retries}`,
+        error
+      );
+
+      if (attempt < retries) {
+        await wait(1000 * attempt);
+      }
+    }
+  }
+
+  throw lastError;
+}
+
+function toggleHistory() {
+
+  const historyArea =
+    document.getElementById("historyArea");
+
+  const button =
+    document.getElementById("historyToggleButton");
+
+  const isHidden =
+    historyArea.style.display === "none";
+
+  if (isHidden) {
+    historyArea.style.display = "block";
+    button.textContent = "▲ 履歴を隠す";
+  } else {
+    historyArea.style.display = "none";
+    button.textContent = "▼ 履歴を表示";
+  }
+}
+
+function openCommonModal({
+  title = "詳細",
+  bodyHtml = "",
+  buttonsHtml = ""
+}) {
+
+  document.getElementById(
+    "commonModalTitle"
+  ).textContent = title;
+
+  document.getElementById(
+    "commonModalBody"
+  ).innerHTML = bodyHtml;
+
+  document.getElementById(
+    "commonModalButtons"
+  ).innerHTML = buttonsHtml;
+
+  document.getElementById(
+    "commonModal"
+  ).style.display = "flex";
+
+  document.body.style.overflow = "hidden";
+}
+
+function closeCommonModal() {
+
+  document.getElementById(
+    "commonModal"
+  ).style.display = "none";
+
+  document.getElementById(
+    "commonModalBody"
+  ).innerHTML = "";
+
+  document.getElementById(
+    "commonModalButtons"
+  ).innerHTML = "";
+
+  document.body.style.overflow = "";
+}
+
+function closeCommonModalByOverlay(event) {
+
+  if (event.target.id === "commonModal") {
+    closeCommonModal();
+  }
+}
+
+function startEditHistory(recordId) {
+
+  const history = histories.find(
+    item => String(item.id) === String(recordId)
+  );
+
+  if (!history) {
+    alert("修正対象の履歴が見つかりません");
+    return;
+  }
+
+  const safeRecordId =
+    String(history.id).replace(/'/g, "\\'");
+
+  openCommonModal({
+
+    title: "排便記録を修正",
+
+    bodyHtml: `
+      <div class="history-edit-form">
+
+        <div class="edit-history-user">
+          ${history.user}
+        </div>
+
+        <div class="edit-history-date">
+          ${history.date}
+        </div>
+
+        <label class="edit-history-label">
+          排便量
+        </label>
+
+        <div class="edit-history-options">
+
+          <label>
+            <input
+              type="radio"
+              name="editHistoryType"
+              value="少"
+              ${history.type === "少" ? "checked" : ""}
+            >
+            少
+          </label>
+
+          <label>
+            <input
+              type="radio"
+              name="editHistoryType"
+              value="少1"
+              ${history.type === "少1" ? "checked" : ""}
+            >
+            少1
+          </label>
+
+          <label>
+            <input
+              type="radio"
+              name="editHistoryType"
+              value="少2"
+              ${history.type === "少2" ? "checked" : ""}
+            >
+            少2
+          </label>
+
+          <label>
+            <input
+              type="radio"
+              name="editHistoryType"
+              value="普通"
+              ${history.type === "普通" ? "checked" : ""}
+            >
+            普通
+          </label>
+
+        </div>
+
+        <div class="edit-history-note">
+          ※修正前の記録は削除せず、
+          取消済み記録として保存されます。
+        </div>
+
+      </div>
+    `,
+
+    buttonsHtml: `
+      <button
+        class="modal-action-edit"
+        onclick="saveEditedHistory('${safeRecordId}')"
+      >
+        修正内容を保存
+      </button>
+
+      <button
+        class="modal-action-close"
+        onclick="openHistoryMenu('${safeRecordId}')"
+      >
+        戻る
+      </button>
+    `
+  });
+}
+
+function startCancelHistory(recordId) {
+
+  const history = histories.find(
+    item => String(item.id) === String(recordId)
+  );
+
+  if (!history) {
+    alert("取消対象の履歴が見つかりません");
+    return;
+  }
+
+  // すでに取消済みなら処理しない
+  if (history.status === "cancelled") {
+    alert("この記録はすでに取消されています");
+    return;
+  }
+
+  const safeRecordId =
+    String(history.id).replace(/'/g, "\\'");
+
+  openCommonModal({
+
+    title: "排便記録を取消",
+
+    bodyHtml: `
+      <div class="history-cancel-form">
+
+        <div class="cancel-history-user">
+          ${history.user}
+        </div>
+
+        <div class="cancel-history-date">
+          ${history.date}
+        </div>
+
+        <div class="cancel-history-type">
+          排便量：<strong>${history.type}</strong>
+        </div>
+
+        <div class="cancel-history-warning">
+          ⚠ この記録を取り消しますか？<br><br>
+
+          取消後、排便状況と緩下剤の
+          対象判定が再計算されます。
+        </div>
+
+      </div>
+    `,
+
+    buttonsHtml: `
+      <button
+        class="modal-action-cancel-history"
+        onclick="confirmCancelHistory('${safeRecordId}')"
+      >
+        記録を取り消す
+      </button>
+
+      <button
+        class="modal-action-close"
+        onclick="openHistoryMenu('${safeRecordId}')"
+      >
+        戻る
+      </button>
+    `
+  });
+}
+
+async function saveEditedHistory(recordId) {
+
+  const selected =
+    document.querySelector(
+      'input[name="editHistoryType"]:checked'
+    );
+
+  if (!selected) {
+    showToast(
+      "⚠ 排便量を選択してください",
+      "error",
+      3000
+    );
+    return;
+  }
+
+  const newType = selected.value;
+
+  // =========================
+  // 修正対象の元履歴
+  // =========================
+
+  const originalHistory =
+    histories.find(
+      item =>
+        String(item.id) ===
+        String(recordId)
+    );
+
+  if (!originalHistory) {
+    showToast(
+      "⚠ 修正対象の履歴が見つかりません",
+      "error",
+      3000
+    );
+    return;
+  }
+
+  const user =
+    originalHistory.user;
+
+
+  // =========================
+  // 失敗時の復元用バックアップ
+  // =========================
+
+  const backupPoint =
+    Number(points[user] || 0);
+
+  const backupLastDate =
+    lastDates[user] || "";
+
+  const backupHistories =
+    JSON.parse(
+      JSON.stringify(histories)
+    );
+
+
+  try {
+
+    // =========================
+    // ① 仮の修正版履歴を作る
+    // =========================
+
+    const temporaryHistory = {
+      ...originalHistory,
+
+      id:
+        "temp-" + Date.now(),
+
+      type:
+        newType,
+
+      status:
+        "active",
+
+      originalId:
+        recordId
+    };
+
+
+    // =========================
+    // ② 既存ロジックで再計算
+    // =========================
+
+    const recalculated =
+      recalculateBowelStatusFromHistory(
+        originalHistory,
+        temporaryHistory
+      );
+
+    points[user] =
+      Number(
+        recalculated.point || 0
+      );
+
+    lastDates[user] =
+      recalculated.lastDate
+        ? String(
+            recalculated.lastDate
+          ).slice(0, 10)
+        : "";
+
+
+    // =========================
+    // ③ 元履歴を画面上で取消扱い
+    // =========================
+
+    histories =
+      histories.map(
+        history => {
+
+          if (
+            String(history.id) ===
+            String(recordId)
+          ) {
+
+            return {
+              ...history,
+              status: "cancelled"
+            };
+          }
+
+          return history;
+        }
+      );
+
+
+    // =========================
+    // ④ 仮の修正版を画面へ追加
+    // =========================
+
+    histories.unshift(
+      temporaryHistory
+    );
+
+
+    // =========================
+    // ⑤ 画面を即時更新
+    // =========================
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    document.getElementById(
+      "history"
+    ).innerHTML =
+      getHistoryHtml();
+
+    document.getElementById(
+     "result"
+     ).textContent =
+     user +
+     "　現在ポイント：" +
+     getBowelPointText(points[user]);
+
+     saveData();
+
+
+    // モーダルはすぐ閉じる
+    closeCommonModal();
+
+    showToast(
+      "修正を保存中…",
+      "saving",
+      0
+    );
+
+
+    // =========================
+    // ⑥ Googleへ1回だけPOST
+    // =========================
+
+    console.time(
+      "履歴修正一括保存"
+    );
+
+    const response =
+      await fetch(
+        API_URL,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "text/plain;charset=utf-8"
+          },
+
+          body: JSON.stringify({
+
+            action:
+              "editHistoryFast",
+
+            recordId:
+              recordId,
+
+            newType:
+              newType,
+
+            /*
+              再計算後の現在状態
+            */
+            point:
+              points[user],
+
+            lastDate:
+              lastDates[user] || "",
+
+            /*
+              修正版履歴のE列に
+              保存するポイント
+            */
+            historyPoint:
+              Number(
+                temporaryHistory.point || 0
+              )
+          }),
+
+          cache: "no-store"
+        }
+      );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "履歴修正失敗：HTTP " +
+        response.status
+      );
+    }
+
+
+    const result =
+      await response.json();
+
+
+    if (!result.ok) {
+
+      throw new Error(
+        result.message ||
+        "履歴の修正に失敗しました"
+      );
+    }
+
+
+    console.timeEnd(
+      "履歴修正一括保存"
+    );
+
+
+    // =========================
+    // ⑦ 仮履歴を本物へ交換
+    // =========================
+
+    histories =
+      histories.filter(
+        history =>
+          String(history.id) !==
+          String(temporaryHistory.id)
+      );
+
+    if (result.history) {
+
+      histories.unshift(
+        result.history
+      );
+    }
+
+
+    // =========================
+    // ⑧ Google側の確定値を反映
+    // =========================
+
+    points[user] =
+      Number(
+        result.point || 0
+      );
+
+    lastDates[user] =
+      result.lastDate
+        ? String(
+            result.lastDate
+          ).slice(0, 10)
+        : "";
+
+
+    // =========================
+    // ⑨ 最終画面更新
+    // =========================
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    document.getElementById(
+      "history"
+    ).innerHTML =
+      getHistoryHtml();
+
+    document.getElementById(
+     "result"
+     ).textContent =
+     user +
+     "　現在ポイント：" +
+     getBowelPointText(points[user]);
+
+    saveData();
+
+
+    // =========================
+    // ⑩ 完了
+    // =========================
+
+    showToast(
+      "✓ 排便記録を修正しました",
+      "success",
+      2000
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "排便記録修正エラー:",
+      error
+    );
+
+
+    // =========================
+    // 保存失敗 → 元へ戻す
+    // =========================
+
+    points[user] =
+      backupPoint;
+
+    lastDates[user] =
+      backupLastDate;
+
+    histories =
+      backupHistories;
+
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    document.getElementById(
+      "history"
+    ).innerHTML =
+      getHistoryHtml();
+
+    document.getElementById(
+      "result"
+    ).textContent =
+      user +
+      "　現在ポイント：" +
+     getBowelPointText(points[user]);
+
+    saveData();
+
+
+    showToast(
+      "⚠ 修正を保存できませんでした：" +
+      error.message,
+      "error",
+      4000
+    );
+  }
+}
+
+function recalculateBowelStatus(user) {
+
+  /*
+    現在の状態を0から再計算する
+  */
+  let currentPoint = 0;
+
+  let lastBowelDate = "";
+
+
+  /*
+    対象利用者のactive履歴だけ取得
+  */
+  const userHistories =
+    histories
+      .filter(history => {
+
+        if (
+          history.user !== user
+        ) {
+          return false;
+        }
+
+        if (
+          String(
+            history.status
+          ).trim() === "cancelled"
+        ) {
+          return false;
+        }
+
+        return true;
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.date) -
+          new Date(b.date)
+      );
+
+
+  /*
+    古い履歴から順番に再計算
+  */
+  for (
+    const history of userHistories
+  ) {
+
+    /*
+      新ポイント方式
+
+      少   = 1
+      少1  = 3
+      少2  = 6
+      普通 = 9
+
+      旧データの「多量」も
+      getBowelPoint() 内で9として扱う
+    */
+    const addPoint =
+      getBowelPoint(
+        history.type
+      );
+
+    currentPoint +=
+      addPoint;
+
+
+    /*
+      内部ポイント9以上で排便成立
+    */
+    if (
+      currentPoint >= 9
+    ) {
+
+      currentPoint = 0;
+
+      lastBowelDate =
+        String(
+          history.date
+        ).slice(0, 10);
+    }
+  }
+
+
+  return {
+    point:
+      currentPoint,
+
+    lastDate:
+      lastBowelDate
+  };
+}
+
+function recalculateBowelStatusFromHistory(
+  originalHistory,
+  revisedHistory
+) {
+
+  const user = originalHistory.user;
+
+  /*
+    修正対象を登録する直前の状態を
+    再計算のスタート地点にする
+
+    previousPointも新しい内部ポイント
+    （少=1、少1=3、少2=6）で保持する
+  */
+  let currentPoint =
+    Number(
+      originalHistory.previousPoint || 0
+    );
+
+  let lastBowelDate =
+    originalHistory.previousLastDate
+      ? String(
+          originalHistory.previousLastDate
+        ).slice(0, 10)
+      : "";
+
+  const baseDate =
+    new Date(
+      originalHistory.date
+    );
+
+  /*
+    修正版より「後」に登録された
+    active履歴を取得
+  */
+  const laterHistories =
+    histories
+      .filter(history => {
+
+        if (
+          history.user !== user
+        ) {
+          return false;
+        }
+
+        if (
+          String(
+            history.status
+          ).trim() === "cancelled"
+        ) {
+          return false;
+        }
+
+        // 修正版自身は後で直接追加
+        if (
+          String(history.id) ===
+          String(revisedHistory.id)
+        ) {
+          return false;
+        }
+
+        const historyDate =
+          new Date(
+            history.date
+          );
+
+        return (
+          historyDate > baseDate
+        );
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.date) -
+          new Date(b.date)
+      );
+
+
+  /*
+    修正版
+      ↓
+    その後の記録
+
+    の順番で再計算
+  */
+  const historiesToCalculate = [
+    revisedHistory,
+    ...laterHistories
+  ];
+
+
+  for (
+    const history of historiesToCalculate
+  ) {
+
+    // ★ 共通ポイント換算を使用
+    const addPoint =
+      getBowelPoint(
+        history.type
+      );
+
+    currentPoint +=
+      addPoint;
+
+
+    /*
+      ★ 内部9以上で排便成立
+    */
+    if (
+      currentPoint >= 9
+    ) {
+
+      currentPoint = 0;
+
+      lastBowelDate =
+        String(
+          history.date
+        ).slice(0, 10);
+    }
+  }
+
+
+  return {
+    point:
+      currentPoint,
+
+    lastDate:
+      lastBowelDate
+  };
+}
+
+// =========================
+// 排便量 → 内部ポイント変換
+// =========================
+
+function getBowelPoint(type) {
+
+  if (type === "少") {
+    return 1;
+  }
+
+  if (type === "少1") {
+    return 3;
+  }
+
+  if (type === "少2") {
+    return 6;
+  }
+
+  if (type === "普通") {
+    return 9;
+  }
+
+  /*
+    旧データ互換用。
+    新規登録では使用しない。
+  */
+  if (type === "多量") {
+    return 9;
+  }
+
+  return 0;
+}
+
+
+// =========================
+// 内部ポイント → 表示文字列
+// =========================
+
+function getBowelPointText(point) {
+
+  const value =
+    Number(point || 0);
+
+  const normalPoint =
+    Math.floor(value / 3);
+
+  const smallCount =
+    value % 3;
+
+  if (
+    normalPoint === 0 &&
+    smallCount === 0
+  ) {
+    return "0点";
+  }
+
+  if (
+    normalPoint > 0 &&
+    smallCount === 0
+  ) {
+    return normalPoint + "点";
+  }
+
+  if (
+    normalPoint === 0
+  ) {
+    return "0点＋少" +
+      smallCount +
+      "回";
+  }
+
+  return normalPoint +
+    "点＋少" +
+    smallCount +
+    "回";
+}
+
+function recalculateBowelStatusAfterCancel(
+  cancelledHistory
+) {
+
+  const user =
+    cancelledHistory.user;
+
+  /*
+    取消対象を登録する直前の状態を
+    スタート地点にする。
+
+    H列 = previousLastDate
+    I列 = previousPoint
+  */
+  let currentPoint =
+    Number(
+      cancelledHistory.previousPoint || 0
+    );
+
+  let lastBowelDate =
+    cancelledHistory.previousLastDate
+      ? String(
+          cancelledHistory.previousLastDate
+        ).slice(0, 10)
+      : "";
+
+  const baseDate =
+    new Date(
+      cancelledHistory.date
+    );
+
+
+  /*
+    取消対象より後に登録された
+    active履歴だけ取得
+  */
+  const laterHistories =
+    histories
+      .filter(history => {
+
+        if (
+          history.user !== user
+        ) {
+          return false;
+        }
+
+        if (
+          String(
+            history.status
+          ).trim() === "cancelled"
+        ) {
+          return false;
+        }
+
+        // 今回取り消す記録自身は除外
+        if (
+          String(history.id) ===
+          String(cancelledHistory.id)
+        ) {
+          return false;
+        }
+
+        const historyDate =
+          new Date(
+            history.date
+          );
+
+        return (
+          historyDate > baseDate
+        );
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.date) -
+          new Date(b.date)
+      );
+
+
+  /*
+    取消対象の直前状態
+        ↓
+    取消対象より後のactive履歴
+
+    の順番で再計算
+  */
+  for (
+    const history of laterHistories
+  ) {
+
+    // ★ 共通ポイント換算
+    const addPoint =
+      getBowelPoint(
+        history.type
+      );
+
+    currentPoint +=
+      addPoint;
+
+
+    /*
+      ★ 内部9以上で排便成立
+    */
+    if (
+      currentPoint >= 9
+    ) {
+
+      currentPoint = 0;
+
+      lastBowelDate =
+        String(
+          history.date
+        ).slice(0, 10);
+    }
+  }
+
+
+  return {
+    point:
+      currentPoint,
+
+    lastDate:
+      lastBowelDate
+  };
+}
+
+function applyRecalculatedBowelStatus(user) {
+
+  const result =
+    recalculateBowelStatus(user);
+
+  points[user] =
+    Number(result.point || 0);
+
+  /*
+    再計算結果を必ず反映する。
+
+    result.lastDate が空の場合も、
+    古い最終排便日を残さない。
+  */
+  lastDates[user] =
+    result.lastDate
+      ? String(result.lastDate).slice(0, 10)
+      : "";
+
+  console.log(
+    "再計算結果を反映:",
+    user,
+    {
+      point: points[user],
+      lastDate: lastDates[user]
+    }
+  );
+
+  return {
+    point: points[user],
+    lastDate: lastDates[user]
+  };
+}
+
+function testRecalculateBowelStatus(user) {
+
+  const result =
+    recalculateBowelStatus(user);
+
+  console.log(
+    "再計算結果:",
+    user,
+    result
+  );
+
+  alert(
+    "再計算テスト\n\n" +
+    "利用者：" + user + "\n" +
+    "　現在ポイント：" + getBowelPointText(result.point) + "\n" +
+    "最終排便日：" +
+    (result.lastDate || "なし")
+  );
+}
+
+async function confirmCancelHistory(recordId) {
+
+  // =========================
+  // 取消対象を取得
+  // =========================
+
+  const history =
+    histories.find(
+      item =>
+        String(item.id) ===
+        String(recordId)
+    );
+
+  if (!history) {
+
+    showToast(
+      "⚠ 取消対象の履歴が見つかりません",
+      "error",
+      3000
+    );
+
+    return;
+  }
+
+  const user =
+    history.user;
+
+  const previousLastDate =
+    history.previousLastDate || "";
+
+
+  // =========================
+  // 失敗時の復元用バックアップ
+  // =========================
+
+  const backupPoint =
+    Number(points[user] || 0);
+
+  const backupLastDate =
+    lastDates[user] || "";
+
+  const backupHistories =
+    JSON.parse(
+      JSON.stringify(histories)
+    );
+
+
+  try {
+
+    // =========================
+    // ① 画面上で先に取消扱い
+    // =========================
+
+    histories =
+      histories.map(
+        item => {
+
+          if (
+            String(item.id) ===
+            String(recordId)
+          ) {
+
+            return {
+              ...item,
+              status: "cancelled"
+            };
+          }
+
+          return item;
+        }
+      );
+
+
+    // =========================
+    // ② 有効履歴だけで再計算
+    // =========================
+
+    const recalculated =
+     recalculateBowelStatusAfterCancel(
+     history
+     );
+
+     points[user] =
+     Number(
+     recalculated.point || 0
+     );
+
+     lastDates[user] =
+     recalculated.lastDate
+     ? String(
+        recalculated.lastDate
+      ).slice(0, 10)
+     : "";
+
+    // =========================
+    // ③ 画面を即時更新
+    // =========================
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    document.getElementById(
+      "history"
+    ).innerHTML =
+      getHistoryHtml();
+
+    document.getElementById(
+      "result"
+    ).textContent =
+      user +
+     "　現在ポイント：" +
+     getBowelPointText(points[user]);
+
+    saveData();
+
+
+    // モーダルは即閉じる
+    closeCommonModal();
+
+
+    showToast(
+      "取消を保存中…",
+      "saving",
+      0
+    );
+
+
+    // =========================
+    // ④ Googleへ1回だけPOST
+    // =========================
+
+    console.time(
+      "履歴取消一括保存"
+    );
+
+
+    const response =
+      await fetch(
+        API_URL,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "text/plain;charset=utf-8"
+          },
+
+          body: JSON.stringify({
+
+            action:
+              "cancelHistoryFast",
+
+            recordId:
+              recordId,
+
+            point:
+              Number(
+                points[user] || 0
+              ),
+
+            lastDate:
+              lastDates[user] || ""
+
+          }),
+
+          cache: "no-store"
+        }
+      );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "履歴取消失敗：HTTP " +
+        response.status
+      );
+    }
+
+
+    const result =
+      await response.json();
+
+
+    if (!result.ok) {
+
+      throw new Error(
+        result.message ||
+        "履歴の取消に失敗しました"
+      );
+    }
+
+
+    console.timeEnd(
+      "履歴取消一括保存"
+    );
+
+
+    // =========================
+    // ⑤ Google側の確定値を反映
+    // =========================
+
+    points[user] =
+      Number(
+        result.point || 0
+      );
+
+    lastDates[user] =
+      result.lastDate
+        ? String(
+            result.lastDate
+          ).slice(0, 10)
+        : "";
+
+
+    // =========================
+    // ⑥ 最終画面更新
+    // =========================
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    document.getElementById(
+      "history"
+    ).innerHTML =
+      getHistoryHtml();
+
+    document.getElementById(
+      "result"
+    ).textContent =
+      user +
+    "　現在ポイント：" +
+    getBowelPointText(points[user]);
+
+    saveData();
+
+
+    // =========================
+    // ⑦ 完了
+    // =========================
+
+    showToast(
+      "✓ 排便記録を取り消しました",
+      "success",
+      2000
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "排便記録取消エラー:",
+      error
+    );
+
+
+    // =========================
+    // 保存失敗 → 操作前へ復元
+    // =========================
+
+    points[user] =
+      backupPoint;
+
+    lastDates[user] =
+      backupLastDate;
+
+    histories =
+      backupHistories;
+
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    document.getElementById(
+      "history"
+    ).innerHTML =
+      getHistoryHtml();
+
+    document.getElementById(
+      "result"
+    ).textContent =
+      user +
+     "　現在ポイント：" +
+      getBowelPointText(points[user]);
+
+    saveData();
+
+
+    showToast(
+      "⚠ 取消を保存できませんでした：" +
+      error.message,
+      "error",
+      4000
+    );
+  }
+}
+
+function getTodayText() {
+
+  const today = new Date();
+
+  const year = today.getFullYear();
+
+  const month =
+    String(today.getMonth() + 1)
+      .padStart(2, "0");
+
+  const day =
+    String(today.getDate())
+      .padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+</script>
+</div>
+</body>
+</html>tial-scale=1">
   <title></title>
   <style>
 body {
