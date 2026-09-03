@@ -4929,7 +4929,9 @@ async function confirmNoBowelUsers() {
   const confirmSaved =
     await saveDailyConfirmToGoogle();
 
-
+  if (confirmSaved) {
+  await loadDailyConfirmStatus();
+  }
   // =========================
   // 日中帯集計を再描画
   // =========================
