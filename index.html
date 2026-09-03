@@ -1329,14 +1329,12 @@ async function register() {
             type:
               type,
 
-            // 新内部ポイント
             point:
               points[user],
 
             lastDate:
               lastDates[user] || "",
 
-            // 修正・取消時の復元用
             previousLastDate:
               previousLastDate,
 
@@ -1423,6 +1421,41 @@ async function register() {
       "todayTarget"
     ).innerHTML =
       getTodayTarget();
+
+
+    // =========================
+    // ⑦-2 開いている集計画面を更新
+    // =========================
+
+    const dayResult =
+      document.getElementById(
+        "bowelCheckResult"
+      );
+
+    if (
+      dayResult &&
+      dayResult.innerHTML.trim() !== ""
+    ) {
+
+      checkTodayBowelStatus();
+
+    }
+
+
+    const nightResult =
+      document.getElementById(
+        "nightBowelCheckResult"
+      );
+
+    if (
+      nightResult &&
+      nightResult.innerHTML.trim() !== ""
+    ) {
+
+      checkNightBowelStatus();
+
+    }
+
 
     saveData();
 
