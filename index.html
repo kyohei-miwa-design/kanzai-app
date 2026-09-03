@@ -3446,6 +3446,8 @@ async function refreshFromGoogle() {
 
   isRefreshing = true;
 
+  console.time("★ refreshFromGoogle 全体");
+
   try {
 
     const beforeData =
@@ -3453,26 +3455,62 @@ async function refreshFromGoogle() {
 
 
     // =========================
-    // Googleデータを並列取得
+    // 個別に時間計測
     // =========================
 
+    const checksPromise =
+      (async () => {
+
+        console.time("① checks取得");
+
+        await loadChecksFromGoogle();
+
+        console.timeEnd("① checks取得");
+
+      })();
+
+
+    const historiesPromise =
+      (async () => {
+
+        console.time("② histories取得");
+
+        await loadHistoriesFromGoogle();
+
+        console.timeEnd("② histories取得");
+
+      })();
+
+
+    const confirmPromise =
+      (async () => {
+
+        console.time("③ confirm取得");
+
+        await loadDailyConfirmStatus();
+
+        console.timeEnd("③ confirm取得");
+
+      })();
+
+
+    // 3つを並列で待つ
     await Promise.all([
-
-      loadChecksFromGoogle(),
-
-      loadHistoriesFromGoogle(),
-
-      loadDailyConfirmStatus()
-
+      checksPromise,
+      historiesPromise,
+      confirmPromise
     ]);
 
 
-    // =========================
-    // 全取得完了後に
-    // ホームを最終更新
-    // =========================
+    console.time(
+      "④ ホーム投薬状況計算"
+    );
 
     updateHomeMedicineStatus();
+
+    console.timeEnd(
+      "④ ホーム投薬状況計算"
+    );
 
 
     const afterData =
@@ -3506,6 +3544,10 @@ async function refreshFromGoogle() {
 
 
   } finally {
+
+    console.timeEnd(
+      "★ refreshFromGoogle 全体"
+    );
 
     isRefreshing = false;
 
