@@ -715,6 +715,935 @@ button {
   display: block;
 }
 
+/* ==================================================
+   緩下剤管理アプリ Ver.0.8
+   新UI
+================================================== */
+
+
+/* =========================
+   基本
+========================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #f4f6f8;
+}
+
+body {
+  margin: 0;
+  background: #f4f6f8;
+  color: #263238;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Noto Sans JP",
+    sans-serif;
+}
+
+button,
+select,
+input {
+  font: inherit;
+}
+
+
+/* =========================
+   アプリ全体
+========================= */
+
+#appArea {
+  width: 100%;
+  max-width: 900px;
+  min-height: 100vh;
+  margin: 0 auto;
+
+  padding:
+    0
+    16px
+    110px;
+
+  background: #f4f6f8;
+}
+
+
+/* =========================
+   ヘッダー
+========================= */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin:
+    0
+    -16px
+    20px;
+
+  padding:
+    14px
+    16px;
+
+  background: rgba(255, 255, 255, 0.96);
+
+  border-bottom:
+    1px solid #e3e8ec;
+
+  box-shadow:
+    0 2px 10px
+    rgba(0, 0, 0, 0.05);
+
+  backdrop-filter: blur(8px);
+}
+
+.app-header h1 {
+  margin: 0;
+
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.app-version {
+  margin:
+    3px
+    0
+    0;
+
+  color: #78909c;
+  font-size: 12px;
+}
+
+.logout-button {
+  width: auto;
+
+  padding:
+    8px
+    13px;
+
+  border: 1px solid #d7dee3;
+  border-radius: 10px;
+
+  background: #fff;
+  color: #546e7a;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+
+/* =========================
+   ページ
+========================= */
+
+.app-page {
+  display: none;
+  animation:
+    pageFadeIn
+    0.18s ease;
+}
+
+.app-page.active {
+  display: block;
+}
+
+@keyframes pageFadeIn {
+
+  from {
+    opacity: 0;
+    transform:
+      translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform:
+      translateY(0);
+  }
+}
+
+
+/* =========================
+   見出し
+========================= */
+
+.app-page > h2 {
+  margin:
+    24px
+    0
+    12px;
+
+  font-size: 18px;
+  color: #263238;
+}
+
+.app-page > h2:first-child {
+  margin-top: 4px;
+}
+
+h3 {
+  color: #37474f;
+}
+
+
+/* =========================
+   共通カード
+========================= */
+
+.user-card,
+.summary-card,
+.home-unit-card,
+#dailyConfirmArea,
+#todayTarget,
+#completedList,
+#medicineReport,
+#status,
+.history-section,
+#adminArea {
+
+  margin-bottom: 16px;
+
+  padding: 18px;
+
+  background: #ffffff;
+
+  border:
+    1px solid #e4e9ed;
+
+  border-radius: 16px;
+
+  box-shadow:
+    0 3px 12px
+    rgba(0, 0, 0, 0.045);
+}
+
+
+/* =========================
+   ホーム
+========================= */
+
+.home-unit-card {
+  display: flex;
+  align-items: center;
+
+  min-height: 64px;
+
+  font-size: 18px;
+}
+
+.home-unit-card::before {
+  content: "🏠";
+
+  margin-right: 10px;
+
+  font-size: 24px;
+}
+
+
+/* =========================
+   ホーム：勤務帯カード
+========================= */
+
+.home-status-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+
+  margin-bottom: 24px;
+}
+
+.home-status-card {
+  display: grid;
+
+  grid-template-columns:
+    auto 1fr auto;
+
+  gap: 10px;
+
+  align-items: center;
+
+  min-height: 84px;
+
+  padding: 15px;
+
+  border:
+    1px solid #dde5e9;
+
+  border-radius: 16px;
+
+  background: #fff;
+
+  color: #263238;
+
+  text-align: left;
+
+  box-shadow:
+    0 3px 10px
+    rgba(0, 0, 0, 0.04);
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.home-status-card:active {
+  transform:
+    scale(0.98);
+}
+
+.home-status-card strong {
+  font-size: 16px;
+}
+
+.home-status-card small {
+  color: #78909c;
+}
+
+.home-status-icon {
+  font-size: 28px;
+}
+
+
+/* =========================
+   ホーム：大ボタン
+========================= */
+
+.home-action-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+
+  margin-top: 20px;
+}
+
+.home-action-button {
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  min-height: 110px;
+
+  padding: 18px;
+
+  border: none;
+  border-radius: 18px;
+
+  color: #fff;
+
+  font-size: 30px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 4px 12px
+    rgba(0, 0, 0, 0.12);
+
+  transition:
+    transform 0.15s ease;
+}
+
+.home-action-button:active {
+  transform:
+    scale(0.97);
+}
+
+.home-action-button span {
+  font-size: 15px;
+}
+
+.home-action-button.bowel {
+  background:
+    linear-gradient(
+      135deg,
+      #00897b,
+      #26a69a
+    );
+}
+
+.home-action-button.medicine {
+  background:
+    linear-gradient(
+      135deg,
+      #1976d2,
+      #42a5f5
+    );
+}
+
+
+/* =========================
+   ホーム：投薬状況
+========================= */
+
+#homeMedicineStatus {
+  padding: 16px;
+
+  background: #fff;
+
+  border:
+    1px solid #e4e9ed;
+
+  border-radius: 16px;
+
+  color: #546e7a;
+
+  box-shadow:
+    0 3px 10px
+    rgba(0, 0, 0, 0.04);
+}
+
+
+/* =========================
+   入力欄
+========================= */
+
+.app-page select,
+.app-page input[type="text"],
+.app-page input[type="number"],
+.app-page input[type="date"] {
+
+  width: 100%;
+
+  min-height: 48px;
+
+  padding:
+    10px
+    12px;
+
+  border:
+    1px solid #cfd8dc;
+
+  border-radius: 10px;
+
+  background: #fff;
+
+  color: #263238;
+
+  font-size: 16px;
+}
+
+.app-page select:focus,
+.app-page input:focus {
+
+  outline: none;
+
+  border-color: #26a69a;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(38, 166, 154, 0.12);
+}
+
+
+/* =========================
+   共通ボタン
+========================= */
+
+.app-page button:not(
+  .home-status-card
+):not(
+  .home-action-button
+):not(
+  .nav-button
+):not(
+  .modal-close-icon
+) {
+
+  min-height: 44px;
+
+  padding:
+    10px
+    16px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: #00897b;
+
+  color: #fff;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.app-page button:active {
+  transform:
+    scale(0.98);
+}
+
+
+/* 排便登録 */
+
+#registerButton {
+  width: 100%;
+
+  min-height: 52px !important;
+
+  font-size: 17px;
+}
+
+
+/* =========================
+   日中・夜勤カード
+========================= */
+
+.summary-card {
+  position: relative;
+
+  overflow: hidden;
+}
+
+.summary-card h3 {
+  margin-top: 0;
+
+  font-size: 17px;
+}
+
+.summary-card > p {
+  color: #607d8b;
+}
+
+.summary-card:first-of-type {
+  border-left:
+    5px solid #ffb300;
+}
+
+#nightConfirmArea {
+  border-left:
+    5px solid #5c6bc0;
+}
+
+
+/* =========================
+   排便確認一覧
+========================= */
+
+.day-registered-item,
+.day-no-bowel-item,
+.night-no-bowel-item {
+
+  display: grid;
+
+  grid-template-columns:
+    auto 1fr auto;
+
+  gap: 10px;
+
+  align-items: center;
+
+  min-height: 48px;
+
+  margin-top: 7px;
+
+  padding:
+    9px
+    12px;
+
+  border-radius: 10px;
+
+  background: #f7f9fa;
+}
+
+.day-registered-check {
+  color: #00897b;
+  font-weight: 900;
+}
+
+.day-registered-name {
+  font-weight: 700;
+}
+
+.day-registered-type {
+  color: #546e7a;
+}
+
+.day-no-bowel-item input,
+.night-no-bowel-item input {
+
+  width: 22px;
+  height: 22px;
+
+  accent-color: #00897b;
+}
+
+
+/* =========================
+   投薬
+========================= */
+
+#medicinePage #todayTarget,
+#medicinePage #completedList {
+
+  min-height: 70px;
+}
+
+
+/* =========================
+   履歴
+========================= */
+
+#historyPage .history-section {
+  padding: 16px;
+}
+
+#history {
+  margin-top: 16px;
+}
+
+.history-clear-button {
+  background:
+    #78909c !important;
+}
+
+
+/* =========================
+   その他・管理
+========================= */
+
+#adminArea {
+  margin-top: 24px;
+}
+
+#adminArea h2 {
+  margin-top: 0;
+}
+
+#adminArea h3 {
+
+  margin:
+    28px
+    0
+    10px;
+
+  padding-bottom: 7px;
+
+  border-bottom:
+    1px solid #eceff1;
+}
+
+#adminArea p {
+  margin-bottom: 6px;
+}
+
+
+/* =========================
+   通知領域
+========================= */
+
+#newDataMessage:not(:empty),
+#nightAlertArea:not(:empty) {
+
+  margin-bottom: 12px;
+
+  padding: 12px 14px;
+
+  border-radius: 10px;
+
+  background: #fff8e1;
+
+  border:
+    1px solid #ffe082;
+}
+
+
+/* =========================
+   下部ナビ
+========================= */
+
+.bottom-nav {
+
+  position: fixed;
+
+  left: 50%;
+  bottom: 0;
+
+  z-index: 500;
+
+  transform:
+    translateX(-50%);
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(5, 1fr);
+
+  width: 100%;
+  max-width: 900px;
+
+  padding:
+    7px
+    8px
+    calc(7px + env(safe-area-inset-bottom));
+
+  background:
+    rgba(255, 255, 255, 0.97);
+
+  border-top:
+    1px solid #dfe5e8;
+
+  box-shadow:
+    0 -4px 14px
+    rgba(0, 0, 0, 0.06);
+
+  backdrop-filter:
+    blur(10px);
+}
+
+.nav-button {
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 2px;
+
+  min-width: 0;
+  min-height: 54px;
+
+  padding: 4px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  background: transparent;
+
+  color: #78909c;
+
+  cursor: pointer;
+}
+
+.nav-button span {
+  font-size: 21px;
+  line-height: 1;
+}
+
+.nav-button small {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.nav-button.active {
+  background: #e0f2f1;
+  color: #00796b;
+}
+
+
+/* =========================
+   モーダル
+========================= */
+
+.modal-overlay {
+
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 1000;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background:
+    rgba(20, 30, 35, 0.55);
+}
+
+.modal-content {
+
+  width: 100%;
+  max-width: 520px;
+
+  max-height: 85vh;
+
+  overflow-y: auto;
+
+  padding: 20px;
+
+  background: #fff;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 15px 50px
+    rgba(0, 0, 0, 0.25);
+}
+
+.modal-header {
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-bottom: 15px;
+}
+
+.modal-header h3 {
+  margin: 0;
+}
+
+.modal-close-icon {
+
+  width: 40px;
+  height: 40px;
+
+  padding: 0;
+
+  border: none;
+
+  border-radius: 50%;
+
+  background: #eceff1;
+
+  color: #455a64;
+
+  font-size: 25px;
+
+  cursor: pointer;
+}
+
+
+/* =========================
+   スマホ
+========================= */
+
+@media (max-width: 600px) {
+
+  #appArea {
+    padding:
+      0
+      12px
+      105px;
+  }
+
+  .app-header {
+
+    margin:
+      0
+      -12px
+      16px;
+
+    padding:
+      12px;
+  }
+
+  .app-header h1 {
+    font-size: 17px;
+  }
+
+
+  .home-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  .home-action-grid {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+
+  .home-action-button {
+    min-height: 96px;
+  }
+
+
+  .user-card,
+  .summary-card,
+  #dailyConfirmArea,
+  #todayTarget,
+  #completedList,
+  #medicineReport,
+  #status,
+  .history-section,
+  #adminArea {
+
+    padding: 14px;
+
+    border-radius: 14px;
+  }
+
+
+  .day-registered-item,
+  .day-no-bowel-item,
+  .night-no-bowel-item {
+
+    grid-template-columns:
+      auto 1fr auto;
+  }
+
+}
+
+
+/* =========================
+   PC / iPad 横幅活用
+========================= */
+
+@media (min-width: 700px) {
+
+  .home-action-button {
+    min-height: 125px;
+  }
+
+  .home-status-card {
+    min-height: 95px;
+  }
+
+}
+
+/* =========================
+   ホーム 確認状態
+========================= */
+
+.home-confirm-ok {
+  color: #00897b;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.home-confirm-ng {
+  color: #e53935;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
 </style>
 </head>
 
@@ -794,9 +1723,10 @@ button {
     <div class="home-status-grid">
 
       <button
-        class="home-status-card"
-        onclick="openPage('bowelPage'); checkTodayBowelStatus();"
-      >
+       id="homeDayConfirmCard"
+       class="home-status-card"
+      onclick="openPage('bowelPage'); checkTodayBowelStatus();"
+>
         <span class="home-status-icon">☀️</span>
 
         <span>
@@ -809,9 +1739,10 @@ button {
 
 
       <button
+        id="homeNightConfirmCard"
         class="home-status-card"
         onclick="openPage('bowelPage'); checkNightBowelStatus();"
-      >
+>
         <span class="home-status-icon">🌙</span>
 
         <span>
@@ -1909,9 +2840,159 @@ function getTodayTarget() {
 
   return result;
 }
+ 
+function updateHomeMedicineStatus() {
 
-      
+  const area =
+    document.getElementById(
+      "homeMedicineStatus"
+    );
 
+  if (!area) {
+    return;
+  }
+
+
+  let totalCount = 0;
+  let completedCount = 0;
+  let remainingCount = 0;
+
+  let targetUsers = new Set();
+  let remainingUsers = new Set();
+
+
+  // =========================
+  // 今日の投薬対象を集計
+  // =========================
+
+  for (let user in lastDates) {
+
+    // 現在のユニットだけ
+    if (
+      currentUnit !== "all" &&
+      userUnits[user] !== currentUnit
+    ) {
+      continue;
+    }
+
+
+    const days =
+      getNoBowelDays(user);
+
+    const medicines =
+      rules[user]?.[days];
+
+
+    // 今日の投薬なし
+    if (!medicines) {
+      continue;
+    }
+
+
+    targetUsers.add(user);
+
+
+    for (let medicine of medicines) {
+
+      const checkKey =
+        user +
+        "_" +
+        days +
+        "_" +
+        medicine;
+
+
+      totalCount++;
+
+
+      if (checks[checkKey]) {
+
+        completedCount++;
+
+      } else {
+
+        remainingCount++;
+
+        remainingUsers.add(user);
+      }
+    }
+  }
+
+
+  // =========================
+  // 今日の対象なし
+  // =========================
+
+  if (totalCount === 0) {
+
+    area.innerHTML = `
+      <div class="home-medicine-all-clear">
+        🎉 本日の投薬対象はありません
+      </div>
+    `;
+
+    return;
+  }
+
+
+  // =========================
+  // 全て実施済み
+  // =========================
+
+  if (remainingCount === 0) {
+
+    area.innerHTML = `
+      <div class="home-medicine-summary">
+
+        <div>
+          本日の対象
+          <strong>${targetUsers.size}名</strong>
+        </div>
+
+        <div class="home-medicine-complete">
+          ✅ すべて実施済み
+        </div>
+
+      </div>
+    `;
+
+    return;
+  }
+
+
+  // =========================
+  // 未実施あり
+  // =========================
+
+  area.innerHTML = `
+    <div class="home-medicine-summary">
+
+      <div class="home-medicine-counts">
+
+        <span>
+          本日の対象
+          <strong>${targetUsers.size}名</strong>
+        </span>
+
+        <span>
+          ✅ 実施済み
+          <strong>${completedCount}件</strong>
+        </span>
+
+        <span class="home-medicine-remaining">
+          ⚠ 未実施
+          <strong>${remainingCount}件</strong>
+        </span>
+
+      </div>
+
+      <div class="home-medicine-warning">
+        ⚠ ${remainingUsers.size}名に未実施の投薬があります
+      </div>
+
+    </div>
+  `;
+}
 
 function saveData() {
   localStorage.setItem("points", JSON.stringify(points));
@@ -1968,6 +3049,8 @@ function loadData() {
   document.getElementById("ruleList").innerHTML = getRuleListHtml();
   document.getElementById("completedList").innerHTML = getCompletedListHtml();
 
+  updateHomeMedicineStatus();
+  
   updateUserSelects();
   updateRoleUI();
 }
@@ -2006,14 +3089,31 @@ async function loadRulesFromGoogle() {
 }
 
 async function loadChecksFromGoogle() {
-  const response = await fetchApi(API_URL + "?action=getChecks");
-  checks = await response.json();
 
-  document.getElementById("todayTarget").innerHTML =
+  const response =
+    await fetchApi(
+      API_URL +
+      "?action=getChecks"
+    );
+
+  checks =
+    await response.json();
+
+
+  document.getElementById(
+    "todayTarget"
+  ).innerHTML =
     getTodayTarget();
 
-  document.getElementById("completedList").innerHTML =
+
+  document.getElementById(
+    "completedList"
+  ).innerHTML =
     getCompletedListHtml();
+
+
+  // ホームも更新
+  updateHomeMedicineStatus();
 }
 
 async function saveRulesToGoogle() {
@@ -2959,34 +4059,74 @@ function deleteRule(user, day, medicine) {
 }
 
 async function toggleCheck(key) {
-  const previousValue = Boolean(checks[key]);
 
-  checks[key] = !previousValue;
+  const previousValue =
+    Boolean(checks[key]);
 
-  // ここで対象者一覧をすぐ更新
-  document.getElementById("todayTarget").innerHTML =
+  checks[key] =
+    !previousValue;
+
+
+  // =========================
+  // 画面を即時更新
+  // =========================
+
+  document.getElementById(
+    "todayTarget"
+  ).innerHTML =
     getTodayTarget();
 
-  // 実施済み一覧も更新
-  document.getElementById("completedList").innerHTML =
+
+  document.getElementById(
+    "completedList"
+  ).innerHTML =
     getCompletedListHtml();
+
+
+  // ホームの投薬状況も更新
+  updateHomeMedicineStatus();
+
 
   saveData();
 
-  try {
-    await saveChecksToGoogle();
-  } catch (error) {
-    checks[key] = previousValue;
 
-    document.getElementById("todayTarget").innerHTML =
+  try {
+
+    await saveChecksToGoogle();
+
+
+  } catch (error) {
+
+    // =========================
+    // 保存失敗 → 元に戻す
+    // =========================
+
+    checks[key] =
+      previousValue;
+
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
       getTodayTarget();
 
-    document.getElementById("completedList").innerHTML =
+
+    document.getElementById(
+      "completedList"
+    ).innerHTML =
       getCompletedListHtml();
+
+
+    // ホームも元に戻す
+    updateHomeMedicineStatus();
+
 
     saveData();
 
-    alert(error.message);
+
+    alert(
+      error.message
+    );
   }
 }
 
@@ -3617,178 +4757,256 @@ async function loadDailyConfirmStatus() {
   try {
 
     const response = await fetchApi(
-    API_URL +
-    "?action=getDailyConfirms" +
-    "&timestamp=" + Date.now()
+      API_URL +
+      "?action=getDailyConfirms" +
+      "&timestamp=" + Date.now()
     );
 
-if (!response.ok) {
-  throw new Error(
-    "集計状況の取得に失敗しました"
-  );
-}
 
-    const confirms = await response.json();
+    if (!response.ok) {
+
+      throw new Error(
+        "集計状況の取得に失敗しました"
+      );
+
+    }
+
+
+    const confirms =
+      await response.json();
+
 
     let html = "";
 
-    const now = new Date();
+    const now =
+      new Date();
 
     const after8 =
-    now.getHours() >= 8;
+      now.getHours() >= 8;
 
+
+    // =========================
     // 未確定ユニット
+    // =========================
+
     let nightNotConfirmed = [];
 
-    for (let unit = 1; unit <= 4; unit++) {
 
-      const dayConfirm = confirms.find(
-      item =>
-      String(item.unit).trim() === String(unit) &&
-      String(item.type).trim().toLowerCase() === "day"
-      );
+    // =========================
+    // 4ユニット分の一覧
+    // =========================
 
-      const nightConfirm = confirms.find(
-      item =>
-      String(item.unit).trim() === String(unit) &&
-      String(item.type).trim().toLowerCase() === "night"
-      );
+    for (
+      let unit = 1;
+      unit <= 4;
+      unit++
+    ) {
+
+      const dayConfirm =
+        confirms.find(
+          item =>
+            String(item.unit).trim() ===
+              String(unit) &&
+            String(item.type)
+              .trim()
+              .toLowerCase() ===
+              "day"
+        );
+
+
+      const nightConfirm =
+        confirms.find(
+          item =>
+            String(item.unit).trim() ===
+              String(unit) &&
+            String(item.type)
+              .trim()
+              .toLowerCase() ===
+              "night"
+        );
+
 
       html += `
         <div class="user-card">
 
-        <strong>${unit}ユニット</strong><br><br>
+          <strong>
+            ${unit}ユニット
+          </strong>
+
+          <br><br>
       `;
 
+
+      // =========================
       // 夜勤
+      // =========================
+
       if (nightConfirm) {
 
         html += `
-        <div class="confirm-block">
+          <div class="confirm-block">
 
-        <div class="confirm-title">
-        🌙 夜勤
-        </div>
+            <div class="confirm-title">
+              🌙 夜勤
+            </div>
 
-        <div class="confirm-ok">
-        ✅ 確定済み
-        </div>
+            <div class="confirm-ok">
+              ✅ 確定済み
+            </div>
 
-        <div class="confirm-info">
-       ${nightConfirm.time}
-       </div>
+            <div class="confirm-info">
+              ${nightConfirm.time}
+            </div>
 
-       <div class="confirm-info">
-       ${nightConfirm.name}
-       </div>
+            <div class="confirm-info">
+              ${nightConfirm.name}
+            </div>
 
-       </div>
-       `;
+          </div>
+        `;
 
       } else {
 
         html += `
-        <div class="confirm-block">
+          <div class="confirm-block">
 
-        <div class="confirm-title">
-        🌙 夜勤
-        </div>
+            <div class="confirm-title">
+              🌙 夜勤
+            </div>
 
-        <div class="confirm-ng">
-        ⚠ 未確定
-        </div>
+            <div class="confirm-ng">
+              ⚠ 未確定
+            </div>
 
-        </div>
-       `;
+          </div>
+        `;
+
 
         // 朝8時以降だけ警告
         if (after8) {
 
-       nightNotConfirmed.push(
-       unit + "ユニット"
-       );
+          nightNotConfirmed.push(
+            unit + "ユニット"
+          );
 
-       }
+        }
+      }
+
+
+      // =========================
+      // 日勤
+      // =========================
+
+      if (dayConfirm) {
+
+        html += `
+          <div class="confirm-block">
+
+            <div class="confirm-title">
+              ☀ 日勤
+            </div>
+
+            <div class="confirm-ok">
+              ✅ 確定済み
+            </div>
+
+            <div class="confirm-info">
+              ${dayConfirm.time}
+            </div>
+
+            <div class="confirm-info">
+              ${dayConfirm.name}
+            </div>
+
+          </div>
+        `;
+
+      } else {
+
+        html += `
+          <div class="confirm-block">
+
+            <div class="confirm-title">
+              ☀ 日勤
+            </div>
+
+            <div class="confirm-ng">
+              ⚠ 未確定
+            </div>
+
+          </div>
+        `;
 
       }
 
-      // 日勤
-      if (dayConfirm) {
-
-      html += `
-      <div class="confirm-block">
-
-      <div class="confirm-title">
-        ☀ 日勤
-      </div>
-
-      <div class="confirm-ok">
-        ✅ 確定済み
-      </div>
-
-      <div class="confirm-info">
-        ${dayConfirm.time}
-      </div>
-
-      <div class="confirm-info">
-        ${dayConfirm.name}
-      </div>
-
-      </div>
-     `;
-
-    } else {
-
-     html += `
-     <div class="confirm-block">
-
-     <div class="confirm-title">
-        ☀ 日勤
-      </div>
-
-      <div class="confirm-ng">
-        ⚠ 未確定
-      </div>
-
-    </div>
-  `;
-
-}
 
       html += "</div>";
+
     }
-    
+
+
+    // =========================
+    // 夜勤未確認警告
+    // =========================
+
     if (
-     after8 &&
-     nightNotConfirmed.length > 0
-     ) {
+      after8 &&
+      nightNotConfirmed.length > 0
+    ) {
 
-     showNightAlert(
-     `
-     夜勤帯の排便確認が未完了です<br><br>
+      showNightAlert(
+        `
+          夜勤帯の排便確認が未完了です
+          <br><br>
 
-     <div class="night-alert-units">
-      ${nightNotConfirmed.join("<br>")}
-     </div>
+          <div class="night-alert-units">
+            ${nightNotConfirmed.join("<br>")}
+          </div>
 
-     <br>
+          <br>
 
-     朝食時の緩下剤判断に<br>
-     影響する可能性があります。<br><br>
+          朝食時の緩下剤判断に
+          <br>
+          影響する可能性があります。
+          <br><br>
 
-     夜勤者へ確認してください。
-     `
-    );
+          夜勤者へ確認してください。
+        `
+      );
 
     } else {
 
-     hideNightAlert();
+      hideNightAlert();
 
     }
 
-    document.getElementById(
-      "dailyConfirmStatus"
-    ).innerHTML = html;
+
+    // =========================
+    // 従来の集計一覧
+    // =========================
+
+    const dailyConfirmStatus =
+      document.getElementById(
+        "dailyConfirmStatus"
+      );
+
+    if (dailyConfirmStatus) {
+
+      dailyConfirmStatus.innerHTML =
+        html;
+
+    }
+
+
+    // =========================
+    // ★ Ver.0.8
+    // ホームにも反映
+    // =========================
+
+    updateHomeConfirmStatus(
+      confirms
+    );
+
 
   } catch (error) {
 
@@ -3797,11 +5015,271 @@ if (!response.ok) {
       error
     );
 
-    document.getElementById(
-      "dailyConfirmStatus"
-    ).innerHTML =
-      "集計状況の読み込みに失敗しました";
+
+    const dailyConfirmStatus =
+      document.getElementById(
+        "dailyConfirmStatus"
+      );
+
+    if (dailyConfirmStatus) {
+
+      dailyConfirmStatus.innerHTML =
+        "集計状況の読み込みに失敗しました";
+
+    }
+
   }
+}
+
+function updateHomeConfirmStatus(
+  confirms
+) {
+
+  const dayCard =
+    document.getElementById(
+      "homeDayConfirmCard"
+    );
+
+  const nightCard =
+    document.getElementById(
+      "homeNightConfirmCard"
+    );
+
+  const homeUnitName =
+    document.getElementById(
+      "homeUnitName"
+    );
+
+
+  if (
+    !dayCard ||
+    !nightCard
+  ) {
+    return;
+  }
+
+
+  // =========================
+  // ホームのユニット名
+  // =========================
+
+  if (homeUnitName) {
+
+    if (currentUnit === "all") {
+
+      homeUnitName.textContent =
+        "全ユニット";
+
+    } else {
+
+      homeUnitName.textContent =
+        currentUnit +
+        "ユニット";
+
+    }
+
+  }
+
+
+  // =========================
+  // 管理者・看護師など
+  // 全ユニット表示
+  // =========================
+
+  if (currentUnit === "all") {
+
+    let dayConfirmedCount = 0;
+    let nightConfirmedCount = 0;
+
+
+    for (
+      let unit = 1;
+      unit <= 4;
+      unit++
+    ) {
+
+      const dayConfirmed =
+        confirms.some(
+          item =>
+            String(item.unit).trim() ===
+              String(unit) &&
+            String(item.type)
+              .trim()
+              .toLowerCase() ===
+              "day"
+        );
+
+
+      const nightConfirmed =
+        confirms.some(
+          item =>
+            String(item.unit).trim() ===
+              String(unit) &&
+            String(item.type)
+              .trim()
+              .toLowerCase() ===
+              "night"
+        );
+
+
+      if (dayConfirmed) {
+        dayConfirmedCount++;
+      }
+
+      if (nightConfirmed) {
+        nightConfirmedCount++;
+      }
+
+    }
+
+
+    dayCard.innerHTML = `
+      <span class="home-status-icon">
+        ☀️
+      </span>
+
+      <span>
+        <strong>日中帯</strong><br>
+        <small>
+          8:00 ～ 16:00
+        </small>
+      </span>
+
+      <span class="${
+        dayConfirmedCount === 4
+          ? "home-confirm-ok"
+          : "home-confirm-ng"
+      }">
+        ${
+          dayConfirmedCount === 4
+            ? "✓ 全ユニット完了"
+            : "⚠ " +
+              dayConfirmedCount +
+              "/4 確定"
+        }
+      </span>
+    `;
+
+
+    nightCard.innerHTML = `
+      <span class="home-status-icon">
+        🌙
+      </span>
+
+      <span>
+        <strong>夜勤帯</strong><br>
+        <small>
+          16:00 ～ 翌8:00
+        </small>
+      </span>
+
+      <span class="${
+        nightConfirmedCount === 4
+          ? "home-confirm-ok"
+          : "home-confirm-ng"
+      }">
+        ${
+          nightConfirmedCount === 4
+            ? "✓ 全ユニット完了"
+            : "⚠ " +
+              nightConfirmedCount +
+              "/4 確定"
+        }
+      </span>
+    `;
+
+
+    return;
+  }
+
+
+  // =========================
+  // 通常の介護士
+  // 自ユニットのみ
+  // =========================
+
+  const dayConfirm =
+    confirms.find(
+      item =>
+        String(item.unit).trim() ===
+          String(currentUnit) &&
+        String(item.type)
+          .trim()
+          .toLowerCase() ===
+          "day"
+    );
+
+
+  const nightConfirm =
+    confirms.find(
+      item =>
+        String(item.unit).trim() ===
+          String(currentUnit) &&
+        String(item.type)
+          .trim()
+          .toLowerCase() ===
+          "night"
+    );
+
+
+  // =========================
+  // 日中カード
+  // =========================
+
+  dayCard.innerHTML = `
+    <span class="home-status-icon">
+      ☀️
+    </span>
+
+    <span>
+      <strong>日中帯</strong><br>
+      <small>
+        8:00 ～ 16:00
+      </small>
+    </span>
+
+    <span class="${
+      dayConfirm
+        ? "home-confirm-ok"
+        : "home-confirm-ng"
+    }">
+      ${
+        dayConfirm
+          ? "✓ 確認済み"
+          : "⚠ 未確認"
+      }
+    </span>
+  `;
+
+
+  // =========================
+  // 夜勤カード
+  // =========================
+
+  nightCard.innerHTML = `
+    <span class="home-status-icon">
+      🌙
+    </span>
+
+    <span>
+      <strong>夜勤帯</strong><br>
+      <small>
+        16:00 ～ 翌8:00
+      </small>
+    </span>
+
+    <span class="${
+      nightConfirm
+        ? "home-confirm-ok"
+        : "home-confirm-ng"
+    }">
+      ${
+        nightConfirm
+          ? "✓ 確認済み"
+          : "⚠ 未確認"
+      }
+    </span>
+  `;
 }
 
 async function changeLastDate() {
