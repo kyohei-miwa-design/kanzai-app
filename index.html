@@ -3180,23 +3180,74 @@ function closeTodayBowelStatus() {
 
 async function confirmNoBowelUsers() {
 
-  const checkedUsers = Array.from(
-    document.querySelectorAll(".noBowelCheck:checked")
-  ).map(input => input.value);
+  // =========================
+  // 日中帯か確認
+  // 8:00以上 ～ 16:00未満
+  // =========================
 
-  if (checkedUsers.length === 0) {
-    alert("対象者が選択されていません");
+  const now = new Date();
+
+  const dayStart = new Date(now);
+  dayStart.setHours(8, 0, 0, 0);
+
+  const dayEnd = new Date(now);
+  dayEnd.setHours(16, 0, 0, 0);
+
+
+  if (
+    now < dayStart ||
+    now >= dayEnd
+  ) {
+
+    alert(
+      "日中帯の排便確認は、8:00～16:00の間に確定してください。"
+    );
+
     return;
   }
 
+
+  // =========================
+  // チェックされた利用者を取得
+  // =========================
+
+  const checkedUsers = Array.from(
+    document.querySelectorAll(
+      ".noBowelCheck:checked"
+    )
+  ).map(
+    input => input.value
+  );
+
+
+  if (checkedUsers.length === 0) {
+
+    alert(
+      "対象者が選択されていません"
+    );
+
+    return;
+  }
+
+
+  // =========================
+  // 最終確認
+  // =========================
+
   const ok = confirm(
     checkedUsers.join("、") +
-    " を「排便なし」で確定しますか？"
+    " を日中帯「排便なし」で確定しますか？"
   );
+
 
   if (!ok) {
     return;
   }
+
+
+  // =========================
+  // 排便なしを登録
+  // =========================
 
   for (let user of checkedUsers) {
 
@@ -3205,23 +3256,50 @@ async function confirmNoBowelUsers() {
       type: "なし",
       point: points[user]
     });
+
   }
+
+
+  // =========================
+  // 最新履歴を再取得
+  // =========================
 
   await loadHistoriesFromGoogle();
 
- // ★このユニットの排便確認完了をGoogleへ記録
- const confirmSaved =
-  await saveDailyConfirmToGoogle();
 
- checkTodayBowelStatus();
+  // =========================
+  // このユニットの日中帯
+  // 排便確認完了をGoogleへ記録
+  // =========================
 
- if (confirmSaved) {
-  alert("排便なしで確定しました");
- } else {
-  alert(
-    "排便登録は完了しましたが、集計完了の記録に失敗しました"
-  );
- }
+  const confirmSaved =
+    await saveDailyConfirmToGoogle();
+
+
+  // =========================
+  // 日中帯集計を再描画
+  // =========================
+
+  checkTodayBowelStatus();
+
+
+  // =========================
+  // 完了表示
+  // =========================
+
+  if (confirmSaved) {
+
+    alert(
+      "日中帯の排便なしを確定しました"
+    );
+
+  } else {
+
+    alert(
+      "排便登録は完了しましたが、集計完了の記録に失敗しました"
+    );
+
+  }
 }
 
 async function saveDailyConfirmToGoogle() {
@@ -3515,17 +3593,54 @@ function checkNightBowelStatus() {
 
   const now = new Date();
 
-  // 本日8:00
-  const nightEnd = new Date(now);
-  nightEnd.setHours(8, 0, 0, 0);
+  // =========================
+  // 対象となる夜勤帯を決定
+  // =========================
 
-  // 前日16:00
-  const nightStart = new Date(nightEnd);
-  nightStart.setDate(nightStart.getDate() - 1);
-  nightStart.setHours(16, 0, 0, 0);
+  let nightStart;
+  let nightEnd;
+
+  const hour = now.getHours();
+
+
+  // 16:00以降
+  // 今日16:00 ～ 翌日8:00
+  if (hour >= 16) {
+
+    nightStart = new Date(now);
+    nightStart.setHours(16, 0, 0, 0);
+
+    nightEnd = new Date(now);
+    nightEnd.setDate(
+      nightEnd.getDate() + 1
+    );
+    nightEnd.setHours(8, 0, 0, 0);
+
+  }
+
+  // 0:00 ～ 15:59
+  // 前日16:00 ～ 今日8:00
+  else {
+
+    nightEnd = new Date(now);
+    nightEnd.setHours(8, 0, 0, 0);
+
+    nightStart = new Date(now);
+    nightStart.setDate(
+      nightStart.getDate() - 1
+    );
+    nightStart.setHours(16, 0, 0, 0);
+
+  }
+
 
   let registeredUsers = [];
   let unregisteredUsers = [];
+
+
+  // =========================
+  // 利用者ごとに判定
+  // =========================
 
   for (let user in points) {
 
@@ -3537,29 +3652,40 @@ function checkNightBowelStatus() {
       continue;
     }
 
-    const nightHistories = histories.filter(history => {
 
-  if (history.user !== user) {
-    return false;
-  }
+    const nightHistories =
+      histories.filter(history => {
 
-  // 取消済み履歴は集計対象外
-  if (
-    String(history.status).trim() ===
-    "cancelled"
-  ) {
-    return false;
-  }
+        if (history.user !== user) {
+          return false;
+        }
 
-  const historyDate = new Date(
-    String(history.date).replace(" ", "T")
-  );
 
-  return (
-    historyDate >= nightStart &&
-    historyDate < nightEnd
-  );
-});
+        // 取消済み履歴は集計対象外
+        if (
+          String(
+            history.status || ""
+          ).trim() === "cancelled"
+        ) {
+          return false;
+        }
+
+
+        const historyDate =
+          new Date(
+            String(history.date).replace(
+              " ",
+              "T"
+            )
+          );
+
+
+        return (
+          historyDate >= nightStart &&
+          historyDate < nightEnd
+        );
+      });
+
 
     if (nightHistories.length > 0) {
 
@@ -3575,6 +3701,10 @@ function checkNightBowelStatus() {
     }
   }
 
+
+  // =========================
+  // HTML作成
+  // =========================
 
   let html = `
     <div class="user-card">
@@ -3600,12 +3730,35 @@ function checkNightBowelStatus() {
 
     for (let item of registeredUsers) {
 
-      const types = item.histories.map(
-        history => history.type
-      );
+      const types =
+        item.histories.map(history => {
 
-      html +=
-        `✓ ${item.user}：${types.join("、")}<br>`;
+          if (history.type === "なし") {
+            return "排便なし";
+          }
+
+          return history.type || "";
+
+        });
+
+
+      html += `
+        <div class="day-registered-item">
+
+          <span class="day-registered-check">
+            ✓
+          </span>
+
+          <span class="day-registered-name">
+            ${item.user}
+          </span>
+
+          <span class="day-registered-type">
+            ${types.join("、")}
+          </span>
+
+        </div>
+      `;
     }
 
   } else {
@@ -3634,6 +3787,7 @@ function checkNightBowelStatus() {
       </p>
     `;
 
+
     for (let user of unregisteredUsers) {
 
       html += `
@@ -3643,7 +3797,6 @@ function checkNightBowelStatus() {
             type="checkbox"
             class="nightNoBowelCheck"
             value="${user}"
-            checked
           >
 
           <span>${user}</span>
@@ -3665,7 +3818,7 @@ function checkNightBowelStatus() {
 
 
   // =========================
-  // 確定・閉じるボタン
+  // 確定・閉じる
   // =========================
 
   html += `
@@ -3746,17 +3899,98 @@ async function saveNightConfirmToGoogle() {
 
 async function confirmNightShift() {
 
-  const allChecks = Array.from(
-    document.querySelectorAll(
-      ".nightNoBowelCheck"
-    )
-  );
+  const now = new Date();
 
-  const uncheckedUsers = allChecks
-    .filter(input => !input.checked)
-    .map(input => input.value);
 
-  if (uncheckedUsers.length > 0) {
+  // =========================
+  // 現在表示対象の夜勤帯を決定
+  // =========================
+
+  let nightStart;
+  let nightEnd;
+
+  const hour =
+    now.getHours();
+
+
+  // 16:00以降
+  // 本日16:00 ～ 翌日8:00
+  if (hour >= 16) {
+
+    nightStart =
+      new Date(now);
+
+    nightStart.setHours(
+      16, 0, 0, 0
+    );
+
+
+    nightEnd =
+      new Date(now);
+
+    nightEnd.setDate(
+      nightEnd.getDate() + 1
+    );
+
+    nightEnd.setHours(
+      8, 0, 0, 0
+    );
+
+  }
+
+  // 0:00 ～ 15:59
+  // 前日16:00 ～ 本日8:00
+  else {
+
+    nightEnd =
+      new Date(now);
+
+    nightEnd.setHours(
+      8, 0, 0, 0
+    );
+
+
+    nightStart =
+      new Date(now);
+
+    nightStart.setDate(
+      nightStart.getDate() - 1
+    );
+
+    nightStart.setHours(
+      16, 0, 0, 0
+    );
+
+  }
+
+
+  // =========================
+  // 未確認者チェック
+  // =========================
+
+  const allChecks =
+    Array.from(
+      document.querySelectorAll(
+        ".nightNoBowelCheck"
+      )
+    );
+
+
+  const uncheckedUsers =
+    allChecks
+      .filter(
+        input =>
+          !input.checked
+      )
+      .map(
+        input =>
+          input.value
+      );
+
+
+  if (
+    uncheckedUsers.length > 0
+  ) {
 
     alert(
       "次の利用者が未確認です。\n\n" +
@@ -3766,18 +4000,35 @@ async function confirmNightShift() {
     return;
   }
 
-  const ok = confirm(
-    "前日16時から本日8時までの\n" +
-    "夜勤帯排便状況を確定しますか？\n\n" +
-    "記録のない利用者は、夜勤帯に排便なしとして確認したものとします。"
-  );
+
+  // =========================
+  // 確定確認
+  // =========================
+
+  const ok =
+    confirm(
+      formatDateTime(nightStart) +
+      " ～ " +
+      formatDateTime(nightEnd) +
+      "\n\n" +
+      "この夜勤帯の排便状況を確定しますか？\n\n" +
+      "記録のない利用者は、" +
+      "夜勤帯に排便なしとして確認したものとします。"
+    );
+
 
   if (!ok) {
     return;
   }
 
+
+  // =========================
+  // Googleへ夜勤確認を保存
+  // =========================
+
   const saved =
     await saveNightConfirmToGoogle();
+
 
   if (!saved) {
 
@@ -3788,11 +4039,34 @@ async function confirmNightShift() {
     return;
   }
 
+
+  // =========================
+  // 完了
+  // =========================
+
   alert(
     "夜勤帯の排便確認を確定しました"
   );
 
+
+  // 集計状況を更新
   await loadDailyConfirmStatus();
+
+
+  // 開いている夜勤一覧も再描画
+  const nightResult =
+    document.getElementById(
+      "nightBowelCheckResult"
+    );
+
+  if (
+    nightResult &&
+    nightResult.innerHTML.trim() !== ""
+  ) {
+
+    checkNightBowelStatus();
+
+  }
 }
 
 function showNightAlert(message) {
