@@ -622,6 +622,44 @@ button {
   cursor: pointer;
 }
 
+/* =========================
+   日勤 排便なし確認
+========================= */
+
+.day-no-bowel-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  background: #f7f9fc;
+  border: 1px solid #d8dee8;
+  border-radius: 10px;
+
+  padding: 12px 14px;
+  margin: 8px 0;
+
+  font-size: 17px;
+}
+
+/* 共通inputの width:100% を解除 */
+.day-no-bowel-item input[type="checkbox"] {
+  width: 25px;
+  height: 25px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* 利用者名 */
+.day-no-bowel-item span:nth-of-type(1) {
+  flex: 1;
+  font-weight: bold;
+}
+
+/* 「排便なし」 */
+.day-no-bowel-item span:nth-of-type(2) {
+  color: #555;
+}
+
 </style>
 </head>
 
@@ -2889,17 +2927,20 @@ function checkTodayBowelStatus() {
   if (unregisteredUsers.length > 0) {
 
   for (let user of unregisteredUsers) {
-    html += `
-      <label>
-        <input
-          type="checkbox"
-          class="noBowelCheck"
-          value="${user}"
-          checked
-        >
-        ${user}
-      </label>
-      <br>
+   html += `
+    <label class="day-no-bowel-item">
+
+      <input
+        type="checkbox"
+        class="noBowelCheck"
+        value="${user}"
+        checked
+      >
+
+      <span>${user}</span>
+      <span>排便なし</span>
+
+     </label>
     `;
   }
 
