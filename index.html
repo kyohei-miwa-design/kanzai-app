@@ -2937,16 +2937,18 @@ function createMedicineReport() {
 
 function checkTodayBowelStatus() {
 
-  const today = new Date();
+  const now = new Date();
 
-  const year = today.getFullYear();
-  const month =
-    String(today.getMonth() + 1).padStart(2, "0");
-  const day =
-    String(today.getDate()).padStart(2, "0");
+  // =========================
+  // 本日8:00 ～ 本日16:00
+  // =========================
 
-  const todayText =
-    `${year}-${month}-${day}`;
+  const dayStart = new Date(now);
+  dayStart.setHours(8, 0, 0, 0);
+
+  const dayEnd = new Date(now);
+  dayEnd.setHours(16, 0, 0, 0);
+
 
   let registeredUsers = [];
   let unregisteredUsers = [];
@@ -2967,28 +2969,50 @@ function checkTodayBowelStatus() {
     }
 
 
-    // 今日の「有効な」履歴だけ取得
-    const todayHistories =
+    // =========================
+    // 日中帯8:00～16:00の
+    // 有効な履歴だけ取得
+    // =========================
+
+    const dayHistories =
       histories.filter(history => {
 
-        const historyDate =
-          String(history.date).slice(0, 10);
+        if (history.user !== user) {
+          return false;
+        }
 
-        return (
-          history.user === user &&
-          historyDate === todayText &&
+
+        // 取消済みは除外
+        if (
           String(
             history.status || ""
-          ).trim() !== "cancelled"
+          ).trim() === "cancelled"
+        ) {
+          return false;
+        }
+
+
+        const historyDate =
+          new Date(
+            String(history.date).replace(
+              " ",
+              "T"
+            )
+          );
+
+
+        return (
+          historyDate >= dayStart &&
+          historyDate < dayEnd
         );
       });
 
 
-    if (todayHistories.length > 0) {
+    if (dayHistories.length > 0) {
 
       registeredUsers.push({
         user: user,
-        histories: todayHistories
+        histories: dayHistories
       });
 
     } else {
@@ -3006,7 +3030,14 @@ function checkTodayBowelStatus() {
   let html = `
     <div class="user-card">
 
-      <h3>本日の排便確認</h3>
+      <h3>☀️ 日中帯の排便確認</h3>
+
+      <p>
+        対象：
+        ${formatDateTime(dayStart)}
+        ～
+        ${formatDateTime(dayEnd)}
+      </p>
 
       <strong>登録済み</strong><br>
   `;
