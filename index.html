@@ -2995,16 +2995,17 @@ function checkTodayBowelStatus() {
 
     for (let user of registeredUsers) {
 
-      const todayHistory = histories.find(history => {
+      const todayHistories = histories.filter(history => {
 
-        const historyDate =
-          String(history.date).slice(0, 10);
+      const historyDate =
+      String(history.date).slice(0, 10);
 
-        return (
-          history.user === user &&
-          historyDate === todayText
-        );
-      });
+      return (
+      history.user === user &&
+      historyDate === todayText &&
+      String(history.status).trim() !== "cancelled"
+    );
+  });
 
       let bowelText = "";
 
@@ -3485,20 +3486,27 @@ function checkNightBowelStatus() {
 
     const nightHistories = histories.filter(history => {
 
-      if (history.user !== user) {
-        return false;
-      }
+  if (history.user !== user) {
+    return false;
+  }
 
-      // "2026-08-03 05:30:00" をDateへ変換
-      const historyDate = new Date(
-        String(history.date).replace(" ", "T")
-      );
+  // 取消済み履歴は集計対象外
+  if (
+    String(history.status).trim() ===
+    "cancelled"
+  ) {
+    return false;
+  }
 
-      return (
-        historyDate >= nightStart &&
-        historyDate < nightEnd
-      );
-    });
+  const historyDate = new Date(
+    String(history.date).replace(" ", "T")
+  );
+
+  return (
+    historyDate >= nightStart &&
+    historyDate < nightEnd
+  );
+});
 
     if (nightHistories.length > 0) {
 
