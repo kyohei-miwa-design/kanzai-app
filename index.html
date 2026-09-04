@@ -3438,15 +3438,21 @@ initialize();
 async function refreshFromGoogle() {
 
   if (isRefreshing) {
+
     console.log(
       "更新中のため今回の自動更新をスキップ"
     );
+
     return;
   }
 
+
   isRefreshing = true;
 
-  console.time("★ refreshFromGoogle 全体");
+  console.time(
+    "★ refreshFromGoogle 全体"
+  );
+
 
   try {
 
@@ -3455,85 +3461,17 @@ async function refreshFromGoogle() {
 
 
     // =========================
-    // 個別に時間計測
+    // 最新データ一式と
+    // 確定状況を並列取得
     // =========================
 
-    const checksPromise =
-      (async () => {
-
-        console.time("① checks取得");
-
-        await loadChecksFromGoogle();
-
-        console.timeEnd("① checks取得");
-
-      })();
-
-
-    const historiesPromise =
-      (async () => {
-
-        console.time("② histories取得");
-
-        await loadHistoriesFromGoogle();
-
-        console.timeEnd("② histories取得");
-
-      })();
-
-
-    const confirmPromise =
-      (async () => {
-
-        console.time("③ confirm取得");
-
-        await loadDailyConfirmStatus();
-
-        console.timeEnd("③ confirm取得");
-
-      })();
-
-
-    // 3つを並列で待つ
     await Promise.all([
-      checksPromise,
-      historiesPromise,
-      confirmPromise
+
+      loadSyncDataFromGoogle(),
+
+      loadDailyConfirmStatus()
+
     ]);
-
-// =========================
-// 最新データで画面を再描画
-// =========================
-
-document.getElementById(
-  "status"
-).innerHTML =
-  getStatusHtml();
-
-document.getElementById(
-  "todayTarget"
-).innerHTML =
-  getTodayTarget();
-
-document.getElementById(
-  "history"
-).innerHTML =
-  getHistoryHtml();
-
-document.getElementById(
-  "completedList"
-).innerHTML =
-  getCompletedListHtml();
-
-    console.time(
-      "④ ホーム投薬状況計算"
-    );
-
-    updateHomeMedicineStatus();
-
-    console.timeEnd(
-      "④ ホーム投薬状況計算"
-    );
 
 
     const afterData =
@@ -3546,7 +3484,6 @@ document.getElementById(
     ) {
 
       showNewDataMessage();
-
     }
 
 
@@ -3573,7 +3510,6 @@ document.getElementById(
     );
 
     isRefreshing = false;
-
   }
 }
 
@@ -7863,6 +7799,166 @@ function openPage(pageId) {
     top: 0,
     behavior: "smooth"
   });
+}
+
+async function loadSyncDataFromGoogle() {
+
+  const response =
+    await fetch(
+      API_URL,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "text/plain;charset=utf-8"
+        },
+
+        body: JSON.stringify({
+          action: "getInitialData"
+        }),
+
+        cache: "no-store"
+      }
+    );
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      "同期データ取得失敗：HTTP " +
+      response.status
+    );
+  }
+
+
+  const data =
+    await response.json();
+
+
+  if (data.error) {
+
+    throw new Error(
+      data.message ||
+      "同期データの取得に失敗しました"
+    );
+  }
+
+
+  // =========================
+  // users
+  // =========================
+
+  points = {};
+  lastDates = {};
+  userUnits = {};
+
+
+  for (const user of data.users) {
+
+    points[user.name] =
+      Number(
+        user.point || 0
+      );
+
+    userUnits[user.name] =
+      String(
+        user.unit || "1"
+      ).trim();
+
+    lastDates[user.name] =
+      user.lastDate
+        ? String(
+            user.lastDate
+          ).slice(0, 10)
+        : "";
+  }
+
+
+  // =========================
+  // その他データ
+  // =========================
+
+  rules =
+    data.rules || {};
+
+  checks =
+    data.checks || {};
+
+  histories =
+    data.histories || [];
+
+
+  // =========================
+  // 画面更新
+  // =========================
+
+  document.getElementById(
+    "status"
+  ).innerHTML =
+    getStatusHtml();
+
+
+  document.getElementById(
+    "todayTarget"
+  ).innerHTML =
+    getTodayTarget();
+
+
+  document.getElementById(
+    "history"
+  ).innerHTML =
+    getHistoryHtml();
+
+
+  document.getElementById(
+    "completedList"
+  ).innerHTML =
+    getCompletedListHtml();
+
+
+  document.getElementById(
+    "ruleList"
+  ).innerHTML =
+    getRuleListHtml();
+
+
+  updateHomeMedicineStatus();
+
+
+  // =========================
+  // 開いている排便集計も更新
+  // =========================
+
+  const dayResult =
+    document.getElementById(
+      "bowelCheckResult"
+    );
+
+  if (
+    dayResult &&
+    dayResult.innerHTML.trim() !== ""
+  ) {
+
+    checkTodayBowelStatus();
+  }
+
+
+  const nightResult =
+    document.getElementById(
+      "nightBowelCheckResult"
+    );
+
+  if (
+    nightResult &&
+    nightResult.innerHTML.trim() !== ""
+  ) {
+
+    checkNightBowelStatus();
+  }
+
+
+  saveData();
 }
 
 </script>
