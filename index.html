@@ -3501,6 +3501,29 @@ async function refreshFromGoogle() {
       confirmPromise
     ]);
 
+// =========================
+// 最新データで画面を再描画
+// =========================
+
+document.getElementById(
+  "status"
+).innerHTML =
+  getStatusHtml();
+
+document.getElementById(
+  "todayTarget"
+).innerHTML =
+  getTodayTarget();
+
+document.getElementById(
+  "history"
+).innerHTML =
+  getHistoryHtml();
+
+document.getElementById(
+  "completedList"
+).innerHTML =
+  getCompletedListHtml();
 
     console.time(
       "④ ホーム投薬状況計算"
