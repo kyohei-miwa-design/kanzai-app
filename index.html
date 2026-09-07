@@ -843,6 +843,56 @@ input {
 
 
 /* =========================
+   同期状態
+========================= */
+
+.sync-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin: -8px 0 16px;
+  padding: 9px 12px;
+
+  border: 1px solid #d7dee3;
+  border-radius: 10px;
+
+  background: #fff;
+  color: #546e7a;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sync-status-dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #90a4ae;
+}
+
+.sync-status-bar.sync-ok {
+  border-color: #b7dfc4;
+  background: #f3fbf5;
+  color: #25633a;
+}
+
+.sync-status-bar.sync-ok .sync-status-dot {
+  background: #2e7d32;
+}
+
+.sync-status-bar.sync-error {
+  border-color: #efb4b4;
+  background: #fff3f3;
+  color: #b71c1c;
+}
+
+.sync-status-bar.sync-error .sync-status-dot {
+  background: #d32f2f;
+}
+
+/* =========================
    ページ
 ========================= */
 
@@ -1827,7 +1877,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.0</p>
+      <p class="app-version">Ver.0.8.1</p>
     </div>
 
     <button
@@ -1838,6 +1888,15 @@ h3 {
     </button>
 
   </header>
+
+
+  <div
+    id="syncStatusBar"
+    class="sync-status-bar"
+  >
+    <span class="sync-status-dot"></span>
+    <span id="syncStatusText">未同期</span>
+  </div>
 
 
   <!-- 通知領域 -->
@@ -2363,6 +2422,171 @@ let checkDate = "";
 let initialSyncFinished = false;
 let newDataMessageTimer = null;
 let isRefreshing = false;
+let lastSuccessfulSyncAt =
+  localStorage.getItem(
+    "lastSuccessfulSyncAt"
+  ) || "";
+
+
+function getLocalDateTimeText() {
+
+  const now =
+    new Date();
+
+  const year =
+    now.getFullYear();
+
+  const month =
+    String(now.getMonth() + 1)
+      .padStart(2, "0");
+
+  const day =
+    String(now.getDate())
+      .padStart(2, "0");
+
+  const hour =
+    String(now.getHours())
+      .padStart(2, "0");
+
+  const minute =
+    String(now.getMinutes())
+      .padStart(2, "0");
+
+  const second =
+    String(now.getSeconds())
+      .padStart(2, "0");
+
+  return (
+    year + "-" +
+    month + "-" +
+    day + " " +
+    hour + ":" +
+    minute + ":" +
+    second
+  );
+}
+
+
+function getSyncDisplayText(dateTimeText) {
+
+  if (!dateTimeText) {
+    return "未同期";
+  }
+
+  const text =
+    String(dateTimeText);
+
+  if (text.length >= 19) {
+    return (
+      text.slice(5, 10)
+        .replace("-", "/") +
+      " " +
+      text.slice(11, 19)
+    );
+  }
+
+  return text;
+}
+
+
+function markSyncSuccess(serverTime = "") {
+
+  lastSuccessfulSyncAt =
+    serverTime ||
+    getLocalDateTimeText();
+
+  localStorage.setItem(
+    "lastSuccessfulSyncAt",
+    lastSuccessfulSyncAt
+  );
+
+  const bar =
+    document.getElementById(
+      "syncStatusBar"
+    );
+
+  const text =
+    document.getElementById(
+      "syncStatusText"
+    );
+
+  if (!bar || !text) {
+    return;
+  }
+
+  bar.className =
+    "sync-status-bar sync-ok";
+
+  text.textContent =
+    "最新データ受信：" +
+    getSyncDisplayText(
+      lastSuccessfulSyncAt
+    );
+}
+
+
+function markSyncError() {
+
+  const bar =
+    document.getElementById(
+      "syncStatusBar"
+    );
+
+  const text =
+    document.getElementById(
+      "syncStatusText"
+    );
+
+  if (!bar || !text) {
+    return;
+  }
+
+  bar.className =
+    "sync-status-bar sync-error";
+
+  text.textContent =
+    lastSuccessfulSyncAt
+      ? (
+          "⚠ 更新失敗 / 最終同期：" +
+          getSyncDisplayText(
+            lastSuccessfulSyncAt
+          )
+        )
+      : "⚠ 更新失敗 / 同期履歴なし";
+}
+
+
+function restoreSyncStatus() {
+
+  if (!lastSuccessfulSyncAt) {
+    return;
+  }
+
+  const bar =
+    document.getElementById(
+      "syncStatusBar"
+    );
+
+  const text =
+    document.getElementById(
+      "syncStatusText"
+    );
+
+  if (!bar || !text) {
+    return;
+  }
+
+  bar.className =
+    "sync-status-bar";
+
+  text.textContent =
+    "前回同期：" +
+    getSyncDisplayText(
+      lastSuccessfulSyncAt
+    ) +
+    "（最新確認前）";
+}
+
 
 function getAppDataSnapshot() {
   return JSON.stringify({
@@ -2559,6 +2783,26 @@ async function register() {
     );
 
 
+  // =========================
+  // ★ Ver.0.8.1
+  // 同じPOSTの再送を識別する操作ID
+  // =========================
+
+  const operationId =
+    (
+      window.crypto &&
+      typeof window.crypto.randomUUID === "function"
+    )
+      ? window.crypto.randomUUID()
+      : (
+          Date.now() +
+          "-" +
+          Math.random()
+            .toString(36)
+            .slice(2)
+        );
+
+
   try {
 
     // =========================
@@ -2636,7 +2880,7 @@ async function register() {
 
 
     // =========================
-    // ④ Googleへ1回だけPOST
+    // ④ GoogleへPOST（同一操作IDで最大2回）
     // =========================
 
     console.time(
@@ -2644,57 +2888,86 @@ async function register() {
     );
 
 
-    const response =
-      await fetch(
-        API_URL,
-        {
-          method: "POST",
+    let response = null;
+    let result = null;
+    let lastRequestError = null;
 
-          headers: {
-            "Content-Type":
-              "text/plain;charset=utf-8"
-          },
+    // ★ 同じoperationIdのまま最大2回試す。
+    // 1回目がGAS側で成功して応答だけ失われても、
+    // 2回目はGAS側で二重登録されない。
+    for (
+      let attempt = 1;
+      attempt <= 2;
+      attempt++
+    ) {
 
-          body: JSON.stringify({
+      try {
 
-            action:
-              "registerBowel",
+        response =
+          await fetch(
+            API_URL,
+            {
+              method: "POST",
 
-            user:
-              user,
+              headers: {
+                "Content-Type":
+                  "text/plain;charset=utf-8"
+              },
 
-            type:
-              type,
+              body: JSON.stringify({
 
-            point:
-              points[user],
+                action:
+                  "registerBowel",
 
-            lastDate:
-              lastDates[user] || "",
+                operationId:
+                  operationId,
 
-            previousLastDate:
-              previousLastDate,
+                user:
+                  user,
 
-            previousPoint:
-              previousPoint
-          }),
+                type:
+                  type
+              }),
 
-          cache: "no-store"
+              cache: "no-store"
+            }
+          );
+
+        if (!response.ok) {
+          throw new Error(
+            "排便登録失敗：HTTP " +
+            response.status
+          );
         }
-      );
 
+        result =
+          await response.json();
 
-    if (!response.ok) {
+        break;
 
-      throw new Error(
-        "排便登録失敗：HTTP " +
-        response.status
-      );
+      } catch (requestError) {
+
+        lastRequestError =
+          requestError;
+
+        if (attempt < 2) {
+          await new Promise(
+            resolve =>
+              setTimeout(resolve, 700)
+          );
+        }
+      }
     }
 
 
-    const result =
-      await response.json();
+    if (!result) {
+      throw (
+        lastRequestError ||
+        new Error(
+          "排便登録の応答を確認できませんでした"
+        )
+      );
+    }
 
 
     if (!result.ok) {
@@ -2717,9 +2990,18 @@ async function register() {
 
     if (result.history) {
 
-      histories.unshift(
-        result.history
-      );
+      const alreadyExists =
+        histories.some(
+          history =>
+            String(history.id) ===
+            String(result.history.id)
+        );
+
+      if (!alreadyExists) {
+        histories.unshift(
+          result.history
+        );
+      }
     }
 
 
@@ -3477,23 +3759,52 @@ async function saveUsersToGoogle(showAlert = true) {
   */
 }
 
-async function saveChecksToGoogle() {
-  const url =
-    API_URL +
-    "?action=saveChecks&checks=" +
-    encodeURIComponent(JSON.stringify(checks));
+async function saveCheckToGoogle(
+  key,
+  checked
+) {
 
-  const response = await fetchApi(url);
+  const response =
+    await fetch(
+      API_URL,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "text/plain;charset=utf-8"
+        },
+
+        body: JSON.stringify({
+          action: "setCheck",
+          key: key,
+          checked: checked
+        }),
+
+        cache: "no-store"
+      }
+    );
 
   if (!response.ok) {
-    throw new Error("実施チェックの保存に失敗しました");
+    throw new Error(
+      "実施チェック保存失敗：HTTP " +
+      response.status
+    );
   }
 
-  const result = await response.text();
+  const result =
+    await response.json();
 
-  if (result !== "OK") {
-    throw new Error(result);
+  if (!result.ok) {
+    throw new Error(
+      result.message ||
+      "実施チェックの保存に失敗しました"
+    );
   }
+
+  // GAS側で確定した値を採用
+  checks[key] =
+    Boolean(result.checked);
 }
 
 async function loadHistoriesFromGoogle() {
@@ -3537,6 +3848,8 @@ async function clearHistoriesFromGoogle() {
 async function initialize() {
 
   loadData();
+
+  restoreSyncStatus();
 
   restoreLogin();
 
@@ -3622,6 +3935,8 @@ async function refreshFromGoogle() {
       "自動更新に失敗しました",
       error
     );
+
+    markSyncError();
 
 
   } finally {
@@ -4060,6 +4375,10 @@ updateHomeMedicineStatus();
 
 saveData();
 
+markSyncSuccess(
+  data.serverTime || ""
+);
+
     console.timeEnd(
       "初期データ一括取得"
     );
@@ -4084,6 +4403,8 @@ saveData();
       "初期データ一括取得エラー:",
       error
     );
+
+    markSyncError();
 
     console.timeEnd(
       "初期データ一括取得"
@@ -4549,7 +4870,10 @@ async function toggleCheck(key) {
 
   try {
 
-    await saveChecksToGoogle();
+    await saveCheckToGoogle(
+      key,
+      checks[key]
+    );
 
 
   } catch (error) {
@@ -8203,6 +8527,10 @@ async function loadSyncDataFromGoogle() {
     checkNightBowelStatus();
   }
 
+
+  markSyncSuccess(
+    data.serverTime || ""
+  );
 
   saveData();
 }
