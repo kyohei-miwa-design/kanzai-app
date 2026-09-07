@@ -1691,6 +1691,33 @@ h3 {
 
 
 /* =========================
+   ルール閲覧ページ
+========================= */
+
+.rule-view-note {
+  margin-bottom: 16px;
+  padding: 13px 14px;
+
+  border: 1px solid #c5dce8;
+  border-radius: 12px;
+
+  background: #f4f9fc;
+  color: #455a64;
+
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+#ruleViewList .user-card {
+  margin-bottom: 14px;
+}
+
+#ruleViewList .rule-list-line {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+
+/* =========================
    下部ナビ
 ========================= */
 
@@ -1709,7 +1736,7 @@ h3 {
   display: grid;
 
   grid-template-columns:
-    repeat(5, 1fr);
+    repeat(6, 1fr);
 
   width: 100%;
   max-width: 900px;
@@ -2143,7 +2170,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.6</p>
+      <p class="app-version">Ver.0.8.7</p>
     </div>
 
     <button
@@ -2437,6 +2464,28 @@ h3 {
 
 
   <!-- =========================
+       ルール（全職種・閲覧専用）
+  ========================== -->
+  <section
+    id="rulePage"
+    class="app-page"
+  >
+
+    <h2>個別ルール</h2>
+
+    <div class="rule-view-note">
+      現在のユニットに登録されている緩下剤・排便処置ルールです。<br>
+      この画面は閲覧専用です。ルールの変更は管理者が行います。
+    </div>
+
+    <div id="ruleViewList">
+      ルールを読み込んでいます...
+    </div>
+
+  </section>
+
+
+  <!-- =========================
        その他
   ========================== -->
   <section
@@ -2610,6 +2659,16 @@ h3 {
     >
       <span>◷</span>
       <small>履歴</small>
+    </button>
+
+
+    <button
+      class="nav-button"
+      data-page="rulePage"
+      onclick="openPage('rulePage')"
+    >
+      <span>📋</span>
+      <small>ルール</small>
     </button>
 
 
@@ -4167,7 +4226,7 @@ function loadData() {
   document.getElementById("history").innerHTML = getHistoryHtml();
   document.getElementById("status").innerHTML = getStatusHtml();
   document.getElementById("todayTarget").innerHTML = getTodayTarget();
-  document.getElementById("ruleList").innerHTML = getRuleListHtml();
+  updateRuleDisplays();
   document.getElementById("completedList").innerHTML = getCompletedListHtml();
 
 
@@ -4217,10 +4276,7 @@ async function loadRulesFromGoogle() {
   ).innerHTML =
     getTodayTarget();
 
-  document.getElementById(
-    "ruleList"
-  ).innerHTML =
-    getRuleListHtml();
+  updateRuleDisplays();
 
   updateHomeMedicineStatus();
 
@@ -4300,10 +4356,7 @@ async function saveRulesToGoogle() {
   ).innerHTML =
     getTodayTarget();
 
-  document.getElementById(
-    "ruleList"
-  ).innerHTML =
-    getRuleListHtml();
+  updateRuleDisplays();
 
   updateHomeMedicineStatus();
 
@@ -4705,7 +4758,7 @@ async function changeUserUnit() {
 
   document.getElementById("status").innerHTML = getStatusHtml();
   document.getElementById("todayTarget").innerHTML = getTodayTarget();
-  document.getElementById("ruleList").innerHTML = getRuleListHtml();
+  updateRuleDisplays();
 
   updateUserSelects();
 
@@ -4751,6 +4804,10 @@ function updateRoleUI() {
   } else {
     dailyConfirmArea.style.display = "none";
   }
+
+
+  // ルール一覧は全職種で閲覧可能
+  updateRuleDisplays();
 }
 
 async function login() {
@@ -4809,8 +4866,7 @@ async function login() {
     document.getElementById("todayTarget").innerHTML =
       getTodayTarget();
 
-    document.getElementById("ruleList").innerHTML =
-      getRuleListHtml();
+    updateRuleDisplays();
 
      await loadInitialDataFromGoogle();
 
@@ -4853,8 +4909,7 @@ function restoreLogin() {
   document.getElementById("todayTarget").innerHTML =
     getTodayTarget();
 
-  document.getElementById("ruleList").innerHTML =
-    getRuleListHtml();
+  updateRuleDisplays();
 
   // ★ ホームの投薬状況を更新
   updateHomeMedicineStatus();
@@ -4974,10 +5029,7 @@ const data =
     ).innerHTML =
       getTodayTarget();
 
-    document.getElementById(
-      "ruleList"
-    ).innerHTML =
-      getRuleListHtml();
+    updateRuleDisplays();
 
     document.getElementById(
       "history"
@@ -5346,10 +5398,7 @@ async function saveRule() {
   ).innerHTML =
     getTodayTarget();
 
-  document.getElementById(
-    "ruleList"
-  ).innerHTML =
-    getRuleListHtml();
+  updateRuleDisplays();
 
   updateHomeMedicineStatus();
   saveData();
@@ -5384,10 +5433,7 @@ async function saveRule() {
     ).innerHTML =
       getTodayTarget();
 
-    document.getElementById(
-      "ruleList"
-    ).innerHTML =
-      getRuleListHtml();
+    updateRuleDisplays();
 
     updateHomeMedicineStatus();
     saveData();
@@ -5405,7 +5451,7 @@ async function saveRule() {
   }
 }
 
-function getRuleListHtml() {
+function getRuleListHtml(editable = true) {
 
   let result = "";
 
@@ -5465,14 +5511,20 @@ function getRuleListHtml() {
             "'>" +
             getRuleTimingLabel(rule) +
             "</span>" +
-            "<button class='rule-delete-btn' " +
-            "onclick=\"deleteRuleByIndex(" +
-            JSON.stringify(user).replace(/"/g, "&quot;") +
-            "," +
-            JSON.stringify(String(day)).replace(/"/g, "&quot;") +
-            "," +
-            index +
-            ")\">❌</button>" +
+            (
+              editable
+                ?
+                  "<button class='rule-delete-btn' " +
+                  "onclick=\"deleteRuleByIndex(" +
+                  JSON.stringify(user).replace(/"/g, "&quot;") +
+                  "," +
+                  JSON.stringify(String(day)).replace(/"/g, "&quot;") +
+                  "," +
+                  index +
+                  ")\">❌</button>"
+                :
+                  ""
+            ) +
             "</div>";
         }
       );
@@ -5488,6 +5540,26 @@ function getRuleListHtml() {
   }
 
   return result;
+}
+
+function updateRuleDisplays() {
+
+  const adminRuleList =
+    document.getElementById("ruleList");
+
+  if (adminRuleList) {
+    adminRuleList.innerHTML =
+      getRuleListHtml(true);
+  }
+
+
+  const ruleViewList =
+    document.getElementById("ruleViewList");
+
+  if (ruleViewList) {
+    ruleViewList.innerHTML =
+      getRuleListHtml(false);
+  }
 }
 
 async function deleteRuleByIndex(
@@ -5556,10 +5628,7 @@ async function deleteRuleByIndex(
     }
 
 
-    document.getElementById(
-      "ruleList"
-    ).innerHTML =
-      getRuleListHtml();
+    updateRuleDisplays();
 
     document.getElementById(
       "todayTarget"
@@ -5588,10 +5657,7 @@ async function deleteRuleByIndex(
 
     rules = previousRules;
 
-    document.getElementById(
-      "ruleList"
-    ).innerHTML =
-      getRuleListHtml();
+    updateRuleDisplays();
 
     document.getElementById(
       "todayTarget"
@@ -9546,6 +9612,12 @@ function openPage(pageId) {
   }
 
 
+  // ルール画面は開くたびに最新のメモリ状態で再描画
+  if (pageId === "rulePage") {
+    updateRuleDisplays();
+  }
+
+
   // ナビの選択状態を解除
   document
     .querySelectorAll(".nav-button")
@@ -9692,10 +9764,7 @@ async function loadSyncDataFromGoogle() {
     getCompletedListHtml();
 
 
-  document.getElementById(
-    "ruleList"
-  ).innerHTML =
-    getRuleListHtml();
+  updateRuleDisplays();
 
 
   updateHomeMedicineStatus();
