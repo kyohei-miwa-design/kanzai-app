@@ -197,6 +197,67 @@ button {
   border: 1px solid #81c995;
 }
 
+/* 昼 */
+.medicine-time.lunch {
+  color: #8a5a00;
+  background: #fff8e1;
+  border: 1px solid #ffd54f;
+}
+
+/* 日中の排便処置 */
+.medicine-time.daytime {
+  color: #6a1b9a;
+  background: #f3e5f5;
+  border: 1px solid #ce93d8;
+}
+
+.rule-kind-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin: 0 8px 4px 0;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.rule-kind-badge.laxative {
+  color: #1565c0;
+  background: #eaf4ff;
+  border: 1px solid #90caf9;
+}
+
+.rule-kind-badge.procedure {
+  color: #6a1b9a;
+  background: #f3e5f5;
+  border: 1px solid #ce93d8;
+}
+
+.rule-list-line {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  margin: 7px 0;
+  padding: 9px 10px;
+  border: 1px solid #e0e6ea;
+  border-radius: 10px;
+  background: #fafcfd;
+}
+
+.rule-list-content {
+  min-width: 0;
+  font-weight: 700;
+}
+
+.rule-form-note {
+  margin: -4px 0 12px;
+  color: #78909c;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 
 /* =========================
    翌朝の投薬予定（表示のみ）
@@ -2082,7 +2143,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.5</p>
+      <p class="app-version">Ver.0.8.6</p>
     </div>
 
     <button
@@ -2164,7 +2225,7 @@ h3 {
     </div>
 
 
-    <h2>投薬の状況</h2>
+    <h2>緩下剤・排便処置の状況</h2>
 
     <div id="homeMedicineStatus">
       本日の投薬状況を確認しています...
@@ -2186,7 +2247,7 @@ h3 {
         onclick="openPage('medicinePage')"
       >
         💊
-        <span>投薬対象を確認</span>
+        <span>対応を確認</span>
       </button>
 
     </div>
@@ -2322,7 +2383,7 @@ h3 {
     class="app-page"
   >
 
-    <h2>本日の投薬対象者</h2>
+    <h2>本日の対応対象者</h2>
 
     <div id="todayTarget">
       まだ対象者はいません
@@ -2336,10 +2397,10 @@ h3 {
     </div>
 
 
-    <h2>投薬報告</h2>
+    <h2>投薬・排便処置報告</h2>
 
     <button onclick="createMedicineReport()">
-      投薬報告を作成
+      対応報告を作成
     </button>
 
     <div id="medicineReport"></div>
@@ -2439,7 +2500,7 @@ h3 {
       </button>
 
 
-      <h3>下剤ルール編集</h3>
+      <h3>緩下剤・排便処置ルール編集</h3>
 
 
       <h3>登録済みルール一覧</h3>
@@ -2463,13 +2524,40 @@ h3 {
       >
 
 
-      <p>薬剤・時間</p>
+      <p>種類</p>
+
+      <select
+        id="ruleKind"
+        onchange="onRuleKindChange()"
+      >
+        <option value="laxative">緩下剤</option>
+        <option value="procedure">排便処置</option>
+      </select>
+
+
+      <p>内容</p>
 
       <input
         type="text"
         id="ruleMedicine"
-        placeholder="例：ピコ15滴 朝"
+        placeholder="例：ピコ15滴 / テレミン"
       >
+
+
+      <p>時間帯</p>
+
+      <select id="ruleTiming">
+        <option value="">選択してください</option>
+        <option value="morning">朝</option>
+        <option value="lunch">昼</option>
+        <option value="evening">夕</option>
+        <option value="daytime">日中</option>
+      </select>
+
+      <div class="rule-form-note">
+        朝：0:00～10:00 ／ 昼・夕・日中：9:00～18:30<br>
+        排便処置を選ぶと、時間帯は「日中」を初期選択します。
+      </div>
 
       <button onclick="saveRule()">
         ルール保存
@@ -2511,7 +2599,7 @@ h3 {
       onclick="openPage('medicinePage')"
     >
       <span>💊</span>
-      <small>投薬</small>
+      <small>対応</small>
     </button>
 
 
@@ -2585,19 +2673,32 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzq9qSuPmvSzAbv_uLFbIrX
 
 let rules = {
   "A様": {
-    2: ["ピコ15滴 朝"],
-    3: ["ピコ30滴 朝", "ピコ15滴 夕", "センノシド 夕"],
-    4: ["テレミン 昼", "センノシド 夕"]
+    2: [{ kind: "laxative", content: "ピコ15滴", timing: "morning" }],
+    3: [
+      { kind: "laxative", content: "ピコ30滴", timing: "morning" },
+      { kind: "laxative", content: "ピコ15滴", timing: "evening" },
+      { kind: "laxative", content: "センノシド", timing: "evening" }
+    ],
+    4: [
+      { kind: "procedure", content: "テレミン", timing: "daytime" },
+      { kind: "laxative", content: "センノシド", timing: "evening" }
+    ]
   },
   "B様": {
-    2: ["センノシド 夕"],
-    3: ["ピコ15滴 朝", "センノシド 夕"],
-    4: ["テレミン 昼"]
+    2: [{ kind: "laxative", content: "センノシド", timing: "evening" }],
+    3: [
+      { kind: "laxative", content: "ピコ15滴", timing: "morning" },
+      { kind: "laxative", content: "センノシド", timing: "evening" }
+    ],
+    4: [{ kind: "procedure", content: "テレミン", timing: "daytime" }]
   },
   "C様": {
-    2: ["ピコ15滴 朝"],
-    3: ["ピコ30滴 朝"],
-    4: ["テレミン 昼", "センノシド 夕"]
+    2: [{ kind: "laxative", content: "ピコ15滴", timing: "morning" }],
+    3: [{ kind: "laxative", content: "ピコ30滴", timing: "morning" }],
+    4: [
+      { kind: "procedure", content: "テレミン", timing: "daytime" },
+      { kind: "laxative", content: "センノシド", timing: "evening" }
+    ]
   }
 };
 
@@ -3357,6 +3458,317 @@ async function register() {
   }
 }
 
+const RULE_KIND_LABELS = {
+  laxative: "緩下剤",
+  procedure: "排便処置"
+};
+
+const RULE_TIMING_LABELS = {
+  morning: "朝",
+  lunch: "昼",
+  evening: "夕",
+  daytime: "日中"
+};
+
+function normalizeRuleItem(item) {
+
+  if (
+    item &&
+    typeof item === "object" &&
+    !Array.isArray(item)
+  ) {
+
+    let kind =
+      String(item.kind || "laxative").trim();
+
+    if (kind === "緩下剤") {
+      kind = "laxative";
+    }
+
+    if (kind === "排便処置") {
+      kind = "procedure";
+    }
+
+    if (
+      kind !== "laxative" &&
+      kind !== "procedure"
+    ) {
+      kind = "laxative";
+    }
+
+
+    let timing =
+      String(item.timing || "").trim();
+
+    const timingMap = {
+      "朝": "morning",
+      "昼": "lunch",
+      "夕": "evening",
+      "日中": "daytime"
+    };
+
+    timing =
+      timingMap[timing] || timing;
+
+
+    return {
+      kind: kind,
+      content:
+        String(
+          item.content ||
+          item.medicine ||
+          ""
+        ).trim(),
+      timing: timing,
+      legacyText:
+        String(item.legacyText || "").trim()
+    };
+  }
+
+
+  const raw =
+    String(item || "").trim();
+
+  let timing = "";
+
+  if (/\s*日中\s*$/.test(raw)) {
+    timing = "daytime";
+  } else if (/\s*朝\s*$/.test(raw)) {
+    timing = "morning";
+  } else if (/\s*昼\s*$/.test(raw)) {
+    timing = "lunch";
+  } else if (/\s*夕\s*$/.test(raw)) {
+    timing = "evening";
+  }
+
+  let content =
+    raw.replace(
+      /\s*(朝|昼|夕|日中)\s*$/,
+      ""
+    ).trim();
+
+  let kind = "laxative";
+
+  /*
+    旧形式では種類列がないため、
+    既存のテレミンだけは排便処置として移行する。
+  */
+  if (/テレミン/i.test(content)) {
+    kind = "procedure";
+
+    if (timing === "lunch") {
+      timing = "daytime";
+    }
+  }
+
+  return {
+    kind: kind,
+    content: content,
+    timing: timing,
+    legacyText: raw
+  };
+}
+
+function normalizeRulesObject(source) {
+
+  const normalized = {};
+
+  if (!source || typeof source !== "object") {
+    return normalized;
+  }
+
+  for (const user in source) {
+
+    const days = source[user];
+
+    if (!days || typeof days !== "object") {
+      continue;
+    }
+
+    normalized[user] = {};
+
+    for (const day in days) {
+
+      const items =
+        Array.isArray(days[day])
+          ? days[day]
+          : [];
+
+      normalized[user][day] =
+        items
+          .map(normalizeRuleItem)
+          .filter(rule =>
+            rule.content &&
+            RULE_TIMING_LABELS[rule.timing]
+          );
+    }
+  }
+
+  return normalized;
+}
+
+function getRuleKindLabel(rule) {
+  return RULE_KIND_LABELS[rule.kind] || "緩下剤";
+}
+
+function getRuleTimingLabel(rule) {
+  return RULE_TIMING_LABELS[rule.timing] || "";
+}
+
+function getRuleTimingClass(rule) {
+  return rule.timing || "";
+}
+
+function getRuleKindIcon(rule) {
+  return rule.kind === "procedure" ? "🩺" : "💊";
+}
+
+function isRuleActiveNow(rule, hour) {
+
+  if (rule.timing === "morning") {
+    return hour < 10;
+  }
+
+  if (
+    rule.timing === "lunch" ||
+    rule.timing === "evening" ||
+    rule.timing === "daytime"
+  ) {
+    return hour >= 9 && hour < 18.5;
+  }
+
+  return false;
+}
+
+function getRulesForDay(user, day) {
+
+  return (
+    rules[user]?.[day] || []
+  )
+    .map(normalizeRuleItem)
+    .filter(rule =>
+      rule.content &&
+      RULE_TIMING_LABELS[rule.timing]
+    );
+}
+
+function buildRuleCheckToken(rule) {
+
+  const normalized =
+    normalizeRuleItem(rule);
+
+  return [
+    "v2",
+    normalized.kind,
+    normalized.timing,
+    encodeURIComponent(normalized.content)
+  ].join("|");
+}
+
+function buildRuleCheckKey(user, day, rule) {
+  return (
+    user +
+    "_" +
+    day +
+    "_" +
+    buildRuleCheckToken(rule)
+  );
+}
+
+function getLegacyCheckKeys(user, day, rule) {
+
+  const normalized =
+    normalizeRuleItem(rule);
+
+  const keys = [];
+
+  if (normalized.legacyText) {
+    keys.push(
+      user + "_" + day + "_" +
+      normalized.legacyText
+    );
+  }
+
+  const label =
+    getRuleTimingLabel(normalized);
+
+  if (label) {
+    keys.push(
+      user + "_" + day + "_" +
+      normalized.content + " " + label
+    );
+  }
+
+  if (
+    normalized.kind === "procedure" &&
+    normalized.timing === "daytime"
+  ) {
+    keys.push(
+      user + "_" + day + "_" +
+      normalized.content + " 昼"
+    );
+  }
+
+  return [...new Set(keys)];
+}
+
+function getCheckKeyForRule(user, day, rule) {
+
+  const newKey =
+    buildRuleCheckKey(
+      user,
+      day,
+      rule
+    );
+
+  if (
+    Object.prototype.hasOwnProperty.call(
+      checks,
+      newKey
+    )
+  ) {
+    return newKey;
+  }
+
+  for (
+    const legacyKey of
+    getLegacyCheckKeys(user, day, rule)
+  ) {
+
+    if (
+      Object.prototype.hasOwnProperty.call(
+        checks,
+        legacyKey
+      )
+    ) {
+      return legacyKey;
+    }
+  }
+
+  return newKey;
+}
+
+function isRuleChecked(user, day, rule) {
+
+  const key =
+    getCheckKeyForRule(
+      user,
+      day,
+      rule
+    );
+
+  return Boolean(checks[key]);
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function getNoBowelDays(user) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -3381,11 +3793,7 @@ function getTodayTarget() {
     now.getMinutes() / 60;
 
 
-  for (let user in lastDates) {
-
-    // =========================
-    // 現在のユニット以外は表示しない
-    // =========================
+  for (const user in lastDates) {
 
     if (
       currentUnit !== "all" &&
@@ -3395,197 +3803,111 @@ function getTodayTarget() {
     }
 
 
-    // =========================
-    // 今日の未排便日数
-    // =========================
-
     const todayDays =
       getNoBowelDays(user);
 
-
-    // =========================
-    // 今日の対象 / 明日朝の予定を分離
-    // =========================
-
-    const todayMedicines = [];
-    const tomorrowMedicines = [];
-
-
-    // -------------------------
-    // 今日の朝
-    // 0:00 ～ 10:00
-    // -------------------------
-
-    if (hour < 10) {
-
-      const medicines =
-        rules[user]?.[todayDays] || [];
-
-      for (const medicine of medicines) {
-
-        if (medicine.includes("朝")) {
-
-          todayMedicines.push({
-            medicine: medicine,
-            days: todayDays,
-            timing: "朝"
-          });
-        }
-      }
-    }
+    const todayRules =
+      getRulesForDay(
+        user,
+        todayDays
+      )
+      .filter(rule =>
+        isRuleActiveNow(
+          rule,
+          hour
+        )
+      );
 
 
-    // -------------------------
-    // 今日の夕
-    // 9:00 ～ 18:30
-    // -------------------------
-
-    if (
-      hour >= 9 &&
-      hour < 18.5
-    ) {
-
-      const medicines =
-        rules[user]?.[todayDays] || [];
-
-      for (const medicine of medicines) {
-
-        if (medicine.includes("夕")) {
-
-          todayMedicines.push({
-            medicine: medicine,
-            days: todayDays,
-            timing: "夕"
-          });
-        }
-      }
-    }
+    const remainingToday =
+      todayRules.filter(rule =>
+        !isRuleChecked(
+          user,
+          todayDays,
+          rule
+        )
+      );
 
 
-    // -------------------------
-    // 明日の朝
-    // 前日16:00 ～ 24:00
-    // ※ 予定表示のみ。実施チェックはさせない。
-    // -------------------------
+    let tomorrowMorningRules = [];
 
     if (hour >= 16) {
 
       const tomorrowDays =
         todayDays + 1;
 
-      const medicines =
-        rules[user]?.[tomorrowDays] || [];
-
-      for (const medicine of medicines) {
-
-        if (medicine.includes("朝")) {
-
-          tomorrowMedicines.push({
-            medicine: medicine,
-            days: tomorrowDays,
-            timing: "朝"
-          });
-        }
-      }
+      tomorrowMorningRules =
+        getRulesForDay(
+          user,
+          tomorrowDays
+        )
+        .filter(rule =>
+          rule.timing === "morning"
+        );
     }
-
-
-    // =========================
-    // 今日分だけ実施済みを除外
-    // =========================
-
-    const remainingToday =
-      todayMedicines.filter(item => {
-
-        const checkKey =
-          user +
-          "_" +
-          item.days +
-          "_" +
-          item.medicine;
-
-        return !checks[checkKey];
-      });
 
 
     if (
       remainingToday.length === 0 &&
-      tomorrowMedicines.length === 0
+      tomorrowMorningRules.length === 0
     ) {
       continue;
     }
 
 
-    // =========================
-    // 利用者カード開始
-    // =========================
-
     result +=
       "<div class='target-card'>" +
       "<strong>⚠ " +
-      user +
+      escapeHtml(user) +
       "</strong><br>" +
       "未排便日数：" +
       todayDays +
       "日";
 
 
-    // =========================
-    // 今日の対象（チェック可能）
-    // =========================
-
-    for (const item of remainingToday) {
-
-      const medicine =
-        item.medicine;
-
-      const timing =
-        item.timing;
+    for (const rule of remainingToday) {
 
       const checkKey =
-        user +
-        "_" +
-        item.days +
-        "_" +
-        medicine;
+        getCheckKeyForRule(
+          user,
+          todayDays,
+          rule
+        );
 
+      const safeKey =
+        String(checkKey)
+          .replace(/\\/g, "\\\\")
+          .replace(/'/g, "\\'");
 
-      const medicineName =
-        medicine
-          .replace(" 朝", "")
-          .replace(" 夕", "");
-
+      const timingLabel =
+        getRuleTimingLabel(rule);
 
       result +=
         "<label>" +
-
         "<input type='checkbox' onchange=\"toggleCheck('" +
-        checkKey +
+        safeKey +
         "')\">" +
-
         "<span class='medicine-name'>" +
-        medicineName +
-        "</span>" +
-
-        "<span class='medicine-time " +
-        (
-          timing === "朝"
-            ? "morning"
-            : "evening"
-        ) +
+        "<span class='rule-kind-badge " +
+        rule.kind +
         "'>" +
-        timing +
+        getRuleKindIcon(rule) +
+        " " +
+        getRuleKindLabel(rule) +
         "</span>" +
-
+        "<br>" +
+        escapeHtml(rule.content) +
+        "</span>" +
+        "<span class='medicine-time " +
+        getRuleTimingClass(rule) +
+        "'>" +
+        timingLabel +
+        "</span>" +
         "</label>";
     }
 
 
-    // =========================
-    // 明日朝の予定（表示のみ）
-    // =========================
-
-    if (tomorrowMedicines.length > 0) {
+    if (tomorrowMorningRules.length > 0) {
 
       result +=
         "<div class='tomorrow-medicine-block'>" +
@@ -3597,17 +3919,20 @@ function getTodayTarget() {
         "</div>";
 
 
-      for (const item of tomorrowMedicines) {
-
-        const medicineName =
-          item.medicine
-            .replace(" 朝", "")
-            .replace(" 夕", "");
+      for (const rule of tomorrowMorningRules) {
 
         result +=
           "<div class='tomorrow-medicine-item'>" +
           "<span class='medicine-name'>" +
-          medicineName +
+          "<span class='rule-kind-badge " +
+          rule.kind +
+          "'>" +
+          getRuleKindIcon(rule) +
+          " " +
+          getRuleKindLabel(rule) +
+          "</span>" +
+          "<br>" +
+          escapeHtml(rule.content) +
           "</span>" +
           "<span class='tomorrow-medicine-badge'>朝・予定</span>" +
           "</div>";
@@ -3623,8 +3948,7 @@ function getTodayTarget() {
 
 
   if (result === "") {
-
-    return "🎉 現在の投薬対象者はいません";
+    return "🎉 現在の対応対象者はいません";
   }
 
 
@@ -3643,21 +3967,22 @@ function updateHomeMedicineStatus() {
   }
 
 
+  const now = new Date();
+
+  const hour =
+    now.getHours() +
+    now.getMinutes() / 60;
+
   let totalCount = 0;
   let completedCount = 0;
   let remainingCount = 0;
 
-  let targetUsers = new Set();
-  let remainingUsers = new Set();
+  const targetUsers = new Set();
+  const remainingUsers = new Set();
 
 
-  // =========================
-  // 今日の投薬対象を集計
-  // =========================
+  for (const user in lastDates) {
 
-  for (let user in lastDates) {
-
-    // 現在のユニットだけ
     if (
       currentUnit !== "all" &&
       userUnits[user] !== currentUnit
@@ -3665,69 +3990,58 @@ function updateHomeMedicineStatus() {
       continue;
     }
 
-
     const days =
       getNoBowelDays(user);
 
-    const medicines =
-      rules[user]?.[days];
+    const activeRules =
+      getRulesForDay(
+        user,
+        days
+      )
+      .filter(rule =>
+        isRuleActiveNow(
+          rule,
+          hour
+        )
+      );
 
-
-    // 今日の投薬なし
-    if (!medicines) {
+    if (activeRules.length === 0) {
       continue;
     }
 
-
     targetUsers.add(user);
 
-
-    for (let medicine of medicines) {
-
-      const checkKey =
-        user +
-        "_" +
-        days +
-        "_" +
-        medicine;
-
+    for (const rule of activeRules) {
 
       totalCount++;
 
-
-      if (checks[checkKey]) {
-
+      if (
+        isRuleChecked(
+          user,
+          days,
+          rule
+        )
+      ) {
         completedCount++;
-
       } else {
-
         remainingCount++;
-
         remainingUsers.add(user);
       }
     }
   }
 
 
-  // =========================
-  // 今日の対象なし
-  // =========================
-
   if (totalCount === 0) {
 
     area.innerHTML = `
       <div class="home-medicine-all-clear">
-        🎉 本日の投薬対象はありません
+        🎉 現在の対応対象はありません
       </div>
     `;
 
     return;
   }
 
-
-  // =========================
-  // 全て実施済み
-  // =========================
 
   if (remainingCount === 0) {
 
@@ -3742,7 +4056,7 @@ function updateHomeMedicineStatus() {
           </span>
 
           <span>
-            💊 投薬予定
+            📋 対応予定
             <strong>${totalCount}件</strong>
           </span>
 
@@ -3754,7 +4068,7 @@ function updateHomeMedicineStatus() {
         </div>
 
         <div class="home-medicine-complete">
-          ✅ すべて実施済み
+          ✅ 現在表示中の対応はすべて実施済みです
         </div>
 
       </div>
@@ -3763,10 +4077,6 @@ function updateHomeMedicineStatus() {
     return;
   }
 
-
-  // =========================
-  // 未実施あり
-  // =========================
 
   area.innerHTML = `
     <div class="home-medicine-summary">
@@ -3779,7 +4089,7 @@ function updateHomeMedicineStatus() {
         </span>
 
         <span>
-          💊 投薬予定
+          📋 対応予定
           <strong>${totalCount}件</strong>
         </span>
 
@@ -3796,7 +4106,7 @@ function updateHomeMedicineStatus() {
       </div>
 
       <div class="home-medicine-warning">
-        ⚠ ${remainingUsers.size}名に未実施の投薬があります
+        ⚠ ${remainingUsers.size}名に未実施の対応があります
       </div>
 
     </div>
@@ -3837,7 +4147,9 @@ function loadData() {
   }
 
   if (savedRules !== null) {
-    rules = JSON.parse(savedRules);
+    rules = normalizeRulesObject(
+      JSON.parse(savedRules)
+    );
   }
 
   if (savedHistories !== null) {
@@ -3885,13 +4197,32 @@ async function loadUsersFromGoogle() {
 }
 
 async function loadRulesFromGoogle() {
-  const response = await fetchApi(API_URL + "?action=getRules");
-  const googleRules = await response.json();
 
-  rules = googleRules;
+  const response =
+    await fetchApi(
+      API_URL +
+      "?action=getRulesV2"
+    );
 
-  document.getElementById("todayTarget").innerHTML = getTodayTarget();
-  document.getElementById("ruleList").innerHTML = getRuleListHtml();
+  const googleRules =
+    await response.json();
+
+  rules =
+    normalizeRulesObject(
+      googleRules
+    );
+
+  document.getElementById(
+    "todayTarget"
+  ).innerHTML =
+    getTodayTarget();
+
+  document.getElementById(
+    "ruleList"
+  ).innerHTML =
+    getRuleListHtml();
+
+  updateHomeMedicineStatus();
 
   saveData();
 }
@@ -3907,35 +4238,76 @@ async function loadChecksFromGoogle() {
   checks =
     await response.json();
 
-
   document.getElementById(
     "todayTarget"
   ).innerHTML =
     getTodayTarget();
-
 
   document.getElementById(
     "completedList"
   ).innerHTML =
     getCompletedListHtml();
 
-
-  // ホームも更新
   updateHomeMedicineStatus();
 }
 
 async function saveRulesToGoogle() {
-  const url =
-    API_URL +
-    "?action=saveRules&rules=" +
-    encodeURIComponent(JSON.stringify(rules));
 
-  const response = await fetchApi(url);
-  const result = await response.text();
+  const response =
+    await fetch(
+      API_URL,
+      {
+        method: "POST",
 
-  alert(result);
+        headers: {
+          "Content-Type":
+            "text/plain;charset=utf-8"
+        },
 
-  await loadRulesFromGoogle();
+        body: JSON.stringify({
+          action: "saveRulesV2",
+          rules: rules
+        }),
+
+        cache: "no-store"
+      }
+    );
+
+  if (!response.ok) {
+    throw new Error(
+      "ルール保存失敗：HTTP " +
+      response.status
+    );
+  }
+
+  const result =
+    await response.json();
+
+  if (!result.ok) {
+    throw new Error(
+      result.message ||
+      "ルール保存に失敗しました"
+    );
+  }
+
+  rules =
+    normalizeRulesObject(
+      result.rules || rules
+    );
+
+  document.getElementById(
+    "todayTarget"
+  ).innerHTML =
+    getTodayTarget();
+
+  document.getElementById(
+    "ruleList"
+  ).innerHTML =
+    getRuleListHtml();
+
+  updateHomeMedicineStatus();
+
+  saveData();
 }
 
 async function saveUsersToGoogle(showAlert = true) {
@@ -4566,7 +4938,11 @@ const data =
     // =========================
 
     rules =
-      data.rules || {};
+      normalizeRulesObject(
+        data.rulesV2 ||
+        data.rules ||
+        {}
+      );
 
     // =========================
     // checks
@@ -4872,15 +5248,78 @@ function openHistoryMenu(recordId) {
   });
 }
 
-async function saveRule() {
-  const user = document.getElementById("ruleUserSelect").value;
-  const day = document.getElementById("ruleDay").value;
-  const medicine = document.getElementById("ruleMedicine").value;
+function onRuleKindChange() {
 
-  if (user === "" || day === "" || medicine === "") {
-    alert("利用者・日数・薬剤を入力してください");
+  const kind =
+    document.getElementById(
+      "ruleKind"
+    ).value;
+
+  const timingSelect =
+    document.getElementById(
+      "ruleTiming"
+    );
+
+  if (kind === "procedure") {
+    timingSelect.value = "daytime";
+  } else if (
+    timingSelect.value === "daytime"
+  ) {
+    timingSelect.value = "";
+  }
+}
+
+async function saveRule() {
+
+  const user =
+    document.getElementById(
+      "ruleUserSelect"
+    ).value;
+
+  const day =
+    document.getElementById(
+      "ruleDay"
+    ).value;
+
+  const kind =
+    document.getElementById(
+      "ruleKind"
+    ).value;
+
+  const content =
+    document.getElementById(
+      "ruleMedicine"
+    ).value.trim();
+
+  const timing =
+    document.getElementById(
+      "ruleTiming"
+    ).value;
+
+
+  if (
+    !user ||
+    day === "" ||
+    !kind ||
+    !content ||
+    !timing
+  ) {
+
+    showToast(
+      "⚠ 利用者・日数・種類・内容・時間帯を入力してください",
+      "error",
+      4000
+    );
+
     return;
   }
+
+
+  const previousRules =
+    JSON.parse(
+      JSON.stringify(rules)
+    );
+
 
   if (!rules[user]) {
     rules[user] = {};
@@ -4890,44 +5329,159 @@ async function saveRule() {
     rules[user][day] = [];
   }
 
-  rules[user][day].push(medicine);
 
-  document.getElementById("todayTarget").innerHTML = getTodayTarget();
-  document.getElementById("ruleList").innerHTML = getRuleListHtml();
-  
+  rules[user][day].push({
+    kind: kind,
+    content: content,
+    timing: timing
+  });
+
+
+  rules =
+    normalizeRulesObject(rules);
+
+
+  document.getElementById(
+    "todayTarget"
+  ).innerHTML =
+    getTodayTarget();
+
+  document.getElementById(
+    "ruleList"
+  ).innerHTML =
+    getRuleListHtml();
+
+  updateHomeMedicineStatus();
   saveData();
 
-  await saveRulesToGoogle();
+  showToast(
+    "ルールを保存中…",
+    "saving",
+    0
+  );
 
-  alert("ルールを保存しました");
+
+  try {
+
+    await saveRulesToGoogle();
+
+    document.getElementById(
+      "ruleMedicine"
+    ).value = "";
+
+    showToast(
+      "✓ ルールを保存しました",
+      "success",
+      2500
+    );
+
+  } catch (error) {
+
+    rules = previousRules;
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    document.getElementById(
+      "ruleList"
+    ).innerHTML =
+      getRuleListHtml();
+
+    updateHomeMedicineStatus();
+    saveData();
+
+    console.error(
+      "ルール保存エラー",
+      error
+    );
+
+    showToast(
+      "⚠ ルールの保存に失敗しました",
+      "error",
+      4000
+    );
+  }
 }
 
 function getRuleListHtml() {
+
   let result = "";
 
-  for (let user in rules) {
-    if (currentUnit !== "all" && userUnits[user] !== currentUnit) {
-   continue;
-   }
-    result += "<div class='user-card'>";
-    result += "<strong>" + user + "</strong><br>";
 
-    for (let day in rules[user]) {
-      result += "<br>未排便" + day + "日<br>";
+  for (const user in rules) {
 
-      for (let medicine of rules[user][day]) {
-  result +=
-    "・" + medicine +
-    " <button class='rule-delete-btn' onclick=\"deleteRule('" +
-    user + "','" +
-    day + "','" +
-    medicine +
-    "')\">❌</button><br>";
-}
+    if (
+      currentUnit !== "all" &&
+      userUnits[user] !== currentUnit
+    ) {
+      continue;
     }
+
+
+    result +=
+      "<div class='user-card'>" +
+      "<strong>" +
+      escapeHtml(user) +
+      "</strong><br>";
+
+
+    for (const day in rules[user]) {
+
+      const dayRules =
+        getRulesForDay(
+          user,
+          day
+        );
+
+      if (dayRules.length === 0) {
+        continue;
+      }
+
+      result +=
+        "<br><strong>未排便" +
+        escapeHtml(day) +
+        "日</strong><br>";
+
+
+      dayRules.forEach(
+        (rule, index) => {
+
+          result +=
+            "<div class='rule-list-line'>" +
+            "<span class='rule-kind-badge " +
+            rule.kind +
+            "'>" +
+            getRuleKindIcon(rule) +
+            " " +
+            getRuleKindLabel(rule) +
+            "</span>" +
+            "<span class='rule-list-content'>" +
+            escapeHtml(rule.content) +
+            "</span>" +
+            "<span class='medicine-time " +
+            getRuleTimingClass(rule) +
+            "'>" +
+            getRuleTimingLabel(rule) +
+            "</span>" +
+            "<button class='rule-delete-btn' " +
+            "onclick=\"deleteRuleByIndex(" +
+            JSON.stringify(user).replace(/"/g, "&quot;") +
+            "," +
+            JSON.stringify(String(day)).replace(/"/g, "&quot;") +
+            "," +
+            index +
+            ")\">❌</button>" +
+            "</div>";
+        }
+      );
+    }
+
 
     result += "</div>";
   }
+
 
   if (result === "") {
     return "まだルールはありません";
@@ -4936,30 +5490,43 @@ function getRuleListHtml() {
   return result;
 }
 
-async function deleteRule(user, day, medicine) {
+async function deleteRuleByIndex(
+  user,
+  day,
+  index
+) {
 
-  // =========================
-  // 削除確認
-  // =========================
+  const dayRules =
+    getRulesForDay(
+      user,
+      day
+    );
+
+  const rule =
+    dayRules[index];
+
+  if (!rule) {
+    return;
+  }
+
 
   const ok = confirm(
     user +
-    " の\n" +
-    "未排便" +
+    " の\n未排便" +
     day +
     "日\n" +
-    medicine +
-    "\n\nこのルールを削除しますか？"
+    getRuleKindLabel(rule) +
+    "：" +
+    rule.content +
+    "（" +
+    getRuleTimingLabel(rule) +
+    "）\n\nこのルールを削除しますか？"
   );
 
   if (!ok) {
     return;
   }
 
-
-  // =========================
-  // 削除前の状態を保存
-  // =========================
 
   const previousRules =
     JSON.parse(
@@ -4969,107 +5536,75 @@ async function deleteRule(user, day, medicine) {
 
   try {
 
-    // =========================
-    // ローカルから削除
-    // =========================
+    rules[user][day].splice(
+      index,
+      1
+    );
 
-    rules[user][day] =
-      rules[user][day].filter(
-        item => item !== medicine
-      );
-
-
-    // その日数の薬が0件なら
-    // 日数そのものを削除
     if (
       rules[user][day].length === 0
     ) {
-
       delete rules[user][day];
     }
 
-
-    // 利用者のルールが
-    // 全部なくなった場合
     if (
       Object.keys(
         rules[user]
       ).length === 0
     ) {
-
       delete rules[user];
     }
 
 
-    // =========================
-    // 画面を即時更新
-    // =========================
-
     document.getElementById(
       "ruleList"
     ).innerHTML =
       getRuleListHtml();
-
 
     document.getElementById(
       "todayTarget"
     ).innerHTML =
       getTodayTarget();
 
-
     updateHomeMedicineStatus();
-
-
     saveData();
-
-
-    // =========================
-    // Googleにも保存
-    // =========================
-
-    await saveRulesToGoogle();
 
 
     showToast(
-      "✅ ルールを削除しました",
-      "success",
-      3000
+      "ルールを削除中…",
+      "saving",
+      0
     );
 
+    await saveRulesToGoogle();
+
+    showToast(
+      "✓ ルールを削除しました",
+      "success",
+      2500
+    );
 
   } catch (error) {
 
-    // =========================
-    // 保存失敗 → 元に戻す
-    // =========================
-
-    rules =
-      previousRules;
-
+    rules = previousRules;
 
     document.getElementById(
       "ruleList"
     ).innerHTML =
       getRuleListHtml();
 
-
     document.getElementById(
       "todayTarget"
     ).innerHTML =
       getTodayTarget();
 
-
     updateHomeMedicineStatus();
-
-
     saveData();
-
 
     console.error(
       "ルール削除エラー",
       error
     );
-
 
     showToast(
       "⚠ ルールの削除に失敗しました",
@@ -5178,7 +5713,6 @@ function parseCheckKey(key) {
       firstSeparator + 1
     );
 
-
   if (
     firstSeparator === -1 ||
     secondSeparator === -1
@@ -5187,26 +5721,66 @@ function parseCheckKey(key) {
   }
 
 
+  const user =
+    key.slice(
+      0,
+      firstSeparator
+    );
+
+  const days =
+    key.slice(
+      firstSeparator + 1,
+      secondSeparator
+    );
+
+  const token =
+    key.slice(
+      secondSeparator + 1
+    );
+
+
+  let rule;
+
+  if (token.startsWith("v2|")) {
+
+    const parts =
+      token.split("|");
+
+    if (parts.length < 4) {
+      return null;
+    }
+
+    let content = "";
+
+    try {
+      content =
+        decodeURIComponent(
+          parts.slice(3).join("|")
+        );
+    } catch (_) {
+      content =
+        parts.slice(3).join("|");
+    }
+
+    rule = normalizeRuleItem({
+      kind: parts[1],
+      timing: parts[2],
+      content: content
+    });
+
+  } else {
+
+    rule =
+      normalizeRuleItem(token);
+  }
+
+
   return {
-    user:
-      key.slice(
-        0,
-        firstSeparator
-      ),
-
-    days:
-      key.slice(
-        firstSeparator + 1,
-        secondSeparator
-      ),
-
-    medicine:
-      key.slice(
-        secondSeparator + 1
-      )
+    user: user,
+    days: days,
+    rule: rule
   };
 }
-
 
 function getCompletedListHtml() {
 
@@ -5223,25 +5797,23 @@ function getCompletedListHtml() {
     const data =
       parseCheckKey(key);
 
-
     if (!data) {
       continue;
     }
 
 
+    if (
+      currentUnit !== "all" &&
+      userUnits[data.user] !== currentUnit
+    ) {
+      continue;
+    }
+
+
+    const rule = data.rule;
+
     const timing =
-      data.medicine.includes("朝")
-        ? "朝"
-        : data.medicine.includes("夕")
-          ? "夕"
-          : "";
-
-
-    const medicineName =
-      data.medicine
-        .replace(" 朝", "")
-        .replace(" 夕", "");
-
+      getRuleTimingLabel(rule);
 
     const safeKey =
       String(key)
@@ -5257,28 +5829,23 @@ function getCompletedListHtml() {
           <div class="completed-medicine-user">
 
             <strong>
-              ✅ ${data.user}
+              ✅ ${escapeHtml(data.user)}
             </strong>
 
+            <span class="rule-kind-badge ${rule.kind}">
+              ${getRuleKindIcon(rule)}
+              ${getRuleKindLabel(rule)}
+            </span>
+
             <div class="completed-medicine-name">
-              ${medicineName}
+              ${escapeHtml(rule.content)}
             </div>
 
           </div>
 
-          ${
-            timing
-              ? `
-                <span class="medicine-time ${
-                  timing === "朝"
-                    ? "morning"
-                    : "evening"
-                }">
-                  ${timing}
-                </span>
-              `
-              : ""
-          }
+          <span class="medicine-time ${getRuleTimingClass(rule)}">
+            ${timing}
+          </span>
 
         </div>
 
@@ -5316,7 +5883,6 @@ function getCompletedListHtml() {
   return result;
 }
 
-
 function openCancelCompletedModal(key) {
 
   if (!checks[key]) {
@@ -5334,7 +5900,6 @@ function openCancelCompletedModal(key) {
   const data =
     parseCheckKey(key);
 
-
   if (!data) {
 
     showToast(
@@ -5347,24 +5912,12 @@ function openCancelCompletedModal(key) {
   }
 
 
-  const timing =
-    data.medicine.includes("朝")
-      ? "朝"
-      : data.medicine.includes("夕")
-        ? "夕"
-        : "";
-
-
-  const medicineName =
-    data.medicine
-      .replace(" 朝", "")
-      .replace(" 夕", "");
-
+  const rule = data.rule;
 
   const safeKey =
     String(key)
-        .replace(/\\/g, "\\\\")
-        .replace(/'/g, "\\'");
+      .replace(/\\/g, "\\\\")
+      .replace(/'/g, "\\'");
 
 
   openCommonModal({
@@ -5378,28 +5931,23 @@ function openCancelCompletedModal(key) {
         <div class="completed-cancel-preview">
 
           <div class="completed-cancel-user">
-            ✅ ${data.user}
+            ✅ ${escapeHtml(data.user)}
           </div>
+
+          <span class="rule-kind-badge ${rule.kind}">
+            ${getRuleKindIcon(rule)}
+            ${getRuleKindLabel(rule)}
+          </span>
 
           <div class="completed-cancel-medicine">
 
             <span>
-              ${medicineName}
+              ${escapeHtml(rule.content)}
             </span>
 
-            ${
-              timing
-                ? `
-                  <span class="medicine-time ${
-                    timing === "朝"
-                      ? "morning"
-                      : "evening"
-                  }">
-                    ${timing}
-                  </span>
-                `
-                : ""
-            }
+            <span class="medicine-time ${getRuleTimingClass(rule)}">
+              ${getRuleTimingLabel(rule)}
+            </span>
 
           </div>
 
@@ -5407,7 +5955,7 @@ function openCancelCompletedModal(key) {
 
         <div class="completed-cancel-warning">
           この実施済みチェックを取り消します。<br>
-          取り消すと、本日の投薬対象に再び表示されます。
+          取り消すと、本日の対応対象に再び表示されます。
         </div>
 
       </div>
@@ -5433,41 +5981,29 @@ function openCancelCompletedModal(key) {
   });
 }
 
-
 async function cancelCompletedCheck(key) {
 
   if (!checks[key]) {
-
     closeCommonModal();
-
     return;
   }
 
 
-  checks[key] =
-    false;
-
+  checks[key] = false;
 
   document.getElementById(
     "todayTarget"
   ).innerHTML =
     getTodayTarget();
 
-
   document.getElementById(
     "completedList"
   ).innerHTML =
     getCompletedListHtml();
 
-
   updateHomeMedicineStatus();
-
-
   saveData();
-
-
   closeCommonModal();
-
 
   showToast(
     "取消を保存中…",
@@ -5483,37 +6019,28 @@ async function cancelCompletedCheck(key) {
       false
     );
 
-
     showToast(
       "実施済みを取り消しました",
       "success",
       3000
     );
 
-
   } catch (error) {
 
-    checks[key] =
-      true;
-
+    checks[key] = true;
 
     document.getElementById(
       "todayTarget"
     ).innerHTML =
       getTodayTarget();
 
-
     document.getElementById(
       "completedList"
     ).innerHTML =
       getCompletedListHtml();
 
-
     updateHomeMedicineStatus();
-
-
     saveData();
-
 
     showToast(
       "⚠ 実施済みの取消を保存できませんでした",
@@ -5522,7 +6049,6 @@ async function cancelCompletedCheck(key) {
     );
   }
 }
-
 
 function logout() {
   const ok = confirm("ログアウトしますか？");
@@ -5550,150 +6076,247 @@ function logout() {
 
 function createMedicineReport() {
 
-  let morningList = {};
-  let eveningList = {}; 
+  const lists = {
+    lunch: {},
+    daytime: {},
+    evening: {},
+    tomorrowMorning: {}
+  };
+
   let bowelHtml = "";
 
-  for (let user in points) {
 
-  // 自分のユニットだけ
-  if (
-    currentUnit !== "all" &&
-    userUnits[user] !== currentUnit
-  ) {
-    continue;
-  }
+  for (const user in points) {
 
-  // 今日のこの利用者の履歴だけ取得
-  const todayHistories = histories.filter(history => {
-
-    const historyDate =
-      String(history.date).slice(0, 10);
-
-    const today = new Date();
-
-    const todayText =
-      today.getFullYear() + "-" +
-      String(today.getMonth() + 1).padStart(2, "0") + "-" +
-      String(today.getDate()).padStart(2, "0");
-
-    return (
-      history.user === user &&
-      historyDate === todayText
-    );
-  });
-
-  if (todayHistories.length === 0) {
-
-    bowelHtml +=
-      `<strong>${user}</strong>：未確認<br>`;
-
-  } else {
-
-    const types = todayHistories.map(history => history.type);
-
-    bowelHtml +=
-      `<strong>${user}</strong>：${types.join("、")}<br>`;
-  }
-}
-
-  for (let user in lastDates) {
-
-    if (currentUnit !== "all" && userUnits[user] !== currentUnit) {
+    if (
+      currentUnit !== "all" &&
+      userUnits[user] !== currentUnit
+    ) {
       continue;
     }
 
-    const days = getNoBowelDays(user);
-    const medicines = rules[user]?.[days];
 
-    if (!medicines) continue;
+    const todayHistories =
+      histories.filter(history => {
 
-    for (let medicine of medicines) {
+        const historyDate =
+          String(history.date)
+            .slice(0, 10);
 
-      if (medicine.includes("朝")) {
-        if (!morningList[user]) {
-          morningList[user] = [];
-         }
+        const today = new Date();
 
-          morningList[user].push(
-          medicine.replace(" 朝", "")
+        const todayText =
+          today.getFullYear() + "-" +
+          String(today.getMonth() + 1)
+            .padStart(2, "0") + "-" +
+          String(today.getDate())
+            .padStart(2, "0");
+
+        return (
+          history.user === user &&
+          historyDate === todayText &&
+          history.status !== "cancelled"
         );
-      }
+      });
 
-      if (medicine.includes("夕")) {
-        if (!eveningList[user]) {
-         eveningList[user] = [];
-         }
 
-           eveningList[user].push(
-           medicine.replace(" 夕", "")
-          );
-      }
+    if (todayHistories.length === 0) {
 
+      bowelHtml +=
+        `<strong>${escapeHtml(user)}</strong>：未確認<br>`;
+
+    } else {
+
+      const types =
+        todayHistories.map(
+          history =>
+            escapeHtml(history.type)
+        );
+
+      bowelHtml +=
+        `<strong>${escapeHtml(user)}</strong>：${types.join("、")}<br>`;
     }
   }
 
-  let eveningHtml = "";
 
- for (let user in eveningList) {
+  function addToList(
+    listName,
+    user,
+    rule
+  ) {
 
-  eveningHtml += `<strong>${user}</strong><br>`;
+    if (!lists[listName][user]) {
+      lists[listName][user] = [];
+    }
 
-  for (let medicine of eveningList[user]) {
-    eveningHtml += `・${medicine}<br>`;
+    lists[listName][user].push(rule);
   }
 
-  eveningHtml += "<br>";
- }
 
- let morningHtml = "";
+  for (const user in lastDates) {
 
- for (let user in morningList) {
+    if (
+      currentUnit !== "all" &&
+      userUnits[user] !== currentUnit
+    ) {
+      continue;
+    }
 
-  morningHtml += `<strong>${user}</strong><br>`;
+    const days =
+      getNoBowelDays(user);
 
-  for (let medicine of morningList[user]) {
-    morningHtml += `・${medicine}<br>`;
+    const todayRules =
+      getRulesForDay(
+        user,
+        days
+      );
+
+    for (const rule of todayRules) {
+
+      if (rule.timing === "lunch") {
+        addToList(
+          "lunch",
+          user,
+          rule
+        );
+      }
+
+      if (rule.timing === "daytime") {
+        addToList(
+          "daytime",
+          user,
+          rule
+        );
+      }
+
+      if (rule.timing === "evening") {
+        addToList(
+          "evening",
+          user,
+          rule
+        );
+      }
+    }
+
+
+    const tomorrowRules =
+      getRulesForDay(
+        user,
+        days + 1
+      );
+
+    for (const rule of tomorrowRules) {
+
+      if (rule.timing === "morning") {
+        addToList(
+          "tomorrowMorning",
+          user,
+          rule
+        );
+      }
+    }
   }
 
-  morningHtml += "<br>";
- }
 
- const today = new Date();
+  function listToHtml(list) {
 
- const tomorrow = new Date(today);
- tomorrow.setDate(today.getDate() + 1);
+    let output = "";
 
- const todayText =
-  (today.getMonth() + 1) + "月" +
-  today.getDate() + "日";
+    for (const user in list) {
 
- const tomorrowText =
-  (tomorrow.getMonth() + 1) + "月" +
-  tomorrow.getDate() + "日";
+      output +=
+        `<strong>${escapeHtml(user)}</strong><br>`;
 
-  document.getElementById("medicineReport").innerHTML = `
- <div class="user-card">
+      for (const rule of list[user]) {
 
- <h3>${todayText} 排便状況</h3>
- ${bowelHtml || "対象者なし"}
+        output +=
+          `・${getRuleKindIcon(rule)} ${escapeHtml(rule.content)}<br>`;
+      }
 
- <hr>
+      output += "<br>";
+    }
 
- <h3>${todayText} 夕方</h3>
- ${eveningHtml || "対象者なし"}
+    return output;
+  }
 
- <hr>
 
- <h3>${tomorrowText} 朝</h3>
- ${morningHtml || "対象者なし"}
+  const today = new Date();
+  const tomorrow = new Date(today);
 
- <button onclick="copyMedicineReport()">
-📋 投薬報告をコピー
- </button>
+  tomorrow.setDate(
+    today.getDate() + 1
+  );
 
- </div>
- `;
+  const todayText =
+    (today.getMonth() + 1) +
+    "月" +
+    today.getDate() +
+    "日";
+
+  const tomorrowText =
+    (tomorrow.getMonth() + 1) +
+    "月" +
+    tomorrow.getDate() +
+    "日";
+
+
+  const lunchHtml =
+    listToHtml(lists.lunch);
+
+  const daytimeHtml =
+    listToHtml(lists.daytime);
+
+  const eveningHtml =
+    listToHtml(lists.evening);
+
+  const morningHtml =
+    listToHtml(
+      lists.tomorrowMorning
+    );
+
+
+  document.getElementById(
+    "medicineReport"
+  ).innerHTML = `
+    <div class="user-card">
+
+      <h3>${todayText} 排便状況</h3>
+      ${bowelHtml || "対象者なし"}
+
+      ${
+        lunchHtml
+          ? `
+            <hr>
+            <h3>${todayText} 昼</h3>
+            ${lunchHtml}
+          `
+          : ""
+      }
+
+      ${
+        daytimeHtml
+          ? `
+            <hr>
+            <h3>${todayText} 日中の排便処置</h3>
+            ${daytimeHtml}
+          `
+          : ""
+      }
+
+      <hr>
+      <h3>${todayText} 夕方</h3>
+      ${eveningHtml || "対象者なし"}
+
+      <hr>
+      <h3>${tomorrowText} 朝</h3>
+      ${morningHtml || "対象者なし"}
+
+      <button onclick="copyMedicineReport()">
+        📋 対応報告をコピー
+      </button>
+
+    </div>
+  `;
 }
 
 function checkTodayBowelStatus() {
@@ -9028,7 +9651,11 @@ async function loadSyncDataFromGoogle() {
   // =========================
 
   rules =
-    data.rules || {};
+    normalizeRulesObject(
+      data.rulesV2 ||
+      data.rules ||
+      {}
+    );
 
   checks =
     data.checks || {};
