@@ -89,25 +89,33 @@ button {
 #newDataMessage {
   display: none;
   position: fixed;
-  top: 15px;
+
+  /* ヘッダーに重なりにくい位置 */
+  top: 76px;
   left: 50%;
   transform: translateX(-50%);
 
-  min-width: 240px;
+  width: max-content;
+  min-width: 280px;
   max-width: calc(100% - 32px);
 
-  padding: 13px 20px;
-  border-radius: 10px;
+  padding: 14px 22px;
 
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
+  border: 2px solid rgba(255,255,255,0.28);
+  border-radius: 12px;
+
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.4;
   text-align: center;
 
   z-index: 20000;
 
   box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.25);
+    0 7px 22px rgba(0, 0, 0, 0.30);
+
+  pointer-events: none;
 
   transition:
     opacity 0.2s,
@@ -116,12 +124,12 @@ button {
 
 /* 通常 */
 #newDataMessage.toast-info {
-  background: #333;
+  background: #37474f;
 }
 
 /* 保存中 */
 #newDataMessage.toast-saving {
-  background: #1976d2;
+  background: #1565c0;
 }
 
 /* 成功 */
@@ -131,7 +139,7 @@ button {
 
 /* 失敗 */
 #newDataMessage.toast-error {
-  background: #d32f2f;
+  background: #c62828;
 }
 
 /* 本日の対象者チェック用 */
@@ -1606,7 +1614,6 @@ h3 {
    通知領域
 ========================= */
 
-#newDataMessage:not(:empty),
 #nightAlertArea:not(:empty) {
 
   margin-bottom: 12px;
@@ -2075,7 +2082,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.3</p>
+      <p class="app-version">Ver.0.8.4</p>
     </div>
 
     <button
@@ -5222,15 +5229,6 @@ function getCompletedListHtml() {
     }
 
 
-    // 現在のユニット以外は表示しない
-    if (
-      currentUnit !== "all" &&
-      userUnits[data.user] !== currentUnit
-    ) {
-      continue;
-    }
-
-
     const timing =
       data.medicine.includes("朝")
         ? "朝"
@@ -5247,8 +5245,8 @@ function getCompletedListHtml() {
 
     const safeKey =
       String(key)
-        .replace(/\\/g, "\\\\")
-        .replace(/'/g, "\\'");
+        .replace(/\/g, "\\")
+        .replace(/'/g, "\'");
 
 
     result += `
@@ -5365,8 +5363,8 @@ function openCancelCompletedModal(key) {
 
   const safeKey =
     String(key)
-      .replace(/\\/g, "\\\\")
-      .replace(/'/g, "\\'");
+      .replace(/\/g, "\\")
+      .replace(/'/g, "\'");
 
 
   openCommonModal({
