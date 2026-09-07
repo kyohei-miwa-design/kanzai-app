@@ -4372,22 +4372,147 @@ function getRuleListHtml() {
   return result;
 }
 
-function deleteRule(user, day, medicine) {
-  rules[user][day] = rules[user][day].filter(
-    item => item !== medicine
+async function deleteRule(user, day, medicine) {
+
+  // =========================
+  // 削除確認
+  // =========================
+
+  const ok = confirm(
+    user +
+    " の\n" +
+    "未排便" +
+    day +
+    "日\n" +
+    medicine +
+    "\n\nこのルールを削除しますか？"
   );
 
-  if (rules[user][day].length === 0) {
-    delete rules[user][day];
+  if (!ok) {
+    return;
   }
 
-  document.getElementById("ruleList").innerHTML =
-    getRuleListHtml();
 
-  document.getElementById("todayTarget").innerHTML =
-    getTodayTarget();
+  // =========================
+  // 削除前の状態を保存
+  // =========================
 
-  saveData();
+  const previousRules =
+    JSON.parse(
+      JSON.stringify(rules)
+    );
+
+
+  try {
+
+    // =========================
+    // ローカルから削除
+    // =========================
+
+    rules[user][day] =
+      rules[user][day].filter(
+        item => item !== medicine
+      );
+
+
+    // その日数の薬が0件なら
+    // 日数そのものを削除
+    if (
+      rules[user][day].length === 0
+    ) {
+
+      delete rules[user][day];
+    }
+
+
+    // 利用者のルールが
+    // 全部なくなった場合
+    if (
+      Object.keys(
+        rules[user]
+      ).length === 0
+    ) {
+
+      delete rules[user];
+    }
+
+
+    // =========================
+    // 画面を即時更新
+    // =========================
+
+    document.getElementById(
+      "ruleList"
+    ).innerHTML =
+      getRuleListHtml();
+
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+
+    updateHomeMedicineStatus();
+
+
+    saveData();
+
+
+    // =========================
+    // Googleにも保存
+    // =========================
+
+    await saveRulesToGoogle();
+
+
+    showToast(
+      "✅ ルールを削除しました",
+      "success",
+      3000
+    );
+
+
+  } catch (error) {
+
+    // =========================
+    // 保存失敗 → 元に戻す
+    // =========================
+
+    rules =
+      previousRules;
+
+
+    document.getElementById(
+      "ruleList"
+    ).innerHTML =
+      getRuleListHtml();
+
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+
+    updateHomeMedicineStatus();
+
+
+    saveData();
+
+
+    console.error(
+      "ルール削除エラー",
+      error
+    );
+
+
+    showToast(
+      "⚠ ルールの削除に失敗しました",
+      "error",
+      4000
+    );
+  }
 }
 
 async function toggleCheck(key) {
