@@ -2884,11 +2884,22 @@ function getNoBowelDays(user) {
 }
 
 function getTodayTarget() {
+
   let result = "";
+
+  const now = new Date();
+
+  const hour =
+    now.getHours() +
+    now.getMinutes() / 60;
+
 
   for (let user in lastDates) {
 
+    // =========================
     // 現在のユニット以外は表示しない
+    // =========================
+
     if (
       currentUnit !== "all" &&
       userUnits[user] !== currentUnit
@@ -2896,49 +2907,158 @@ function getTodayTarget() {
       continue;
     }
 
-    const days = getNoBowelDays(user);
-    const medicines = rules[user]?.[days];
 
-    if (!medicines) {
-      continue;
+    // =========================
+    // 今日の未排便日数
+    // =========================
+
+    const todayDays =
+      getNoBowelDays(user);
+
+
+    // =========================
+    // 表示対象となる薬を作る
+    // =========================
+
+    const displayMedicines = [];
+
+
+    // -------------------------
+    // 今日の朝
+    //
+    // 0:00 ～ 10:00
+    // -------------------------
+
+    if (hour < 10) {
+
+      const medicines =
+        rules[user]?.[todayDays] || [];
+
+      for (const medicine of medicines) {
+
+        if (medicine.includes("朝")) {
+
+          displayMedicines.push({
+            medicine: medicine,
+            days: todayDays,
+            timing: "朝"
+          });
+        }
+      }
     }
 
-    // まだ実施していない薬だけ残す
-    const remaining = medicines.filter(medicine => {
 
-      const checkKey =
-        user + "_" + days + "_" + medicine;
+    // -------------------------
+    // 今日の夕
+    //
+    // 9:00 ～ 18:30
+    // -------------------------
 
-      return !checks[checkKey];
-    });
+    if (
+      hour >= 9 &&
+      hour < 18.5
+    ) {
 
-    // 全部実施済みなら利用者ごと非表示
+      const medicines =
+        rules[user]?.[todayDays] || [];
+
+      for (const medicine of medicines) {
+
+        if (medicine.includes("夕")) {
+
+          displayMedicines.push({
+            medicine: medicine,
+            days: todayDays,
+            timing: "夕"
+          });
+        }
+      }
+    }
+
+
+    // -------------------------
+    // 明日の朝
+    //
+    // 前日16:00 ～ 24:00
+    // -------------------------
+
+    if (hour >= 16) {
+
+      const tomorrowDays =
+        todayDays + 1;
+
+      const medicines =
+        rules[user]?.[tomorrowDays] || [];
+
+      for (const medicine of medicines) {
+
+        if (medicine.includes("朝")) {
+
+          displayMedicines.push({
+            medicine: medicine,
+            days: tomorrowDays,
+            timing: "朝"
+          });
+        }
+      }
+    }
+
+
+    // =========================
+    // 実施済みを除外
+    // =========================
+
+    const remaining =
+      displayMedicines.filter(item => {
+
+        const checkKey =
+          user +
+          "_" +
+          item.days +
+          "_" +
+          item.medicine;
+
+        return !checks[checkKey];
+      });
+
+
     if (remaining.length === 0) {
       continue;
     }
 
 
+    // =========================
     // 利用者カード開始
+    // =========================
+
     result +=
       "<div class='target-card'>" +
-      "<strong>⚠ " + user + "</strong><br>" +
-      "未排便日数：" + days + "日";
+      "<strong>⚠ " +
+      user +
+      "</strong><br>" +
+      "未排便日数：" +
+      todayDays +
+      "日";
 
 
+    // =========================
     // 薬を1つずつ表示
-    for (let medicine of remaining) {
+    // =========================
+
+    for (const item of remaining) {
+
+      const medicine =
+        item.medicine;
+
+      const timing =
+        item.timing;
 
       const checkKey =
-        user + "_" + days + "_" + medicine;
-
-
-      // 朝・夕を判定
-      const timing =
-        medicine.includes("朝")
-          ? "朝"
-          : medicine.includes("夕")
-          ? "夕"
-          : "";
+        user +
+        "_" +
+        item.days +
+        "_" +
+        medicine;
 
 
       // 「テスト薬 朝」→「テスト薬」
@@ -2960,11 +3080,11 @@ function getTodayTarget() {
         "</span>" +
 
         "<span class='medicine-time " +
-        (timing === "朝"
-          ? "morning"
-          : timing === "夕"
-          ? "evening"
-          : "") +
+        (
+          timing === "朝"
+            ? "morning"
+            : "evening"
+        ) +
         "'>" +
         timing +
         "</span>" +
@@ -2973,14 +3093,15 @@ function getTodayTarget() {
     }
 
 
-    // 利用者カード終了
     result += "</div>";
   }
 
 
   if (result === "") {
-    return "🎉 本日の対象者はいません";
+
+    return "🎉 現在の投薬対象者はいません";
   }
+
 
   return result;
 }
