@@ -189,6 +189,58 @@ button {
   border: 1px solid #81c995;
 }
 
+
+/* =========================
+   翌朝の投薬予定（表示のみ）
+========================= */
+
+.tomorrow-medicine-block {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed #b0bec5;
+}
+
+.tomorrow-medicine-title {
+  margin-bottom: 4px;
+  color: #5c6bc0;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.tomorrow-medicine-note {
+  margin-bottom: 8px;
+  color: #78909c;
+  font-size: 13px;
+}
+
+.tomorrow-medicine-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  margin: 8px 0;
+  padding: 12px 14px;
+  border: 1px solid #d8def5;
+  border-radius: 10px;
+  background: #f5f6ff;
+}
+
+.tomorrow-medicine-item .medicine-name {
+  flex: 1;
+  font-weight: 700;
+}
+
+.tomorrow-medicine-badge {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border: 1px solid #9fa8da;
+  border-radius: 7px;
+  background: #eef0ff;
+  color: #3949ab;
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .night-no-bowel-item {
   display: flex;
   align-items: center;
@@ -1877,7 +1929,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.1</p>
+      <p class="app-version">Ver.0.8.2</p>
     </div>
 
     <button
@@ -3199,15 +3251,15 @@ function getTodayTarget() {
 
 
     // =========================
-    // 表示対象となる薬を作る
+    // 今日の対象 / 明日朝の予定を分離
     // =========================
 
-    const displayMedicines = [];
+    const todayMedicines = [];
+    const tomorrowMedicines = [];
 
 
     // -------------------------
     // 今日の朝
-    //
     // 0:00 ～ 10:00
     // -------------------------
 
@@ -3220,7 +3272,7 @@ function getTodayTarget() {
 
         if (medicine.includes("朝")) {
 
-          displayMedicines.push({
+          todayMedicines.push({
             medicine: medicine,
             days: todayDays,
             timing: "朝"
@@ -3232,7 +3284,6 @@ function getTodayTarget() {
 
     // -------------------------
     // 今日の夕
-    //
     // 9:00 ～ 18:30
     // -------------------------
 
@@ -3248,7 +3299,7 @@ function getTodayTarget() {
 
         if (medicine.includes("夕")) {
 
-          displayMedicines.push({
+          todayMedicines.push({
             medicine: medicine,
             days: todayDays,
             timing: "夕"
@@ -3260,8 +3311,8 @@ function getTodayTarget() {
 
     // -------------------------
     // 明日の朝
-    //
     // 前日16:00 ～ 24:00
+    // ※ 予定表示のみ。実施チェックはさせない。
     // -------------------------
 
     if (hour >= 16) {
@@ -3276,7 +3327,7 @@ function getTodayTarget() {
 
         if (medicine.includes("朝")) {
 
-          displayMedicines.push({
+          tomorrowMedicines.push({
             medicine: medicine,
             days: tomorrowDays,
             timing: "朝"
@@ -3287,11 +3338,11 @@ function getTodayTarget() {
 
 
     // =========================
-    // 実施済みを除外
+    // 今日分だけ実施済みを除外
     // =========================
 
-    const remaining =
-      displayMedicines.filter(item => {
+    const remainingToday =
+      todayMedicines.filter(item => {
 
         const checkKey =
           user +
@@ -3304,7 +3355,10 @@ function getTodayTarget() {
       });
 
 
-    if (remaining.length === 0) {
+    if (
+      remainingToday.length === 0 &&
+      tomorrowMedicines.length === 0
+    ) {
       continue;
     }
 
@@ -3324,10 +3378,10 @@ function getTodayTarget() {
 
 
     // =========================
-    // 薬を1つずつ表示
+    // 今日の対象（チェック可能）
     // =========================
 
-    for (const item of remaining) {
+    for (const item of remainingToday) {
 
       const medicine =
         item.medicine;
@@ -3343,7 +3397,6 @@ function getTodayTarget() {
         medicine;
 
 
-      // 「テスト薬 朝」→「テスト薬」
       const medicineName =
         medicine
           .replace(" 朝", "")
@@ -3372,6 +3425,43 @@ function getTodayTarget() {
         "</span>" +
 
         "</label>";
+    }
+
+
+    // =========================
+    // 明日朝の予定（表示のみ）
+    // =========================
+
+    if (tomorrowMedicines.length > 0) {
+
+      result +=
+        "<div class='tomorrow-medicine-block'>" +
+        "<div class='tomorrow-medicine-title'>🌅 明日朝の予定</div>" +
+        "<div class='tomorrow-medicine-note'>" +
+        "明日時点：未排便" +
+        (todayDays + 1) +
+        "日目 ／ 予定確認用（実施チェックは明日行います）" +
+        "</div>";
+
+
+      for (const item of tomorrowMedicines) {
+
+        const medicineName =
+          item.medicine
+            .replace(" 朝", "")
+            .replace(" 夕", "");
+
+        result +=
+          "<div class='tomorrow-medicine-item'>" +
+          "<span class='medicine-name'>" +
+          medicineName +
+          "</span>" +
+          "<span class='tomorrow-medicine-badge'>朝・予定</span>" +
+          "</div>";
+      }
+
+
+      result += "</div>";
     }
 
 
