@@ -241,6 +241,152 @@ button {
   font-weight: 800;
 }
 
+
+/* =========================
+   本日実施済み
+========================= */
+
+.completed-medicine-card {
+  margin: 10px 0;
+  padding: 14px 16px;
+
+  border: 1px solid #b7e4cf;
+  border-left: 5px solid #00897b;
+  border-radius: 12px;
+
+  background: #f3fbf7;
+}
+
+.completed-medicine-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.completed-medicine-user {
+  flex: 1;
+  min-width: 0;
+}
+
+.completed-medicine-user strong {
+  display: block;
+  margin-bottom: 4px;
+
+  color: #263238;
+  font-size: 18px;
+}
+
+.completed-medicine-name {
+  color: #455a64;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.completed-medicine-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-top: 12px;
+  padding-top: 10px;
+
+  border-top: 1px dashed #b7d9c9;
+}
+
+.completed-badge {
+  flex-shrink: 0;
+
+  padding: 4px 9px;
+
+  border: 1px solid #80cbc4;
+  border-radius: 999px;
+
+  background: #e0f2f1;
+  color: #00796b;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.completed-cancel-button {
+  width: auto !important;
+  min-height: 38px !important;
+
+  margin: 0 0 0 auto !important;
+  padding: 7px 12px !important;
+
+  border: 1px solid #ef9a9a !important;
+  border-radius: 9px !important;
+
+  background: #fff !important;
+  color: #c62828 !important;
+
+  font-size: 14px !important;
+  font-weight: 800 !important;
+}
+
+.completed-empty-message {
+  padding: 14px;
+
+  border: 1px dashed #cfd8dc;
+  border-radius: 10px;
+
+  background: #fafcfd;
+  color: #78909c;
+
+  text-align: center;
+}
+
+
+/* =========================
+   実施済み取消モーダル
+========================= */
+
+.completed-cancel-form {
+  display: grid;
+  gap: 14px;
+}
+
+.completed-cancel-preview {
+  padding: 14px;
+
+  border: 1px solid #b7e4cf;
+  border-left: 5px solid #00897b;
+  border-radius: 10px;
+
+  background: #f3fbf7;
+}
+
+.completed-cancel-user {
+  margin-bottom: 5px;
+
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.completed-cancel-medicine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  color: #455a64;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.completed-cancel-warning {
+  padding: 13px 14px;
+
+  border: 1px solid #ffcdd2;
+  border-radius: 10px;
+
+  background: #fff5f5;
+  color: #b71c1c;
+
+  font-size: 14px;
+  line-height: 1.7;
+}
+
 .night-no-bowel-item {
   display: flex;
   align-items: center;
@@ -1929,7 +2075,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.2</p>
+      <p class="app-version">Ver.0.8.3</p>
     </div>
 
     <button
@@ -5014,27 +5160,371 @@ function clearHistory() {
   saveData();
 }
 
+function parseCheckKey(key) {
+
+  const firstSeparator =
+    key.indexOf("_");
+
+  const secondSeparator =
+    key.indexOf(
+      "_",
+      firstSeparator + 1
+    );
+
+
+  if (
+    firstSeparator === -1 ||
+    secondSeparator === -1
+  ) {
+    return null;
+  }
+
+
+  return {
+    user:
+      key.slice(
+        0,
+        firstSeparator
+      ),
+
+    days:
+      key.slice(
+        firstSeparator + 1,
+        secondSeparator
+      ),
+
+    medicine:
+      key.slice(
+        secondSeparator + 1
+      )
+  };
+}
+
+
 function getCompletedListHtml() {
+
   let result = "";
 
-  for (let key in checks) {
-    if (checks[key]) {
-      const parts = key.split("_");
 
-      result +=
-        "<div class='history-card'>" +
-        "☑ " + parts[0] + "<br>" +
-        parts[2] +
-        "</div>";
+  for (const key in checks) {
+
+    if (!checks[key]) {
+      continue;
     }
+
+
+    const data =
+      parseCheckKey(key);
+
+
+    if (!data) {
+      continue;
+    }
+
+
+    // 現在のユニット以外は表示しない
+    if (
+      currentUnit !== "all" &&
+      userUnits[data.user] !== currentUnit
+    ) {
+      continue;
+    }
+
+
+    const timing =
+      data.medicine.includes("朝")
+        ? "朝"
+        : data.medicine.includes("夕")
+          ? "夕"
+          : "";
+
+
+    const medicineName =
+      data.medicine
+        .replace(" 朝", "")
+        .replace(" 夕", "");
+
+
+    const safeKey =
+      String(key)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'");
+
+
+    result += `
+      <div class="completed-medicine-card">
+
+        <div class="completed-medicine-main">
+
+          <div class="completed-medicine-user">
+
+            <strong>
+              ✅ ${data.user}
+            </strong>
+
+            <div class="completed-medicine-name">
+              ${medicineName}
+            </div>
+
+          </div>
+
+          ${
+            timing
+              ? `
+                <span class="medicine-time ${
+                  timing === "朝"
+                    ? "morning"
+                    : "evening"
+                }">
+                  ${timing}
+                </span>
+              `
+              : ""
+          }
+
+        </div>
+
+        <div class="completed-medicine-footer">
+
+          <span class="completed-badge">
+            実施済み
+          </span>
+
+          <button
+            type="button"
+            class="completed-cancel-button"
+            onclick="openCancelCompletedModal('${safeKey}')"
+          >
+            実施済みを取消
+          </button>
+
+        </div>
+
+      </div>
+    `;
   }
+
 
   if (result === "") {
-    return "まだ実施記録はありません";
+
+    return `
+      <div class="completed-empty-message">
+        まだ本日の実施記録はありません
+      </div>
+    `;
   }
+
 
   return result;
 }
+
+
+function openCancelCompletedModal(key) {
+
+  if (!checks[key]) {
+
+    showToast(
+      "この実施記録はすでに取り消されています",
+      "info",
+      3000
+    );
+
+    return;
+  }
+
+
+  const data =
+    parseCheckKey(key);
+
+
+  if (!data) {
+
+    showToast(
+      "実施記録の情報を読み取れませんでした",
+      "error",
+      3500
+    );
+
+    return;
+  }
+
+
+  const timing =
+    data.medicine.includes("朝")
+      ? "朝"
+      : data.medicine.includes("夕")
+        ? "夕"
+        : "";
+
+
+  const medicineName =
+    data.medicine
+      .replace(" 朝", "")
+      .replace(" 夕", "");
+
+
+  const safeKey =
+    String(key)
+      .replace(/\\/g, "\\\\")
+      .replace(/'/g, "\\'");
+
+
+  openCommonModal({
+
+    title:
+      "実施済みを取消",
+
+    bodyHtml: `
+      <div class="completed-cancel-form">
+
+        <div class="completed-cancel-preview">
+
+          <div class="completed-cancel-user">
+            ✅ ${data.user}
+          </div>
+
+          <div class="completed-cancel-medicine">
+
+            <span>
+              ${medicineName}
+            </span>
+
+            ${
+              timing
+                ? `
+                  <span class="medicine-time ${
+                    timing === "朝"
+                      ? "morning"
+                      : "evening"
+                  }">
+                    ${timing}
+                  </span>
+                `
+                : ""
+            }
+
+          </div>
+
+        </div>
+
+        <div class="completed-cancel-warning">
+          この実施済みチェックを取り消します。<br>
+          取り消すと、本日の投薬対象に再び表示されます。
+        </div>
+
+      </div>
+    `,
+
+    buttonsHtml: `
+      <button
+        type="button"
+        class="modal-action-cancel"
+        onclick="cancelCompletedCheck('${safeKey}')"
+      >
+        実施済みを取り消す
+      </button>
+
+      <button
+        type="button"
+        class="modal-action-close"
+        onclick="closeCommonModal()"
+      >
+        閉じる
+      </button>
+    `
+  });
+}
+
+
+async function cancelCompletedCheck(key) {
+
+  if (!checks[key]) {
+
+    closeCommonModal();
+
+    return;
+  }
+
+
+  checks[key] =
+    false;
+
+
+  document.getElementById(
+    "todayTarget"
+  ).innerHTML =
+    getTodayTarget();
+
+
+  document.getElementById(
+    "completedList"
+  ).innerHTML =
+    getCompletedListHtml();
+
+
+  updateHomeMedicineStatus();
+
+
+  saveData();
+
+
+  closeCommonModal();
+
+
+  showToast(
+    "取消を保存中…",
+    "saving",
+    0
+  );
+
+
+  try {
+
+    await saveCheckToGoogle(
+      key,
+      false
+    );
+
+
+    showToast(
+      "実施済みを取り消しました",
+      "success",
+      3000
+    );
+
+
+  } catch (error) {
+
+    checks[key] =
+      true;
+
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+
+    document.getElementById(
+      "completedList"
+    ).innerHTML =
+      getCompletedListHtml();
+
+
+    updateHomeMedicineStatus();
+
+
+    saveData();
+
+
+    showToast(
+      "⚠ 実施済みの取消を保存できませんでした",
+      "error",
+      4000
+    );
+  }
+}
+
 
 function logout() {
   const ok = confirm("ログアウトしますか？");
