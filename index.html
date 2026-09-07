@@ -2082,7 +2082,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.4</p>
+      <p class="app-version">Ver.0.8.5</p>
     </div>
 
     <button
@@ -5245,8 +5245,8 @@ function getCompletedListHtml() {
 
     const safeKey =
       String(key)
-        .replace(/\/g, "\\")
-        .replace(/'/g, "\'");
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'");
 
 
     result += `
@@ -5363,8 +5363,8 @@ function openCancelCompletedModal(key) {
 
   const safeKey =
     String(key)
-      .replace(/\/g, "\\")
-      .replace(/'/g, "\'");
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'");
 
 
   openCommonModal({
