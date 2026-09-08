@@ -1539,7 +1539,7 @@ h3 {
 
 
 /* =========================
-   勤務帯確認・遅延確認 Ver.0.8.17
+   勤務帯確認・遅延確認 Ver.0.8.18
 ========================= */
 
 .shift-confirm-timing-note {
@@ -2640,6 +2640,198 @@ h3 {
   white-space: nowrap;
 }
 
+
+/* =========================
+   看護師個別指示 Ver.0.8.18
+========================= */
+
+.nurse-instruction-panel {
+  margin-top: 12px;
+  overflow: hidden;
+
+  border: 1px solid #9fa8da;
+  border-left: 6px solid #5c6bc0;
+  border-radius: 12px;
+
+  background: #f7f8ff;
+}
+
+.nurse-instruction-panel.completed {
+  border-color: #9ad8c4;
+  border-left-color: #00897b;
+  background: #f5fbf8;
+}
+
+.nurse-instruction-panel.observing {
+  border-color: #90caf9;
+  border-left-color: #1976d2;
+  background: #f4f9ff;
+}
+
+.nurse-instruction-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  padding: 12px 14px;
+  background: rgba(92, 107, 192, 0.08);
+}
+
+.nurse-instruction-header strong {
+  color: #3949ab;
+  font-size: 16px;
+}
+
+.nurse-instruction-panel.completed .nurse-instruction-header strong {
+  color: #00796b;
+}
+
+.nurse-instruction-panel.observing .nurse-instruction-header strong {
+  color: #1565c0;
+}
+
+.nurse-instruction-body {
+  padding: 13px 14px;
+}
+
+.nurse-instruction-user {
+  margin-bottom: 6px;
+  color: #263238;
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.nurse-instruction-content {
+  margin-top: 8px;
+  color: #37474f;
+  font-weight: 750;
+  line-height: 1.65;
+}
+
+.nurse-instruction-meta {
+  margin-top: 9px;
+  color: #607d8b;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.nurse-instruction-note {
+  margin-top: 9px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: #fff;
+  color: #546e7a;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.nurse-instruction-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.nurse-instruction-actions button {
+  width: auto !important;
+  margin: 0 !important;
+  min-height: 38px !important;
+  padding: 7px 11px !important;
+}
+
+.nurse-instruction-cancel-btn {
+  background: #fff !important;
+  color: #c62828 !important;
+  border: 1px solid #ef9a9a !important;
+}
+
+.nurse-add-action-button {
+  background: #c62828 !important;
+  color: #fff !important;
+}
+
+.nurse-target-card {
+  border-left-color: #5c6bc0 !important;
+  background: #f7f8ff !important;
+}
+
+.nurse-target-status {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e8eaf6;
+  color: #3949ab;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.nurse-target-status.overdue {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.nurse-target-status.planned {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.nurse-form {
+  display: grid;
+  gap: 13px;
+}
+
+.nurse-form-label {
+  color: #37474f;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.nurse-form textarea {
+  width: 100%;
+  min-height: 84px;
+  padding: 10px 12px;
+  border: 1px solid #cfd8dc;
+  border-radius: 10px;
+  resize: vertical;
+  font: inherit;
+}
+
+.nurse-form-summary {
+  padding: 12px;
+  border: 1px solid #ffcdd2;
+  border-left: 5px solid #d32f2f;
+  border-radius: 10px;
+  background: #fff7f7;
+  line-height: 1.65;
+}
+
+.status-user-card.state-nurse-instruction {
+  border-left-color: #5c6bc0;
+  background: #fafaff;
+}
+.status-user-card.state-nurse-observing {
+  border-left-color: #1976d2;
+  background: #f8fbff;
+}
+.status-user-card.state-nurse-completed {
+  border-left-color: #00897b;
+  background: #f7fcfa;
+}
+.state-nurse-instruction .status-state-badge {
+  background: #e8eaf6;
+  color: #3949ab;
+}
+.state-nurse-observing .status-state-badge {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+.state-nurse-completed .status-state-badge {
+  background: #e0f2f1;
+  color: #00796b;
+}
+
 /* =========================
    看護師確認アラート Ver.0.8.14
 ========================= */
@@ -3006,7 +3198,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.16</p>
+      <p class="app-version">Ver.0.8.18</p>
     </div>
 
     <button
@@ -3621,6 +3813,9 @@ let points = {
 };
 
 let histories = [];
+
+// 看護師が今回限りで登録する個別対応指示
+let nurseInstructions = [];
 
 let checks = {};
 
@@ -4696,13 +4891,14 @@ function getNoBowelDays(user) {
 
 function getTodayTarget() {
 
-  let result = "";
-
   const now = new Date();
 
   const hour =
     now.getHours() +
     now.getMinutes() / 60;
+
+  let result =
+    getNurseInstructionTargetHtml(hour);
 
 
   for (const user in lastDates) {
@@ -4950,6 +5146,38 @@ function updateHomeMedicineStatus() {
   }
 
 
+
+  const todayTextForNurse = getTodayText();
+
+  for (const item of nurseInstructions.map(normalizeNurseInstruction)) {
+
+    if (
+      currentUnit !== "all" &&
+      userUnits[item.user] !== currentUnit
+    ) {
+      continue;
+    }
+
+    if (item.status === "pending" && isNurseInstructionCurrentCycle(item)) {
+
+      if (item.targetDate <= todayTextForNurse) {
+        totalCount++;
+        remainingCount++;
+        targetUsers.add(item.user);
+        remainingUsers.add(item.user);
+      }
+    }
+
+    if (
+      item.status === "completed" &&
+      String(item.completedAt || "").slice(0, 10) === todayTextForNurse
+    ) {
+      totalCount++;
+      completedCount++;
+      targetUsers.add(item.user);
+    }
+  }
+
   if (totalCount === 0) {
 
     area.innerHTML = `
@@ -5065,6 +5293,11 @@ function saveData() {
   );
 
   localStorage.setItem(
+    "nurseInstructions",
+    JSON.stringify(nurseInstructions)
+  );
+
+  localStorage.setItem(
     "rules",
     JSON.stringify(rules)
   );
@@ -5087,6 +5320,7 @@ function loadData() {
   const savedStaffMaster = localStorage.getItem("staffMaster");
   const savedUnitMaster = localStorage.getItem("unitMaster");
   const savedHistories = localStorage.getItem("histories");
+  const savedNurseInstructions = localStorage.getItem("nurseInstructions");
   const savedRules = localStorage.getItem("rules");
   const savedChecks = localStorage.getItem("checks");
   const savedCheckDate = localStorage.getItem("checkDate");
@@ -5115,6 +5349,10 @@ function loadData() {
 
   if (savedHistories !== null) {
     histories = JSON.parse(savedHistories);
+  }
+
+  if (savedNurseInstructions !== null) {
+    nurseInstructions = JSON.parse(savedNurseInstructions);
   }
 
   if (savedPoints !== null) {
@@ -5726,6 +5964,675 @@ function getMaxRuleDay(user) {
   return Math.max(...days);
 }
 
+
+function normalizeNurseInstruction(item) {
+
+  return {
+    instructionId:
+      String(item?.instructionId || "").trim(),
+    createdAt:
+      String(item?.createdAt || "").trim(),
+    targetDate:
+      String(item?.targetDate || "").slice(0, 10),
+    user:
+      String(item?.user || "").trim(),
+    unit:
+      String(item?.unit || "").trim(),
+    cycleLastDate:
+      String(item?.cycleLastDate || "").slice(0, 10),
+    noBowelDays:
+      Number(item?.noBowelDays || 0),
+    kind:
+      String(item?.kind || "").trim(),
+    content:
+      String(item?.content || "").trim(),
+    timing:
+      String(item?.timing || "").trim(),
+    nurseStaffId:
+      String(item?.nurseStaffId || "").trim(),
+    nurseName:
+      String(item?.nurseName || "").trim(),
+    note:
+      String(item?.note || "").trim(),
+    status:
+      String(item?.status || "").trim(),
+    completedAt:
+      String(item?.completedAt || "").trim(),
+    updatedAt:
+      String(item?.updatedAt || "").trim(),
+    cancelledAt:
+      String(item?.cancelledAt || "").trim(),
+    cancelledByStaffId:
+      String(item?.cancelledByStaffId || "").trim(),
+    cancelledByName:
+      String(item?.cancelledByName || "").trim(),
+    cancelReason:
+      String(item?.cancelReason || "").trim()
+  };
+}
+
+
+function getNurseInstructionKindLabel(item) {
+
+  if (item.kind === "procedure") {
+    return "排便処置";
+  }
+
+  if (item.kind === "observe") {
+    return "経過観察";
+  }
+
+  return "緩下剤";
+}
+
+
+function getNurseInstructionKindIcon(item) {
+
+  if (item.kind === "procedure") {
+    return "🩺";
+  }
+
+  if (item.kind === "observe") {
+    return "👀";
+  }
+
+  return "💊";
+}
+
+
+function getNurseInstructionTimingLabel(item) {
+
+  return RULE_TIMING_LABELS[item.timing] || "";
+}
+
+
+function isNurseInstructionCurrentCycle(item) {
+
+  const normalized =
+    normalizeNurseInstruction(item);
+
+  return (
+    normalized.user &&
+    normalized.status !== "cancelled" &&
+    String(lastDates[normalized.user] || "").slice(0, 10) ===
+      normalized.cycleLastDate
+  );
+}
+
+
+function getLatestCurrentCycleNurseInstruction(user) {
+
+  const todayText = getTodayText();
+
+  const items =
+    nurseInstructions
+      .map(normalizeNurseInstruction)
+      .filter(item =>
+        item.user === user &&
+        isNurseInstructionCurrentCycle(item)
+      )
+      .sort((a, b) =>
+        String(b.createdAt).localeCompare(String(a.createdAt))
+      );
+
+  for (const item of items) {
+
+    // 未実施の具体的指示は、対象日を過ぎても解決するまで残す
+    if (item.status === "pending") {
+      return item;
+    }
+
+    // 経過観察は指定日まで有効。翌日には再度看護師確認へ戻す
+    if (
+      item.status === "observing" &&
+      item.targetDate >= todayText
+    ) {
+      return item;
+    }
+
+    // 実施済みは実施した当日だけ「対応済み」とする
+    if (
+      item.status === "completed" &&
+      String(item.completedAt || "").slice(0, 10) === todayText
+    ) {
+      return item;
+    }
+  }
+
+  return null;
+}
+
+
+function getNurseOnlyStaffSelectHtml(selectId) {
+
+  const nurses =
+    staffMaster
+      .filter(staff =>
+        staff.active &&
+        staff.job === "看護師"
+      )
+      .sort((a, b) =>
+        a.name.localeCompare(b.name, "ja")
+      );
+
+  let html = `
+    <select id="${escapeHtml(selectId)}">
+      <option value="">看護師を選択してください</option>
+  `;
+
+  for (const nurse of nurses) {
+    html += `
+      <option value="${escapeHtml(nurse.staffId)}">
+        ${escapeHtml(nurse.name)}
+      </option>
+    `;
+  }
+
+  html += "</select>";
+  return html;
+}
+
+
+function getInstructionWindowState(item, hour) {
+
+  const todayText = getTodayText();
+  const targetDate = item.targetDate || todayText;
+
+  if (targetDate < todayText) {
+    return "overdue";
+  }
+
+  if (targetDate > todayText) {
+    return "planned";
+  }
+
+  if (item.timing === "morning") {
+    return hour < 10 ? "active" : "overdue";
+  }
+
+  if (
+    item.timing === "lunch" ||
+    item.timing === "evening" ||
+    item.timing === "daytime"
+  ) {
+    if (hour < 9) {
+      return "planned";
+    }
+    if (hour < 18.5) {
+      return "active";
+    }
+    return "overdue";
+  }
+
+  return "active";
+}
+
+
+function getPendingNurseInstructionsForCurrentUnit() {
+
+  return nurseInstructions
+    .map(normalizeNurseInstruction)
+    .filter(item =>
+      item.status === "pending" &&
+      isNurseInstructionCurrentCycle(item) &&
+      (
+        currentUnit === "all" ||
+        userUnits[item.user] === currentUnit
+      )
+    )
+    .sort((a, b) =>
+      String(a.targetDate).localeCompare(String(b.targetDate)) ||
+      String(a.createdAt).localeCompare(String(b.createdAt))
+    );
+}
+
+
+function openNurseInstructionModal(user) {
+
+  if (currentRole !== "nurse") {
+    showToast(
+      "看護師共通アカウントから登録してください",
+      "error",
+      3500
+    );
+    return;
+  }
+
+  const maxRuleDay = getMaxRuleDay(user);
+  const days = Math.max(0, getNoBowelDays(user));
+  const safeUser = encodeURIComponent(user);
+
+  openCommonModal({
+    title: "看護師 個別対応指示",
+    bodyHtml: `
+      <div class="nurse-form">
+
+        <div class="nurse-form-summary">
+          <strong>${escapeHtml(user)}</strong><br>
+          未排便 ${days}日<br>
+          設定最終日：${maxRuleDay === null ? "なし" : `未排便${maxRuleDay}日`}
+        </div>
+
+        <div>
+          <div class="nurse-form-label">対応種類</div>
+          <select
+            id="nurseInstructionKind"
+            onchange="updateNurseInstructionFormFields()"
+          >
+            <option value="laxative">💊 緩下剤与薬</option>
+            <option value="procedure">🩺 排便処置</option>
+            <option value="observe">👀 経過観察</option>
+          </select>
+        </div>
+
+        <div id="nurseInstructionContentBlock">
+          <div class="nurse-form-label">内容</div>
+          <input
+            type="text"
+            id="nurseInstructionContent"
+            placeholder="例：ピコ15滴"
+          >
+        </div>
+
+        <div id="nurseInstructionTimingBlock">
+          <div class="nurse-form-label">時間帯</div>
+          <select id="nurseInstructionTiming"></select>
+        </div>
+
+        <div>
+          <div class="nurse-form-label">対象日</div>
+          <input
+            type="date"
+            id="nurseInstructionTargetDate"
+            value="${getTodayText()}"
+            min="${getTodayText()}"
+          >
+        </div>
+
+        <div>
+          <div class="nurse-form-label">指示した看護師</div>
+          ${getNurseOnlyStaffSelectHtml("nurseInstructionStaff")}
+        </div>
+
+        <div>
+          <div class="nurse-form-label">メモ（任意）</div>
+          <textarea
+            id="nurseInstructionNote"
+            placeholder="相談内容や注意点があれば入力"
+          ></textarea>
+        </div>
+
+      </div>
+    `,
+    buttonsHtml: `
+      <button
+        class="modal-action-edit"
+        onclick="saveNurseInstructionFromModal(decodeURIComponent('${safeUser}'))"
+      >
+        対応を登録
+      </button>
+      <button
+        class="modal-action-close"
+        onclick="closeCommonModal()"
+      >
+        閉じる
+      </button>
+    `
+  });
+
+  updateNurseInstructionFormFields();
+}
+
+
+function updateNurseInstructionFormFields() {
+
+  const kind =
+    document.getElementById("nurseInstructionKind")?.value || "laxative";
+
+  const contentBlock =
+    document.getElementById("nurseInstructionContentBlock");
+
+  const timingBlock =
+    document.getElementById("nurseInstructionTimingBlock");
+
+  const timingSelect =
+    document.getElementById("nurseInstructionTiming");
+
+  if (!contentBlock || !timingBlock || !timingSelect) {
+    return;
+  }
+
+  if (kind === "observe") {
+    contentBlock.style.display = "none";
+    timingBlock.style.display = "none";
+    timingSelect.innerHTML = "";
+    return;
+  }
+
+  contentBlock.style.display = "block";
+  timingBlock.style.display = "block";
+
+  if (kind === "procedure") {
+    timingSelect.innerHTML = `
+      <option value="daytime">日中</option>
+    `;
+    return;
+  }
+
+  timingSelect.innerHTML = `
+    <option value="morning">朝</option>
+    <option value="lunch">昼</option>
+    <option value="evening">夕</option>
+  `;
+}
+
+
+async function saveNurseInstructionFromModal(user) {
+
+  const kind =
+    document.getElementById("nurseInstructionKind")?.value || "";
+
+  const content =
+    document.getElementById("nurseInstructionContent")?.value.trim() || "";
+
+  const timing =
+    document.getElementById("nurseInstructionTiming")?.value || "";
+
+  const targetDate =
+    document.getElementById("nurseInstructionTargetDate")?.value || getTodayText();
+
+  const nurseStaffId =
+    document.getElementById("nurseInstructionStaff")?.value || "";
+
+  const note =
+    document.getElementById("nurseInstructionNote")?.value.trim() || "";
+
+  if (!nurseStaffId) {
+    showToast("指示した看護師を選択してください", "error", 3000);
+    return;
+  }
+
+  if (kind !== "observe" && !content) {
+    showToast("対応内容を入力してください", "error", 3000);
+    return;
+  }
+
+  showToast("看護師指示を保存中…", "saving", 0);
+
+  try {
+
+    const response = await fetch(
+      API_URL,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify({
+          action: "saveNurseInstruction",
+          sourceRole: currentRole,
+          user: user,
+          kind: kind,
+          content: content,
+          timing: timing,
+          targetDate: targetDate,
+          nurseStaffId: nurseStaffId,
+          note: note
+        }),
+        cache: "no-store"
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.ok) {
+      throw new Error(result.message || "看護師指示を保存できませんでした");
+    }
+
+    closeCommonModal();
+    await refreshFromGoogle();
+
+    showToast("✓ 看護師指示を登録しました", "success", 3000);
+
+  } catch (error) {
+    console.error("看護師指示登録エラー", error);
+    showToast("⚠ " + error.message, "error", 4000);
+  }
+}
+
+
+function openCancelNurseInstructionModal(instructionId) {
+
+  if (currentRole !== "nurse") {
+    showToast("看護師共通アカウントから操作してください", "error", 3000);
+    return;
+  }
+
+  const item =
+    nurseInstructions
+      .map(normalizeNurseInstruction)
+      .find(x => x.instructionId === instructionId);
+
+  if (!item) {
+    showToast("看護師指示が見つかりません", "error", 3000);
+    return;
+  }
+
+  const safeId = encodeURIComponent(instructionId);
+
+  openCommonModal({
+    title: "看護師指示を取消",
+    bodyHtml: `
+      <div class="nurse-form">
+        <div class="nurse-form-summary">
+          <strong>${escapeHtml(item.user)}</strong><br>
+          ${getNurseInstructionKindIcon(item)}
+          ${escapeHtml(item.content || getNurseInstructionKindLabel(item))}
+        </div>
+        <div>
+          <div class="nurse-form-label">取消を行う看護師</div>
+          ${getNurseOnlyStaffSelectHtml("nurseCancelStaff")}
+        </div>
+        <div>
+          <div class="nurse-form-label">取消理由（任意）</div>
+          <textarea id="nurseCancelReason"></textarea>
+        </div>
+      </div>
+    `,
+    buttonsHtml: `
+      <button
+        class="modal-action-cancel"
+        onclick="cancelNurseInstructionFromModal(decodeURIComponent('${safeId}'))"
+      >
+        指示を取り消す
+      </button>
+      <button class="modal-action-close" onclick="closeCommonModal()">
+        閉じる
+      </button>
+    `
+  });
+}
+
+
+async function cancelNurseInstructionFromModal(instructionId) {
+
+  const nurseStaffId =
+    document.getElementById("nurseCancelStaff")?.value || "";
+
+  const cancelReason =
+    document.getElementById("nurseCancelReason")?.value.trim() || "";
+
+  if (!nurseStaffId) {
+    showToast("取消を行う看護師を選択してください", "error", 3000);
+    return;
+  }
+
+  try {
+    showToast("看護師指示を取消中…", "saving", 0);
+
+    const response = await fetch(
+      API_URL,
+      {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "setNurseInstructionStatus",
+          statusAction: "cancel",
+          instructionId: instructionId,
+          sourceRole: currentRole,
+          nurseStaffId: nurseStaffId,
+          cancelReason: cancelReason
+        }),
+        cache: "no-store"
+      }
+    );
+
+    const result = await response.json();
+    if (!response.ok || !result.ok) {
+      throw new Error(result.message || "指示を取り消せませんでした");
+    }
+
+    closeCommonModal();
+    await refreshFromGoogle();
+    showToast("✓ 看護師指示を取り消しました", "success", 3000);
+
+  } catch (error) {
+    console.error(error);
+    showToast("⚠ " + error.message, "error", 4000);
+  }
+}
+
+
+async function setNurseInstructionExecution(instructionId, statusAction) {
+
+  try {
+    showToast(
+      statusAction === "complete" ? "実施を保存中…" : "実施取消を保存中…",
+      "saving",
+      0
+    );
+
+    const response = await fetch(
+      API_URL,
+      {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "setNurseInstructionStatus",
+          statusAction: statusAction,
+          instructionId: instructionId,
+          sourceRole: currentRole
+        }),
+        cache: "no-store"
+      }
+    );
+
+    const result = await response.json();
+    if (!response.ok || !result.ok) {
+      throw new Error(result.message || "保存できませんでした");
+    }
+
+    await refreshFromGoogle();
+
+    showToast(
+      statusAction === "complete"
+        ? "✓ 看護師指示の対応を実施済みにしました"
+        : "✓ 実施済みを取り消しました",
+      "success",
+      2800
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML = getTodayTarget();
+
+    document.getElementById(
+      "completedList"
+    ).innerHTML = getCompletedListHtml();
+
+    showToast("⚠ " + error.message, "error", 4000);
+  }
+}
+
+
+function getNurseInstructionTargetHtml(hour) {
+
+  const instructions =
+    getPendingNurseInstructionsForCurrentUnit();
+
+  if (instructions.length === 0) {
+    return "";
+  }
+
+  let html = "";
+
+  for (const item of instructions) {
+
+    const state =
+      getInstructionWindowState(item, hour);
+
+    const canExecute =
+      state === "active" || state === "overdue";
+
+    const stateText =
+      state === "planned"
+        ? `予定：${item.targetDate}`
+        : state === "overdue"
+          ? "⚠ 指定時間を過ぎています"
+          : `対象日：${item.targetDate}`;
+
+    const safeId = encodeURIComponent(item.instructionId);
+
+    html += `
+      <div class="target-card nurse-target-card">
+        <strong>🩺 看護師指示　${escapeHtml(item.user)}</strong><br>
+        未排便日数：${Math.max(0, getNoBowelDays(item.user))}日
+
+        <div class="nurse-instruction-content">
+          ${getNurseInstructionKindIcon(item)}
+          ${escapeHtml(getNurseInstructionKindLabel(item))}<br>
+          <strong>${escapeHtml(item.content)}</strong>
+          ${item.timing ? `　<span class="medicine-time ${escapeHtml(item.timing)}">${escapeHtml(getNurseInstructionTimingLabel(item))}</span>` : ""}
+        </div>
+
+        <div class="nurse-instruction-meta">
+          指示者：${escapeHtml(item.nurseName)}<br>
+          指示日時：${escapeHtml(item.createdAt)}
+          ${item.note ? `<br>メモ：${escapeHtml(item.note)}` : ""}
+        </div>
+
+        <span class="nurse-target-status ${state}">
+          ${escapeHtml(stateText)}
+        </span>
+
+        ${
+          canExecute
+            ? `
+              <label>
+                <input
+                  type="checkbox"
+                  onchange="setNurseInstructionExecution(decodeURIComponent('${safeId}'), 'complete')"
+                >
+                <span class="medicine-name">この看護師指示を実施済みにする</span>
+              </label>
+            `
+            : `
+              <div class="tomorrow-medicine-note" style="margin-top:10px;">
+                予定確認用（実施可能時間になったらチェックできます）
+              </div>
+            `
+        }
+      </div>
+    `;
+  }
+
+  return html;
+}
+
+
 function getOverdueNurseUsers() {
 
   const overdue = [];
@@ -5766,7 +6673,9 @@ function getOverdueNurseUsers() {
       overdue.push({
         user: user,
         days: days,
-        maxRuleDay: maxRuleDay
+        maxRuleDay: maxRuleDay,
+        instruction:
+          getLatestCurrentCycleNurseInstruction(user)
       });
     }
   }
@@ -5793,87 +6702,155 @@ function getNurseAlertHtml(
   const overdue =
     getOverdueNurseUsers();
 
-
   if (overdue.length === 0) {
     return "";
   }
 
+  const waiting =
+    overdue.filter(info => !info.instruction);
 
-  let items = "";
+  const handled =
+    overdue.filter(info => Boolean(info.instruction));
 
+  let html = "";
 
-  for (const info of overdue) {
+  if (waiting.length > 0) {
 
-    items += `
-      <div class="nurse-overdue-item">
+    let items = "";
 
-        <div class="nurse-overdue-user">
+    for (const info of waiting) {
 
-          <strong>
-            ${escapeHtml(info.user)}
-          </strong>
+      const safeUser = encodeURIComponent(info.user);
 
-          <span>
-            設定最終日：
-            未排便${info.maxRuleDay}日
-          </span>
-
+      items += `
+        <div class="nurse-overdue-item">
+          <div class="nurse-overdue-user">
+            <strong>${escapeHtml(info.user)}</strong>
+            <span>設定最終日：未排便${info.maxRuleDay}日</span>
+          </div>
+          <div class="nurse-overdue-days">
+            未排便
+            <strong>${info.days}日</strong>
+          </div>
+          ${
+            context === "medicine" && currentRole === "nurse"
+              ? `
+                <div class="nurse-instruction-actions" style="grid-column:1/-1;">
+                  <button
+                    type="button"
+                    class="nurse-add-action-button"
+                    onclick="openNurseInstructionModal(decodeURIComponent('${safeUser}'))"
+                  >
+                    ＋ 対応を追加
+                  </button>
+                </div>
+              `
+              : ""
+          }
         </div>
+      `;
+    }
 
-        <div class="nurse-overdue-days">
-          未排便
-          <strong>${info.days}日</strong>
+    html += `
+      <div class="nurse-overdue-panel">
+        <div class="nurse-overdue-header">
+          <strong>🚨 看護師確認が必要です</strong>
+          <span class="nurse-overdue-count">${waiting.length}名</span>
         </div>
-
+        <div class="nurse-overdue-list">${items}</div>
+        <div class="nurse-overdue-note">
+          設定された最終日を超えています。
+          看護師へ確認してください。
+        </div>
+        ${
+          context === "home"
+            ? `
+              <div class="nurse-overdue-action">
+                <button type="button" onclick="openPage('medicinePage')">
+                  対応を確認する
+                </button>
+              </div>
+            `
+            : ""
+        }
       </div>
     `;
   }
 
+  for (const info of handled) {
 
-  const actionHtml =
-    context === "home"
-      ? `
-        <div class="nurse-overdue-action">
-          <button
-            type="button"
-            onclick="openPage('medicinePage')"
-          >
-            対応を確認する
-          </button>
+    const item = info.instruction;
+    const panelClass =
+      item.status === "completed"
+        ? "completed"
+        : item.status === "observing"
+          ? "observing"
+          : "";
+
+    const title =
+      item.status === "completed"
+        ? "✅ 看護師指示の対応実施済み"
+        : item.status === "observing"
+          ? "👀 看護師確認済み・経過観察"
+          : "🩺 看護師確認済み・対応指示あり";
+
+    const safeId = encodeURIComponent(item.instructionId);
+    const safeUser = encodeURIComponent(info.user);
+
+    html += `
+      <div class="nurse-instruction-panel ${panelClass}">
+        <div class="nurse-instruction-header">
+          <strong>${title}</strong>
+          <span>${escapeHtml(info.user)}</span>
         </div>
-      `
-      : "";
-
-
-  return `
-    <div class="nurse-overdue-panel">
-
-      <div class="nurse-overdue-header">
-
-        <strong>
-          🚨 看護師確認が必要です
-        </strong>
-
-        <span class="nurse-overdue-count">
-          ${overdue.length}名
-        </span>
-
+        <div class="nurse-instruction-body">
+          <div class="nurse-instruction-user">
+            未排便 ${info.days}日
+          </div>
+          <div class="nurse-instruction-content">
+            ${getNurseInstructionKindIcon(item)}
+            ${escapeHtml(getNurseInstructionKindLabel(item))}
+            ${item.kind !== "observe" && item.content ? `：${escapeHtml(item.content)}` : ""}
+            ${item.timing ? `（${escapeHtml(getNurseInstructionTimingLabel(item))}）` : ""}
+          </div>
+          <div class="nurse-instruction-meta">
+            指示者：${escapeHtml(item.nurseName)} ／ ${escapeHtml(item.createdAt)}<br>
+            対象日：${escapeHtml(item.targetDate)}
+          </div>
+          ${item.note ? `<div class="nurse-instruction-note">${escapeHtml(item.note)}</div>` : ""}
+          ${
+            context === "medicine" && currentRole === "nurse"
+              ? `
+                <div class="nurse-instruction-actions">
+                  <button
+                    type="button"
+                    class="nurse-instruction-cancel-btn"
+                    onclick="openCancelNurseInstructionModal(decodeURIComponent('${safeId}'))"
+                  >
+                    指示を取消
+                  </button>
+                  ${
+                    item.status === "completed"
+                      ? `
+                        <button
+                          type="button"
+                          onclick="openNurseInstructionModal(decodeURIComponent('${safeUser}'))"
+                        >
+                          ＋ 追加対応
+                        </button>
+                      `
+                      : ""
+                  }
+                </div>
+              `
+              : ""
+          }
+        </div>
       </div>
+    `;
+  }
 
-      <div class="nurse-overdue-list">
-        ${items}
-      </div>
-
-      <div class="nurse-overdue-note">
-        設定された最終日を超えています。
-        アプリ上で追加の処置を判断せず、
-        看護師へ確認してください。
-      </div>
-
-      ${actionHtml}
-
-    </div>
-  `;
+  return html;
 }
 
 
@@ -5951,11 +6928,37 @@ function getStatusActionText(
 ) {
 
   if (info.state === "nurse") {
-
     return (
       "🚨 設定最終日（未排便" +
       info.maxRuleDay +
       "日）を超えています。看護師へ確認してください。"
+    );
+  }
+
+  if (
+    info.state === "nurse-instruction" ||
+    info.state === "nurse-observing" ||
+    info.state === "nurse-completed"
+  ) {
+    const item =
+      getLatestCurrentCycleNurseInstruction(user);
+
+    if (!item) {
+      return "看護師確認済み";
+    }
+
+    if (item.status === "observing") {
+      return "👀 看護師指示：経過観察（" + escapeHtml(item.nurseName) + "）";
+    }
+
+    if (item.status === "completed") {
+      return "✅ 看護師指示の対応実施済み：" + escapeHtml(item.content);
+    }
+
+    return (
+      "🩺 看護師指示：" +
+      escapeHtml(item.content) +
+      (item.timing ? "（" + escapeHtml(getNurseInstructionTimingLabel(item)) + "）" : "")
     );
   }
 
@@ -6114,14 +7117,26 @@ function getUserStatusInfo(user) {
     days > maxRuleDay
   ) {
 
-    state =
-      "nurse";
+    const nurseInstruction =
+      getLatestCurrentCycleNurseInstruction(user);
 
-    stateLabel =
-      "看護師確認";
-
-    priority =
-      0;
+    if (nurseInstruction?.status === "pending") {
+      state = "nurse-instruction";
+      stateLabel = "看護師指示あり";
+      priority = 1;
+    } else if (nurseInstruction?.status === "observing") {
+      state = "nurse-observing";
+      stateLabel = "経過観察";
+      priority = 4;
+    } else if (nurseInstruction?.status === "completed") {
+      state = "nurse-completed";
+      stateLabel = "指示対応済み";
+      priority = 4;
+    } else {
+      state = "nurse";
+      stateLabel = "看護師確認";
+      priority = 0;
+    }
 
   } else if (
     remainingToday.some(
@@ -6312,7 +7327,8 @@ function getStatusHtml() {
         [
           "missed",
           "active",
-          "upcoming"
+          "upcoming",
+          "nurse-instruction"
         ].includes(info.state)
     ).length;
 
@@ -7458,6 +8474,7 @@ function clearCachedAppData() {
     "staffMaster",
     "unitMaster",
     "histories",
+    "nurseInstructions",
     "rules",
     "checks",
     "checkDate"
@@ -7727,6 +8744,11 @@ const data =
 
     histories =
       data.histories || [];
+
+    nurseInstructions =
+      Array.isArray(data.nurseInstructions)
+        ? data.nurseInstructions
+        : [];
 
     // =========================
     // staffMaster / unitMaster
@@ -8656,6 +9678,60 @@ function getCompletedListHtml() {
   }
 
 
+
+  const todayText = getTodayText();
+
+  for (
+    const item of
+    nurseInstructions
+      .map(normalizeNurseInstruction)
+      .filter(item =>
+        item.status === "completed" &&
+        String(item.completedAt || "").slice(0, 10) === todayText &&
+        (
+          currentUnit === "all" ||
+          userUnits[item.user] === currentUnit
+        )
+      )
+  ) {
+
+    const safeId = encodeURIComponent(item.instructionId);
+
+    result += `
+      <div class="completed-medicine-card">
+        <div class="completed-medicine-main">
+          <div class="completed-medicine-user">
+            <strong>✅ ${escapeHtml(item.user)}</strong>
+            <span class="rule-kind-badge ${item.kind === "procedure" ? "procedure" : "laxative"}">
+              🩺 看護師指示
+            </span>
+            <div class="completed-medicine-name">
+              ${getNurseInstructionKindIcon(item)} ${escapeHtml(item.content)}
+            </div>
+            <div class="nurse-instruction-meta">
+              指示者：${escapeHtml(item.nurseName)}
+            </div>
+          </div>
+          ${
+            item.timing
+              ? `<span class="medicine-time ${escapeHtml(item.timing)}">${escapeHtml(getNurseInstructionTimingLabel(item))}</span>`
+              : ""
+          }
+        </div>
+        <div class="completed-medicine-footer">
+          <span class="completed-badge">看護師指示・実施済み</span>
+          <button
+            type="button"
+            class="completed-cancel-button"
+            onclick="setNurseInstructionExecution(decodeURIComponent('${safeId}'), 'reopen')"
+          >
+            実施済みを取消
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
   if (result === "") {
 
     return `
@@ -9070,6 +10146,43 @@ function createMedicineReport() {
       lists.tomorrowMorning
     );
 
+  const todayDateKey = getTodayText();
+  const tomorrowDateKey = addDaysToDateText(todayDateKey, 1);
+
+  const nurseReportItems =
+    nurseInstructions
+      .map(normalizeNurseInstruction)
+      .filter(item =>
+        item.status !== "cancelled" &&
+        (
+          currentUnit === "all" ||
+          userUnits[item.user] === currentUnit
+        ) &&
+        (
+          item.targetDate === todayDateKey ||
+          item.targetDate === tomorrowDateKey
+        )
+      );
+
+  let nurseInstructionReportHtml = "";
+
+  for (const item of nurseReportItems) {
+    const statusText =
+      item.status === "completed"
+        ? "実施済み"
+        : item.status === "observing"
+          ? "経過観察"
+          : "未実施";
+
+    nurseInstructionReportHtml += `
+      <strong>${escapeHtml(item.user)}</strong>：
+      ${getNurseInstructionKindIcon(item)} ${escapeHtml(item.content)}
+      ${item.timing ? `（${escapeHtml(getNurseInstructionTimingLabel(item))}）` : ""}
+      ／ ${statusText}
+      ／ 指示：${escapeHtml(item.nurseName)}<br>
+    `;
+  }
+
 
   document.getElementById(
     "medicineReport"
@@ -9078,6 +10191,16 @@ function createMedicineReport() {
 
       <h3>${todayText} 排便状況</h3>
       ${bowelHtml || "対象者なし"}
+
+      ${
+        nurseInstructionReportHtml
+          ? `
+            <hr>
+            <h3>🩺 看護師個別指示</h3>
+            ${nurseInstructionReportHtml}
+          `
+          : ""
+      }
 
       ${
         lunchHtml
@@ -12524,6 +13647,11 @@ async function loadSyncDataFromGoogle() {
 
   histories =
     data.histories || [];
+
+  nurseInstructions =
+    Array.isArray(data.nurseInstructions)
+      ? data.nurseInstructions
+      : [];
 
   setMasterDataFromServer(data);
 
