@@ -1544,7 +1544,7 @@ h3 {
 
 
 /* =========================
-   勤務帯確認・遅延確認 Ver.0.8.24
+   勤務帯確認・遅延確認 Ver.0.8.25
 ========================= */
 
 .shift-confirm-timing-note {
@@ -3242,7 +3242,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.24</p>
+      <p class="app-version">Ver.0.8.25</p>
     </div>
 
     <button
@@ -5949,6 +5949,16 @@ async function initialize() {
     一時的な通信障害なら30秒後に再試行できる。
   */
   startAutoRefresh();
+
+  /*
+    ページ更新をまたいだ保存結果不明も、
+    初期同期とは別に状態確認APIで追跡する。
+  */
+  if (pendingBowelOperation) {
+    schedulePendingBowelResolution(
+      1500
+    );
+  }
 }
 
 initialize();
@@ -12174,6 +12184,183 @@ function clearPendingBowelOperation() {
 }
 
 
+async function tryResolvePendingBowelOperationDirect() {
+
+  if (!pendingBowelOperation) {
+    return true;
+  }
+
+  const pending =
+    pendingBowelOperation;
+
+  try {
+
+    const status =
+      await postJsonApiOnce(
+        {
+          action:
+            "getBowelOperationStatus",
+
+          operationId:
+            pending.operationId,
+
+          user:
+            pending.user
+        },
+        10000
+      );
+
+
+    if (
+      status &&
+      status.ok &&
+      status.found
+    ) {
+
+      /*
+        サーバーが保存済みと確定。
+        返却値だけで画面を先に復旧し、
+        次の同期で全体を揃える。
+      */
+      if (status.history) {
+
+        const alreadyExists =
+          histories.some(
+            history =>
+              String(
+                history.id || ""
+              ) ===
+              String(
+                status.history.id || ""
+              )
+          );
+
+        if (!alreadyExists) {
+          histories.unshift(
+            status.history
+          );
+        }
+      }
+
+      points[pending.user] =
+        Number(
+          status.point || 0
+        );
+
+      lastDates[pending.user] =
+        status.lastDate
+          ? String(
+              status.lastDate
+            ).slice(0, 10)
+          : "";
+
+      clearPendingBowelOperation();
+
+      saveData();
+
+      document.getElementById(
+        "history"
+      ).innerHTML =
+        getHistoryHtml();
+
+      document.getElementById(
+        "status"
+      ).innerHTML =
+        getStatusHtml();
+
+      document.getElementById(
+        "todayTarget"
+      ).innerHTML =
+        getTodayTarget();
+
+      updateHomeMedicineStatus();
+      updateNurseAlerts();
+
+      showToast(
+        "✓ 前回の排便登録済みを確認しました",
+        "success",
+        4500
+      );
+
+      /*
+        全体データは後から通常同期で合わせる。
+        ここでは保存確認を長時間ブロックしない。
+      */
+      setTimeout(
+        () => {
+          refreshFromGoogle()
+            .catch(error => {
+              console.warn(
+                "保存確認後の同期失敗",
+                error
+              );
+            });
+        },
+        500
+      );
+
+      return true;
+    }
+
+
+    if (
+      status &&
+      status.code === "BUSY"
+    ) {
+
+      console.log(
+        "前回の排便保存はまだサーバー処理中です"
+      );
+
+      return false;
+    }
+
+
+    if (
+      status &&
+      status.ok &&
+      status.found === false
+    ) {
+
+      /*
+        Ver.0.8.25の状態確認APIは、
+        保存処理中なら必ずBUSYを返す。
+        ここでfound:falseなら未保存と判断できる。
+      */
+      clearPendingBowelOperation();
+
+      showToast(
+        "⚠ 前回の排便は保存されていません。もう一度登録してください",
+        "error",
+        6000
+      );
+
+      const resultElement =
+        document.getElementById(
+          "result"
+        );
+
+      if (resultElement) {
+        resultElement.textContent =
+          "保存されていません。もう一度登録してください";
+      }
+
+      return true;
+    }
+
+
+  } catch (error) {
+
+    console.warn(
+      "保留中排便登録の状態確認失敗",
+      error
+    );
+  }
+
+  return false;
+}
+
+
 function schedulePendingBowelResolution(
   delayMs = 3000
 ) {
@@ -12212,24 +12399,16 @@ function schedulePendingBowelResolution(
           return;
         }
 
-        try {
-
-          await refreshFromGoogle();
-
-        } catch (error) {
-
-          console.warn(
-            "保留中排便登録の自動確認失敗",
-            error
-          );
-        }
+        const resolved =
+          await tryResolvePendingBowelOperationDirect();
 
         if (
+          !resolved &&
           pendingBowelOperation
         ) {
 
           schedulePendingBowelResolution(
-            10000
+            8000
           );
         }
       },
@@ -12634,9 +12813,10 @@ async function registerBowelWithRecovery({
 
 
   /*
-    まず登録要求。
-    404/429/5xxやネットワーク瞬断は同じoperationIdで再送する。
-    operationIdが同じなので二重登録にはならない。
+    通常登録。
+    404/429/5xx等は同じoperationIdで再試行する。
+    20秒タイムアウト時はサーバー処理が残っている
+    可能性があるため、POSTを重ねず状態確認へ移る。
   */
   for (
     let attempt = 1;
@@ -12661,16 +12841,20 @@ async function registerBowelWithRecovery({
             type:
               type
           },
-          30000
+          20000
         );
 
-      if (result && result.ok) {
+      if (
+        result &&
+        result.ok
+      ) {
         return result;
       }
 
       const error =
         new Error(
-          result && result.message
+          result &&
+          result.message
             ? result.message
             : "排便登録に失敗しました"
         );
@@ -12696,32 +12880,40 @@ async function registerBowelWithRecovery({
 
     } catch (error) {
 
-      lastError = error;
+      lastError =
+        error;
 
       console.warn(
         `排便登録通信 ${attempt}/3`,
         error
       );
 
-      /*
-        30秒タイムアウト時は、
-        GAS本体がまだ保存処理中の可能性が高い。
-        新しい登録POSTを重ねず保存済み確認へ進む。
-      */
+
       if (
         error &&
-        String(error.message || "").includes(
+        String(
+          error.message || ""
+        ).includes(
           "タイムアウト"
         )
       ) {
+
+        /*
+          AbortしてもGAS側は止まらない。
+          同じPOSTを重ねず、保存状態確認へ。
+        */
         break;
       }
 
+
       if (
-        !isTransientApiError(error)
+        !isTransientApiError(
+          error
+        )
       ) {
         throw error;
       }
+
 
       if (attempt < 3) {
 
@@ -12737,23 +12929,27 @@ async function registerBowelWithRecovery({
 
 
   /*
-    「シートには保存済みだが返事だけ来なかった」
-    可能性をoperationIdで確認する。
-    保存処理がまだ走っている場合もあるため、
-    1秒→2秒→4秒の間隔で最大4回確認する。
+    Ver.0.8.25
+    保存状態確認APIはScriptLockを長時間待たず、
+    保存中なら即BUSYを返す。
+
+    1秒→2.5秒の2回だけ確認し、
+    まだ保存中ならRESULT_UNKNOWNとして
+    画面を解放し、バックグラウンド追跡へ移す。
   */
+  let sawBusy = false;
+
   for (
     let checkAttempt = 1;
-    checkAttempt <= 4;
+    checkAttempt <= 2;
     checkAttempt++
   ) {
 
-    const delay =
-      getRetryBackoffMs(
-        checkAttempt
-      );
-
-    await wait(delay);
+    await wait(
+      checkAttempt === 1
+        ? 1000
+        : 2500
+    );
 
     try {
 
@@ -12769,8 +12965,9 @@ async function registerBowelWithRecovery({
             user:
               user
           },
-          20000
+          10000
         );
+
 
       if (
         status &&
@@ -12792,12 +12989,28 @@ async function registerBowelWithRecovery({
         status.code === "BUSY"
       ) {
 
+        sawBusy = true;
+
         console.log(
-          `保存処理完了待ち ${checkAttempt}/4`
+          `保存処理継続中 ${checkAttempt}/2`
         );
 
         continue;
       }
+
+
+      /*
+        保存中ではなく、まだ履歴にもない。
+        念のため最後に1回だけ権威同期して確定する。
+      */
+      if (
+        status &&
+        status.ok &&
+        status.found === false
+      ) {
+        break;
+      }
+
 
     } catch (statusError) {
 
@@ -12805,9 +13018,10 @@ async function registerBowelWithRecovery({
         statusError;
 
       console.warn(
-        `排便登録の保存済み確認 ${checkAttempt}/4`,
+        `排便登録の保存済み確認 ${checkAttempt}/2`,
         statusError
       );
+
 
       if (
         !isTransientApiError(
@@ -12821,20 +13035,45 @@ async function registerBowelWithRecovery({
 
 
   /*
-    最後にScriptLockを使う初期同期を1回通す。
-    これが成功した時点では保存処理の途中状態ではないため、
-    historiesにoperationIdがあれば保存済み、
-    なければ未保存と確定できる。
+    サーバーが明示的にまだ保存中なら、
+    ここで追加の初期同期を投げてロック渋滞を作らない。
+    ブラウザ側を一度解放してバックグラウンド追跡へ。
+  */
+  if (sawBusy) {
+
+    const unknownError =
+      new Error(
+        "排便登録の保存処理が継続中です"
+      );
+
+    unknownError.code =
+      "RESULT_UNKNOWN";
+
+    unknownError.operationId =
+      operationId;
+
+    unknownError.cause =
+      lastError;
+
+    throw unknownError;
+  }
+
+
+  /*
+    保存中マーカーが消えていた場合だけ、
+    初期同期を1回通して最終確認する。
   */
   try {
 
     const data =
       await requestInitialDataFromServer(
-        2
+        1
       );
 
     const historiesFromServer =
-      Array.isArray(data.histories)
+      Array.isArray(
+        data.histories
+      )
         ? data.histories
         : [];
 
@@ -12847,6 +13086,7 @@ async function registerBowelWithRecovery({
           String(operationId)
       );
 
+
     if (matched) {
 
       const userRow =
@@ -12856,7 +13096,9 @@ async function registerBowelWithRecovery({
             : []
         ).find(
           item =>
-            String(item.name) ===
+            String(
+              item.name
+            ) ===
             String(user)
         );
 
@@ -12869,7 +13111,8 @@ async function registerBowelWithRecovery({
         ok: true,
         found: true,
         recovered: true,
-        history: matched,
+        history:
+          matched,
         point:
           userRow
             ? Number(
@@ -12899,6 +13142,7 @@ async function registerBowelWithRecovery({
 
     throw notSavedError;
 
+
   } catch (syncError) {
 
     if (
@@ -12920,11 +13164,6 @@ async function registerBowelWithRecovery({
   }
 
 
-  /*
-    ここまで来た場合は「失敗」と断定しない。
-    operationIdを保留し、
-    次の正常な初期同期で自動判定する。
-  */
   const unknownError =
     new Error(
       "排便登録の保存結果を確認できませんでした"
@@ -12941,6 +13180,7 @@ async function registerBowelWithRecovery({
 
   throw unknownError;
 }
+
 
 async function fetchApi(
   url,
