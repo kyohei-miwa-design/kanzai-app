@@ -1643,7 +1643,7 @@ h3 {
 
 
 /* =========================
-   利用者状況 Ver.0.8.9
+   利用者状況 Ver.0.8.10
 ========================= */
 
 #status {
@@ -5026,16 +5026,56 @@ async function clearHistoriesFromGoogle() {
 
 async function initialize() {
 
-  loadData();
+  /*
+    ログイン復元を最優先にする。
+    ローカルキャッシュに不整合があっても、
+    ログイン画面へ戻されないようにする。
+  */
 
   restoreSyncStatus();
 
   restoreLogin();
 
+
+  try {
+
+    loadData();
+
+  } catch (error) {
+
+    console.error(
+      "ローカルキャッシュ読込エラー",
+      error
+    );
+
+    /*
+      サーバー側データが正本なので、
+      壊れた端末キャッシュだけ削除する。
+      ログイン情報は削除しない。
+    */
+    clearCachedAppData();
+  }
+
+
   // ログインしている時だけ通信
   if (currentRole !== "") {
 
-    await loadInitialDataFromGoogle();
+    try {
+
+      await loadInitialDataFromGoogle();
+
+    } catch (error) {
+
+      console.error(
+        "初期同期エラー",
+        error
+      );
+
+      setSyncStatusError(
+        "初期同期に失敗しました"
+      );
+    }
+
 
     setInterval(
       refreshFromGoogle,
@@ -6336,6 +6376,133 @@ function updateRoleUI() {
   updateRuleDisplays();
 }
 
+
+function setLoginSessionValue(key, value) {
+
+  const textValue =
+    String(value ?? "");
+
+  try {
+    localStorage.setItem(
+      key,
+      textValue
+    );
+  } catch (error) {
+    console.warn(
+      "localStorage保存失敗",
+      key,
+      error
+    );
+  }
+
+  try {
+    sessionStorage.setItem(
+      key,
+      textValue
+    );
+  } catch (error) {
+    console.warn(
+      "sessionStorage保存失敗",
+      key,
+      error
+    );
+  }
+}
+
+
+function getLoginSessionValue(key) {
+
+  try {
+
+    const localValue =
+      localStorage.getItem(key);
+
+    if (localValue) {
+      return localValue;
+    }
+
+  } catch (error) {
+    console.warn(
+      "localStorage読込失敗",
+      key,
+      error
+    );
+  }
+
+
+  try {
+
+    const sessionValue =
+      sessionStorage.getItem(key);
+
+    if (sessionValue) {
+      return sessionValue;
+    }
+
+  } catch (error) {
+    console.warn(
+      "sessionStorage読込失敗",
+      key,
+      error
+    );
+  }
+
+
+  return "";
+}
+
+
+function removeLoginSessionValue(key) {
+
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.warn(
+      "localStorage削除失敗",
+      key,
+      error
+    );
+  }
+
+  try {
+    sessionStorage.removeItem(key);
+  } catch (error) {
+    console.warn(
+      "sessionStorage削除失敗",
+      key,
+      error
+    );
+  }
+}
+
+
+function clearCachedAppData() {
+
+  const cacheKeys = [
+    "points",
+    "lastDates",
+    "histories",
+    "rules",
+    "checks",
+    "checkDate"
+  ];
+
+
+  for (const key of cacheKeys) {
+
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.warn(
+        "キャッシュ削除失敗",
+        key,
+        error
+      );
+    }
+  }
+}
+
+
 async function login() {
   const userId =
     document.getElementById("loginUserId").value.trim();
@@ -6373,9 +6540,22 @@ async function login() {
     currentRole = String(result.role).trim();
     currentUnit = String(result.unit).trim();
 
-    localStorage.setItem("loginRole", currentRole);
-    localStorage.setItem("loginUnit", currentUnit);
-    localStorage.setItem("loginName", String(result.name || "").trim());
+    setLoginSessionValue(
+      "loginRole",
+      currentRole
+    );
+
+    setLoginSessionValue(
+      "loginUnit",
+      currentUnit
+    );
+
+    setLoginSessionValue(
+      "loginName",
+      String(
+        result.name || ""
+      ).trim()
+    );
 
     document.getElementById("loginArea").style.display =
       "none";
@@ -6408,9 +6588,15 @@ async function login() {
 
 function restoreLogin() {
 
-  const savedRole = localStorage.getItem("loginRole");
+  const savedRole =
+    getLoginSessionValue(
+      "loginRole"
+    );
 
-  const savedUnit = localStorage.getItem("loginUnit");
+  const savedUnit =
+    getLoginSessionValue(
+      "loginUnit"
+    );
 
   if (!savedRole || !savedUnit) {
     return;
@@ -7649,9 +7835,17 @@ function logout() {
     return;
   }
 
-  localStorage.removeItem("loginRole");
-  localStorage.removeItem("loginUnit");
-  localStorage.removeItem("loginName");
+  removeLoginSessionValue(
+    "loginRole"
+  );
+
+  removeLoginSessionValue(
+    "loginUnit"
+  );
+
+  removeLoginSessionValue(
+    "loginName"
+  );
 
   currentRole = "";
   currentUnit = "";
@@ -8283,7 +8477,7 @@ async function confirmNoBowelUsers() {
 async function saveDailyConfirmToGoogle() {
 
   const loginName =
-    localStorage.getItem("loginName") || "不明";
+    getLoginSessionValue("loginName") || "不明";
 
    const url =
    API_URL +
@@ -9181,7 +9375,7 @@ function formatDateTime(date) {
 async function saveNightConfirmToGoogle() {
 
   const loginName =
-    localStorage.getItem("loginName") || "不明";
+    getLoginSessionValue("loginName") || "不明";
 
   const url =
     API_URL +
