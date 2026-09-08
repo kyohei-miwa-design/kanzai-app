@@ -1539,7 +1539,7 @@ h3 {
 
 
 /* =========================
-   勤務帯確認・遅延確認 Ver.0.8.20
+   勤務帯確認・遅延確認 Ver.0.8.21
 ========================= */
 
 .shift-confirm-timing-note {
@@ -3237,7 +3237,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.20</p>
+      <p class="app-version">Ver.0.8.21</p>
     </div>
 
     <button
@@ -3799,6 +3799,13 @@ h3 {
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzq9qSuPmvSzAbv_uLFbIrXmVJ3DNHkpdxJKYIExyPgti-N3gU1iT7W1eWa2KRCJurE/exec";
 
+// =========================
+// Ver.0.8.21 排便量ポイント基準
+// 少×2 = 少1
+// =========================
+const BOWEL_POINT_RULE_VERSION = 2;
+const BOWEL_RESET_POINT = 6;
+
 let rules = {
   "A様": {
     2: [{ kind: "laxative", content: "ピコ15滴", timing: "morning" }],
@@ -4270,10 +4277,10 @@ async function register() {
 
 
     // =========================
-    // ② 内部9以上で排便成立
+    // ② 内部6以上で排便成立
     // =========================
 
-    if (points[user] >= 9) {
+    if (points[user] >= BOWEL_RESET_POINT) {
 
       const todayText =
         getTodayText();
@@ -5302,6 +5309,11 @@ function updateHomeMedicineStatus() {
 function saveData() {
 
   localStorage.setItem(
+    "bowelPointRuleVersion",
+    String(BOWEL_POINT_RULE_VERSION)
+  );
+
+  localStorage.setItem(
     "points",
     JSON.stringify(points)
   );
@@ -5353,6 +5365,13 @@ function saveData() {
 }
 
 function loadData() {
+  const savedBowelPointRuleVersion =
+    localStorage.getItem("bowelPointRuleVersion");
+
+  const pointCacheCompatible =
+    savedBowelPointRuleVersion ===
+    String(BOWEL_POINT_RULE_VERSION);
+
   const savedPoints = localStorage.getItem("points");
   const savedLastDates = localStorage.getItem("lastDates");
   const savedUserUnits = localStorage.getItem("userUnits");
@@ -5394,12 +5413,26 @@ function loadData() {
     nurseInstructions = JSON.parse(savedNurseInstructions);
   }
 
-  if (savedPoints !== null) {
+  /*
+    旧ポイント基準のローカルキャッシュは使用しない。
+    GAS同期後に新基準データを保存し直す。
+  */
+  if (
+    pointCacheCompatible &&
+    savedPoints !== null
+  ) {
     points = JSON.parse(savedPoints);
+  } else {
+    points = {};
   }
 
-  if (savedLastDates !== null) {
+  if (
+    pointCacheCompatible &&
+    savedLastDates !== null
+  ) {
     lastDates = JSON.parse(savedLastDates);
+  } else {
+    lastDates = {};
   }
 
   if (savedUserUnits !== null) {
@@ -7474,7 +7507,7 @@ function getStatusHtml() {
           100,
           (
             Number(info.point) /
-            9
+            BOWEL_RESET_POINT
           ) * 100
         )
       );
@@ -7649,7 +7682,7 @@ function getCurrentBowelCycleHistories(user) {
 
   /*
     「現在の排便状況」だけを追うため、
-    最後に内部9点へ到達して排便成立した記録を境界にする。
+    最後に内部6点へ到達して排便成立した記録を境界にする。
 
     取消済み記録はポイント計算には含めないが、
     最初のpreviousPointを正しく拾うため
@@ -7715,7 +7748,7 @@ function getCurrentBowelCycleHistories(user) {
       false;
 
 
-    if (currentPoint >= 9) {
+    if (currentPoint >= BOWEL_RESET_POINT) {
 
       currentPoint = 0;
       established = true;
@@ -8729,6 +8762,15 @@ const data =
       );
     }
 
+    if (
+      Number(data.bowelPointRuleVersion || 0) !==
+      BOWEL_POINT_RULE_VERSION
+    ) {
+      throw new Error(
+        "GASが旧排便量基準のままです。Ver.0.8.21のGASへ更新してください。"
+      );
+    }
+
     // =========================
     // users
     // =========================
@@ -8831,6 +8873,40 @@ saveData();
 markSyncSuccess(
   data.serverTime || ""
 );
+
+    if (
+      data.pointMigration &&
+      data.pointMigration.migrated
+    ) {
+
+      const migrationWarnings =
+        Array.isArray(
+          data.pointMigration.warnings
+        )
+          ? data.pointMigration.warnings
+          : [];
+
+      if (migrationWarnings.length > 0) {
+        console.warn(
+          "排便量基準移行時の確認事項:",
+          migrationWarnings
+        );
+
+        showToast(
+          "排便量基準を新ルールへ移行しました。履歴外の残ポイント換算が " +
+          migrationWarnings.length +
+          "名あります。テスト時に状態をご確認ください。",
+          "info",
+          8000
+        );
+      } else {
+        showToast(
+          "✓ 排便量基準を新ルールへ移行しました",
+          "success",
+          4000
+        );
+      }
+    }
 
     console.timeEnd(
       "初期データ一括取得"
@@ -12674,6 +12750,28 @@ function recalculateBowelStatus(user) {
 
 
   /*
+    Ver.0.8.21
+    最初の履歴より前に保持していた状態がある場合も、
+    histories の previousPoint / previousLastDate を基準にする。
+    GAS側の移行処理で新基準へそろえられている。
+  */
+  if (userHistories.length > 0) {
+
+    currentPoint =
+      Number(
+        userHistories[0].previousPoint || 0
+      );
+
+    lastBowelDate =
+      userHistories[0].previousLastDate
+        ? String(
+            userHistories[0].previousLastDate
+          ).slice(0, 10)
+        : "";
+  }
+
+
+  /*
     古い履歴から順番に再計算
   */
   for (
@@ -12684,12 +12782,12 @@ function recalculateBowelStatus(user) {
       新ポイント方式
 
       少   = 1
-      少1  = 3
-      少2  = 6
-      普通 = 9
+      少1  = 2
+      少2  = 4
+      普通 = 6
 
       旧データの「多量」も
-      getBowelPoint() 内で9として扱う
+      getBowelPoint() 内で6として扱う
     */
     const addPoint =
       getBowelPoint(
@@ -12701,10 +12799,10 @@ function recalculateBowelStatus(user) {
 
 
     /*
-      内部ポイント9以上で排便成立
+      内部ポイント6以上で排便成立
     */
     if (
-      currentPoint >= 9
+      currentPoint >= BOWEL_RESET_POINT
     ) {
 
       currentPoint = 0;
@@ -12738,7 +12836,7 @@ function recalculateBowelStatusFromHistory(
     再計算のスタート地点にする
 
     previousPointも新しい内部ポイント
-    （少=1、少1=3、少2=6）で保持する
+    （少=1、少1=2、少2=4）で保持する
   */
   let currentPoint =
     Number(
@@ -12831,10 +12929,10 @@ function recalculateBowelStatusFromHistory(
 
 
     /*
-      ★ 内部9以上で排便成立
+      ★ 内部6以上で排便成立
     */
     if (
-      currentPoint >= 9
+      currentPoint >= BOWEL_RESET_POINT
     ) {
 
       currentPoint = 0;
@@ -12867,15 +12965,15 @@ function getBowelPoint(type) {
   }
 
   if (type === "少1") {
-    return 3;
+    return 2;
   }
 
   if (type === "少2") {
-    return 6;
+    return 4;
   }
 
   if (type === "普通") {
-    return 9;
+    return BOWEL_RESET_POINT;
   }
 
   /*
@@ -12883,7 +12981,7 @@ function getBowelPoint(type) {
     新規登録では使用しない。
   */
   if (type === "多量") {
-    return 9;
+    return BOWEL_RESET_POINT;
   }
 
   return 0;
@@ -12900,10 +12998,10 @@ function getBowelPointText(point) {
     Number(point || 0);
 
   const normalPoint =
-    Math.floor(value / 3);
+    Math.floor(value / 2);
 
   const smallCount =
-    value % 3;
+    value % 2;
 
   if (
     normalPoint === 0 &&
@@ -13033,10 +13131,10 @@ function recalculateBowelStatusAfterCancel(
 
 
     /*
-      ★ 内部9以上で排便成立
+      ★ 内部6以上で排便成立
     */
     if (
-      currentPoint >= 9
+      currentPoint >= BOWEL_RESET_POINT
     ) {
 
       currentPoint = 0;
@@ -13637,6 +13735,15 @@ async function loadSyncDataFromGoogle() {
     throw new Error(
       data.message ||
       "同期データの取得に失敗しました"
+    );
+  }
+
+  if (
+    Number(data.bowelPointRuleVersion || 0) !==
+    BOWEL_POINT_RULE_VERSION
+  ) {
+    throw new Error(
+      "GASが旧排便量基準のままです。Ver.0.8.21のGASへ更新してください。"
     );
   }
 
