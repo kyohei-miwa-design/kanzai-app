@@ -970,6 +970,16 @@ button {
   background: #808080;
 }
 
+
+/* =========================
+   勤務帯確認への自動スクロール
+========================= */
+
+#bowelCheckResult,
+#nightBowelCheckResult {
+  scroll-margin-top: 92px;
+}
+
 /* =========================
    Ver.0.8 ページ切り替え
 ========================= */
@@ -1529,7 +1539,7 @@ h3 {
 
 
 /* =========================
-   勤務帯確認・遅延確認 Ver.0.8.16
+   勤務帯確認・遅延確認 Ver.0.8.17
 ========================= */
 
 .shift-confirm-timing-note {
@@ -9401,6 +9411,60 @@ function getPendingShiftConfirmations(
 }
 
 
+function openShiftConfirmationFromAlert(
+  type,
+  targetDate
+) {
+
+  openPage(
+    "bowelPage"
+  );
+
+
+  if (type === "day") {
+
+    checkTodayBowelStatus(
+      targetDate
+    );
+
+  } else {
+
+    checkNightBowelStatus(
+      targetDate
+    );
+  }
+
+
+  /*
+    確認内容のDOM描画後に、
+    展開された確認欄まで移動する。
+  */
+  requestAnimationFrame(() => {
+
+    requestAnimationFrame(() => {
+
+      const target =
+        document.getElementById(
+          type === "day"
+            ? "bowelCheckResult"
+            : "nightBowelCheckResult"
+        );
+
+
+      if (!target) {
+        return;
+      }
+
+
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    });
+  });
+}
+
+
 function updateShiftOverdueAlert(
   confirms
 ) {
@@ -9426,14 +9490,10 @@ function updateShiftOverdueAlert(
         ? `
           <button
             type="button"
-            onclick="
-              openPage('bowelPage');
-              ${
-                item.type === "day"
-                  ? `checkTodayBowelStatus('${item.targetDate}')`
-                  : `checkNightBowelStatus('${item.targetDate}')`
-              };
-            "
+            onclick="openShiftConfirmationFromAlert(
+              '${item.type}',
+              '${item.targetDate}'
+            )"
           >
             今から確認する
           </button>
