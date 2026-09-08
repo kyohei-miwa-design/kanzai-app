@@ -1643,7 +1643,7 @@ h3 {
 
 
 /* =========================
-   利用者状況 Ver.0.8.10
+   利用者状況 Ver.0.8.11
 ========================= */
 
 #status {
@@ -2683,7 +2683,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.10</p>
+      <p class="app-version">Ver.0.8.11</p>
     </div>
 
     <button
@@ -3298,6 +3298,7 @@ let checkDate = "";
 let initialSyncFinished = false;
 let newDataMessageTimer = null;
 let isRefreshing = false;
+let autoRefreshTimer = null;
 let lastSuccessfulSyncAt =
   localStorage.getItem(
     "lastSuccessfulSyncAt"
@@ -5024,6 +5025,45 @@ async function clearHistoriesFromGoogle() {
   }
 }
 
+
+function stopAutoRefresh() {
+
+  if (autoRefreshTimer !== null) {
+
+    clearInterval(
+      autoRefreshTimer
+    );
+
+    autoRefreshTimer =
+      null;
+  }
+}
+
+
+function startAutoRefresh() {
+
+  /*
+    多重起動を防ぐため、
+    既存タイマーを必ず止めてから開始する。
+  */
+  stopAutoRefresh();
+
+
+  if (currentRole === "") {
+    return;
+  }
+
+
+  autoRefreshTimer =
+    startAutoRefresh();
+
+
+  console.log(
+    "30秒自動同期を開始しました"
+  );
+}
+
+
 async function initialize() {
 
   /*
@@ -6574,7 +6614,13 @@ async function login() {
 
     updateRuleDisplays();
 
-     await loadInitialDataFromGoogle();
+    await loadInitialDataFromGoogle();
+
+    /*
+      ページ起動時に未ログインだった場合でも、
+      ログイン成功後ここで必ず自動同期を開始する。
+    */
+    startAutoRefresh();
 
     alert(result.name + "としてログインしました");
 
@@ -7849,6 +7895,8 @@ function logout() {
 
   currentRole = "";
   currentUnit = "";
+
+  stopAutoRefresh();
 
   document.getElementById("appArea").style.display =
     "none";
