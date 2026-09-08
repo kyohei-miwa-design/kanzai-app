@@ -1539,7 +1539,7 @@ h3 {
 
 
 /* =========================
-   勤務帯確認・遅延確認 Ver.0.8.21
+   勤務帯確認・遅延確認 Ver.0.8.22
 ========================= */
 
 .shift-confirm-timing-note {
@@ -3237,7 +3237,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.21</p>
+      <p class="app-version">Ver.0.8.22</p>
     </div>
 
     <button
@@ -3800,7 +3800,7 @@ h3 {
 const API_URL = "https://script.google.com/macros/s/AKfycbzq9qSuPmvSzAbv_uLFbIrXmVJ3DNHkpdxJKYIExyPgti-N3gU1iT7W1eWa2KRCJurE/exec";
 
 // =========================
-// Ver.0.8.21 排便量ポイント基準
+// Ver.0.8.22 排便量ポイント基準
 // 少×2 = 少1
 // =========================
 const BOWEL_POINT_RULE_VERSION = 2;
@@ -3871,6 +3871,26 @@ let initialSyncFinished = false;
 let newDataMessageTimer = null;
 let isRefreshing = false;
 let autoRefreshTimer = null;
+
+// Ver.0.8.22
+// 書き込み処理中に30秒自動同期が割り込むのを防ぐ
+let activeWriteCount = 0;
+
+function beginWriteActivity() {
+  activeWriteCount++;
+}
+
+function endWriteActivity() {
+  activeWriteCount =
+    Math.max(
+      0,
+      activeWriteCount - 1
+    );
+}
+
+function isWriteActivityActive() {
+  return activeWriteCount > 0;
+}
 
 /*
   利用者状況の並び順。
@@ -3945,6 +3965,32 @@ function getSyncDisplayText(dateTimeText) {
   }
 
   return text;
+}
+
+
+function markSyncLoading(
+  message = "最新データを同期中…"
+) {
+
+  const bar =
+    document.getElementById(
+      "syncStatusBar"
+    );
+
+  const text =
+    document.getElementById(
+      "syncStatusText"
+    );
+
+  if (!bar || !text) {
+    return;
+  }
+
+  bar.className =
+    "sync-status-bar";
+
+  text.textContent =
+    message;
 }
 
 
@@ -4228,6 +4274,8 @@ async function register() {
       "0.6";
   }
 
+  beginWriteActivity();
+
 
   // =========================
   // 登録直前の状態を保存
@@ -4339,7 +4387,10 @@ async function register() {
 
 
     // =========================
-    // ④ GoogleへPOST（同一操作IDで最大2回）
+    // ④ GoogleへPOST
+    // Ver.0.8.22:
+    // タイムアウト + 同一operationId再送 +
+    // 保存済み確認で「保存中…」固着を防ぐ
     // =========================
 
     console.time(
@@ -4347,95 +4398,17 @@ async function register() {
     );
 
 
-    let response = null;
-    let result = null;
-    let lastRequestError = null;
+    const result =
+      await registerBowelWithRecovery({
+        operationId:
+          operationId,
 
-    // ★ 同じoperationIdのまま最大2回試す。
-    // 1回目がGAS側で成功して応答だけ失われても、
-    // 2回目はGAS側で二重登録されない。
-    for (
-      let attempt = 1;
-      attempt <= 2;
-      attempt++
-    ) {
+        user:
+          user,
 
-      try {
-
-        response =
-          await fetch(
-            API_URL,
-            {
-              method: "POST",
-
-              headers: {
-                "Content-Type":
-                  "text/plain;charset=utf-8"
-              },
-
-              body: JSON.stringify({
-
-                action:
-                  "registerBowel",
-
-                operationId:
-                  operationId,
-
-                user:
-                  user,
-
-                type:
-                  type
-              }),
-
-              cache: "no-store"
-            }
-          );
-
-        if (!response.ok) {
-          throw new Error(
-            "排便登録失敗：HTTP " +
-            response.status
-          );
-        }
-
-        result =
-          await response.json();
-
-        break;
-
-      } catch (requestError) {
-
-        lastRequestError =
-          requestError;
-
-        if (attempt < 2) {
-          await new Promise(
-            resolve =>
-              setTimeout(resolve, 700)
-          );
-        }
-      }
-    }
-
-
-    if (!result) {
-      throw (
-        lastRequestError ||
-        new Error(
-          "排便登録の応答を確認できませんでした"
-        )
-      );
-    }
-
-
-    if (!result.ok) {
-
-      throw new Error(
-        result.message ||
-        "排便登録に失敗しました"
-      );
-    }
+        type:
+          type
+      });
 
 
     console.timeEnd(
@@ -4599,6 +4572,8 @@ async function register() {
 
 
   } finally {
+
+    endWriteActivity();
 
     if (registerButton) {
 
@@ -5821,6 +5796,10 @@ async function initialize() {
     return;
   }
 
+  markSyncLoading(
+    "最新データを同期中…"
+  );
+
 
   try {
 
@@ -5856,6 +5835,15 @@ async function refreshFromGoogle() {
 
     console.log(
       "更新中のため今回の自動更新をスキップ"
+    );
+
+    return;
+  }
+
+  if (isWriteActivityActive()) {
+
+    console.log(
+      "保存処理中のため今回の自動更新をスキップ"
     );
 
     return;
@@ -8594,8 +8582,19 @@ async function login() {
       "&userId=" + encodeURIComponent(userId) +
       "&password=" + encodeURIComponent(password);
 
-    const response = await fetchApi(url);
-    const result = await response.json();
+    /*
+      Ver.0.8.22
+      ログイン通信にもタイムアウト/再試行を適用する。
+    */
+    const response =
+      await fetchApi(
+        url,
+        3,
+        15000
+      );
+
+    const result =
+      await response.json();
 
     if (!result.success) {
       loginMessage.textContent =
@@ -8603,8 +8602,15 @@ async function login() {
       return;
     }
 
-    currentRole = String(result.role).trim();
-    currentUnit = String(result.unit).trim();
+    /*
+      ここで「認証」は完了。
+      最新データ同期を待たず、ユニット/権限を即時反映する。
+    */
+    currentRole =
+      String(result.role).trim();
+
+    currentUnit =
+      String(result.unit).trim();
 
     setLoginSessionValue(
       "loginRole",
@@ -8623,12 +8629,29 @@ async function login() {
       ).trim()
     );
 
+    /*
+      GASが返した正式ユニット名を即時反映。
+      初回端末でunitMasterキャッシュがまだなくても
+      「2ユニット」等の仮表示になりにくくする。
+    */
+    if (
+      currentUnit &&
+      currentUnit !== "all" &&
+      result.unitName
+    ) {
+      unitMaster[currentUnit] =
+        String(result.unitName).trim();
+    }
+
     document.getElementById("loginArea").style.display =
       "none";
 
     document.getElementById("appArea").style.display =
       "block";
 
+    loginMessage.textContent = "";
+
+    updateUnitMasterDisplays();
     updateRoleUI();
     updateUserSelects();
 
@@ -8639,11 +8662,27 @@ async function login() {
       getTodayTarget();
 
     updateRuleDisplays();
+    updateHomeMedicineStatus();
+    updateNurseAlerts();
 
     /*
-      認証はすでに成功しているので、
-      初期データ同期が失敗しても
-      「ログイン失敗」扱いにはしない。
+      ブラウザ標準alertは画面描画を止めるため廃止。
+      認証成功をすぐ表示する。
+    */
+    showToast(
+      String(result.name || "ログイン") +
+      "としてログインしました",
+      "success",
+      2500
+    );
+
+    markSyncLoading(
+      "ログイン済み / 最新データを同期中…"
+    );
+
+    /*
+      認証成功と最新データ同期は別処理。
+      同期失敗でもログイン自体は維持する。
     */
     try {
 
@@ -8657,27 +8696,28 @@ async function login() {
       );
 
       markSyncError();
+
+      showToast(
+        "⚠ ログイン済みですが最新データの同期に失敗しました。自動で再試行します。",
+        "error",
+        5000
+      );
     }
 
-
     /*
-      初回同期に失敗していても、
+      初回同期の成否にかかわらず、
       30秒後の自動同期で再試行する。
     */
     startAutoRefresh();
-
-    alert(
-      result.name +
-      "としてログインしました"
-    );
 
   } catch (error) {
     console.error("ログインエラー", error);
 
     loginMessage.textContent =
-      "ログイン処理に失敗しました";
+      "ログイン処理に失敗しました。通信状態を確認してもう一度お試しください。";
   }
 }
+
 
 function restoreLogin() {
 
@@ -8726,34 +8766,9 @@ async function loadInitialDataFromGoogle() {
 
   try {
 
-    const response =
-  await fetch(
-    API_URL,
-    {
-      method: "POST",
+    const data =
+      await requestInitialDataFromServer();
 
-      headers: {
-        "Content-Type":
-          "text/plain;charset=utf-8"
-      },
-
-      body: JSON.stringify({
-        action: "getInitialData"
-      }),
-
-      cache: "no-store"
-    }
-  );
-
-if (!response.ok) {
-  throw new Error(
-    "初期データ取得失敗：HTTP " +
-    response.status
-  );
-}
-
-const data =
-  await response.json();
 
     if (data.error) {
       throw new Error(
@@ -8767,7 +8782,7 @@ const data =
       BOWEL_POINT_RULE_VERSION
     ) {
       throw new Error(
-        "GASが旧排便量基準のままです。Ver.0.8.21のGASへ更新してください。"
+        "GASが旧排便量基準のままです。Ver.0.8.22のGASへ更新してください。"
       );
     }
 
@@ -11924,30 +11939,380 @@ async function manualRefreshDailyConfirm() {
 }
 
 function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise(
+    resolve =>
+      setTimeout(resolve, ms)
+  );
 }
 
-async function fetchApi(url, retries = 3) {
+
+/*
+  Ver.0.8.22
+  fetchが通信待ちのまま永久に残らないようにする。
+*/
+async function fetchWithTimeout(
+  url,
+  options = {},
+  timeoutMs = 15000
+) {
+
+  const controller =
+    new AbortController();
+
+  const timer =
+    setTimeout(
+      () => controller.abort(),
+      timeoutMs
+    );
+
+  try {
+
+    return await fetch(
+      url,
+      {
+        ...options,
+        signal: controller.signal
+      }
+    );
+
+  } catch (error) {
+
+    if (error && error.name === "AbortError") {
+      throw new Error(
+        "通信がタイムアウトしました"
+      );
+    }
+
+    throw error;
+
+  } finally {
+
+    clearTimeout(timer);
+  }
+}
+
+
+async function parseApiJsonResponse(
+  response,
+  label = "API通信"
+) {
+
+  const text =
+    await response.text();
+
+  if (!response.ok) {
+    throw new Error(
+      label +
+      "失敗：HTTP " +
+      response.status
+    );
+  }
+
+  if (
+    text.trim().startsWith("<!DOCTYPE") ||
+    text.trim().startsWith("<html")
+  ) {
+    throw new Error(
+      "APIからHTMLが返されました"
+    );
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error(
+      label +
+      "の応答をJSONとして読めませんでした"
+    );
+  }
+}
+
+
+async function postJsonApiOnce(
+  payload,
+  timeoutMs = 15000
+) {
+
+  const response =
+    await fetchWithTimeout(
+      API_URL,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "text/plain;charset=utf-8"
+        },
+
+        body:
+          JSON.stringify(payload),
+
+        cache: "no-store"
+      },
+      timeoutMs
+    );
+
+  return await parseApiJsonResponse(
+    response,
+    String(payload.action || "POST")
+  );
+}
+
+
+/*
+  getInitialData専用。
+  GASのロック競合(BUSY)や一時的な通信失敗は
+  その場で最大3回まで自動再試行する。
+*/
+async function requestInitialDataFromServer(
+  retries = 3
+) {
+
+  let lastError = null;
+
+  for (
+    let attempt = 1;
+    attempt <= retries;
+    attempt++
+  ) {
+
+    try {
+
+      const data =
+        await postJsonApiOnce(
+          {
+            action:
+              "getInitialData"
+          },
+          15000
+        );
+
+      if (data && data.error) {
+
+        const error =
+          new Error(
+            data.message ||
+            "初期データの取得に失敗しました"
+          );
+
+        error.retryable =
+          Boolean(data.retryable);
+
+        throw error;
+      }
+
+      return data;
+
+    } catch (error) {
+
+      lastError = error;
+
+      console.warn(
+        `初期同期失敗 ${attempt}/${retries}`,
+        error
+      );
+
+      if (attempt < retries) {
+
+        /*
+          BUSYかどうかにかかわらず、
+          一時的な通信障害もあるため短い待機後に再試行。
+        */
+        await wait(
+          700 * attempt
+        );
+      }
+    }
+  }
+
+  throw (
+    lastError ||
+    new Error(
+      "初期データを取得できませんでした"
+    )
+  );
+}
+
+
+/*
+  排便登録。
+  1) 同じoperationIdで最大2回登録要求
+  2) 応答が途切れた場合はoperationIdで保存済み確認
+  3) 保存済みなら成功として復旧
+*/
+async function registerBowelWithRecovery({
+  operationId,
+  user,
+  type
+}) {
+
+  let lastError = null;
+
+  for (
+    let attempt = 1;
+    attempt <= 2;
+    attempt++
+  ) {
+
+    try {
+
+      const result =
+        await postJsonApiOnce(
+          {
+            action:
+              "registerBowel",
+
+            operationId:
+              operationId,
+
+            user:
+              user,
+
+            type:
+              type
+          },
+          15000
+        );
+
+      if (result && result.ok) {
+        return result;
+      }
+
+      const error =
+        new Error(
+          result && result.message
+            ? result.message
+            : "排便登録に失敗しました"
+        );
+
+      error.retryable =
+        Boolean(
+          result &&
+          result.retryable
+        );
+
+      throw error;
+
+    } catch (error) {
+
+      lastError = error;
+
+      console.warn(
+        `排便登録通信 ${attempt}/2`,
+        error
+      );
+
+      if (attempt < 2) {
+        await wait(700);
+      }
+    }
+  }
+
+
+  /*
+    「シートには保存済みだが返事だけ来なかった」
+    可能性をoperationIdで確認する。
+  */
+  for (
+    let checkAttempt = 1;
+    checkAttempt <= 2;
+    checkAttempt++
+  ) {
+
+    try {
+
+      await wait(
+        500 * checkAttempt
+      );
+
+      const status =
+        await postJsonApiOnce(
+          {
+            action:
+              "getBowelOperationStatus",
+
+            operationId:
+              operationId,
+
+            user:
+              user
+          },
+          10000
+        );
+
+      if (
+        status &&
+        status.ok &&
+        status.found
+      ) {
+
+        console.log(
+          "排便登録の保存済み状態を確認して復旧しました",
+          operationId
+        );
+
+        return status;
+      }
+
+    } catch (statusError) {
+
+      console.warn(
+        `排便登録の保存済み確認 ${checkAttempt}/2`,
+        statusError
+      );
+    }
+  }
+
+
+  throw (
+    lastError ||
+    new Error(
+      "排便登録の保存結果を確認できませんでした"
+    )
+  );
+}
+
+
+async function fetchApi(
+  url,
+  retries = 3,
+  timeoutMs = 15000
+) {
 
   let lastError;
 
-  for (let attempt = 1; attempt <= retries; attempt++) {
+  for (
+    let attempt = 1;
+    attempt <= retries;
+    attempt++
+  ) {
 
     try {
-      const separator = url.includes("?") ? "&" : "?";
 
-      const response = await fetch(
-        url + separator + "_=" + Date.now(),
-        {
-          cache: "no-store"
-        }
-      );
+      const separator =
+        url.includes("?")
+          ? "&"
+          : "?";
 
-      const text = await response.text();
+      const response =
+        await fetchWithTimeout(
+          url +
+            separator +
+            "_=" +
+            Date.now(),
+          {
+            cache: "no-store"
+          },
+          timeoutMs
+        );
+
+      const text =
+        await response.text();
 
       if (!response.ok) {
         throw new Error(
-          "HTTP " + response.status
+          "HTTP " +
+          response.status
         );
       }
 
@@ -11962,11 +12327,14 @@ async function fetchApi(url, retries = 3) {
       }
 
       return {
-      ok: true,
+        ok: true,
 
-      text: async () => text,
+        text:
+          async () => text,
 
-      json: async () => JSON.parse(text)
+        json:
+          async () =>
+            JSON.parse(text)
       };
 
     } catch (error) {
@@ -11979,13 +12347,17 @@ async function fetchApi(url, retries = 3) {
       );
 
       if (attempt < retries) {
-        await wait(1000 * attempt);
+
+        await wait(
+          700 * attempt
+        );
       }
     }
   }
 
   throw lastError;
 }
+
 
 function toggleHistory() {
 
@@ -12750,7 +13122,7 @@ function recalculateBowelStatus(user) {
 
 
   /*
-    Ver.0.8.21
+    Ver.0.8.22
     最初の履歴より前に保持していた状態がある場合も、
     histories の previousPoint / previousLastDate を基準にする。
     GAS側の移行処理で新基準へそろえられている。
@@ -13697,37 +14069,8 @@ function openPage(pageId) {
 
 async function loadSyncDataFromGoogle() {
 
-  const response =
-    await fetch(
-      API_URL,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "text/plain;charset=utf-8"
-        },
-
-        body: JSON.stringify({
-          action: "getInitialData"
-        }),
-
-        cache: "no-store"
-      }
-    );
-
-
-  if (!response.ok) {
-
-    throw new Error(
-      "同期データ取得失敗：HTTP " +
-      response.status
-    );
-  }
-
-
   const data =
-    await response.json();
+    await requestInitialDataFromServer();
 
 
   if (data.error) {
@@ -13743,7 +14086,7 @@ async function loadSyncDataFromGoogle() {
     BOWEL_POINT_RULE_VERSION
   ) {
     throw new Error(
-      "GASが旧排便量基準のままです。Ver.0.8.21のGASへ更新してください。"
+      "GASが旧排便量基準のままです。Ver.0.8.22のGASへ更新してください。"
     );
   }
 
