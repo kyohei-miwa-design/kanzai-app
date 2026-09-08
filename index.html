@@ -1529,6 +1529,70 @@ h3 {
 
 
 /* =========================
+   勤務帯確認・遅延確認 Ver.0.8.16
+========================= */
+
+.shift-confirm-timing-note {
+  margin: 12px 0;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: #f5f7f8;
+  color: #546e7a;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.shift-confirm-timing-note.available {
+  background: #edf8f3;
+  border: 1px solid #b7e4cf;
+  color: #00796b;
+}
+
+.shift-confirm-timing-note.late {
+  background: #fff3f3;
+  border: 1px solid #ffcdd2;
+  color: #b71c1c;
+}
+
+.shift-confirm-button[disabled] {
+  background: #b0bec5 !important;
+  color: #fff !important;
+  cursor: not-allowed !important;
+  opacity: 0.8;
+}
+
+.confirm-late {
+  color: #c62828;
+  font-weight: 800;
+}
+
+.shift-overdue-list {
+  display: grid;
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.shift-overdue-item {
+  padding: 11px 13px;
+  border: 1px solid #ef9a9a;
+  border-radius: 10px;
+  background: #fff;
+  color: #b71c1c;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.shift-overdue-item strong {
+  color: #263238;
+}
+
+.shift-overdue-item button {
+  margin-top: 8px !important;
+  background: #c62828 !important;
+}
+
+/* =========================
    確認者（電子印） Ver.0.8.15
 ========================= */
 
@@ -2932,7 +2996,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.15</p>
+      <p class="app-version">Ver.0.8.16</p>
     </div>
 
     <button
@@ -9041,44 +9105,397 @@ function createMedicineReport() {
   `;
 }
 
-function checkTodayBowelStatus() {
+function parseLocalDateText(dateText) {
+
+  const parts =
+    String(dateText || "")
+      .split("-")
+      .map(Number);
+
+  if (
+    parts.length !== 3 ||
+    !parts[0] ||
+    !parts[1] ||
+    !parts[2]
+  ) {
+    return null;
+  }
+
+  return new Date(
+    parts[0],
+    parts[1] - 1,
+    parts[2],
+    0, 0, 0, 0
+  );
+}
+
+
+function getLocalDateText(date) {
+
+  const year = date.getFullYear();
+  const month =
+    String(date.getMonth() + 1)
+      .padStart(2, "0");
+  const day =
+    String(date.getDate())
+      .padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+
+function addDaysToDateText(
+  dateText,
+  days
+) {
+
+  const date =
+    parseLocalDateText(dateText);
+
+  if (!date) {
+    return dateText;
+  }
+
+  date.setDate(
+    date.getDate() + Number(days || 0)
+  );
+
+  return getLocalDateText(date);
+}
+
+
+function getDefaultNightTargetDateText(
+  now = new Date()
+) {
+
+  /*
+    夜勤帯は「終了する日」を確認日として扱う。
+    例：9/8 16:00～9/9 8:00 → targetDate = 9/9
+  */
+  const base = new Date(now);
+
+  if (now.getHours() >= 16) {
+    base.setDate(base.getDate() + 1);
+  }
+
+  return getLocalDateText(base);
+}
+
+
+function getShiftTiming(
+  type,
+  targetDateText
+) {
+
+  const base =
+    parseLocalDateText(
+      targetDateText
+    );
+
+  if (!base) {
+    return null;
+  }
+
+  let shiftStart;
+  let confirmStart;
+  let shiftEnd;
+
+  if (type === "day") {
+
+    shiftStart = new Date(base);
+    shiftStart.setHours(8, 0, 0, 0);
+
+    confirmStart = new Date(base);
+    confirmStart.setHours(15, 0, 0, 0);
+
+    shiftEnd = new Date(base);
+    shiftEnd.setHours(16, 0, 0, 0);
+
+  } else {
+
+    shiftEnd = new Date(base);
+    shiftEnd.setHours(8, 0, 0, 0);
+
+    confirmStart = new Date(base);
+    confirmStart.setHours(5, 0, 0, 0);
+
+    shiftStart = new Date(base);
+    shiftStart.setDate(
+      shiftStart.getDate() - 1
+    );
+    shiftStart.setHours(16, 0, 0, 0);
+  }
 
   const now = new Date();
 
-  // =========================
-  // 本日8:00 ～ 本日16:00
-  // =========================
+  return {
+    type: type,
+    targetDate: targetDateText,
+    shiftStart: shiftStart,
+    confirmStart: confirmStart,
+    shiftEnd: shiftEnd,
+    canConfirm:
+      now >= confirmStart,
+    isLate:
+      now >= shiftEnd
+  };
+}
 
-  const dayStart = new Date(now);
-  dayStart.setHours(8, 0, 0, 0);
 
-  const dayEnd = new Date(now);
-  dayEnd.setHours(16, 0, 0, 0);
+function getShiftTimingNote(timing) {
 
+  if (!timing) {
+    return "";
+  }
+
+  if (!timing.canConfirm) {
+
+    const startLabel =
+      timing.type === "day"
+        ? "15:00"
+        : "5:00";
+
+    return `
+      <div class="shift-confirm-timing-note">
+        この勤務帯は ${startLabel} から確定できます。
+      </div>
+    `;
+  }
+
+  if (timing.isLate) {
+
+    return `
+      <div class="shift-confirm-timing-note late">
+        🚨 勤務帯終了後の確認です。<br>
+        確定すると「遅延確認」として記録されます。
+      </div>
+    `;
+  }
+
+  return `
+    <div class="shift-confirm-timing-note available">
+      ✓ 現在、確認を確定できます。
+    </div>
+  `;
+}
+
+
+function getConfirmFor(
+  confirms,
+  unit,
+  type,
+  targetDate
+) {
+
+  return confirms.find(
+    item =>
+      String(item.unit).trim() ===
+        String(unit) &&
+      String(item.type)
+        .trim()
+        .toLowerCase() ===
+        String(type).toLowerCase() &&
+      String(item.date).slice(0, 10) ===
+        String(targetDate).slice(0, 10)
+  );
+}
+
+
+function getPendingShiftConfirmations(
+  confirms
+) {
+
+  const now = new Date();
+  const today = getLocalDateText(now);
+  const yesterday =
+    addDaysToDateText(today, -1);
+
+  const units =
+    currentUnit === "all"
+      ? ["1", "2", "3", "4"]
+      : [String(currentUnit)];
+
+  const pending = [];
+
+  const hasAnyYesterdayRecord =
+    confirms.some(
+      item =>
+        String(item.date).slice(0, 10) ===
+          yesterday
+    );
+
+  for (const unit of units) {
+
+    const todayDayTiming =
+      getShiftTiming("day", today);
+
+    if (
+      todayDayTiming.isLate &&
+      !getConfirmFor(
+        confirms,
+        unit,
+        "day",
+        today
+      )
+    ) {
+      pending.push({
+        unit: unit,
+        type: "day",
+        targetDate: today,
+        label: "☀️ 日中帯"
+      });
+    }
+
+    const todayNightTiming =
+      getShiftTiming("night", today);
+
+    if (
+      todayNightTiming.isLate &&
+      !getConfirmFor(
+        confirms,
+        unit,
+        "night",
+        today
+      )
+    ) {
+      pending.push({
+        unit: unit,
+        type: "night",
+        targetDate: today,
+        label: "🌙 夜勤帯"
+      });
+    }
+
+    /*
+      前日分は、dailyConfirmに前日の記録が1件でもある場合だけ
+      未確認候補として残す。
+      導入前の日付を大量に未確認扱いしないための安全策。
+    */
+    if (hasAnyYesterdayRecord) {
+
+      for (const type of ["day", "night"]) {
+
+        if (
+          !getConfirmFor(
+            confirms,
+            unit,
+            type,
+            yesterday
+          )
+        ) {
+          pending.push({
+            unit: unit,
+            type: type,
+            targetDate: yesterday,
+            label:
+              type === "day"
+                ? "☀️ 日中帯"
+                : "🌙 夜勤帯"
+          });
+        }
+      }
+    }
+  }
+
+  return pending;
+}
+
+
+function updateShiftOverdueAlert(
+  confirms
+) {
+
+  const pending =
+    getPendingShiftConfirmations(
+      confirms
+    );
+
+  if (pending.length === 0) {
+    hideNightAlert();
+    return;
+  }
+
+  let items = "";
+
+  for (const item of pending) {
+
+    const action =
+      currentUnit !== "all" &&
+      String(item.unit) ===
+        String(currentUnit)
+        ? `
+          <button
+            type="button"
+            onclick="
+              openPage('bowelPage');
+              ${
+                item.type === "day"
+                  ? `checkTodayBowelStatus('${item.targetDate}')`
+                  : `checkNightBowelStatus('${item.targetDate}')`
+              };
+            "
+          >
+            今から確認する
+          </button>
+        `
+        : "";
+
+    items += `
+      <div class="shift-overdue-item">
+        <strong>
+          ${escapeHtml(getUnitName(item.unit))}
+          ・${item.label}
+        </strong>
+        <br>
+        対象日：${escapeHtml(item.targetDate)}
+        ${action}
+      </div>
+    `;
+  }
+
+  showNightAlert(`
+    排便確認が未完了の勤務帯があります
+
+    <div class="shift-overdue-list">
+      ${items}
+    </div>
+
+    <br>
+    今から確認して確定できます。<br>
+    勤務帯終了後の確定は「遅延確認」として記録されます。
+  `);
+}
+
+
+function checkTodayBowelStatus(
+  targetDateText = getTodayText()
+) {
+
+  const timing =
+    getShiftTiming(
+      "day",
+      targetDateText
+    );
+
+  if (!timing) {
+    alert("対象日の取得に失敗しました");
+    return;
+  }
+
+  const dayStart = timing.shiftStart;
+  const dayEnd = timing.shiftEnd;
 
   let registeredUsers = [];
   let unregisteredUsers = [];
 
-
-  // =========================
-  // 利用者ごとに判定
-  // =========================
-
   for (let user in points) {
 
-    // 自分のユニットだけ
     if (
       currentUnit !== "all" &&
       userUnits[user] !== currentUnit
     ) {
       continue;
     }
-
-
-    // =========================
-    // 日中帯8:00～16:00の
-    // 有効な履歴だけ取得
-    // =========================
 
     const dayHistories =
       histories.filter(history => {
@@ -9087,25 +9504,18 @@ function checkTodayBowelStatus() {
           return false;
         }
 
-
-        // 取消済みは除外
         if (
-          String(
-            history.status || ""
-          ).trim() === "cancelled"
+          String(history.status || "")
+            .trim() === "cancelled"
         ) {
           return false;
         }
 
-
         const historyDate =
           new Date(
-            String(history.date).replace(
-              " ",
-              "T"
-            )
+            String(history.date)
+              .replace(" ", "T")
           );
-
 
         return (
           historyDate >= dayStart &&
@@ -9113,25 +9523,15 @@ function checkTodayBowelStatus() {
         );
       });
 
-
     if (dayHistories.length > 0) {
-
       registeredUsers.push({
         user: user,
         histories: dayHistories
       });
-
     } else {
-
       unregisteredUsers.push(user);
-
     }
   }
-
-
-  // =========================
-  // HTML作成
-  // =========================
 
   let html = `
     <div class="user-card">
@@ -9145,152 +9545,98 @@ function checkTodayBowelStatus() {
         ${formatDateTime(dayEnd)}
       </p>
 
+      ${getShiftTimingNote(timing)}
+
       <strong>登録済み</strong><br>
   `;
-
-
-  // =========================
-  // 登録済み
-  // =========================
 
   if (registeredUsers.length > 0) {
 
     for (let item of registeredUsers) {
 
       const types =
-        item.histories.map(history => {
-
-          if (history.type === "なし") {
-            return "排便なし";
-          }
-
-          return history.type || "";
-
-        });
-
+        item.histories.map(history =>
+          history.type === "なし"
+            ? "排便なし"
+            : history.type || ""
+        );
 
       html += `
         <div class="day-registered-item">
-
-          <span class="day-registered-check">
-            ✓
-          </span>
-
-          <span class="day-registered-name">
-            ${item.user}
-          </span>
-
-          <span class="day-registered-type">
-            ${types.join("、")}
-          </span>
-
+          <span class="day-registered-check">✓</span>
+          <span class="day-registered-name">${item.user}</span>
+          <span class="day-registered-type">${types.join("、")}</span>
         </div>
       `;
     }
 
   } else {
-
     html += `
-      <div class="day-empty-message">
-        なし
-      </div>
+      <div class="day-empty-message">なし</div>
     `;
-
   }
 
-
   html += `
-      <br>
-
-      <strong>未入力</strong><br>
+    <br>
+    <strong>未入力</strong><br>
   `;
-
-
-  // =========================
-  // 未入力
-  // =========================
 
   if (unregisteredUsers.length > 0) {
 
     for (let user of unregisteredUsers) {
-
       html += `
         <label class="day-no-bowel-item">
-
           <input
             type="checkbox"
             class="noBowelCheck"
             value="${user}"
           >
-
           <span>${user}</span>
-
-          <span>
-            排便なし
-          </span>
-
+          <span>排便なし</span>
         </label>
       `;
     }
 
-
-    html += `
-      <br>
-    `;
+    html += `<br>`;
 
   } else {
-
     html += `
-      <div class="day-empty-message">
-        なし
-      </div>
+      <div class="day-empty-message">なし</div>
     `;
-
   }
 
-
-  // =========================
-  // 確認者（電子印）
-  // =========================
-
   html += `
-      <div class="confirm-signature-box">
-
-        <div class="confirm-signature-title">
-          ✍️ 確認者
-        </div>
-
-        <div class="confirm-signature-note">
-          紙の確認印の代わりに、実際に確認した職員を選択してください。
-        </div>
-
-        ${getStaffSelectHtml("dayConfirmerSelect")}
-
+    <div class="confirm-signature-box">
+      <div class="confirm-signature-title">✍️ 確認者</div>
+      <div class="confirm-signature-note">
+        紙の確認印の代わりに、実際に確認した職員を選択してください。
       </div>
+      ${getStaffSelectHtml("dayConfirmerSelect")}
+    </div>
 
-      <button onclick="confirmNoBowelUsers()">
-        ☀️ 日中帯の確認を確定
-      </button>
-  `;
+    <button
+      class="shift-confirm-button"
+      onclick="confirmNoBowelUsers('${targetDateText}')"
+      ${timing.canConfirm ? "" : "disabled"}
+    >
+      ${
+        timing.isLate
+          ? "🚨 遅れて日中帯を確認・確定"
+          : "☀️ 日中帯の確認を確定"
+      }
+    </button>
 
+    <br>
 
-  // =========================
-  // 閉じる
-  // =========================
-
-  html += `
-      <br>
-
-      <button
-        class="close-summary-button"
-        onclick="closeTodayBowelStatus()"
-      >
-        ▲ 閉じる
-      </button>
+    <button
+      class="close-summary-button"
+      onclick="closeTodayBowelStatus()"
+    >
+      ▲ 閉じる
+    </button>
 
     </div>
   `;
-
 
   document.getElementById(
     "bowelCheckResult"
@@ -9305,38 +9651,27 @@ function closeTodayBowelStatus() {
 
 }
 
-async function confirmNoBowelUsers() {
+async function confirmNoBowelUsers(
+  targetDateText = getTodayText()
+) {
 
-  // =========================
-  // 日中帯か確認
-  // 8:00以上 ～ 16:00未満
-  // =========================
-
-  const now = new Date();
-
-  const dayStart = new Date(now);
-  dayStart.setHours(8, 0, 0, 0);
-
-  const dayEnd = new Date(now);
-  dayEnd.setHours(16, 0, 0, 0);
-
-
-  if (
-    now < dayStart ||
-    now >= dayEnd
-  ) {
-
-    alert(
-      "日中帯の排便確認は、8:00～16:00の間に確定してください。"
+  const timing =
+    getShiftTiming(
+      "day",
+      targetDateText
     );
 
+  if (!timing) {
+    alert("対象日の取得に失敗しました");
     return;
   }
 
-
-  // =========================
-  // 確認者を取得
-  // =========================
+  if (!timing.canConfirm) {
+    alert(
+      "日中帯の確認は15:00から確定できます。"
+    );
+    return;
+  }
 
   const confirmer =
     getSelectedStaff(
@@ -9344,27 +9679,15 @@ async function confirmNoBowelUsers() {
     );
 
   if (!confirmer) {
-
-    alert(
-      "確認者を選択してください"
-    );
-
+    alert("確認者を選択してください");
     return;
   }
-
-
-  // =========================
-  // チェックされた利用者を取得
-  // =========================
 
   const checkedUsers = Array.from(
     document.querySelectorAll(
       ".noBowelCheck:checked"
     )
-  ).map(
-    input => input.value
-  );
-
+  ).map(input => input.value);
 
   const allNoBowelChecks =
     Array.from(
@@ -9379,105 +9702,87 @@ async function confirmNoBowelUsers() {
       .map(input => input.value);
 
   if (uncheckedUsers.length > 0) {
-
     alert(
       "次の利用者が未確認です。\n\n" +
       uncheckedUsers.join("、")
     );
-
     return;
   }
 
-
-  // =========================
-  // 最終確認
-  // =========================
-
   const noBowelText =
     checkedUsers.length > 0
-      ? "\n排便なし：" + checkedUsers.join("、")
+      ? "\n排便なし：" +
+        checkedUsers.join("、")
       : "\n未入力者なし";
+
+  const lateText =
+    timing.isLate
+      ? "\n\n⚠ 勤務帯終了後のため、遅延確認として記録されます。"
+      : "";
 
   const ok = confirm(
     "日中帯の排便状況を確定しますか？\n\n" +
-    "確認者：" + confirmer.name +
-    noBowelText
+    "対象：" +
+    formatDateTime(timing.shiftStart) +
+    " ～ " +
+    formatDateTime(timing.shiftEnd) +
+    "\n確認者：" + confirmer.name +
+    noBowelText +
+    lateText
   );
-
 
   if (!ok) {
     return;
   }
-
-
-  // =========================
-  // 排便なしを登録
-  // =========================
 
   for (let user of checkedUsers) {
 
     await addHistoryToGoogle({
       user: user,
       type: "なし",
-      point: points[user]
+      point: points[user],
+      confirmType: "day",
+      targetDate: targetDateText
     });
-
   }
 
-
-  // =========================
-  // 最新履歴を再取得
-  // =========================
-
   await loadHistoriesFromGoogle();
-
-
-  // =========================
-  // このユニットの日中帯
-  // 排便確認完了をGoogleへ記録
-  // =========================
 
   const confirmSaved =
     await saveDailyConfirmToGoogle(
       "day",
-      confirmer
+      confirmer,
+      targetDateText
     );
 
   if (confirmSaved) {
-  await loadDailyConfirmStatus();
+    await loadDailyConfirmStatus();
   }
-  // =========================
-  // 日中帯集計を再描画
-  // =========================
 
-  checkTodayBowelStatus();
-
-
-  // =========================
-  // 完了表示
-  // =========================
+  checkTodayBowelStatus(
+    targetDateText
+  );
 
   if (confirmSaved) {
-
     alert(
-      "日中帯の排便なしを確定しました"
+      timing.isLate
+        ? "日中帯を遅延確認として確定しました"
+        : "日中帯の排便なしを確定しました"
     );
-
   } else {
-
     alert(
       "排便登録は完了しましたが、集計完了の記録に失敗しました"
     );
-
   }
 }
 
 async function saveDailyConfirmToGoogle(
   type,
-  staff
+  staff,
+  targetDate
 ) {
 
-  if (!staff) {
+  if (!staff || !targetDate) {
     return false;
   }
 
@@ -9489,6 +9794,7 @@ async function saveDailyConfirmToGoogle(
     "?action=saveDailyConfirm" +
     "&unit=" + encodeURIComponent(currentUnit) +
     "&type=" + encodeURIComponent(confirmType) +
+    "&targetDate=" + encodeURIComponent(targetDate) +
     "&staffId=" + encodeURIComponent(staff.staffId) +
     "&name=" + encodeURIComponent(staff.name) +
     "&role=" + encodeURIComponent(currentRole);
@@ -9505,6 +9811,15 @@ async function saveDailyConfirmToGoogle(
       "排便集計確定:",
       result
     );
+
+    if (result === "TOO_EARLY") {
+      alert(
+        confirmType === "day"
+          ? "日中帯は15:00から確定できます"
+          : "夜勤帯は5:00から確定できます"
+      );
+      return false;
+    }
 
     return (
       result === "OK" ||
@@ -9548,231 +9863,127 @@ async function loadDailyConfirmStatus() {
     const response = await fetchApi(
       API_URL +
       "?action=getDailyConfirms" +
+      "&days=3" +
       "&timestamp=" + Date.now()
     );
 
-
     if (!response.ok) {
-
       throw new Error(
         "集計状況の取得に失敗しました"
       );
-
     }
-
 
     const confirms =
       await response.json();
 
+    const now = new Date();
+    const today = getLocalDateText(now);
+    const nightTarget =
+      getDefaultNightTargetDateText(now);
 
     let html = "";
 
-    const now =
-      new Date();
-
-    const after8 =
-      now.getHours() >= 8;
-
-
-    // =========================
-    // 未確定ユニット
-    // =========================
-
-    let nightNotConfirmed = [];
-
-
-    // =========================
-    // 4ユニット分の一覧
-    // =========================
-
-    for (
-      let unit = 1;
-      unit <= 4;
-      unit++
-    ) {
+    for (let unit = 1; unit <= 4; unit++) {
 
       const dayConfirm =
-        confirms.find(
-          item =>
-            String(item.unit).trim() ===
-              String(unit) &&
-            String(item.type)
-              .trim()
-              .toLowerCase() ===
-              "day"
+        getConfirmFor(
+          confirms,
+          unit,
+          "day",
+          today
         );
-
 
       const nightConfirm =
-        confirms.find(
-          item =>
-            String(item.unit).trim() ===
-              String(unit) &&
-            String(item.type)
-              .trim()
-              .toLowerCase() ===
-              "night"
+        getConfirmFor(
+          confirms,
+          unit,
+          "night",
+          nightTarget
         );
-
 
       html += `
         <div class="user-card">
-
-          <strong>
-            ${getUnitName(unit)}
-          </strong>
-
+          <strong>${getUnitName(unit)}</strong>
           <br><br>
       `;
 
-
-      // =========================
-      // 夜勤
-      // =========================
-
-      if (nightConfirm) {
-
-        html += `
-          <div class="confirm-block">
-
-            <div class="confirm-title">
-              🌙 夜勤
-            </div>
-
-            <div class="confirm-ok">
-              ✅ 確定済み
-            </div>
-
-            <div class="confirm-info">
-              ${nightConfirm.time}
-            </div>
-
-            <div class="confirm-signed-by">
-              ✍️ ${escapeHtml(nightConfirm.name || "確認者不明")}
-            </div>
-
-          </div>
-        `;
-
-      } else {
-
-        html += `
-          <div class="confirm-block">
-
-            <div class="confirm-title">
-              🌙 夜勤
-            </div>
-
-            <div class="confirm-ng">
-              ⚠ 未確定
-            </div>
-
-          </div>
-        `;
-
-
-        // 朝8時以降だけ警告
-        if (after8) {
-
-          nightNotConfirmed.push(
-            getUnitName(unit)
-          );
-
+      for (const item of [
+        {
+          type: "night",
+          title: "🌙 夜勤",
+          confirm: nightConfirm,
+          targetDate: nightTarget
+        },
+        {
+          type: "day",
+          title: "☀ 日勤",
+          confirm: dayConfirm,
+          targetDate: today
         }
-      }
-
-
-      // =========================
-      // 日勤
-      // =========================
-
-      if (dayConfirm) {
+      ]) {
 
         html += `
           <div class="confirm-block">
-
             <div class="confirm-title">
-              ☀ 日勤
+              ${item.title}
             </div>
+        `;
 
-            <div class="confirm-ok">
-              ✅ 確定済み
+        if (item.confirm) {
+
+          const late =
+            String(item.confirm.status || "") ===
+              "late";
+
+          html += `
+            <div class="${late ? "confirm-late" : "confirm-ok"}">
+              ${late ? "⏰ 遅延確認" : "✅ 確定済み"}
             </div>
 
             <div class="confirm-info">
-              ${dayConfirm.time}
+              ${escapeHtml(item.confirm.time || "")}
             </div>
 
             <div class="confirm-signed-by">
-              ✍️ ${escapeHtml(dayConfirm.name || "確認者不明")}
+              ✍️ ${escapeHtml(item.confirm.name || "確認者不明")}
             </div>
+          `;
 
-          </div>
-        `;
+        } else {
 
-      } else {
+          const timing =
+            getShiftTiming(
+              item.type,
+              item.targetDate
+            );
 
-        html += `
-          <div class="confirm-block">
+          let statusText = "⚠ 未確定";
 
-            <div class="confirm-title">
-              ☀ 日勤
-            </div>
+          if (!timing.canConfirm) {
+            statusText =
+              item.type === "day"
+                ? "15:00から確認可"
+                : "5:00から確認可";
+          } else if (!timing.isLate) {
+            statusText = "○ 確認可能";
+          }
 
+          html += `
             <div class="confirm-ng">
-              ⚠ 未確定
+              ${statusText}
             </div>
+          `;
+        }
 
-          </div>
-        `;
-
+        html += `</div>`;
       }
-
 
       html += "</div>";
-
     }
 
-
-    // =========================
-    // 夜勤未確認警告
-    // =========================
-
-    if (
-      after8 &&
-      nightNotConfirmed.length > 0
-    ) {
-
-      showNightAlert(
-        `
-          夜勤帯の排便確認が未完了です
-          <br><br>
-
-          <div class="night-alert-units">
-            ${nightNotConfirmed.join("<br>")}
-          </div>
-
-          <br>
-
-          朝食時の緩下剤判断に
-          <br>
-          影響する可能性があります。
-          <br><br>
-
-          夜勤者へ確認してください。
-        `
-      );
-
-    } else {
-
-      hideNightAlert();
-
-    }
-
-
-    // =========================
-    // 従来の集計一覧
-    // =========================
+    updateShiftOverdueAlert(
+      confirms
+    );
 
     const dailyConfirmStatus =
       document.getElementById(
@@ -9780,22 +9991,12 @@ async function loadDailyConfirmStatus() {
       );
 
     if (dailyConfirmStatus) {
-
-      dailyConfirmStatus.innerHTML =
-        html;
-
+      dailyConfirmStatus.innerHTML = html;
     }
-
-
-    // =========================
-    // ★ Ver.0.8
-    // ホームにも反映
-    // =========================
 
     updateHomeConfirmStatus(
       confirms
     );
-
 
   } catch (error) {
 
@@ -9804,19 +10005,15 @@ async function loadDailyConfirmStatus() {
       error
     );
 
-
     const dailyConfirmStatus =
       document.getElementById(
         "dailyConfirmStatus"
       );
 
     if (dailyConfirmStatus) {
-
       dailyConfirmStatus.innerHTML =
         "集計状況の読み込みに失敗しました";
-
     }
-
   }
 }
 
@@ -9839,233 +10036,173 @@ function updateHomeConfirmStatus(
       "homeUnitName"
     );
 
-
-  if (
-    !dayCard ||
-    !nightCard
-  ) {
+  if (!dayCard || !nightCard) {
     return;
   }
 
-
-  // =========================
-  // ホームのユニット名
-  // =========================
-
   if (homeUnitName) {
-
-    if (currentUnit === "all") {
-
-      homeUnitName.textContent =
-        "全ユニット";
-
-    } else {
-
-      homeUnitName.textContent =
-        getUnitName(currentUnit);
-
-    }
-
+    homeUnitName.textContent =
+      currentUnit === "all"
+        ? "全ユニット"
+        : getUnitName(currentUnit);
   }
 
+  const now = new Date();
+  const today = getLocalDateText(now);
+  const nightTarget =
+    getDefaultNightTargetDateText(now);
 
-  // =========================
-  // 管理者・看護師など
-  // 全ユニット表示
-  // =========================
+  function getHomeStatusText(
+    type,
+    confirm,
+    targetDate
+  ) {
+
+    if (confirm) {
+      return String(confirm.status || "") === "late"
+        ? "⏰ 遅延確認"
+        : "✓ 確認済み";
+    }
+
+    const timing =
+      getShiftTiming(
+        type,
+        targetDate
+      );
+
+    if (!timing.canConfirm) {
+      return type === "day"
+        ? "15:00から"
+        : "5:00から";
+    }
+
+    if (timing.isLate) {
+      return "⚠ 未確認";
+    }
+
+    return "○ 確認可能";
+  }
+
+  function statusClass(confirm, type, targetDate) {
+
+    if (confirm) {
+      return String(confirm.status || "") === "late"
+        ? "home-confirm-ng"
+        : "home-confirm-ok";
+    }
+
+    const timing =
+      getShiftTiming(type, targetDate);
+
+    return timing && timing.isLate
+      ? "home-confirm-ng"
+      : "home-confirm-ok";
+  }
 
   if (currentUnit === "all") {
 
-    let dayConfirmedCount = 0;
-    let nightConfirmedCount = 0;
+    let dayCount = 0;
+    let nightCount = 0;
+    let dayLate = 0;
+    let nightLate = 0;
 
+    for (let unit = 1; unit <= 4; unit++) {
 
-    for (
-      let unit = 1;
-      unit <= 4;
-      unit++
-    ) {
-
-      const dayConfirmed =
-        confirms.some(
-          item =>
-            String(item.unit).trim() ===
-              String(unit) &&
-            String(item.type)
-              .trim()
-              .toLowerCase() ===
-              "day"
+      const day =
+        getConfirmFor(
+          confirms,
+          unit,
+          "day",
+          today
         );
 
-
-      const nightConfirmed =
-        confirms.some(
-          item =>
-            String(item.unit).trim() ===
-              String(unit) &&
-            String(item.type)
-              .trim()
-              .toLowerCase() ===
-              "night"
+      const night =
+        getConfirmFor(
+          confirms,
+          unit,
+          "night",
+          nightTarget
         );
 
-
-      if (dayConfirmed) {
-        dayConfirmedCount++;
+      if (day) {
+        dayCount++;
+        if (day.status === "late") dayLate++;
       }
 
-      if (nightConfirmed) {
-        nightConfirmedCount++;
+      if (night) {
+        nightCount++;
+        if (night.status === "late") nightLate++;
       }
-
     }
 
-
     dayCard.innerHTML = `
-      <span class="home-status-icon">
-        ☀️
-      </span>
-
+      <span class="home-status-icon">☀️</span>
       <span>
         <strong>日中帯</strong><br>
-        <small>
-          8:00 ～ 16:00
-        </small>
+        <small>8:00 ～ 16:00</small>
       </span>
-
-      <span class="${
-        dayConfirmedCount === 4
-          ? "home-confirm-ok"
-          : "home-confirm-ng"
-      }">
+      <span class="${dayCount === 4 && dayLate === 0 ? "home-confirm-ok" : "home-confirm-ng"}">
         ${
-          dayConfirmedCount === 4
-            ? "✓ 全ユニット完了"
-            : "⚠ " +
-              dayConfirmedCount +
-              "/4 確定"
+          dayCount === 4
+            ? (dayLate > 0 ? `⏰ 遅延${dayLate}件` : "✓ 全ユニット完了")
+            : `⚠ ${dayCount}/4 確定`
         }
       </span>
     `;
-
 
     nightCard.innerHTML = `
-      <span class="home-status-icon">
-        🌙
-      </span>
-
+      <span class="home-status-icon">🌙</span>
       <span>
         <strong>夜勤帯</strong><br>
-        <small>
-          16:00 ～ 翌8:00
-        </small>
+        <small>16:00 ～ 翌8:00</small>
       </span>
-
-      <span class="${
-        nightConfirmedCount === 4
-          ? "home-confirm-ok"
-          : "home-confirm-ng"
-      }">
+      <span class="${nightCount === 4 && nightLate === 0 ? "home-confirm-ok" : "home-confirm-ng"}">
         ${
-          nightConfirmedCount === 4
-            ? "✓ 全ユニット完了"
-            : "⚠ " +
-              nightConfirmedCount +
-              "/4 確定"
+          nightCount === 4
+            ? (nightLate > 0 ? `⏰ 遅延${nightLate}件` : "✓ 全ユニット完了")
+            : `⚠ ${nightCount}/4 確定`
         }
       </span>
     `;
-
 
     return;
   }
 
-
-  // =========================
-  // 通常の介護士
-  // 自ユニットのみ
-  // =========================
-
   const dayConfirm =
-    confirms.find(
-      item =>
-        String(item.unit).trim() ===
-          String(currentUnit) &&
-        String(item.type)
-          .trim()
-          .toLowerCase() ===
-          "day"
+    getConfirmFor(
+      confirms,
+      currentUnit,
+      "day",
+      today
     );
-
 
   const nightConfirm =
-    confirms.find(
-      item =>
-        String(item.unit).trim() ===
-          String(currentUnit) &&
-        String(item.type)
-          .trim()
-          .toLowerCase() ===
-          "night"
+    getConfirmFor(
+      confirms,
+      currentUnit,
+      "night",
+      nightTarget
     );
 
-
-  // =========================
-  // 日中カード
-  // =========================
-
   dayCard.innerHTML = `
-    <span class="home-status-icon">
-      ☀️
-    </span>
-
+    <span class="home-status-icon">☀️</span>
     <span>
       <strong>日中帯</strong><br>
-      <small>
-        8:00 ～ 16:00
-      </small>
+      <small>8:00 ～ 16:00</small>
     </span>
-
-    <span class="${
-      dayConfirm
-        ? "home-confirm-ok"
-        : "home-confirm-ng"
-    }">
-      ${
-        dayConfirm
-          ? "✓ 確認済み"
-          : "⚠ 未確認"
-      }
+    <span class="${statusClass(dayConfirm, "day", today)}">
+      ${getHomeStatusText("day", dayConfirm, today)}
     </span>
   `;
 
-
-  // =========================
-  // 夜勤カード
-  // =========================
-
   nightCard.innerHTML = `
-    <span class="home-status-icon">
-      🌙
-    </span>
-
+    <span class="home-status-icon">🌙</span>
     <span>
       <strong>夜勤帯</strong><br>
-      <small>
-        16:00 ～ 翌8:00
-      </small>
+      <small>16:00 ～ 翌8:00</small>
     </span>
-
-    <span class="${
-      nightConfirm
-        ? "home-confirm-ok"
-        : "home-confirm-ng"
-    }">
-      ${
-        nightConfirm
-          ? "✓ 確認済み"
-          : "⚠ 未確認"
-      }
+    <span class="${statusClass(nightConfirm, "night", nightTarget)}">
+      ${getHomeStatusText("night", nightConfirm, nightTarget)}
     </span>
   `;
 }
@@ -10117,69 +10254,36 @@ async function changeLastDate() {
   );
 }
 
-function checkNightBowelStatus() {
+function checkNightBowelStatus(
+  targetDateText =
+    getDefaultNightTargetDateText()
+) {
 
-  const now = new Date();
-
-  // =========================
-  // 対象となる夜勤帯を決定
-  // =========================
-
-  let nightStart;
-  let nightEnd;
-
-  const hour = now.getHours();
-
-
-  // 16:00以降
-  // 今日16:00 ～ 翌日8:00
-  if (hour >= 16) {
-
-    nightStart = new Date(now);
-    nightStart.setHours(16, 0, 0, 0);
-
-    nightEnd = new Date(now);
-    nightEnd.setDate(
-      nightEnd.getDate() + 1
+  const timing =
+    getShiftTiming(
+      "night",
+      targetDateText
     );
-    nightEnd.setHours(8, 0, 0, 0);
 
+  if (!timing) {
+    alert("対象日の取得に失敗しました");
+    return;
   }
 
-  // 0:00 ～ 15:59
-  // 前日16:00 ～ 今日8:00
-  else {
-
-    nightEnd = new Date(now);
-    nightEnd.setHours(8, 0, 0, 0);
-
-    nightStart = new Date(now);
-    nightStart.setDate(
-      nightStart.getDate() - 1
-    );
-    nightStart.setHours(16, 0, 0, 0);
-
-  }
-
+  const nightStart = timing.shiftStart;
+  const nightEnd = timing.shiftEnd;
 
   let registeredUsers = [];
   let unregisteredUsers = [];
 
-
-  // =========================
-  // 利用者ごとに判定
-  // =========================
-
   for (let user in points) {
 
-    // 現在のユニットだけ
     if (
       currentUnit !== "all" &&
       userUnits[user] !== currentUnit
     ) {
       continue;
     }
-
 
     const nightHistories =
       histories.filter(history => {
@@ -10188,25 +10292,18 @@ function checkNightBowelStatus() {
           return false;
         }
 
-
-        // 取消済み履歴は集計対象外
         if (
-          String(
-            history.status || ""
-          ).trim() === "cancelled"
+          String(history.status || "")
+            .trim() === "cancelled"
         ) {
           return false;
         }
 
-
         const historyDate =
           new Date(
-            String(history.date).replace(
-              " ",
-              "T"
-            )
+            String(history.date)
+              .replace(" ", "T")
           );
-
 
         return (
           historyDate >= nightStart &&
@@ -10214,25 +10311,15 @@ function checkNightBowelStatus() {
         );
       });
 
-
     if (nightHistories.length > 0) {
-
       registeredUsers.push({
         user: user,
         histories: nightHistories
       });
-
     } else {
-
       unregisteredUsers.push(user);
-
     }
   }
-
-
-  // =========================
-  // HTML作成
-  // =========================
 
   let html = `
     <div class="user-card">
@@ -10246,66 +10333,39 @@ function checkNightBowelStatus() {
         ${formatDateTime(nightEnd)}
       </p>
 
+      ${getShiftTimingNote(timing)}
+
       <strong>登録済み</strong><br>
   `;
-
-
-  // =========================
-  // 登録済み
-  // =========================
 
   if (registeredUsers.length > 0) {
 
     for (let item of registeredUsers) {
 
       const types =
-        item.histories.map(history => {
-
-          if (history.type === "なし") {
-            return "排便なし";
-          }
-
-          return history.type || "";
-
-        });
-
+        item.histories.map(history =>
+          history.type === "なし"
+            ? "排便なし"
+            : history.type || ""
+        );
 
       html += `
         <div class="day-registered-item">
-
-          <span class="day-registered-check">
-            ✓
-          </span>
-
-          <span class="day-registered-name">
-            ${item.user}
-          </span>
-
-          <span class="day-registered-type">
-            ${types.join("、")}
-          </span>
-
+          <span class="day-registered-check">✓</span>
+          <span class="day-registered-name">${item.user}</span>
+          <span class="day-registered-type">${types.join("、")}</span>
         </div>
       `;
     }
 
   } else {
-
     html += "なし<br>";
-
   }
 
-
   html += `
-      <br>
-
-      <strong>未入力</strong><br>
+    <br>
+    <strong>未入力</strong><br>
   `;
-
-
-  // =========================
-  // 未入力
-  // =========================
 
   if (unregisteredUsers.length > 0) {
 
@@ -10315,69 +10375,54 @@ function checkNightBowelStatus() {
       </p>
     `;
 
-
     for (let user of unregisteredUsers) {
-
       html += `
         <label class="night-no-bowel-item">
-
           <input
             type="checkbox"
             class="nightNoBowelCheck"
             value="${user}"
           >
-
           <span>${user}</span>
-
-          <span>
-            排便なし
-          </span>
-
+          <span>排便なし</span>
         </label>
       `;
     }
 
   } else {
-
-    html +=
-      "全利用者に排便記録があります<br>";
-
+    html += "全利用者に排便記録があります<br>";
   }
 
-
-  // =========================
-  // 確定・閉じる
-  // =========================
-
   html += `
-      <div class="confirm-signature-box">
-
-        <div class="confirm-signature-title">
-          ✍️ 確認者
-        </div>
-
-        <div class="confirm-signature-note">
-          紙の確認印の代わりに、実際に確認した職員を選択してください。
-        </div>
-
-        ${getStaffSelectHtml("nightConfirmerSelect")}
-
+    <div class="confirm-signature-box">
+      <div class="confirm-signature-title">✍️ 確認者</div>
+      <div class="confirm-signature-note">
+        紙の確認印の代わりに、実際に確認した職員を選択してください。
       </div>
+      ${getStaffSelectHtml("nightConfirmerSelect")}
+    </div>
 
-      <button onclick="confirmNightShift()">
-        🌙 夜勤帯の確認を確定
-      </button>
+    <button
+      class="shift-confirm-button"
+      onclick="confirmNightShift('${targetDateText}')"
+      ${timing.canConfirm ? "" : "disabled"}
+    >
+      ${
+        timing.isLate
+          ? "🚨 遅れて夜勤帯を確認・確定"
+          : "🌙 夜勤帯の確認を確定"
+      }
+    </button>
 
-      <button
-        class="close-summary-button"
-        onclick="closeNightBowelStatus()"
-      >
-        ▲ 閉じる
-      </button>
+    <button
+      class="close-summary-button"
+      onclick="closeNightBowelStatus()"
+    >
+      ▲ 閉じる
+    </button>
 
     </div>
   `;
-
 
   document.getElementById(
     "nightBowelCheckResult"
@@ -10403,19 +10448,39 @@ function formatDateTime(date) {
 }
 
 async function saveNightConfirmToGoogle(
-  staff
+  staff,
+  targetDate
 ) {
 
   return saveDailyConfirmToGoogle(
     "night",
-    staff
+    staff,
+    targetDate
   );
 }
 
-async function confirmNightShift() {
+async function confirmNightShift(
+  targetDateText =
+    getDefaultNightTargetDateText()
+) {
 
-  const now = new Date();
+  const timing =
+    getShiftTiming(
+      "night",
+      targetDateText
+    );
 
+  if (!timing) {
+    alert("対象日の取得に失敗しました");
+    return;
+  }
+
+  if (!timing.canConfirm) {
+    alert(
+      "夜勤帯の確認は5:00から確定できます。"
+    );
+    return;
+  }
 
   const confirmer =
     getSelectedStaff(
@@ -10423,80 +10488,9 @@ async function confirmNightShift() {
     );
 
   if (!confirmer) {
-
-    alert(
-      "確認者を選択してください"
-    );
-
+    alert("確認者を選択してください");
     return;
   }
-
-
-  // =========================
-  // 現在表示対象の夜勤帯を決定
-  // =========================
-
-  let nightStart;
-  let nightEnd;
-
-  const hour =
-    now.getHours();
-
-
-  // 16:00以降
-  // 本日16:00 ～ 翌日8:00
-  if (hour >= 16) {
-
-    nightStart =
-      new Date(now);
-
-    nightStart.setHours(
-      16, 0, 0, 0
-    );
-
-
-    nightEnd =
-      new Date(now);
-
-    nightEnd.setDate(
-      nightEnd.getDate() + 1
-    );
-
-    nightEnd.setHours(
-      8, 0, 0, 0
-    );
-
-  }
-
-  // 0:00 ～ 15:59
-  // 前日16:00 ～ 本日8:00
-  else {
-
-    nightEnd =
-      new Date(now);
-
-    nightEnd.setHours(
-      8, 0, 0, 0
-    );
-
-
-    nightStart =
-      new Date(now);
-
-    nightStart.setDate(
-      nightStart.getDate() - 1
-    );
-
-    nightStart.setHours(
-      16, 0, 0, 0
-    );
-
-  }
-
-
-  // =========================
-  // 未確認者チェック
-  // =========================
 
   const allChecks =
     Array.from(
@@ -10505,88 +10499,59 @@ async function confirmNightShift() {
       )
     );
 
-
   const uncheckedUsers =
     allChecks
-      .filter(
-        input =>
-          !input.checked
-      )
-      .map(
-        input =>
-          input.value
-      );
+      .filter(input => !input.checked)
+      .map(input => input.value);
 
-
-  if (
-    uncheckedUsers.length > 0
-  ) {
-
+  if (uncheckedUsers.length > 0) {
     alert(
       "次の利用者が未確認です。\n\n" +
       uncheckedUsers.join("、")
     );
-
     return;
   }
 
+  const lateText =
+    timing.isLate
+      ? "\n\n⚠ 勤務帯終了後のため、遅延確認として記録されます。"
+      : "";
 
-  // =========================
-  // 確定確認
-  // =========================
-
-  const ok =
-    confirm(
-      formatDateTime(nightStart) +
-      " ～ " +
-      formatDateTime(nightEnd) +
-      "\n\n" +
-      "この夜勤帯の排便状況を確定しますか？\n\n" +
-      "確認者：" + confirmer.name + "\n\n" +
-      "記録のない利用者は、" +
-      "夜勤帯に排便なしとして確認したものとします。"
-    );
-
+  const ok = confirm(
+    formatDateTime(timing.shiftStart) +
+    " ～ " +
+    formatDateTime(timing.shiftEnd) +
+    "\n\n" +
+    "この夜勤帯の排便状況を確定しますか？\n\n" +
+    "確認者：" + confirmer.name +
+    lateText
+  );
 
   if (!ok) {
     return;
   }
 
-
-  // =========================
-  // Googleへ夜勤確認を保存
-  // =========================
-
   const saved =
     await saveNightConfirmToGoogle(
-      confirmer
+      confirmer,
+      targetDateText
     );
 
-
   if (!saved) {
-
     alert(
       "夜勤帯の確定記録を保存できませんでした"
     );
-
     return;
   }
 
-
-  // =========================
-  // 完了
-  // =========================
-
   alert(
-    "夜勤帯の排便確認を確定しました"
+    timing.isLate
+      ? "夜勤帯を遅延確認として確定しました"
+      : "夜勤帯の排便確認を確定しました"
   );
 
-
-  // 集計状況を更新
   await loadDailyConfirmStatus();
 
-
-  // 開いている夜勤一覧も再描画
   const nightResult =
     document.getElementById(
       "nightBowelCheckResult"
@@ -10596,9 +10561,9 @@ async function confirmNightShift() {
     nightResult &&
     nightResult.innerHTML.trim() !== ""
   ) {
-
-    checkNightBowelStatus();
-
+    checkNightBowelStatus(
+      targetDateText
+    );
   }
 }
 
