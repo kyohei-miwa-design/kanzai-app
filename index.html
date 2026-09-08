@@ -1539,7 +1539,7 @@ h3 {
 
 
 /* =========================
-   勤務帯確認・遅延確認 Ver.0.8.22
+   勤務帯確認・遅延確認 Ver.0.8.23
 ========================= */
 
 .shift-confirm-timing-note {
@@ -3237,7 +3237,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.22</p>
+      <p class="app-version">Ver.0.8.23</p>
     </div>
 
     <button
@@ -8609,8 +8609,22 @@ async function login() {
     currentRole =
       String(result.role).trim();
 
+    const loginUnit =
+      String(result.unit || "").trim();
+
+    /*
+      看護師・管理者の共有アカウントは
+      staffシートのunitが空欄でも
+      全ユニット権限として扱う。
+    */
     currentUnit =
-      String(result.unit).trim();
+      loginUnit ||
+      (
+        currentRole === "nurse" ||
+        currentRole === "admin"
+          ? "all"
+          : ""
+      );
 
     setLoginSessionValue(
       "loginRole",
@@ -8731,12 +8745,34 @@ function restoreLogin() {
       "loginUnit"
     );
 
-  if (!savedRole || !savedUnit) {
+  if (!savedRole) {
+    return;
+  }
+
+  const restoredUnit =
+    savedUnit ||
+    (
+      savedRole === "nurse" ||
+      savedRole === "admin"
+        ? "all"
+        : ""
+    );
+
+  if (!restoredUnit) {
     return;
   }
 
   currentRole = savedRole;
-  currentUnit = savedUnit;
+  currentUnit = restoredUnit;
+
+  /*
+    旧版で看護師/管理者のunitが空欄保存されていた場合も
+    ここでallへ補正して次回以降に引き継ぐ。
+  */
+  setLoginSessionValue(
+    "loginUnit",
+    currentUnit
+  );
 
   document.getElementById("loginArea").style.display =
     "none";
@@ -8769,6 +8805,19 @@ async function loadInitialDataFromGoogle() {
     const data =
       await requestInitialDataFromServer();
 
+    if (
+      data &&
+      Number.isFinite(
+        Number(data.initialDataDurationMs)
+      )
+    ) {
+      console.log(
+        "GAS初期データ処理時間:",
+        Number(data.initialDataDurationMs),
+        "ms"
+      );
+    }
+
 
     if (data.error) {
       throw new Error(
@@ -8782,7 +8831,7 @@ async function loadInitialDataFromGoogle() {
       BOWEL_POINT_RULE_VERSION
     ) {
       throw new Error(
-        "GASが旧排便量基準のままです。Ver.0.8.22のGASへ更新してください。"
+        "GASが旧排便量基準のままです。Ver.0.8.23のGASへ更新してください。"
       );
     }
 
@@ -12084,7 +12133,7 @@ async function requestInitialDataFromServer(
             action:
               "getInitialData"
           },
-          15000
+          60000
         );
 
       if (data && data.error) {
@@ -12112,14 +12161,30 @@ async function requestInitialDataFromServer(
         error
       );
 
+      /*
+        fetchのAbortはGAS実行そのものを停止しない。
+        タイムアウト直後に再送すると、まだ動いている
+        直前リクエストと自分自身でロック競合するため、
+        タイムアウト時はこの同期処理内では再送しない。
+        次回の30秒同期に任せる。
+      */
+      if (
+        error &&
+        String(error.message || "").includes(
+          "タイムアウト"
+        )
+      ) {
+        throw error;
+      }
+
       if (attempt < retries) {
 
         /*
-          BUSYかどうかにかかわらず、
-          一時的な通信障害もあるため短い待機後に再試行。
+          GASがBUSYを返した場合などは、
+          少し待ってから再試行する。
         */
         await wait(
-          700 * attempt
+          1000 * attempt
         );
       }
     }
@@ -14086,7 +14151,7 @@ async function loadSyncDataFromGoogle() {
     BOWEL_POINT_RULE_VERSION
   ) {
     throw new Error(
-      "GASが旧排便量基準のままです。Ver.0.8.22のGASへ更新してください。"
+      "GASが旧排便量基準のままです。Ver.0.8.23のGASへ更新してください。"
     );
   }
 
