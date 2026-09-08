@@ -1643,7 +1643,7 @@ h3 {
 
 
 /* =========================
-   利用者状況 Ver.0.8.8
+   利用者状況 Ver.0.8.9
 ========================= */
 
 #status {
@@ -5924,42 +5924,153 @@ function getUserRulesDetailHtml(user) {
 }
 
 
-function getUserRecentHistoryHtml(user) {
+function getCurrentBowelCycleHistories(user) {
 
-  const recent =
+  /*
+    「現在の排便状況」だけを追うため、
+    最後に内部9点へ到達して排便成立した記録を境界にする。
+
+    取消済み記録はポイント計算には含めないが、
+    最初のpreviousPointを正しく拾うため
+    時系列そのものには残しておく。
+  */
+
+  const userHistories =
     histories
       .filter(history =>
-        history.user === user &&
-        String(
-          history.status || ""
-        ).trim() !== "cancelled"
+        history.user === user
       )
+      .slice()
+      .sort(
+        (a, b) =>
+          new Date(a.date) -
+          new Date(b.date)
+      );
+
+
+  if (userHistories.length === 0) {
+    return [];
+  }
+
+
+  let currentPoint =
+    Number(
+      userHistories[0].previousPoint || 0
+    );
+
+  let lastEstablishedIndex =
+    -1;
+
+  const calculated = [];
+
+
+  for (
+    let i = 0;
+    i < userHistories.length;
+    i++
+  ) {
+
+    const history =
+      userHistories[i];
+
+    const isCancelled =
+      String(
+        history.status || ""
+      ).trim() === "cancelled";
+
+
+    if (isCancelled) {
+      continue;
+    }
+
+
+    currentPoint +=
+      getBowelPoint(
+        history.type
+      );
+
+
+    let established =
+      false;
+
+
+    if (currentPoint >= 9) {
+
+      currentPoint = 0;
+      established = true;
+      lastEstablishedIndex = i;
+    }
+
+
+    calculated.push({
+      history: history,
+      sourceIndex: i,
+      pointAfter: currentPoint,
+      established: established
+    });
+  }
+
+
+  return calculated
+    .filter(item =>
+      item.sourceIndex >
+      lastEstablishedIndex
+    )
+    .map(item => ({
+      ...item.history,
+      cyclePoint:
+        item.pointAfter
+    }));
+}
+
+
+function getUserRecentHistoryHtml(user) {
+
+  const currentCycle =
+    getCurrentBowelCycleHistories(
+      user
+    )
+      .slice()
       .sort(
         (a, b) =>
           new Date(b.date) -
           new Date(a.date)
-      )
-      .slice(0, 5);
+      );
 
 
-  if (recent.length === 0) {
+  if (currentCycle.length === 0) {
 
     return `
       <div class="status-detail-empty">
-        排便履歴はまだありません
+        排便成立後の新しい排便記録はありません
       </div>
     `;
   }
 
 
-  return recent
+  return currentCycle
     .map(history => `
       <div class="status-detail-history-item">
+
         <strong>
           ${escapeHtml(history.type)}
         </strong>
+
         <br>
+
         ${escapeHtml(history.date)}
+
+        <br>
+
+        <span style="color:#607d8b;font-size:13px;">
+          この時点：
+          ${escapeHtml(
+            getBowelPointText(
+              history.cyclePoint
+            )
+          )}
+        </span>
+
       </div>
     `)
     .join("");
@@ -6069,7 +6180,7 @@ function openUserStatusDetail(user) {
       <div class="status-detail-section">
 
         <div class="status-detail-section-title">
-          最近の排便（最大5件）
+          現在の排便経過
         </div>
 
         ${getUserRecentHistoryHtml(user)}
