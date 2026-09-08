@@ -1643,7 +1643,7 @@ h3 {
 
 
 /* =========================
-   利用者状況 Ver.0.8.12
+   利用者状況 Ver.0.8.13
 ========================= */
 
 #status {
@@ -2683,7 +2683,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.12</p>
+      <p class="app-version">Ver.0.8.13</p>
     </div>
 
     <button
@@ -3299,6 +3299,16 @@ let initialSyncFinished = false;
 let newDataMessageTimer = null;
 let isRefreshing = false;
 let autoRefreshTimer = null;
+
+/*
+  利用者状況の並び順。
+  initialize() → loadData() → getStatusHtml()
+  から参照されるため、起動処理より前に必ず初期化する。
+*/
+let statusSortMode =
+  localStorage.getItem(
+    "statusSortMode"
+  ) || "priority";
 let lastSuccessfulSyncAt =
   localStorage.getItem(
     "lastSuccessfulSyncAt"
@@ -5279,12 +5289,6 @@ async function addUser() {
 
   await loadUsersFromGoogle();
 }
-
-let statusSortMode =
-  localStorage.getItem(
-    "statusSortMode"
-  ) || "priority";
-
 
 function setStatusSortMode(value) {
 
