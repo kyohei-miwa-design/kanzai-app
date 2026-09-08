@@ -1643,7 +1643,7 @@ h3 {
 
 
 /* =========================
-   利用者状況 Ver.0.8.11
+   利用者状況 Ver.0.8.12
 ========================= */
 
 #status {
@@ -2683,7 +2683,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.11</p>
+      <p class="app-version">Ver.0.8.12</p>
     </div>
 
     <button
@@ -4685,17 +4685,47 @@ function updateHomeMedicineStatus() {
 }
 
 function saveData() {
-  localStorage.setItem("points", JSON.stringify(points));
-  localStorage.setItem("lastDates", JSON.stringify(lastDates));
-  localStorage.setItem("histories", JSON.stringify(histories));
-  localStorage.setItem("rules", JSON.stringify(rules));
-  localStorage.setItem("checks", JSON.stringify(checks));
-  localStorage.setItem("checkDate", checkDate);
+
+  localStorage.setItem(
+    "points",
+    JSON.stringify(points)
+  );
+
+  localStorage.setItem(
+    "lastDates",
+    JSON.stringify(lastDates)
+  );
+
+  localStorage.setItem(
+    "userUnits",
+    JSON.stringify(userUnits)
+  );
+
+  localStorage.setItem(
+    "histories",
+    JSON.stringify(histories)
+  );
+
+  localStorage.setItem(
+    "rules",
+    JSON.stringify(rules)
+  );
+
+  localStorage.setItem(
+    "checks",
+    JSON.stringify(checks)
+  );
+
+  localStorage.setItem(
+    "checkDate",
+    checkDate
+  );
 }
 
 function loadData() {
   const savedPoints = localStorage.getItem("points");
   const savedLastDates = localStorage.getItem("lastDates");
+  const savedUserUnits = localStorage.getItem("userUnits");
   const savedHistories = localStorage.getItem("histories");
   const savedRules = localStorage.getItem("rules");
   const savedChecks = localStorage.getItem("checks");
@@ -4733,6 +4763,10 @@ function loadData() {
 
   if (savedLastDates !== null) {
     lastDates = JSON.parse(savedLastDates);
+  }
+
+  if (savedUserUnits !== null) {
+    userUnits = JSON.parse(savedUserUnits);
   }
 
   document.getElementById("history").innerHTML = getHistoryHtml();
@@ -5043,8 +5077,8 @@ function stopAutoRefresh() {
 function startAutoRefresh() {
 
   /*
-    多重起動を防ぐため、
-    既存タイマーを必ず止めてから開始する。
+    二重タイマーを防ぐ。
+    ログイン済みの場合だけ30秒同期を開始する。
   */
   stopAutoRefresh();
 
@@ -5055,7 +5089,10 @@ function startAutoRefresh() {
 
 
   autoRefreshTimer =
-    startAutoRefresh();
+    setInterval(
+      refreshFromGoogle,
+      30000
+    );
 
 
   console.log(
@@ -5067,14 +5104,14 @@ function startAutoRefresh() {
 async function initialize() {
 
   /*
-    ログイン復元を最優先にする。
-    ローカルキャッシュに不整合があっても、
-    ログイン画面へ戻されないようにする。
+    1. 同期表示を復元
+    2. ローカルキャッシュを安全に読む
+    3. ログイン状態を復元
+    4. ログイン済みならサーバーを正本として同期
+    5. 30秒自動同期を開始
   */
 
   restoreSyncStatus();
-
-  restoreLogin();
 
 
   try {
@@ -5088,42 +5125,46 @@ async function initialize() {
       error
     );
 
-    /*
-      サーバー側データが正本なので、
-      壊れた端末キャッシュだけ削除する。
-      ログイン情報は削除しない。
-    */
     clearCachedAppData();
   }
 
 
-  // ログインしている時だけ通信
-  if (currentRole !== "") {
-
-    try {
-
-      await loadInitialDataFromGoogle();
-
-    } catch (error) {
-
-      console.error(
-        "初期同期エラー",
-        error
-      );
-
-      setSyncStatusError(
-        "初期同期に失敗しました"
-      );
-    }
+  /*
+    キャッシュ読込に失敗しても、
+    ログイン情報は別キーなので復元できる。
+  */
+  restoreLogin();
 
 
-    setInterval(
-      refreshFromGoogle,
-      30000
-    );
-
+  if (currentRole === "") {
+    return;
   }
 
+
+  try {
+
+    await loadInitialDataFromGoogle();
+
+  } catch (error) {
+
+    console.error(
+      "初期同期エラー",
+      error
+    );
+
+    /*
+      シート取得に失敗しても、
+      ローカルキャッシュがあれば画面は維持する。
+    */
+    markSyncError();
+  }
+
+
+  /*
+    初回同期の成否にかかわらず開始。
+    一時的な通信障害なら30秒後に再試行できる。
+  */
+  startAutoRefresh();
 }
 
 initialize();
@@ -6521,6 +6562,7 @@ function clearCachedAppData() {
   const cacheKeys = [
     "points",
     "lastDates",
+    "userUnits",
     "histories",
     "rules",
     "checks",
@@ -6614,15 +6656,36 @@ async function login() {
 
     updateRuleDisplays();
 
-    await loadInitialDataFromGoogle();
+    /*
+      認証はすでに成功しているので、
+      初期データ同期が失敗しても
+      「ログイン失敗」扱いにはしない。
+    */
+    try {
+
+      await loadInitialDataFromGoogle();
+
+    } catch (syncError) {
+
+      console.error(
+        "ログイン後の初期同期エラー",
+        syncError
+      );
+
+      markSyncError();
+    }
+
 
     /*
-      ページ起動時に未ログインだった場合でも、
-      ログイン成功後ここで必ず自動同期を開始する。
+      初回同期に失敗していても、
+      30秒後の自動同期で再試行する。
     */
     startAutoRefresh();
 
-    alert(result.name + "としてログインしました");
+    alert(
+      result.name +
+      "としてログインしました"
+    );
 
   } catch (error) {
     console.error("ログインエラー", error);
