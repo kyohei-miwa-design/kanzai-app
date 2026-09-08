@@ -1529,6 +1529,72 @@ h3 {
 
 
 /* =========================
+   確認者（電子印） Ver.0.8.15
+========================= */
+
+.confirm-signature-box {
+  margin-top: 16px;
+  padding: 14px;
+
+  border: 1px solid #cfd8dc;
+  border-left: 5px solid #5c6bc0;
+  border-radius: 12px;
+
+  background: #f8f9ff;
+}
+
+.confirm-signature-title {
+  margin-bottom: 6px;
+
+  color: #37474f;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.confirm-signature-note {
+  margin-bottom: 9px;
+
+  color: #78909c;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.confirm-staff-select {
+  width: 100% !important;
+  min-height: 46px !important;
+
+  margin: 0 !important;
+  padding: 9px 11px !important;
+
+  border: 1px solid #b0bec5;
+  border-radius: 10px;
+
+  background: #fff;
+  color: #263238;
+
+  font-size: 16px !important;
+  font-weight: 700;
+}
+
+.confirm-signed-by {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-top: 4px;
+  padding: 5px 9px;
+
+  border: 1px solid #c5cae9;
+  border-radius: 999px;
+
+  background: #f0f1ff;
+  color: #3949ab;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* =========================
    日中・夜勤カード
 ========================= */
 
@@ -1643,7 +1709,7 @@ h3 {
 
 
 /* =========================
-   利用者状況 Ver.0.8.14
+   利用者状況 Ver.0.8.15
 ========================= */
 
 #status {
@@ -2866,7 +2932,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.14</p>
+      <p class="app-version">Ver.0.8.15</p>
     </div>
 
     <button
@@ -3466,6 +3532,10 @@ let lastDates = {
 };
 
 let userUnits = {};
+
+// 職員マスター / ユニットマスター
+let staffMaster = [];
+let unitMaster = {};
 
 let currentUnit = "";
 let currentRole = "";
@@ -4906,6 +4976,16 @@ function saveData() {
   );
 
   localStorage.setItem(
+    "staffMaster",
+    JSON.stringify(staffMaster)
+  );
+
+  localStorage.setItem(
+    "unitMaster",
+    JSON.stringify(unitMaster)
+  );
+
+  localStorage.setItem(
     "histories",
     JSON.stringify(histories)
   );
@@ -4930,6 +5010,8 @@ function loadData() {
   const savedPoints = localStorage.getItem("points");
   const savedLastDates = localStorage.getItem("lastDates");
   const savedUserUnits = localStorage.getItem("userUnits");
+  const savedStaffMaster = localStorage.getItem("staffMaster");
+  const savedUnitMaster = localStorage.getItem("unitMaster");
   const savedHistories = localStorage.getItem("histories");
   const savedRules = localStorage.getItem("rules");
   const savedChecks = localStorage.getItem("checks");
@@ -4972,6 +5054,16 @@ function loadData() {
   if (savedUserUnits !== null) {
     userUnits = JSON.parse(savedUserUnits);
   }
+
+  if (savedStaffMaster !== null) {
+    staffMaster = JSON.parse(savedStaffMaster);
+  }
+
+  if (savedUnitMaster !== null) {
+    unitMaster = JSON.parse(savedUnitMaster);
+  }
+
+  updateUnitMasterDisplays();
 
   document.getElementById("history").innerHTML = getHistoryHtml();
   document.getElementById("status").innerHTML = getStatusHtml();
@@ -6161,9 +6253,7 @@ function getStatusHtml() {
 
       <span class="status-toolbar-label">
         ${escapeHtml(
-          currentUnit === "all"
-            ? "全ユニット"
-            : currentUnit + "ユニット"
+          getUnitName(currentUnit)
         )}
       </span>
 
@@ -6739,6 +6829,354 @@ await loadUsersFromGoogle();
 updateUserSelects();
 }
 
+function normalizeMasterActive(value) {
+
+  if (value === true) {
+    return true;
+  }
+
+  const text =
+    String(value ?? "")
+      .trim()
+      .toUpperCase();
+
+  return (
+    text === "TRUE" ||
+    text === "1" ||
+    text === "YES"
+  );
+}
+
+
+function setMasterDataFromServer(data) {
+
+  if (
+    data &&
+    Array.isArray(data.staffMaster)
+  ) {
+
+    staffMaster =
+      data.staffMaster
+        .map(item => ({
+          staffId:
+            String(item.staffId || "").trim(),
+          name:
+            String(item.name || "").trim(),
+          job:
+            String(item.job || "").trim(),
+          unit:
+            String(item.unit || "").trim(),
+          active:
+            normalizeMasterActive(item.active)
+        }))
+        .filter(item =>
+          item.staffId !== "" &&
+          item.name !== ""
+        );
+  }
+
+
+  if (
+    data &&
+    Array.isArray(data.unitMaster)
+  ) {
+
+    unitMaster = {};
+
+    for (const item of data.unitMaster) {
+
+      if (!normalizeMasterActive(item.active)) {
+        continue;
+      }
+
+      const unitId =
+        String(item.unitId || "").trim();
+
+      const unitName =
+        String(item.unitName || "").trim();
+
+      if (unitId && unitName) {
+        unitMaster[unitId] = unitName;
+      }
+    }
+  }
+
+
+  updateUnitMasterDisplays();
+}
+
+
+function getUnitName(unitId) {
+
+  const id =
+    String(unitId ?? "").trim();
+
+  if (id === "all") {
+    return "全ユニット";
+  }
+
+  if (unitMaster[id]) {
+    return unitMaster[id];
+  }
+
+  if (id) {
+    return id + "ユニット";
+  }
+
+  return "ユニット未設定";
+}
+
+
+function updateUnitMasterDisplays() {
+
+  const unitSelect =
+    document.getElementById("unitSelect");
+
+  if (unitSelect) {
+
+    const currentValue =
+      unitSelect.value;
+
+    unitSelect.innerHTML = "";
+
+    for (
+      let unit = 1;
+      unit <= 4;
+      unit++
+    ) {
+
+      const option =
+        document.createElement("option");
+
+      option.value =
+        String(unit);
+
+      option.textContent =
+        getUnitName(unit);
+
+      unitSelect.appendChild(option);
+    }
+
+    if (
+      currentValue &&
+      ["1", "2", "3", "4"]
+        .includes(String(currentValue))
+    ) {
+      unitSelect.value =
+        String(currentValue);
+    }
+  }
+
+
+  const homeUnitName =
+    document.getElementById(
+      "homeUnitName"
+    );
+
+  if (homeUnitName) {
+    homeUnitName.textContent =
+      getUnitName(currentUnit);
+  }
+}
+
+
+function getStaffCandidatesForCurrentAccount() {
+
+  let candidates =
+    staffMaster.filter(
+      staff => staff.active
+    );
+
+
+  // 看護師共通アカウントは看護職員だけ
+  if (currentRole === "nurse") {
+
+    candidates =
+      candidates.filter(
+        staff => staff.job === "看護師"
+      );
+
+  } else if (currentRole !== "admin") {
+
+    // ユニット共通アカウントは介護職員を候補にする
+    candidates =
+      candidates.filter(
+        staff => staff.job !== "看護師"
+      );
+  }
+
+
+  candidates.sort((a, b) => {
+
+    // ユニット共通アカウントでは自ユニットを上へ
+    if (
+      currentUnit !== "all" &&
+      currentRole !== "nurse" &&
+      currentRole !== "admin"
+    ) {
+
+      const aOwn =
+        String(a.unit) ===
+        String(currentUnit);
+
+      const bOwn =
+        String(b.unit) ===
+        String(currentUnit);
+
+      if (aOwn !== bOwn) {
+        return aOwn ? -1 : 1;
+      }
+    }
+
+    const unitCompare =
+      String(a.unit).localeCompare(
+        String(b.unit),
+        "ja"
+      );
+
+    if (unitCompare !== 0) {
+      return unitCompare;
+    }
+
+    return a.name.localeCompare(
+      b.name,
+      "ja"
+    );
+  });
+
+
+  return candidates;
+}
+
+
+function getStaffSelectHtml(selectId) {
+
+  const candidates =
+    getStaffCandidatesForCurrentAccount();
+
+
+  if (candidates.length === 0) {
+
+    return `
+      <div class="status-detail-empty">
+        選択できる在籍職員が職員マスターに登録されていません
+      </div>
+    `;
+  }
+
+
+  let html = `
+    <select
+      id="${escapeHtml(selectId)}"
+      class="confirm-staff-select"
+    >
+      <option value="">
+        確認者を選択してください
+      </option>
+  `;
+
+
+  // ユニット共通アカウントは自ユニットとその他を分ける
+  if (
+    currentUnit !== "all" &&
+    currentRole !== "nurse" &&
+    currentRole !== "admin"
+  ) {
+
+    const own =
+      candidates.filter(
+        staff =>
+          String(staff.unit) ===
+          String(currentUnit)
+      );
+
+    const others =
+      candidates.filter(
+        staff =>
+          String(staff.unit) !==
+          String(currentUnit)
+      );
+
+
+    if (own.length > 0) {
+
+      html += `
+        <optgroup label="${escapeHtml(getUnitName(currentUnit))}">
+      `;
+
+      for (const staff of own) {
+        html += `
+          <option value="${escapeHtml(staff.staffId)}">
+            ${escapeHtml(staff.name)}
+          </option>
+        `;
+      }
+
+      html += "</optgroup>";
+    }
+
+
+    if (others.length > 0) {
+
+      html += `
+        <optgroup label="その他のユニット">
+      `;
+
+      for (const staff of others) {
+        html += `
+          <option value="${escapeHtml(staff.staffId)}">
+            ${escapeHtml(staff.name)}（${escapeHtml(getUnitName(staff.unit))}）
+          </option>
+        `;
+      }
+
+      html += "</optgroup>";
+    }
+
+  } else {
+
+    for (const staff of candidates) {
+
+      const suffix =
+        currentRole === "admin"
+          ? `（${staff.job} / ${getUnitName(staff.unit)}）`
+          : "";
+
+      html += `
+        <option value="${escapeHtml(staff.staffId)}">
+          ${escapeHtml(staff.name + suffix)}
+        </option>
+      `;
+    }
+  }
+
+
+  html += "</select>";
+
+  return html;
+}
+
+
+function getSelectedStaff(selectId) {
+
+  const select =
+    document.getElementById(selectId);
+
+  if (!select || !select.value) {
+    return null;
+  }
+
+  return (
+    staffMaster.find(
+      staff =>
+        staff.active &&
+        String(staff.staffId) ===
+        String(select.value)
+    ) || null
+  );
+}
+
+
 function updateUserSelects() {
   const userSelect = document.getElementById("userSelect");
   const ruleUserSelect = document.getElementById("ruleUserSelect");
@@ -6789,7 +7227,7 @@ async function changeUserUnit() {
 
   updateUserSelects();
 
-  alert(user + "を" + newUnit + "ユニットに変更しました");
+  alert(user + "を「" + getUnitName(newUnit) + "」に変更しました");
 }
 
 function updateRoleUI() {
@@ -6943,6 +7381,8 @@ function clearCachedAppData() {
     "points",
     "lastDates",
     "userUnits",
+    "staffMaster",
+    "unitMaster",
     "histories",
     "rules",
     "checks",
@@ -7213,6 +7653,11 @@ const data =
 
     histories =
       data.histories || [];
+
+    // =========================
+    // staffMaster / unitMaster
+    // =========================
+    setMasterDataFromServer(data);
 
     // =========================
     // 画面をまとめて更新
@@ -8791,10 +9236,6 @@ function checkTodayBowelStatus() {
 
     html += `
       <br>
-
-      <button onclick="confirmNoBowelUsers()">
-        未入力者を「排便なし」で確定
-      </button>
     `;
 
   } else {
@@ -8806,6 +9247,31 @@ function checkTodayBowelStatus() {
     `;
 
   }
+
+
+  // =========================
+  // 確認者（電子印）
+  // =========================
+
+  html += `
+      <div class="confirm-signature-box">
+
+        <div class="confirm-signature-title">
+          ✍️ 確認者
+        </div>
+
+        <div class="confirm-signature-note">
+          紙の確認印の代わりに、実際に確認した職員を選択してください。
+        </div>
+
+        ${getStaffSelectHtml("dayConfirmerSelect")}
+
+      </div>
+
+      <button onclick="confirmNoBowelUsers()">
+        ☀️ 日中帯の確認を確定
+      </button>
+  `;
 
 
   // =========================
@@ -8869,6 +9335,25 @@ async function confirmNoBowelUsers() {
 
 
   // =========================
+  // 確認者を取得
+  // =========================
+
+  const confirmer =
+    getSelectedStaff(
+      "dayConfirmerSelect"
+    );
+
+  if (!confirmer) {
+
+    alert(
+      "確認者を選択してください"
+    );
+
+    return;
+  }
+
+
+  // =========================
   // チェックされた利用者を取得
   // =========================
 
@@ -8881,10 +9366,23 @@ async function confirmNoBowelUsers() {
   );
 
 
-  if (checkedUsers.length === 0) {
+  const allNoBowelChecks =
+    Array.from(
+      document.querySelectorAll(
+        ".noBowelCheck"
+      )
+    );
+
+  const uncheckedUsers =
+    allNoBowelChecks
+      .filter(input => !input.checked)
+      .map(input => input.value);
+
+  if (uncheckedUsers.length > 0) {
 
     alert(
-      "対象者が選択されていません"
+      "次の利用者が未確認です。\n\n" +
+      uncheckedUsers.join("、")
     );
 
     return;
@@ -8895,9 +9393,15 @@ async function confirmNoBowelUsers() {
   // 最終確認
   // =========================
 
+  const noBowelText =
+    checkedUsers.length > 0
+      ? "\n排便なし：" + checkedUsers.join("、")
+      : "\n未入力者なし";
+
   const ok = confirm(
-    checkedUsers.join("、") +
-    " を日中帯「排便なし」で確定しますか？"
+    "日中帯の排便状況を確定しますか？\n\n" +
+    "確認者：" + confirmer.name +
+    noBowelText
   );
 
 
@@ -8934,7 +9438,10 @@ async function confirmNoBowelUsers() {
   // =========================
 
   const confirmSaved =
-    await saveDailyConfirmToGoogle();
+    await saveDailyConfirmToGoogle(
+      "day",
+      confirmer
+    );
 
   if (confirmSaved) {
   await loadDailyConfirmStatus();
@@ -8965,30 +9472,51 @@ async function confirmNoBowelUsers() {
   }
 }
 
-async function saveDailyConfirmToGoogle() {
+async function saveDailyConfirmToGoogle(
+  type,
+  staff
+) {
 
-  const loginName =
-    getLoginSessionValue("loginName") || "不明";
+  if (!staff) {
+    return false;
+  }
 
-   const url =
-   API_URL +
-   "?action=saveDailyConfirm" +
-   "&unit=" + encodeURIComponent(currentUnit) +
-   "&type=day" +
-   "&name=" + encodeURIComponent(loginName);
+  const confirmType =
+    String(type || "").trim();
 
-   try {
+  const url =
+    API_URL +
+    "?action=saveDailyConfirm" +
+    "&unit=" + encodeURIComponent(currentUnit) +
+    "&type=" + encodeURIComponent(confirmType) +
+    "&staffId=" + encodeURIComponent(staff.staffId) +
+    "&name=" + encodeURIComponent(staff.name) +
+    "&role=" + encodeURIComponent(currentRole);
 
-    const response = await fetchApi(url);
-    const result = await response.text();
+  try {
 
-    console.log("排便集計確定:", result);
+    const response =
+      await fetchApi(url);
 
-    return true;
+    const result =
+      await response.text();
 
-   } catch (error) {
+    console.log(
+      "排便集計確定:",
+      result
+    );
 
-    console.error("排便集計確定エラー", error);
+    return (
+      result === "OK" ||
+      result === "UPDATED"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "排便集計確定エラー",
+      error
+    );
 
     return false;
   }
@@ -9091,7 +9619,7 @@ async function loadDailyConfirmStatus() {
         <div class="user-card">
 
           <strong>
-            ${unit}ユニット
+            ${getUnitName(unit)}
           </strong>
 
           <br><br>
@@ -9119,8 +9647,8 @@ async function loadDailyConfirmStatus() {
               ${nightConfirm.time}
             </div>
 
-            <div class="confirm-info">
-              ${nightConfirm.name}
+            <div class="confirm-signed-by">
+              ✍️ ${escapeHtml(nightConfirm.name || "確認者不明")}
             </div>
 
           </div>
@@ -9147,7 +9675,7 @@ async function loadDailyConfirmStatus() {
         if (after8) {
 
           nightNotConfirmed.push(
-            unit + "ユニット"
+            getUnitName(unit)
           );
 
         }
@@ -9175,8 +9703,8 @@ async function loadDailyConfirmStatus() {
               ${dayConfirm.time}
             </div>
 
-            <div class="confirm-info">
-              ${dayConfirm.name}
+            <div class="confirm-signed-by">
+              ✍️ ${escapeHtml(dayConfirm.name || "確認者不明")}
             </div>
 
           </div>
@@ -9334,8 +9862,7 @@ function updateHomeConfirmStatus(
     } else {
 
       homeUnitName.textContent =
-        currentUnit +
-        "ユニット";
+        getUnitName(currentUnit);
 
     }
 
@@ -9823,7 +10350,19 @@ function checkNightBowelStatus() {
   // =========================
 
   html += `
-      <br>
+      <div class="confirm-signature-box">
+
+        <div class="confirm-signature-title">
+          ✍️ 確認者
+        </div>
+
+        <div class="confirm-signature-note">
+          紙の確認印の代わりに、実際に確認した職員を選択してください。
+        </div>
+
+        ${getStaffSelectHtml("nightConfirmerSelect")}
+
+      </div>
 
       <button onclick="confirmNightShift()">
         🌙 夜勤帯の確認を確定
@@ -9863,44 +10402,34 @@ function formatDateTime(date) {
   );
 }
 
-async function saveNightConfirmToGoogle() {
+async function saveNightConfirmToGoogle(
+  staff
+) {
 
-  const loginName =
-    getLoginSessionValue("loginName") || "不明";
-
-  const url =
-    API_URL +
-    "?action=saveDailyConfirm" +
-    "&unit=" + encodeURIComponent(currentUnit) +
-    "&type=night" +
-    "&name=" + encodeURIComponent(loginName);
-
-  try {
-
-    const response = await fetchApi(url);
-    const result = await response.text();
-
-    console.log("夜勤帯確定:", result);
-
-    return (
-      result === "OK" ||
-      result === "UPDATED"
-    );
-
-  } catch (error) {
-
-    console.error(
-      "夜勤帯確定エラー",
-      error
-    );
-
-    return false;
-  }
+  return saveDailyConfirmToGoogle(
+    "night",
+    staff
+  );
 }
 
 async function confirmNightShift() {
 
   const now = new Date();
+
+
+  const confirmer =
+    getSelectedStaff(
+      "nightConfirmerSelect"
+    );
+
+  if (!confirmer) {
+
+    alert(
+      "確認者を選択してください"
+    );
+
+    return;
+  }
 
 
   // =========================
@@ -10013,6 +10542,7 @@ async function confirmNightShift() {
       formatDateTime(nightEnd) +
       "\n\n" +
       "この夜勤帯の排便状況を確定しますか？\n\n" +
+      "確認者：" + confirmer.name + "\n\n" +
       "記録のない利用者は、" +
       "夜勤帯に排便なしとして確認したものとします。"
     );
@@ -10028,7 +10558,9 @@ async function confirmNightShift() {
   // =========================
 
   const saved =
-    await saveNightConfirmToGoogle();
+    await saveNightConfirmToGoogle(
+      confirmer
+    );
 
 
   if (!saved) {
@@ -11967,6 +12499,8 @@ async function loadSyncDataFromGoogle() {
 
   histories =
     data.histories || [];
+
+  setMasterDataFromServer(data);
 
 
   // =========================
