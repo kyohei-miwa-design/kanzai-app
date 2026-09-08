@@ -1539,7 +1539,7 @@ h3 {
 
 
 /* =========================
-   勤務帯確認・遅延確認 Ver.0.8.19
+   勤務帯確認・遅延確認 Ver.0.8.20
 ========================= */
 
 .shift-confirm-timing-note {
@@ -2672,7 +2672,8 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
 
   padding: 12px 14px;
   background: rgba(92, 107, 192, 0.08);
@@ -2681,6 +2682,15 @@ h3 {
 .nurse-instruction-header strong {
   color: #3949ab;
   font-size: 16px;
+}
+
+.nurse-instruction-header > span {
+  margin-left: auto;
+  color: #263238;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .nurse-instruction-panel.completed .nurse-instruction-header strong {
@@ -3227,7 +3237,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.19</p>
+      <p class="app-version">Ver.0.8.20</p>
     </div>
 
     <button
