@@ -142,6 +142,11 @@ button {
   background: #c62828;
 }
 
+/* 保存結果の確認中・一時的な通信不安定 */
+#newDataMessage.toast-warning {
+  background: #ef6c00;
+}
+
 /* 本日の対象者チェック用 */
 .target-card label {
   display: flex;
@@ -1539,7 +1544,7 @@ h3 {
 
 
 /* =========================
-   勤務帯確認・遅延確認 Ver.0.8.23
+   勤務帯確認・遅延確認 Ver.0.8.24
 ========================= */
 
 .shift-confirm-timing-note {
@@ -3237,7 +3242,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.23</p>
+      <p class="app-version">Ver.0.8.24</p>
     </div>
 
     <button
@@ -3876,6 +3881,40 @@ let autoRefreshTimer = null;
 // 書き込み処理中に30秒自動同期が割り込むのを防ぐ
 let activeWriteCount = 0;
 
+/*
+  Ver.0.8.24
+  通信が切れて「保存済みか不明」になった排便登録。
+  ページ更新をまたいでも同じoperationIdを追跡する。
+*/
+let pendingBowelOperation = null;
+let pendingBowelResolveTimer = null;
+
+try {
+  const savedPending =
+    localStorage.getItem(
+      "pendingBowelOperationV1"
+    );
+
+  if (savedPending) {
+    const parsed =
+      JSON.parse(savedPending);
+
+    if (
+      parsed &&
+      parsed.operationId &&
+      parsed.user
+    ) {
+      pendingBowelOperation =
+        parsed;
+    }
+  }
+} catch (error) {
+  console.warn(
+    "保留中排便登録の読込失敗",
+    error
+  );
+}
+
 function beginWriteActivity() {
   activeWriteCount++;
 }
@@ -4158,6 +4197,12 @@ function showToast(
       "toast-error"
     );
 
+  } else if (type === "warning") {
+
+    toast.classList.add(
+      "toast-warning"
+    );
+
   } else {
 
     toast.classList.add(
@@ -4251,6 +4296,27 @@ async function register() {
       "⚠ 排便量を選択してください",
       "error",
       3000
+    );
+
+    return;
+  }
+
+
+  /*
+    前回の保存結果がまだ未確定なら、
+    新しいoperationIdで再登録して二重登録になるのを防ぐ。
+    最新同期が成功すれば自動判定して解除される。
+  */
+  if (pendingBowelOperation) {
+
+    showToast(
+      "⚠ 前回の排便登録結果を確認中です。最新データ受信まで少しお待ちください",
+      "warning",
+      4500
+    );
+
+    schedulePendingBowelResolution(
+      500
     );
 
     return;
@@ -4531,14 +4597,84 @@ async function register() {
 
 
     // =========================
-    // 保存失敗 → 登録前へ復元
+    // 保存結果不明
     // =========================
+    if (
+      error &&
+      error.code ===
+        "RESULT_UNKNOWN"
+    ) {
 
-    points[user] =
-      previousPoint;
+      /*
+        未確認の値を「保存済み」とは扱わない。
+        いったん登録前の画面へ戻し、
+        operationIdだけ保持して次回の権威同期で判定する。
+      */
+      points[user] =
+        previousPoint;
 
-    lastDates[user] =
-      previousLastDate;
+      lastDates[user] =
+        previousLastDate;
+
+      setPendingBowelOperation({
+        operationId:
+          operationId,
+        user:
+          user,
+        type:
+          type,
+        createdAt:
+          new Date().toISOString()
+      });
+
+      document.getElementById(
+        "result"
+      ).textContent =
+        "保存結果を確認中です";
+
+      showToast(
+        "⚠ 通信が不安定なため保存結果を確認中です",
+        "warning",
+        6000
+      );
+
+      schedulePendingBowelResolution(
+        2500
+      );
+
+    } else {
+
+      // =========================
+      // 保存失敗 → 登録前へ復元
+      // =========================
+
+      points[user] =
+        previousPoint;
+
+      lastDates[user] =
+        previousLastDate;
+
+      document.getElementById(
+        "result"
+      ).textContent =
+        (
+          error &&
+          error.code === "NOT_SAVED"
+        )
+          ? "保存されていません。もう一度登録してください"
+          : "登録に失敗しました";
+
+      showToast(
+        (
+          error &&
+          error.code === "NOT_SAVED"
+        )
+          ? "⚠ 保存されていません。もう一度登録してください"
+          : "⚠ 保存に失敗しました",
+        "error",
+        5000
+      );
+    }
 
 
     document.getElementById(
@@ -4556,19 +4692,7 @@ async function register() {
     ).value =
       previousLastDate || "";
 
-    document.getElementById(
-      "result"
-    ).textContent =
-      "登録に失敗しました";
-
     saveData();
-
-
-    showToast(
-      "⚠ 保存に失敗しました",
-      "error",
-      4000
-    );
 
 
   } finally {
@@ -8589,8 +8713,8 @@ async function login() {
     const response =
       await fetchApi(
         url,
-        3,
-        15000
+        4,
+        20000
       );
 
     const result =
@@ -8831,7 +8955,7 @@ async function loadInitialDataFromGoogle() {
       BOWEL_POINT_RULE_VERSION
     ) {
       throw new Error(
-        "GASが旧排便量基準のままです。Ver.0.8.23のGASへ更新してください。"
+        "GASが旧排便量基準のままです。Ver.0.8.24のGASへ更新してください。"
       );
     }
 
@@ -11995,6 +12119,257 @@ function wait(ms) {
 }
 
 
+function setPendingBowelOperation(
+  operation
+) {
+
+  pendingBowelOperation =
+    operation || null;
+
+  try {
+
+    if (pendingBowelOperation) {
+
+      localStorage.setItem(
+        "pendingBowelOperationV1",
+        JSON.stringify(
+          pendingBowelOperation
+        )
+      );
+
+    } else {
+
+      localStorage.removeItem(
+        "pendingBowelOperationV1"
+      );
+    }
+
+  } catch (error) {
+
+    console.warn(
+      "保留中排便登録の保存失敗",
+      error
+    );
+  }
+}
+
+
+function clearPendingBowelOperation() {
+
+  setPendingBowelOperation(
+    null
+  );
+
+  if (
+    pendingBowelResolveTimer !== null
+  ) {
+
+    clearTimeout(
+      pendingBowelResolveTimer
+    );
+
+    pendingBowelResolveTimer =
+      null;
+  }
+}
+
+
+function schedulePendingBowelResolution(
+  delayMs = 3000
+) {
+
+  if (!pendingBowelOperation) {
+    return;
+  }
+
+  if (
+    pendingBowelResolveTimer !== null
+  ) {
+    return;
+  }
+
+  pendingBowelResolveTimer =
+    setTimeout(
+      async () => {
+
+        pendingBowelResolveTimer =
+          null;
+
+        if (
+          !pendingBowelOperation
+        ) {
+          return;
+        }
+
+        if (
+          isWriteActivityActive()
+        ) {
+
+          schedulePendingBowelResolution(
+            2000
+          );
+
+          return;
+        }
+
+        try {
+
+          await refreshFromGoogle();
+
+        } catch (error) {
+
+          console.warn(
+            "保留中排便登録の自動確認失敗",
+            error
+          );
+        }
+
+        if (
+          pendingBowelOperation
+        ) {
+
+          schedulePendingBowelResolution(
+            10000
+          );
+        }
+      },
+      delayMs
+    );
+}
+
+
+function resolvePendingBowelOperationAfterSync() {
+
+  if (!pendingBowelOperation) {
+    return;
+  }
+
+  const pending =
+    pendingBowelOperation;
+
+  const found =
+    histories.some(
+      history =>
+        String(
+          history.operationId || ""
+        ) ===
+        String(
+          pending.operationId
+        )
+    );
+
+  clearPendingBowelOperation();
+
+  if (found) {
+
+    showToast(
+      "✓ 前回の排便登録済みを確認しました",
+      "success",
+      4500
+    );
+
+  } else {
+
+    showToast(
+      "⚠ 前回の排便は保存されていません。もう一度登録してください",
+      "error",
+      6000
+    );
+  }
+}
+
+
+/*
+  Ver.0.8.24
+  Google Apps Scriptのリダイレクト先で一時的に返る
+  404 / 429 / 5xx 等を「再試行可能」と判定する。
+*/
+function isTransientHttpStatus(
+  status
+) {
+
+  return [
+    404,
+    408,
+    425,
+    429,
+    500,
+    502,
+    503,
+    504
+  ].includes(
+    Number(status)
+  );
+}
+
+
+function isTransientApiError(
+  error
+) {
+
+  if (!error) {
+    return false;
+  }
+
+  if (
+    error.retryable === true ||
+    error.transient === true
+  ) {
+    return true;
+  }
+
+  if (
+    isTransientHttpStatus(
+      error.httpStatus
+    )
+  ) {
+    return true;
+  }
+
+  const message =
+    String(
+      error.message || ""
+    );
+
+  return (
+    message.includes(
+      "タイムアウト"
+    ) ||
+    message.includes(
+      "Failed to fetch"
+    ) ||
+    message.includes(
+      "NetworkError"
+    ) ||
+    message.includes(
+      "Load failed"
+    )
+  );
+}
+
+
+function getRetryBackoffMs(
+  failedAttempt
+) {
+
+  const delays = [
+    1000,
+    2000,
+    4000
+  ];
+
+  return delays[
+    Math.min(
+      Math.max(
+        Number(failedAttempt || 1) - 1,
+        0
+      ),
+      delays.length - 1
+    )
+  ];
+}
+
+
 /*
   Ver.0.8.22
   fetchが通信待ちのまま永久に残らないようにする。
@@ -12050,32 +12425,57 @@ async function parseApiJsonResponse(
     await response.text();
 
   if (!response.ok) {
-    throw new Error(
-      label +
-      "失敗：HTTP " +
-      response.status
-    );
+
+    const error =
+      new Error(
+        label +
+        "失敗：HTTP " +
+        response.status
+      );
+
+    error.httpStatus =
+      Number(
+        response.status || 0
+      );
+
+    error.transient =
+      isTransientHttpStatus(
+        error.httpStatus
+      );
+
+    throw error;
   }
 
   if (
     text.trim().startsWith("<!DOCTYPE") ||
     text.trim().startsWith("<html")
   ) {
-    throw new Error(
-      "APIからHTMLが返されました"
-    );
+
+    const error =
+      new Error(
+        "APIからHTMLが返されました"
+      );
+
+    error.transient = true;
+
+    throw error;
   }
 
   try {
     return JSON.parse(text);
   } catch (error) {
-    throw new Error(
-      label +
-      "の応答をJSONとして読めませんでした"
-    );
+
+    const parseError =
+      new Error(
+        label +
+        "の応答をJSONとして読めませんでした"
+      );
+
+    parseError.transient = true;
+
+    throw parseError;
   }
 }
-
 
 async function postJsonApiOnce(
   payload,
@@ -12114,7 +12514,7 @@ async function postJsonApiOnce(
   その場で最大3回まで自動再試行する。
 */
 async function requestInitialDataFromServer(
-  retries = 3
+  retries = 4
 ) {
 
   let lastError = null;
@@ -12144,8 +12544,18 @@ async function requestInitialDataFromServer(
             "初期データの取得に失敗しました"
           );
 
+        error.code =
+          String(
+            data.code || ""
+          );
+
         error.retryable =
-          Boolean(data.retryable);
+          Boolean(
+            data.retryable
+          );
+
+        error.transient =
+          error.retryable;
 
         throw error;
       }
@@ -12162,11 +12572,8 @@ async function requestInitialDataFromServer(
       );
 
       /*
-        fetchのAbortはGAS実行そのものを停止しない。
-        タイムアウト直後に再送すると、まだ動いている
-        直前リクエストと自分自身でロック競合するため、
-        タイムアウト時はこの同期処理内では再送しない。
-        次回の30秒同期に任せる。
+        AbortしてもGAS本体は止まらないため、
+        60秒タイムアウトだけは同一処理内で即再送しない。
       */
       if (
         error &&
@@ -12177,15 +12584,28 @@ async function requestInitialDataFromServer(
         throw error;
       }
 
+      /*
+        認証エラーや入力エラー等は、
+        再試行しても改善しないため即終了。
+      */
+      if (
+        !isTransientApiError(error)
+      ) {
+        throw error;
+      }
+
       if (attempt < retries) {
 
-        /*
-          GASがBUSYを返した場合などは、
-          少し待ってから再試行する。
-        */
-        await wait(
-          1000 * attempt
+        const delay =
+          getRetryBackoffMs(
+            attempt
+          );
+
+        console.log(
+          `初期同期を${delay}ms後に再試行します`
         );
+
+        await wait(delay);
       }
     }
   }
@@ -12197,7 +12617,6 @@ async function requestInitialDataFromServer(
     )
   );
 }
-
 
 /*
   排便登録。
@@ -12213,9 +12632,15 @@ async function registerBowelWithRecovery({
 
   let lastError = null;
 
+
+  /*
+    まず登録要求。
+    404/429/5xxやネットワーク瞬断は同じoperationIdで再送する。
+    operationIdが同じなので二重登録にはならない。
+  */
   for (
     let attempt = 1;
-    attempt <= 2;
+    attempt <= 3;
     attempt++
   ) {
 
@@ -12236,7 +12661,7 @@ async function registerBowelWithRecovery({
             type:
               type
           },
-          15000
+          30000
         );
 
       if (result && result.ok) {
@@ -12250,11 +12675,22 @@ async function registerBowelWithRecovery({
             : "排便登録に失敗しました"
         );
 
+      error.code =
+        String(
+          result &&
+          result.code
+            ? result.code
+            : ""
+        );
+
       error.retryable =
         Boolean(
           result &&
           result.retryable
         );
+
+      error.transient =
+        error.retryable;
 
       throw error;
 
@@ -12263,12 +12699,38 @@ async function registerBowelWithRecovery({
       lastError = error;
 
       console.warn(
-        `排便登録通信 ${attempt}/2`,
+        `排便登録通信 ${attempt}/3`,
         error
       );
 
-      if (attempt < 2) {
-        await wait(700);
+      /*
+        30秒タイムアウト時は、
+        GAS本体がまだ保存処理中の可能性が高い。
+        新しい登録POSTを重ねず保存済み確認へ進む。
+      */
+      if (
+        error &&
+        String(error.message || "").includes(
+          "タイムアウト"
+        )
+      ) {
+        break;
+      }
+
+      if (
+        !isTransientApiError(error)
+      ) {
+        throw error;
+      }
+
+      if (attempt < 3) {
+
+        const delay =
+          getRetryBackoffMs(
+            attempt
+          );
+
+        await wait(delay);
       }
     }
   }
@@ -12277,18 +12739,23 @@ async function registerBowelWithRecovery({
   /*
     「シートには保存済みだが返事だけ来なかった」
     可能性をoperationIdで確認する。
+    保存処理がまだ走っている場合もあるため、
+    1秒→2秒→4秒の間隔で最大4回確認する。
   */
   for (
     let checkAttempt = 1;
-    checkAttempt <= 2;
+    checkAttempt <= 4;
     checkAttempt++
   ) {
 
-    try {
-
-      await wait(
-        500 * checkAttempt
+    const delay =
+      getRetryBackoffMs(
+        checkAttempt
       );
+
+    await wait(delay);
+
+    try {
 
       const status =
         await postJsonApiOnce(
@@ -12302,7 +12769,7 @@ async function registerBowelWithRecovery({
             user:
               user
           },
-          10000
+          20000
         );
 
       if (
@@ -12319,29 +12786,166 @@ async function registerBowelWithRecovery({
         return status;
       }
 
+
+      if (
+        status &&
+        status.code === "BUSY"
+      ) {
+
+        console.log(
+          `保存処理完了待ち ${checkAttempt}/4`
+        );
+
+        continue;
+      }
+
     } catch (statusError) {
 
+      lastError =
+        statusError;
+
       console.warn(
-        `排便登録の保存済み確認 ${checkAttempt}/2`,
+        `排便登録の保存済み確認 ${checkAttempt}/4`,
         statusError
       );
+
+      if (
+        !isTransientApiError(
+          statusError
+        )
+      ) {
+        break;
+      }
     }
   }
 
 
-  throw (
-    lastError ||
+  /*
+    最後にScriptLockを使う初期同期を1回通す。
+    これが成功した時点では保存処理の途中状態ではないため、
+    historiesにoperationIdがあれば保存済み、
+    なければ未保存と確定できる。
+  */
+  try {
+
+    const data =
+      await requestInitialDataFromServer(
+        2
+      );
+
+    const historiesFromServer =
+      Array.isArray(data.histories)
+        ? data.histories
+        : [];
+
+    const matched =
+      historiesFromServer.find(
+        history =>
+          String(
+            history.operationId || ""
+          ) ===
+          String(operationId)
+      );
+
+    if (matched) {
+
+      const userRow =
+        (
+          Array.isArray(data.users)
+            ? data.users
+            : []
+        ).find(
+          item =>
+            String(item.name) ===
+            String(user)
+        );
+
+      console.log(
+        "初期同期から排便登録済みを確認して復旧しました",
+        operationId
+      );
+
+      return {
+        ok: true,
+        found: true,
+        recovered: true,
+        history: matched,
+        point:
+          userRow
+            ? Number(
+                userRow.point || 0
+              )
+            : Number(
+                matched.point || 0
+              ),
+        lastDate:
+          userRow &&
+          userRow.lastDate
+            ? String(
+                userRow.lastDate
+              ).slice(0, 10)
+            : ""
+      };
+    }
+
+
+    const notSavedError =
+      new Error(
+        "サーバー上に排便登録を確認できませんでした"
+      );
+
+    notSavedError.code =
+      "NOT_SAVED";
+
+    throw notSavedError;
+
+  } catch (syncError) {
+
+    if (
+      syncError &&
+      syncError.code ===
+        "NOT_SAVED"
+    ) {
+      throw syncError;
+    }
+
+    console.warn(
+      "排便登録の最終確認同期に失敗しました",
+      syncError
+    );
+
+    lastError =
+      syncError ||
+      lastError;
+  }
+
+
+  /*
+    ここまで来た場合は「失敗」と断定しない。
+    operationIdを保留し、
+    次の正常な初期同期で自動判定する。
+  */
+  const unknownError =
     new Error(
       "排便登録の保存結果を確認できませんでした"
-    )
-  );
-}
+    );
 
+  unknownError.code =
+    "RESULT_UNKNOWN";
+
+  unknownError.operationId =
+    operationId;
+
+  unknownError.cause =
+    lastError;
+
+  throw unknownError;
+}
 
 async function fetchApi(
   url,
-  retries = 3,
-  timeoutMs = 15000
+  retries = 4,
+  timeoutMs = 20000
 ) {
 
   let lastError;
@@ -12375,10 +12979,24 @@ async function fetchApi(
         await response.text();
 
       if (!response.ok) {
-        throw new Error(
-          "HTTP " +
-          response.status
-        );
+
+        const error =
+          new Error(
+            "HTTP " +
+            response.status
+          );
+
+        error.httpStatus =
+          Number(
+            response.status || 0
+          );
+
+        error.transient =
+          isTransientHttpStatus(
+            error.httpStatus
+          );
+
+        throw error;
       }
 
       // Googleの404ページなどHTMLが返った場合
@@ -12386,9 +13004,15 @@ async function fetchApi(
         text.trim().startsWith("<!DOCTYPE") ||
         text.trim().startsWith("<html")
       ) {
-        throw new Error(
-          "APIからHTMLが返されました"
-        );
+
+        const error =
+          new Error(
+            "APIからHTMLが返されました"
+          );
+
+        error.transient = true;
+
+        throw error;
       }
 
       return {
@@ -12411,18 +13035,26 @@ async function fetchApi(
         error
       );
 
+      if (
+        !isTransientApiError(error)
+      ) {
+        throw error;
+      }
+
       if (attempt < retries) {
 
-        await wait(
-          700 * attempt
-        );
+        const delay =
+          getRetryBackoffMs(
+            attempt
+          );
+
+        await wait(delay);
       }
     }
   }
 
   throw lastError;
 }
-
 
 function toggleHistory() {
 
@@ -14151,7 +14783,7 @@ async function loadSyncDataFromGoogle() {
     BOWEL_POINT_RULE_VERSION
   ) {
     throw new Error(
-      "GASが旧排便量基準のままです。Ver.0.8.23のGASへ更新してください。"
+      "GASが旧排便量基準のままです。Ver.0.8.24のGASへ更新してください。"
     );
   }
 
@@ -14202,6 +14834,13 @@ async function loadSyncDataFromGoogle() {
 
   histories =
     data.histories || [];
+
+  /*
+    Ver.0.8.24
+    前回「保存結果不明」になったoperationIdを、
+    今回の正常な権威同期で自動判定する。
+  */
+  resolvePendingBowelOperationAfterSync();
 
   nurseInstructions =
     Array.isArray(data.nurseInstructions)
