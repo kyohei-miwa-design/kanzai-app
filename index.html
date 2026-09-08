@@ -1643,7 +1643,7 @@ h3 {
 
 
 /* =========================
-   利用者状況 Ver.0.8.13
+   利用者状況 Ver.0.8.14
 ========================= */
 
 #status {
@@ -2501,6 +2501,189 @@ h3 {
 }
 
 /* =========================
+   看護師確認アラート Ver.0.8.14
+========================= */
+
+#homeNurseAlert:empty,
+#medicineNurseAlert:empty {
+  display: none;
+}
+
+#homeNurseAlert,
+#medicineNurseAlert {
+  margin-bottom: 16px;
+}
+
+.nurse-overdue-panel {
+  overflow: hidden;
+
+  border:
+    2px solid #ef9a9a;
+  border-left:
+    7px solid #d32f2f;
+  border-radius: 14px;
+
+  background: #fff7f7;
+
+  box-shadow:
+    0 4px 14px
+    rgba(183, 28, 28, 0.08);
+}
+
+.nurse-overdue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  padding:
+    13px
+    15px;
+
+  background: #ffebee;
+  color: #b71c1c;
+}
+
+.nurse-overdue-header strong {
+  font-size: 17px;
+}
+
+.nurse-overdue-count {
+  flex-shrink: 0;
+
+  padding:
+    4px
+    9px;
+
+  border-radius: 999px;
+
+  background: #c62828;
+  color: #fff;
+
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.nurse-overdue-list {
+  display: grid;
+  gap: 0;
+}
+
+.nurse-overdue-item {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+  gap: 10px;
+
+  align-items: center;
+
+  padding:
+    13px
+    15px;
+
+  border-bottom:
+    1px solid #ffcdd2;
+}
+
+.nurse-overdue-item:last-child {
+  border-bottom: none;
+}
+
+.nurse-overdue-user {
+  min-width: 0;
+}
+
+.nurse-overdue-user strong {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color: #263238;
+  font-size: 17px;
+}
+
+.nurse-overdue-user span {
+  color: #b71c1c;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.nurse-overdue-days {
+  min-width: 75px;
+
+  padding:
+    7px
+    9px;
+
+  border-radius: 10px;
+
+  background: #ffebee;
+  color: #c62828;
+
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.nurse-overdue-days strong {
+  display: block;
+
+  font-size: 21px;
+  line-height: 1.1;
+}
+
+.nurse-overdue-note {
+  padding:
+    11px
+    15px;
+
+  border-top:
+    1px solid #ffcdd2;
+
+  background: #fffafa;
+  color: #b71c1c;
+
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.65;
+}
+
+.nurse-overdue-action {
+  padding:
+    0
+    15px
+    14px;
+}
+
+.nurse-overdue-action button {
+  width: 100% !important;
+
+  margin: 0 !important;
+
+  background: #c62828 !important;
+  color: #fff !important;
+}
+
+#medicineNurseAlert {
+  margin-top: 4px;
+}
+
+@media (max-width: 600px) {
+
+  .nurse-overdue-item {
+    grid-template-columns:
+      1fr
+      auto;
+  }
+
+  .nurse-overdue-header strong {
+    font-size: 16px;
+  }
+}
+
+
+/* =========================
    ホーム：投薬状況カード
 ========================= */
 
@@ -2683,7 +2866,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.13</p>
+      <p class="app-version">Ver.0.8.14</p>
     </div>
 
     <button
@@ -2766,6 +2949,8 @@ h3 {
 
 
     <h2>緩下剤・排便処置の状況</h2>
+
+    <div id="homeNurseAlert"></div>
 
     <div id="homeMedicineStatus">
       本日の投薬状況を確認しています...
@@ -2922,6 +3107,8 @@ h3 {
     id="medicinePage"
     class="app-page"
   >
+
+    <div id="medicineNurseAlert"></div>
 
     <h2>本日の対応対象者</h2>
 
@@ -4538,6 +4725,13 @@ function getTodayTarget() {
  
 function updateHomeMedicineStatus() {
 
+  /*
+    ホーム投薬状況と同じタイミングで
+    看護師確認アラートも常に更新する。
+  */
+  updateNurseAlerts();
+
+
   const area =
     document.getElementById(
       "homeMedicineStatus"
@@ -4788,6 +4982,7 @@ function loadData() {
 
   updateUserSelects();
   updateRoleUI();
+  updateNurseAlerts();
 }
 
 async function loadUsersFromGoogle() {
@@ -5363,6 +5558,187 @@ function getMaxRuleDay(user) {
   }
 
   return Math.max(...days);
+}
+
+function getOverdueNurseUsers() {
+
+  const overdue = [];
+
+
+  for (const user in lastDates) {
+
+    if (
+      currentUnit !== "all" &&
+      userUnits[user] !== currentUnit
+    ) {
+      continue;
+    }
+
+
+    const maxRuleDay =
+      getMaxRuleDay(user);
+
+
+    /*
+      ルール未登録者は
+      「設定最終日超過」とは判定しない。
+    */
+    if (maxRuleDay === null) {
+      continue;
+    }
+
+
+    const days =
+      Math.max(
+        0,
+        getNoBowelDays(user)
+      );
+
+
+    if (days > maxRuleDay) {
+
+      overdue.push({
+        user: user,
+        days: days,
+        maxRuleDay: maxRuleDay
+      });
+    }
+  }
+
+
+  overdue.sort(
+    (a, b) =>
+      b.days - a.days ||
+      a.user.localeCompare(
+        b.user,
+        "ja"
+      )
+  );
+
+
+  return overdue;
+}
+
+
+function getNurseAlertHtml(
+  context = "home"
+) {
+
+  const overdue =
+    getOverdueNurseUsers();
+
+
+  if (overdue.length === 0) {
+    return "";
+  }
+
+
+  let items = "";
+
+
+  for (const info of overdue) {
+
+    items += `
+      <div class="nurse-overdue-item">
+
+        <div class="nurse-overdue-user">
+
+          <strong>
+            ${escapeHtml(info.user)}
+          </strong>
+
+          <span>
+            設定最終日：
+            未排便${info.maxRuleDay}日
+          </span>
+
+        </div>
+
+        <div class="nurse-overdue-days">
+          未排便
+          <strong>${info.days}日</strong>
+        </div>
+
+      </div>
+    `;
+  }
+
+
+  const actionHtml =
+    context === "home"
+      ? `
+        <div class="nurse-overdue-action">
+          <button
+            type="button"
+            onclick="openPage('medicinePage')"
+          >
+            対応を確認する
+          </button>
+        </div>
+      `
+      : "";
+
+
+  return `
+    <div class="nurse-overdue-panel">
+
+      <div class="nurse-overdue-header">
+
+        <strong>
+          🚨 看護師確認が必要です
+        </strong>
+
+        <span class="nurse-overdue-count">
+          ${overdue.length}名
+        </span>
+
+      </div>
+
+      <div class="nurse-overdue-list">
+        ${items}
+      </div>
+
+      <div class="nurse-overdue-note">
+        設定された最終日を超えています。
+        アプリ上で追加の処置を判断せず、
+        看護師へ確認してください。
+      </div>
+
+      ${actionHtml}
+
+    </div>
+  `;
+}
+
+
+function updateNurseAlerts() {
+
+  const homeArea =
+    document.getElementById(
+      "homeNurseAlert"
+    );
+
+  if (homeArea) {
+
+    homeArea.innerHTML =
+      getNurseAlertHtml(
+        "home"
+      );
+  }
+
+
+  const medicineArea =
+    document.getElementById(
+      "medicineNurseAlert"
+    );
+
+  if (medicineArea) {
+
+    medicineArea.innerHTML =
+      getNurseAlertHtml(
+        "medicine"
+      );
+  }
 }
 
 
@@ -11444,6 +11820,15 @@ function openPage(pageId) {
 
   if (targetPage) {
     targetPage.classList.add("active");
+  }
+
+
+  // ホーム・対応画面の看護師確認アラートを再評価
+  if (
+    pageId === "homePage" ||
+    pageId === "medicinePage"
+  ) {
+    updateNurseAlerts();
   }
 
 
