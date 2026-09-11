@@ -3532,6 +3532,539 @@ h3 {
   }
 }
 
+
+
+/* ==================================================
+   Ver.0.8.28 ホーム画面 UI刷新
+================================================== */
+
+.home-dashboard-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 2px 2px 12px;
+}
+
+.home-dashboard-title {
+  margin: 0;
+  color: #263238;
+  font-size: 24px;
+  font-weight: 950;
+  line-height: 1.2;
+}
+
+.home-dashboard-unit {
+  margin-bottom: 3px;
+  color: #607d8b;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.home-dashboard-date {
+  color: #78909c;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.home-section-label {
+  margin: 18px 2px 9px;
+  color: #546e7a;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.home-urgent-card {
+  overflow: hidden;
+  margin-bottom: 13px;
+  border: 2px solid #ef9a9a;
+  border-radius: 16px;
+  background: #fff1f1;
+  box-shadow: 0 2px 9px rgba(198, 40, 40, 0.06);
+}
+
+.home-urgent-card.all-clear {
+  border: 1px solid #c8e6c9;
+  background: #f1f8f2;
+}
+
+.home-urgent-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px;
+  color: #c62828;
+}
+
+.home-urgent-card.all-clear .home-urgent-head {
+  color: #2e7d32;
+}
+
+.home-urgent-head strong {
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.home-urgent-badge {
+  min-width: 35px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #c62828;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.home-urgent-card.all-clear .home-urgent-badge {
+  display: none;
+}
+
+.home-urgent-list {
+  border-top: 1px solid #ffcdd2;
+  background: rgba(255, 255, 255, 0.54);
+}
+
+.home-urgent-card.all-clear .home-urgent-list,
+.home-urgent-card.all-clear .home-urgent-action {
+  display: none;
+}
+
+.home-urgent-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+  border-top: 1px solid #ffe0e0;
+}
+
+.home-urgent-row:first-child {
+  border-top: none;
+}
+
+.home-urgent-label {
+  color: #455a64;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.home-urgent-count {
+  color: #c62828;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.home-urgent-action button {
+  width: 100%;
+  margin: 0 !important;
+  border: 0 !important;
+  border-top: 1px solid #efc4c4 !important;
+  border-radius: 0 !important;
+  padding: 11px 12px !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+  color: #c62828 !important;
+  font-weight: 900 !important;
+}
+
+.home-quick-bowel {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 !important;
+  padding: 15px 17px !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  background: linear-gradient(135deg, #00897b, #26a69a) !important;
+  color: #fff !important;
+  box-shadow: 0 5px 16px rgba(0, 137, 123, 0.18);
+}
+
+.home-quick-bowel-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.home-quick-bowel-icon {
+  font-size: 28px;
+}
+
+.home-quick-bowel-title {
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.home-quick-bowel-sub {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.88;
+}
+
+.home-quick-bowel-arrow {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.home-shift-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 11px;
+}
+
+.home-shift-card {
+  width: 100% !important;
+  min-height: 130px;
+  margin: 0 !important;
+  padding: 14px !important;
+  border: 1px solid #dfe5e8 !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+  color: #263238 !important;
+  box-shadow: 0 2px 9px rgba(38, 50, 56, 0.055);
+  text-align: left !important;
+}
+
+.home-shift-card.state-ok {
+  border-color: #c8e6c9 !important;
+}
+
+.home-shift-card.state-late {
+  border-color: #ef9a9a !important;
+  background: #fff8f8 !important;
+}
+
+.home-shift-card.state-ready {
+  border-color: #ffe0b2 !important;
+  background: #fffaf2 !important;
+}
+
+.home-shift-name {
+  color: #263238;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.home-shift-time {
+  margin-top: 3px;
+  color: #78909c;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.home-shift-state {
+  margin-top: 17px;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.home-shift-state.ok {
+  color: #2e7d32;
+}
+
+.home-shift-state.late {
+  color: #c62828;
+}
+
+.home-shift-state.ready {
+  color: #ef6c00;
+}
+
+.home-shift-state.wait {
+  color: #78909c;
+}
+
+.home-shift-signer {
+  margin-top: 4px;
+  color: #78909c;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.home-current-action-card {
+  padding: 15px;
+  border: 1px solid #dfe5e8;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 9px rgba(38, 50, 56, 0.055);
+}
+
+.home-current-action-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.home-current-action-title {
+  color: #263238;
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.home-current-action-note {
+  margin-top: 3px;
+  color: #78909c;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.home-current-action-number {
+  color: #263238;
+  font-size: 29px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.home-current-action-number small {
+  margin-left: 3px;
+  color: #78909c;
+  font-size: 12px;
+}
+
+.home-action-breakdown {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.home-action-stat {
+  padding: 9px 6px;
+  border-radius: 11px;
+  background: #f5f7f8;
+  text-align: center;
+}
+
+.home-action-stat strong {
+  display: block;
+  color: #263238;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.home-action-stat span {
+  display: block;
+  margin-top: 2px;
+  color: #78909c;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.home-current-action-link {
+  width: 100% !important;
+  margin: 12px 0 0 !important;
+  padding: 10px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: #f1f3ff !important;
+  color: #3949ab !important;
+  font-weight: 900 !important;
+}
+
+.home-current-action-complete {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #edf8f0;
+  color: #2e7d32;
+  font-size: 13px;
+  font-weight: 850;
+  text-align: center;
+}
+
+.home-completion-card {
+  padding: 15px;
+  border: 1px solid #dfe5e8;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 9px rgba(38, 50, 56, 0.055);
+}
+
+.home-completion-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.home-completion-title {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.home-completion-value {
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.home-progress-track {
+  height: 10px;
+  margin: 10px 0 13px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e9eef1;
+}
+
+.home-progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: #43a047;
+  transition: width 0.2s ease;
+}
+
+.home-completion-list {
+  display: grid;
+  gap: 9px;
+}
+
+.home-completion-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 9px;
+  border-top: 1px solid #edf1f3;
+}
+
+.home-completion-row:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.home-completion-row span:first-child {
+  color: #455a64;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.home-completion-status {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.home-completion-status.ok {
+  color: #2e7d32;
+}
+
+.home-completion-status.late {
+  color: #c62828;
+}
+
+.home-completion-status.ready {
+  color: #ef6c00;
+}
+
+.home-completion-status.wait {
+  color: #78909c;
+}
+
+.home-hidden-compat {
+  display: none !important;
+}
+
+.home-urgent-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1250;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(25, 35, 40, 0.46);
+}
+
+.home-urgent-overlay.open {
+  display: flex;
+}
+
+.home-urgent-sheet {
+  width: 100%;
+  max-width: 900px;
+  max-height: 72vh;
+  overflow-y: auto;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  border-radius: 20px 20px 0 0;
+  background: #fff;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.20);
+}
+
+.home-urgent-sheet h3 {
+  margin: 0 0 11px;
+  color: #263238;
+  font-size: 19px;
+  font-weight: 950;
+}
+
+.home-urgent-detail-row {
+  padding: 12px 2px;
+  border-top: 1px solid #edf1f3;
+}
+
+.home-urgent-detail-row:first-child {
+  border-top: none;
+}
+
+.home-urgent-detail-row strong {
+  display: block;
+  color: #263238;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.home-urgent-detail-row span {
+  display: block;
+  margin-top: 3px;
+  color: #78909c;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.home-urgent-detail-row button {
+  width: 100%;
+  margin: 8px 0 0 !important;
+  padding: 9px 10px !important;
+  border: 0 !important;
+  border-radius: 9px !important;
+  background: #f1f3ff !important;
+  color: #3949ab !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+}
+
+.home-urgent-close {
+  width: 100% !important;
+  margin: 11px 0 0 !important;
+  padding: 11px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: #eceff1 !important;
+  color: #455a64 !important;
+  font-weight: 900 !important;
+}
+
+@media (max-width: 420px) {
+  .home-shift-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .home-shift-card {
+    padding: 12px !important;
+  }
+
+  .home-dashboard-title {
+    font-size: 22px;
+  }
+}
+
 </style>
 </head>
 
@@ -3571,7 +4104,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.27</p>
+      <p class="app-version">Ver.0.8.28</p>
     </div>
 
     <button
@@ -3606,84 +4139,198 @@ h3 {
     class="app-page active"
   >
 
-    <h2>ホーム</h2>
+    <div class="home-dashboard-head">
 
-    <div class="home-unit-card">
-      <strong id="homeUnitName">
-        現在のユニット
-      </strong>
+      <div>
+        <div
+          id="homeUnitName"
+          class="home-dashboard-unit"
+        >
+          現在のユニット
+        </div>
+
+        <h2 class="home-dashboard-title">
+          今日の状況
+        </h2>
+      </div>
+
+      <div
+        id="homeTodayDate"
+        class="home-dashboard-date"
+      ></div>
+
     </div>
 
 
-    <h2>排便確認の状況</h2>
+    <div
+      id="homeUrgentCard"
+      class="home-urgent-card all-clear"
+    >
 
-    <div class="home-status-grid">
+      <div class="home-urgent-head">
+        <strong id="homeUrgentTitle">
+          ✅ 要確認なし
+        </strong>
 
-      <button
-       id="homeDayConfirmCard"
-       class="home-status-card"
-      onclick="openPage('bowelPage'); checkTodayBowelStatus();"
->
-        <span class="home-status-icon">☀️</span>
+        <span
+          id="homeUrgentCount"
+          class="home-urgent-badge"
+        >
+          0件
+        </span>
+      </div>
 
-        <span>
-          <strong>日中帯</strong><br>
-          <small>8:00 ～ 16:00</small>
+      <div class="home-urgent-list">
+
+        <div class="home-urgent-row">
+          <span class="home-urgent-label">
+            排便確認未完了
+          </span>
+
+          <span
+            id="homeUrgentShiftCount"
+            class="home-urgent-count"
+          >
+            0件
+          </span>
+        </div>
+
+        <div class="home-urgent-row">
+          <span class="home-urgent-label">
+            看護師確認待ち
+          </span>
+
+          <span
+            id="homeUrgentNurseCount"
+            class="home-urgent-count"
+          >
+            0件
+          </span>
+        </div>
+
+      </div>
+
+      <div class="home-urgent-action">
+        <button
+          type="button"
+          onclick="openHomeUrgentDetail()"
+        >
+          確認する →
+        </button>
+      </div>
+
+    </div>
+
+
+    <div class="home-section-label">
+      すぐ使う
+    </div>
+
+    <button
+      type="button"
+      class="home-quick-bowel"
+      onclick="openPage('bowelPage')"
+    >
+      <span class="home-quick-bowel-main">
+        <span class="home-quick-bowel-icon">
+          💩
         </span>
 
-        <span>確認する ›</span>
+        <span>
+          <span class="home-quick-bowel-title">
+            排便を入力する
+          </span>
+
+          <span class="home-quick-bowel-sub">
+            対象者を選んで記録
+          </span>
+        </span>
+      </span>
+
+      <span class="home-quick-bowel-arrow">
+        ›
+      </span>
+    </button>
+
+
+    <div class="home-section-label">
+      排便確認
+    </div>
+
+    <div class="home-shift-grid">
+
+      <button
+        id="homeDayConfirmCard"
+        type="button"
+        class="home-shift-card"
+        onclick="openPage('bowelPage'); checkTodayBowelStatus();"
+      >
+        <div class="home-shift-name">
+          ☀️ 日中帯
+        </div>
+
+        <div class="home-shift-time">
+          8:00 ～ 16:00
+        </div>
+
+        <div class="home-shift-state wait">
+          読み込み中…
+        </div>
       </button>
 
 
       <button
         id="homeNightConfirmCard"
-        class="home-status-card"
+        type="button"
+        class="home-shift-card"
         onclick="openPage('bowelPage'); checkNightBowelStatus();"
->
-        <span class="home-status-icon">🌙</span>
+      >
+        <div class="home-shift-name">
+          🌙 夜勤帯
+        </div>
 
-        <span>
-          <strong>夜勤帯</strong><br>
-          <small>16:00 ～ 翌8:00</small>
-        </span>
+        <div class="home-shift-time">
+          16:00 ～ 翌8:00
+        </div>
 
-        <span>確認する ›</span>
+        <div class="home-shift-state wait">
+          読み込み中…
+        </div>
       </button>
 
     </div>
 
 
-    <h2>緩下剤・排便処置の状況</h2>
-
-    <div id="homeNurseAlert"></div>
+    <div class="home-section-label">
+      現在の対応
+    </div>
 
     <div id="homeMedicineStatus">
-      本日の投薬状況を確認しています...
+      <div class="home-current-action-card">
+        対応状況を確認しています…
+      </div>
     </div>
 
 
-    <div class="home-action-grid">
-
-      <button
-        class="home-action-button bowel"
-        onclick="openPage('bowelPage')"
-      >
-        💩
-        <span>排便を入力</span>
-      </button>
-
-      <button
-        class="home-action-button medicine"
-        onclick="openPage('medicinePage')"
-      >
-        💊
-        <span>対応を確認</span>
-      </button>
-
+    <div class="home-section-label">
+      完了状況
     </div>
+
+    <div
+      id="homeCompletionStatus"
+      class="home-completion-card"
+    >
+      読み込み中…
+    </div>
+
+
+    <!-- 既存処理との互換用。詳細表示は対応ページへ集約 -->
+    <div
+      id="homeNurseAlert"
+      class="home-hidden-compat"
+    ></div>
 
   </section>
-
 
   <!-- =========================
        排便
@@ -4264,6 +4911,37 @@ h3 {
 
 
   <!-- =========================
+       ホーム 要確認詳細
+  ========================== -->
+  <div
+    id="homeUrgentOverlay"
+    class="home-urgent-overlay"
+    onclick="closeHomeUrgentDetailByOverlay(event)"
+  >
+    <div
+      class="home-urgent-sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="homeUrgentSheetTitle"
+    >
+      <h3 id="homeUrgentSheetTitle">
+        要確認
+      </h3>
+
+      <div id="homeUrgentDetailList"></div>
+
+      <button
+        type="button"
+        class="home-urgent-close"
+        onclick="closeHomeUrgentDetail()"
+      >
+        閉じる
+      </button>
+    </div>
+  </div>
+
+
+  <!-- =========================
        共通モーダル
   ========================== -->
   <div
@@ -4372,6 +5050,17 @@ let histories = [];
 
 // 看護師が今回限りで登録する個別対応指示
 let nurseInstructions = [];
+
+// Ver.0.8.28 ホーム表示用キャッシュ
+let latestDailyConfirms = [];
+let latestHomeActionMetrics = {
+  totalCount: 0,
+  completedCount: 0,
+  remainingCount: 0,
+  remainingLaxative: 0,
+  remainingProcedure: 0,
+  remainingNurse: 0
+};
 
 let checks = {};
 
@@ -6272,13 +6961,660 @@ function getTodayTarget() {
   return result;
 }
  
+function updateHomeDashboardMeta() {
+
+  const dateArea =
+    document.getElementById(
+      "homeTodayDate"
+    );
+
+  if (dateArea) {
+
+    const now =
+      new Date();
+
+    dateArea.textContent =
+      (now.getMonth() + 1) +
+      "月" +
+      now.getDate() +
+      "日";
+  }
+
+
+  const unitArea =
+    document.getElementById(
+      "homeUnitName"
+    );
+
+  if (unitArea) {
+
+    unitArea.textContent =
+      currentUnit === "all"
+        ? "🏠 全ユニット"
+        : "🏠 " +
+          getUnitName(
+            currentUnit
+          );
+  }
+}
+
+
+function getHomeUrgentData() {
+
+  const pendingShifts =
+    Array.isArray(
+      latestDailyConfirms
+    )
+      ? getPendingShiftConfirmations(
+          latestDailyConfirms
+        )
+      : [];
+
+  const nurseWaiting =
+    getOverdueNurseUsers()
+      .filter(info =>
+        !info.instruction
+      );
+
+  return {
+    pendingShifts,
+    nurseWaiting
+  };
+}
+
+
+function updateHomeUrgentSummary() {
+
+  const card =
+    document.getElementById(
+      "homeUrgentCard"
+    );
+
+  if (!card) {
+    return;
+  }
+
+
+  const data =
+    getHomeUrgentData();
+
+  const shiftCount =
+    data.pendingShifts.length;
+
+  const nurseCount =
+    data.nurseWaiting.length;
+
+  const total =
+    shiftCount +
+    nurseCount;
+
+
+  const title =
+    document.getElementById(
+      "homeUrgentTitle"
+    );
+
+  const totalArea =
+    document.getElementById(
+      "homeUrgentCount"
+    );
+
+  const shiftArea =
+    document.getElementById(
+      "homeUrgentShiftCount"
+    );
+
+  const nurseArea =
+    document.getElementById(
+      "homeUrgentNurseCount"
+    );
+
+
+  if (total === 0) {
+
+    card.classList.add(
+      "all-clear"
+    );
+
+    if (title) {
+      title.textContent =
+        "✅ 要確認なし";
+    }
+
+  } else {
+
+    card.classList.remove(
+      "all-clear"
+    );
+
+    if (title) {
+      title.textContent =
+        "🚨 要確認";
+    }
+  }
+
+
+  if (totalArea) {
+    totalArea.textContent =
+      total + "件";
+  }
+
+  if (shiftArea) {
+    shiftArea.textContent =
+      shiftCount + "件";
+  }
+
+  if (nurseArea) {
+    nurseArea.textContent =
+      nurseCount + "件";
+  }
+}
+
+
+function getHomeUrgentDetailHtml() {
+
+  const data =
+    getHomeUrgentData();
+
+  const rows = [];
+
+
+  for (
+    const item of
+      data.pendingShifts
+  ) {
+
+    const unitLabel =
+      currentUnit === "all"
+        ? getUnitName(
+            item.unit
+          ) + " ／ "
+        : "";
+
+    const safeType =
+      escapeHtml(
+        item.type
+      );
+
+    const safeDate =
+      escapeHtml(
+        item.targetDate
+      );
+
+    rows.push(`
+      <div class="home-urgent-detail-row">
+        <strong>
+          ${escapeHtml(item.label)}
+        </strong>
+
+        <span>
+          ${escapeHtml(unitLabel)}
+          ${safeDate}
+          ／ 未確認
+        </span>
+
+        <button
+          type="button"
+          onclick="goToHomeUrgentShift('${safeType}', '${safeDate}')"
+        >
+          今から確認する
+        </button>
+      </div>
+    `);
+  }
+
+
+  for (
+    const info of
+      data.nurseWaiting
+  ) {
+
+    rows.push(`
+      <div class="home-urgent-detail-row">
+        <strong>
+          🚨 ${escapeHtml(info.user)} 様
+        </strong>
+
+        <span>
+          未排便 ${info.days}日
+          ／ 設定最終日 ${info.maxRuleDay}日
+        </span>
+
+        <button
+          type="button"
+          onclick="closeHomeUrgentDetail(); openPage('medicinePage');"
+        >
+          対応を確認する
+        </button>
+      </div>
+    `);
+  }
+
+
+  if (rows.length === 0) {
+
+    return `
+      <div class="home-urgent-detail-row">
+        <strong>✅ 要確認なし</strong>
+        <span>
+          現在、緊急に確認する項目はありません
+        </span>
+      </div>
+    `;
+  }
+
+
+  return rows.join("");
+}
+
+
+function openHomeUrgentDetail() {
+
+  const overlay =
+    document.getElementById(
+      "homeUrgentOverlay"
+    );
+
+  const list =
+    document.getElementById(
+      "homeUrgentDetailList"
+    );
+
+  if (
+    !overlay ||
+    !list
+  ) {
+    return;
+  }
+
+
+  list.innerHTML =
+    getHomeUrgentDetailHtml();
+
+  overlay.classList.add(
+    "open"
+  );
+
+  document.body.style.overflow =
+    "hidden";
+}
+
+
+function closeHomeUrgentDetail() {
+
+  const overlay =
+    document.getElementById(
+      "homeUrgentOverlay"
+    );
+
+  if (overlay) {
+    overlay.classList.remove(
+      "open"
+    );
+  }
+
+  document.body.style.overflow =
+    "";
+}
+
+
+function closeHomeUrgentDetailByOverlay(
+  event
+) {
+
+  if (
+    event &&
+    event.target &&
+    event.target.id ===
+      "homeUrgentOverlay"
+  ) {
+    closeHomeUrgentDetail();
+  }
+}
+
+
+function goToHomeUrgentShift(
+  type,
+  targetDate
+) {
+
+  closeHomeUrgentDetail();
+
+  openShiftConfirmationFromAlert(
+    type,
+    targetDate
+  );
+}
+
+
+function getHomeShiftStatusInfo(
+  type,
+  confirm,
+  targetDate
+) {
+
+  if (confirm) {
+
+    const late =
+      String(
+        confirm.status || ""
+      ) === "late";
+
+    return {
+      cardClass:
+        late
+          ? "state-late"
+          : "state-ok",
+      stateClass:
+        late
+          ? "late"
+          : "ok",
+      statusText:
+        late
+          ? "⏰ 遅延確認"
+          : "✅ 確認済み",
+      signer:
+        confirm.name
+          ? "確認者：" +
+            confirm.name
+          : ""
+    };
+  }
+
+
+  const timing =
+    getShiftTiming(
+      type,
+      targetDate
+    );
+
+
+  if (
+    timing &&
+    timing.isLate
+  ) {
+    return {
+      cardClass: "state-late",
+      stateClass: "late",
+      statusText: "🚨 未確認",
+      signer: "今から確認できます"
+    };
+  }
+
+
+  if (
+    timing &&
+    timing.canConfirm
+  ) {
+    return {
+      cardClass: "state-ready",
+      stateClass: "ready",
+      statusText: "○ 確認可能",
+      signer:
+        type === "day"
+          ? "15:00から確定可能"
+          : "5:00から確定可能"
+    };
+  }
+
+
+  return {
+    cardClass: "",
+    stateClass: "wait",
+    statusText:
+      type === "day"
+        ? "15:00から"
+        : "5:00から",
+    signer: "確定可能時間前です"
+  };
+}
+
+
+function updateHomeCompletionStatus() {
+
+  const area =
+    document.getElementById(
+      "homeCompletionStatus"
+    );
+
+  if (!area) {
+    return;
+  }
+
+
+  const metrics =
+    latestHomeActionMetrics ||
+    {
+      totalCount: 0,
+      completedCount: 0
+    };
+
+  const total =
+    Number(
+      metrics.totalCount || 0
+    );
+
+  const completed =
+    Number(
+      metrics.completedCount || 0
+    );
+
+  const percent =
+    total > 0
+      ? Math.max(
+          0,
+          Math.min(
+            100,
+            Math.round(
+              completed /
+              total *
+              100
+            )
+          )
+        )
+      : 100;
+
+
+  const now =
+    new Date();
+
+  const today =
+    getLocalDateText(
+      now
+    );
+
+  const nightTarget =
+    getDefaultNightTargetDateText(
+      now
+    );
+
+
+  function shiftSummary(
+    type,
+    targetDate
+  ) {
+
+    if (
+      currentUnit === "all"
+    ) {
+
+      let confirmed = 0;
+      let late = 0;
+
+      for (
+        let unit = 1;
+        unit <= 4;
+        unit++
+      ) {
+
+        const item =
+          getConfirmFor(
+            latestDailyConfirms,
+            unit,
+            type,
+            targetDate
+          );
+
+        if (item) {
+          confirmed++;
+
+          if (
+            String(
+              item.status || ""
+            ) === "late"
+          ) {
+            late++;
+          }
+        }
+      }
+
+
+      if (confirmed === 4) {
+
+        return {
+          text:
+            late > 0
+              ? "遅延 " +
+                late +
+                "件"
+              : "完了",
+          className:
+            late > 0
+              ? "late"
+              : "ok"
+        };
+      }
+
+
+      return {
+        text:
+          confirmed +
+          "/4 確定",
+        className:
+          getShiftTiming(
+            type,
+            targetDate
+          ).isLate
+            ? "late"
+            : "wait"
+      };
+    }
+
+
+    const confirm =
+      getConfirmFor(
+        latestDailyConfirms,
+        currentUnit,
+        type,
+        targetDate
+      );
+
+    const state =
+      getHomeShiftStatusInfo(
+        type,
+        confirm,
+        targetDate
+      );
+
+    return {
+      text:
+        state.statusText
+          .replace("✅ ", "")
+          .replace("🚨 ", "")
+          .replace("○ ", "")
+          .replace("⏰ ", ""),
+      className:
+        state.stateClass
+    };
+  }
+
+
+  const day =
+    shiftSummary(
+      "day",
+      today
+    );
+
+  const night =
+    shiftSummary(
+      "night",
+      nightTarget
+    );
+
+
+  area.innerHTML = `
+    <div class="home-completion-head">
+      <div class="home-completion-title">
+        現在の対応
+      </div>
+
+      <div class="home-completion-value">
+        ${completed} / ${total}件
+      </div>
+    </div>
+
+    <div class="home-progress-track">
+      <div
+        class="home-progress-fill"
+        style="width:${percent}%"
+      ></div>
+    </div>
+
+    <div class="home-completion-list">
+
+      <div class="home-completion-row">
+        <span>
+          ☀️ 日中帯の排便確認
+        </span>
+
+        <span class="home-completion-status ${day.className}">
+          ${escapeHtml(day.text)}
+        </span>
+      </div>
+
+      <div class="home-completion-row">
+        <span>
+          🌙 夜勤帯の排便確認
+        </span>
+
+        <span class="home-completion-status ${night.className}">
+          ${escapeHtml(night.text)}
+        </span>
+      </div>
+
+      <div class="home-completion-row">
+        <span>
+          💊 緩下剤・処置
+        </span>
+
+        <span class="home-completion-status ${metrics.remainingCount > 0 ? "ready" : "ok"}">
+          ${
+            total === 0
+              ? "対象なし"
+              : (
+                  completed +
+                  " / " +
+                  total +
+                  "件"
+                )
+          }
+        </span>
+      </div>
+
+    </div>
+  `;
+}
+
+
 function updateHomeMedicineStatus() {
 
   /*
-    ホーム投薬状況と同じタイミングで
-    看護師確認アラートも常に更新する。
+    対応ページ用の看護師アラートは
+    従来どおり更新する。
+    ホームでは件数だけを要約表示。
   */
   updateNurseAlerts();
+  updateHomeDashboardMeta();
 
 
   const area =
@@ -6301,15 +7637,17 @@ function updateHomeMedicineStatus() {
   let completedCount = 0;
   let remainingCount = 0;
 
-  const targetUsers = new Set();
-  const remainingUsers = new Set();
+  let remainingLaxative = 0;
+  let remainingProcedure = 0;
+  let remainingNurse = 0;
 
 
   for (const user in lastDates) {
 
     if (
       currentUnit !== "all" &&
-      userUnits[user] !== currentUnit
+      userUnits[user] !==
+        currentUnit
     ) {
       continue;
     }
@@ -6329,13 +7667,11 @@ function updateHomeMedicineStatus() {
         )
       );
 
-    if (activeRules.length === 0) {
-      continue;
-    }
 
-    targetUsers.add(user);
-
-    for (const rule of activeRules) {
+    for (
+      const rule of
+        activeRules
+    ) {
 
       totalCount++;
 
@@ -6346,129 +7682,167 @@ function updateHomeMedicineStatus() {
           rule
         )
       ) {
+
         completedCount++;
+
       } else {
+
         remainingCount++;
-        remainingUsers.add(user);
+
+        if (
+          rule.kind ===
+            "procedure"
+        ) {
+          remainingProcedure++;
+        } else {
+          remainingLaxative++;
+        }
       }
     }
   }
 
 
+  const todayText =
+    getTodayText();
 
-  const todayTextForNurse = getTodayText();
 
-  for (const item of nurseInstructions.map(normalizeNurseInstruction)) {
+  for (
+    const item of
+      nurseInstructions
+        .map(
+          normalizeNurseInstruction
+        )
+  ) {
 
     if (
       currentUnit !== "all" &&
-      userUnits[item.user] !== currentUnit
+      userUnits[item.user] !==
+        currentUnit
     ) {
       continue;
     }
 
-    if (item.status === "pending" && isNurseInstructionCurrentCycle(item)) {
 
-      if (item.targetDate <= todayTextForNurse) {
-        totalCount++;
-        remainingCount++;
-        targetUsers.add(item.user);
-        remainingUsers.add(item.user);
-      }
+    if (
+      item.status === "pending" &&
+      isNurseInstructionCurrentCycle(
+        item
+      ) &&
+      item.targetDate <=
+        todayText
+    ) {
+
+      totalCount++;
+      remainingCount++;
+      remainingNurse++;
     }
+
 
     if (
       item.status === "completed" &&
-      String(item.completedAt || "").slice(0, 10) === todayTextForNurse
+      String(
+        item.completedAt || ""
+      ).slice(0, 10) ===
+        todayText
     ) {
+
       totalCount++;
       completedCount++;
-      targetUsers.add(item.user);
     }
   }
 
-  if (totalCount === 0) {
 
-    area.innerHTML = `
-      <div class="home-medicine-all-clear">
-        🎉 現在の対応対象はありません
-      </div>
-    `;
+  latestHomeActionMetrics = {
+    totalCount,
+    completedCount,
+    remainingCount,
+    remainingLaxative,
+    remainingProcedure,
+    remainingNurse
+  };
 
-    return;
-  }
 
-
-  if (remainingCount === 0) {
-
-    area.innerHTML = `
-      <div class="home-medicine-summary">
-
-        <div class="home-medicine-counts">
-
-          <span>
-            対象者
-            <strong>${targetUsers.size}名</strong>
-          </span>
-
-          <span>
-            📋 対応予定
-            <strong>${totalCount}件</strong>
-          </span>
-
-          <span>
-            ✅ 実施済み
-            <strong>${completedCount}件</strong>
-          </span>
-
-        </div>
-
-        <div class="home-medicine-complete">
-          ✅ 現在表示中の対応はすべて実施済みです
-        </div>
-
-      </div>
-    `;
-
-    return;
-  }
+  const title =
+    remainingCount > 0
+      ? "💊 未実施"
+      : totalCount > 0
+        ? "✅ 対応完了"
+        : "🎉 対象なし";
 
 
   area.innerHTML = `
-    <div class="home-medicine-summary">
+    <div class="home-current-action-card">
 
-      <div class="home-medicine-counts">
+      <div class="home-current-action-main">
 
-        <span>
-          対象者
-          <strong>${targetUsers.size}名</strong>
-        </span>
+        <div>
+          <div class="home-current-action-title">
+            ${title}
+          </div>
 
-        <span>
-          📋 対応予定
-          <strong>${totalCount}件</strong>
-        </span>
+          <div class="home-current-action-note">
+            ${
+              remainingCount > 0
+                ? "まだ対応が必要なもの"
+                : totalCount > 0
+                  ? "現在表示中の対応は完了しています"
+                  : "現在の対応対象者はいません"
+            }
+          </div>
+        </div>
 
-        <span>
-          ✅ 実施済み
-          <strong>${completedCount}件</strong>
-        </span>
-
-        <span class="home-medicine-remaining">
-          ⚠ 未実施
-          <strong>${remainingCount}件</strong>
-        </span>
+        <div class="home-current-action-number">
+          ${remainingCount}
+          <small>件</small>
+        </div>
 
       </div>
 
-      <div class="home-medicine-warning">
-        ⚠ ${remainingUsers.size}名に未実施の対応があります
+      <div class="home-action-breakdown">
+
+        <div class="home-action-stat">
+          <strong>${remainingLaxative}</strong>
+          <span>緩下剤</span>
+        </div>
+
+        <div class="home-action-stat">
+          <strong>${remainingProcedure}</strong>
+          <span>排便処置</span>
+        </div>
+
+        <div class="home-action-stat">
+          <strong>${remainingNurse}</strong>
+          <span>看護師指示</span>
+        </div>
+
       </div>
+
+      ${
+        remainingCount === 0 &&
+        totalCount > 0
+          ? `
+            <div class="home-current-action-complete">
+              ✅ 現在表示中の対応はすべて実施済みです
+            </div>
+          `
+          : ""
+      }
+
+      <button
+        type="button"
+        class="home-current-action-link"
+        onclick="openPage('medicinePage')"
+      >
+        対応を見る →
+      </button>
 
     </div>
   `;
-}
 
+
+  updateHomeUrgentSummary();
+  updateHomeCompletionStatus();
+}
 function saveData() {
 
   localStorage.setItem(
@@ -12544,6 +13918,11 @@ async function loadDailyConfirmStatus() {
     const confirms =
       await response.json();
 
+    latestDailyConfirms =
+      Array.isArray(confirms)
+        ? confirms
+        : [];
+
     const now = new Date();
     const today = getLocalDateText(now);
     const nightTarget =
@@ -12689,6 +14068,15 @@ function updateHomeConfirmStatus(
   confirms
 ) {
 
+  latestDailyConfirms =
+    Array.isArray(confirms)
+      ? confirms
+      : [];
+
+
+  updateHomeDashboardMeta();
+
+
   const dayCard =
     document.getElementById(
       "homeDayConfirmCard"
@@ -12699,182 +14087,246 @@ function updateHomeConfirmStatus(
       "homeNightConfirmCard"
     );
 
-  const homeUnitName =
-    document.getElementById(
-      "homeUnitName"
-    );
-
-  if (!dayCard || !nightCard) {
+  if (
+    !dayCard ||
+    !nightCard
+  ) {
     return;
   }
 
-  if (homeUnitName) {
-    homeUnitName.textContent =
-      currentUnit === "all"
-        ? "全ユニット"
-        : getUnitName(currentUnit);
-  }
 
-  const now = new Date();
-  const today = getLocalDateText(now);
+  const now =
+    new Date();
+
+  const today =
+    getLocalDateText(
+      now
+    );
+
   const nightTarget =
-    getDefaultNightTargetDateText(now);
+    getDefaultNightTargetDateText(
+      now
+    );
 
-  function getHomeStatusText(
+
+  function applyCard(
+    card,
     type,
-    confirm,
+    title,
+    timeLabel,
     targetDate
   ) {
 
-    if (confirm) {
-      return String(confirm.status || "") === "late"
-        ? "⏰ 遅延確認"
-        : "✓ 確認済み";
+    card.classList.remove(
+      "state-ok",
+      "state-late",
+      "state-ready"
+    );
+
+
+    if (
+      currentUnit === "all"
+    ) {
+
+      let confirmed = 0;
+      let late = 0;
+
+      for (
+        let unit = 1;
+        unit <= 4;
+        unit++
+      ) {
+
+        const item =
+          getConfirmFor(
+            latestDailyConfirms,
+            unit,
+            type,
+            targetDate
+          );
+
+        if (item) {
+          confirmed++;
+
+          if (
+            String(
+              item.status || ""
+            ) === "late"
+          ) {
+            late++;
+          }
+        }
+      }
+
+
+      const timing =
+        getShiftTiming(
+          type,
+          targetDate
+        );
+
+      let stateClass =
+        "wait";
+
+      let statusText =
+        type === "day"
+          ? "15:00から"
+          : "5:00から";
+
+      let detail =
+        "全ユニット";
+
+
+      if (confirmed === 4) {
+
+        if (late > 0) {
+          stateClass = "late";
+          statusText =
+            "⏰ 遅延 " +
+            late +
+            "件";
+        } else {
+          stateClass = "ok";
+          statusText =
+            "✅ 全ユニット完了";
+        }
+
+        detail =
+          "4 / 4 確定";
+
+      } else if (
+        timing &&
+        timing.isLate
+      ) {
+
+        stateClass = "late";
+        statusText =
+          "🚨 " +
+          confirmed +
+          "/4 確定";
+
+        detail =
+          "未確認ユニットあり";
+
+      } else if (
+        timing &&
+        timing.canConfirm
+      ) {
+
+        stateClass = "ready";
+        statusText =
+          "○ " +
+          confirmed +
+          "/4 確定";
+
+        detail =
+          "確認可能";
+      }
+
+
+      card.classList.add(
+        stateClass === "ok"
+          ? "state-ok"
+          : stateClass === "late"
+            ? "state-late"
+            : stateClass === "ready"
+              ? "state-ready"
+              : ""
+      );
+
+
+      card.innerHTML = `
+        <div class="home-shift-name">
+          ${title}
+        </div>
+
+        <div class="home-shift-time">
+          ${timeLabel}
+        </div>
+
+        <div class="home-shift-state ${stateClass}">
+          ${statusText}
+        </div>
+
+        <div class="home-shift-signer">
+          ${detail}
+        </div>
+      `;
+
+      return;
     }
 
-    const timing =
-      getShiftTiming(
+
+    const confirm =
+      getConfirmFor(
+        latestDailyConfirms,
+        currentUnit,
         type,
         targetDate
       );
 
-    if (!timing.canConfirm) {
-      return type === "day"
-        ? "15:00から"
-        : "5:00から";
+    const state =
+      getHomeShiftStatusInfo(
+        type,
+        confirm,
+        targetDate
+      );
+
+
+    if (state.cardClass) {
+      card.classList.add(
+        state.cardClass
+      );
     }
 
-    if (timing.isLate) {
-      return "⚠ 未確認";
-    }
 
-    return "○ 確認可能";
-  }
+    card.innerHTML = `
+      <div class="home-shift-name">
+        ${title}
+      </div>
 
-  function statusClass(confirm, type, targetDate) {
+      <div class="home-shift-time">
+        ${timeLabel}
+      </div>
 
-    if (confirm) {
-      return String(confirm.status || "") === "late"
-        ? "home-confirm-ng"
-        : "home-confirm-ok";
-    }
+      <div class="home-shift-state ${state.stateClass}">
+        ${escapeHtml(state.statusText)}
+      </div>
 
-    const timing =
-      getShiftTiming(type, targetDate);
-
-    return timing && timing.isLate
-      ? "home-confirm-ng"
-      : "home-confirm-ok";
-  }
-
-  if (currentUnit === "all") {
-
-    let dayCount = 0;
-    let nightCount = 0;
-    let dayLate = 0;
-    let nightLate = 0;
-
-    for (let unit = 1; unit <= 4; unit++) {
-
-      const day =
-        getConfirmFor(
-          confirms,
-          unit,
-          "day",
-          today
-        );
-
-      const night =
-        getConfirmFor(
-          confirms,
-          unit,
-          "night",
-          nightTarget
-        );
-
-      if (day) {
-        dayCount++;
-        if (day.status === "late") dayLate++;
+      ${
+        state.signer
+          ? `
+            <div class="home-shift-signer">
+              ${escapeHtml(state.signer)}
+            </div>
+          `
+          : ""
       }
-
-      if (night) {
-        nightCount++;
-        if (night.status === "late") nightLate++;
-      }
-    }
-
-    dayCard.innerHTML = `
-      <span class="home-status-icon">☀️</span>
-      <span>
-        <strong>日中帯</strong><br>
-        <small>8:00 ～ 16:00</small>
-      </span>
-      <span class="${dayCount === 4 && dayLate === 0 ? "home-confirm-ok" : "home-confirm-ng"}">
-        ${
-          dayCount === 4
-            ? (dayLate > 0 ? `⏰ 遅延${dayLate}件` : "✓ 全ユニット完了")
-            : `⚠ ${dayCount}/4 確定`
-        }
-      </span>
     `;
-
-    nightCard.innerHTML = `
-      <span class="home-status-icon">🌙</span>
-      <span>
-        <strong>夜勤帯</strong><br>
-        <small>16:00 ～ 翌8:00</small>
-      </span>
-      <span class="${nightCount === 4 && nightLate === 0 ? "home-confirm-ok" : "home-confirm-ng"}">
-        ${
-          nightCount === 4
-            ? (nightLate > 0 ? `⏰ 遅延${nightLate}件` : "✓ 全ユニット完了")
-            : `⚠ ${nightCount}/4 確定`
-        }
-      </span>
-    `;
-
-    return;
   }
 
-  const dayConfirm =
-    getConfirmFor(
-      confirms,
-      currentUnit,
-      "day",
-      today
-    );
 
-  const nightConfirm =
-    getConfirmFor(
-      confirms,
-      currentUnit,
-      "night",
-      nightTarget
-    );
+  applyCard(
+    dayCard,
+    "day",
+    "☀️ 日中帯",
+    "8:00 ～ 16:00",
+    today
+  );
 
-  dayCard.innerHTML = `
-    <span class="home-status-icon">☀️</span>
-    <span>
-      <strong>日中帯</strong><br>
-      <small>8:00 ～ 16:00</small>
-    </span>
-    <span class="${statusClass(dayConfirm, "day", today)}">
-      ${getHomeStatusText("day", dayConfirm, today)}
-    </span>
-  `;
 
-  nightCard.innerHTML = `
-    <span class="home-status-icon">🌙</span>
-    <span>
-      <strong>夜勤帯</strong><br>
-      <small>16:00 ～ 翌8:00</small>
-    </span>
-    <span class="${statusClass(nightConfirm, "night", nightTarget)}">
-      ${getHomeStatusText("night", nightConfirm, nightTarget)}
-    </span>
-  `;
+  applyCard(
+    nightCard,
+    "night",
+    "🌙 夜勤帯",
+    "16:00 ～ 翌8:00",
+    nightTarget
+  );
+
+
+  updateHomeUrgentSummary();
+  updateHomeCompletionStatus();
 }
-
 async function changeLastDate() {
 
   const user =
@@ -16141,6 +17593,12 @@ function openPage(pageId) {
     pageId === "medicinePage"
   ) {
     updateNurseAlerts();
+  }
+
+  if (pageId === "homePage") {
+    updateHomeDashboardMeta();
+    updateHomeUrgentSummary();
+    updateHomeCompletionStatus();
   }
 
 
