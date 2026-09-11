@@ -2612,7 +2612,7 @@ h3 {
 
 
 /* =========================
-   Ver.0.8.32 その他ページ UI刷新
+   Ver.0.8.33 その他ページ UI刷新
 ========================= */
 
 .other-page-head {
@@ -5352,7 +5352,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.32</p>
+      <p class="app-version">Ver.0.8.33</p>
     </div>
 
     <button
@@ -6122,7 +6122,7 @@ h3 {
 
 
   <!-- =========================
-       その他 Ver.0.8.32
+       その他 Ver.0.8.33
   ========================== -->
   <section
     id="otherPage"
@@ -6436,7 +6436,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.32
+          Ver.0.8.33
         </span>
       </div>
 
@@ -13538,8 +13538,13 @@ async function changeUserUnit() {
 }
 
 
-let otherStatusPanelOpen = false;
-let otherAdminPanel = "";
+/*
+  Ver.0.8.33
+  initialize() より後方に定義されていても TDZ にならないよう、
+  起動時に参照される「その他」UI状態は var で宣言する。
+*/
+var otherStatusPanelOpen = false;
+var otherAdminPanel = "";
 
 
 function getOtherStatusCounts() {
