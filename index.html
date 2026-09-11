@@ -2630,29 +2630,326 @@ h3 {
 
 
 /* =========================
-   ルール閲覧ページ
+   Ver.0.8.31 ルール閲覧ページ UI刷新
 ========================= */
 
+.rule-view-page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.rule-view-page-head h2 {
+  margin: 0;
+}
+
+.rule-view-readonly {
+  flex: none;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #eceff1;
+  color: #607d8b;
+  font-size: 11px;
+  font-weight: 850;
+}
+
 .rule-view-note {
-  margin-bottom: 16px;
-  padding: 13px 14px;
-
-  border: 1px solid #c5dce8;
+  margin-bottom: 12px;
+  padding: 11px 12px;
+  border: 1px solid #dfe5e8;
   border-radius: 12px;
+  background: #f8fafb;
+  color: #607d8b;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.55;
+}
 
-  background: #f4f9fc;
+.rule-view-filter-card {
+  margin-bottom: 13px;
+  padding: 13px;
+  border: 1px solid #dfe5e8;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(38, 50, 56, 0.05);
+}
+
+.rule-view-filter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.rule-view-filter-title {
   color: #455a64;
-
   font-size: 14px;
-  line-height: 1.7;
+  font-weight: 900;
 }
 
-#ruleViewList .user-card {
-  margin-bottom: 14px;
+.rule-view-account-note {
+  color: #78909c;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: right;
 }
 
-#ruleViewList .rule-list-line {
+.rule-view-search-wrap {
+  position: relative;
+}
+
+.rule-view-search-wrap input {
+  width: 100%;
+  margin: 0;
+  padding: 11px 38px 11px 12px;
+  border: 1px solid #cfd8dc;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.rule-view-search-icon {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  opacity: 0.55;
+}
+
+.rule-view-unit-field {
+  margin-top: 10px;
+}
+
+.rule-view-unit-field label {
+  display: block;
+  margin-bottom: 5px;
+  color: #607d8b;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.rule-view-unit-field select {
+  width: 100%;
+  margin: 0;
+  padding: 10px 11px;
+  border: 1px solid #cfd8dc;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.rule-view-filter-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.rule-view-filter-actions button {
+  flex: 1;
+  margin: 0;
+  padding: 9px;
+  border: 0;
+  border-radius: 9px;
+  background: #eceff1;
+  color: #455a64;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.rule-view-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 15px 2px 8px;
+  color: #546e7a;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.rule-view-count-pill {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e9eef1;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.rule-view-user-card {
+  margin-bottom: 10px;
+  overflow: hidden;
+  border: 1px solid #dfe5e8;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(38, 50, 56, 0.05);
+}
+
+.rule-view-user-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  padding: 14px;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  color: #263238;
+  text-align: left;
+}
+
+.rule-view-user-main { min-width: 0; }
+
+.rule-view-user-name {
+  font-size: 20px;
+  font-weight: 950;
+  line-height: 1.2;
+}
+
+.rule-view-user-meta {
+  margin-top: 4px;
+  color: #78909c;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.rule-view-chevron {
+  flex: none;
+  color: #78909c;
+  font-size: 22px;
+  transition: transform 0.18s ease;
+}
+
+.rule-view-user-card.open .rule-view-chevron {
+  transform: rotate(90deg);
+}
+
+.rule-view-user-body {
+  display: none;
+  padding: 10px 14px 14px;
+  border-top: 1px solid #edf1f3;
+}
+
+.rule-view-user-card.open .rule-view-user-body { display: block; }
+
+.rule-view-timeline {
+  position: relative;
+  padding-left: 18px;
+}
+
+.rule-view-timeline::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 5px;
+  width: 2px;
+  background: #d9e1e5;
+}
+
+.rule-view-day-block {
+  position: relative;
+  padding: 0 0 17px 12px;
+}
+
+.rule-view-day-block:last-child { padding-bottom: 0; }
+
+.rule-view-day-block::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: -17px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #90a4ae;
+  box-shadow: 0 0 0 2px #d9e1e5;
+}
+
+.rule-view-day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.rule-view-day-label {
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.rule-view-day-count {
+  color: #78909c;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.rule-view-row {
+  display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: 7px;
+  padding: 10px;
+  border: 1px solid #e0e6ea;
+  border-radius: 11px;
+  background: #fafcfd;
+}
+
+.rule-view-kind {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.rule-view-kind.laxative {
+  color: #1565c0;
+  background: #eaf4ff;
+}
+
+.rule-view-kind.procedure {
+  color: #6a1b9a;
+  background: #f3e5f5;
+}
+
+.rule-view-content {
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 900;
+  word-break: break-word;
+}
+
+.rule-view-time {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #eef2f4;
+  color: #546e7a;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.rule-view-no-rule,
+.rule-view-empty {
+  padding: 22px 8px;
+  color: #90a4ae;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+@media (max-width: 390px) {
+  .rule-view-row { grid-template-columns: 1fr auto; }
+  .rule-view-kind { grid-column: 1 / 3; }
 }
 
 
@@ -4749,7 +5046,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.30</p>
+      <p class="app-version">Ver.0.8.31</p>
     </div>
 
     <button
@@ -5434,18 +5731,81 @@ h3 {
 
 
   <!-- =========================
-       ルール（全職種・閲覧専用）
+       ルール Ver.0.8.31
+       全職種・閲覧専用
   ========================== -->
   <section
     id="rulePage"
     class="app-page"
   >
 
-    <h2>個別ルール</h2>
+    <div class="rule-view-page-head">
+      <h2>個別ルール</h2>
+      <div class="rule-view-readonly">閲覧専用</div>
+    </div>
 
     <div class="rule-view-note">
-      現在のユニットに登録されている緩下剤・排便処置ルールです。<br>
-      この画面は閲覧専用です。ルールの変更は管理者が行います。
+      緩下剤・排便処置の個別ルールを確認できます。<br>
+      ルールの変更は管理者画面から行います。
+    </div>
+
+    <div class="rule-view-filter-card">
+
+      <div class="rule-view-filter-head">
+        <div class="rule-view-filter-title">利用者を探す</div>
+        <div
+          id="ruleViewAccountNote"
+          class="rule-view-account-note"
+        ></div>
+      </div>
+
+      <div class="rule-view-search-wrap">
+        <input
+          id="ruleViewSearch"
+          type="search"
+          placeholder="名前を入力"
+          oninput="renderRuleView()"
+        >
+        <span class="rule-view-search-icon">🔍</span>
+      </div>
+
+      <div
+        id="ruleViewUnitField"
+        class="rule-view-unit-field"
+        style="display:none;"
+      >
+        <label for="ruleViewUnitFilter">
+          ユニット（看護師・管理者）
+        </label>
+        <select
+          id="ruleViewUnitFilter"
+          onchange="renderRuleView()"
+        ></select>
+      </div>
+
+      <div class="rule-view-filter-actions">
+        <button
+          type="button"
+          onclick="toggleAllRuleViewUsers()"
+        >
+          全員を開く / 閉じる
+        </button>
+        <button
+          type="button"
+          onclick="clearRuleViewFilters()"
+        >
+          検索を解除
+        </button>
+      </div>
+
+    </div>
+
+    <div class="rule-view-summary">
+      <span>表示利用者</span>
+      <span
+        id="ruleViewCount"
+        class="rule-view-count-pill"
+      >0名</span>
     </div>
 
     <div id="ruleViewList">
@@ -5831,6 +6191,10 @@ let histories = [];
 // Ver.0.8.30 履歴画面
 let historyViewMode = "today";
 let historyVisiblePastCount = 50;
+
+// Ver.0.8.31 ルール閲覧画面
+let ruleViewAllOpen = false;
+let ruleViewOpenUsers = new Set();
 
 // 看護師が今回限りで登録する個別対応指示
 let nurseInstructions = [];
@@ -14115,6 +14479,431 @@ async function saveRule() {
   }
 }
 
+function getRuleViewAllUsers() {
+
+  const activeUsers =
+    Object.keys(userUnits || {});
+
+  const names =
+    activeUsers.length > 0
+      ? new Set(activeUsers)
+      : new Set([
+          ...Object.keys(points || {}),
+          ...Object.keys(lastDates || {}),
+          ...Object.keys(rules || {})
+        ]);
+
+  return [...names]
+    .filter(name => String(name || "").trim())
+    .sort((a, b) =>
+      String(a).localeCompare(
+        String(b),
+        "ja"
+      )
+    );
+}
+
+function getRuleViewSelectedUnit() {
+
+  const select =
+    document.getElementById(
+      "ruleViewUnitFilter"
+    );
+
+  if (
+    currentUnit !== "all" ||
+    !select
+  ) {
+    return currentUnit;
+  }
+
+  return String(
+    select.value || ""
+  ).trim();
+}
+
+function updateRuleViewUnitFilter() {
+
+  const field =
+    document.getElementById(
+      "ruleViewUnitField"
+    );
+
+  const select =
+    document.getElementById(
+      "ruleViewUnitFilter"
+    );
+
+  const note =
+    document.getElementById(
+      "ruleViewAccountNote"
+    );
+
+  if (!field || !select || !note) {
+    return;
+  }
+
+  if (currentUnit !== "all") {
+
+    field.style.display = "none";
+
+    note.textContent =
+      getUnitName(currentUnit) +
+      "のみ表示";
+
+    return;
+  }
+
+  field.style.display = "block";
+
+  note.textContent =
+    "全ユニット表示";
+
+  const previousValue =
+    String(select.value || "");
+
+  const ids = new Set([
+    ...Object.keys(unitMaster || {}),
+    ...Object.values(userUnits || {})
+      .map(value => String(value || "").trim())
+      .filter(value => value && value !== "all")
+  ]);
+
+  const sortedIds = [...ids]
+    .sort((a, b) =>
+      String(a).localeCompare(
+        String(b),
+        "ja",
+        { numeric: true }
+      )
+    );
+
+  select.innerHTML =
+    `<option value="">全ユニット</option>` +
+    sortedIds.map(unitId => `
+      <option value="${escapeHtml(unitId)}">
+        ${escapeHtml(getUnitName(unitId))}
+      </option>
+    `).join("");
+
+  if (
+    previousValue &&
+    sortedIds.includes(previousValue)
+  ) {
+    select.value = previousValue;
+  }
+}
+
+function getRuleViewTimingIcon(rule) {
+
+  const timing =
+    String(rule?.timing || "").trim();
+
+  if (timing === "morning") {
+    return "🌅";
+  }
+
+  if (timing === "evening") {
+    return "🌙";
+  }
+
+  if (timing === "lunch") {
+    return "☀️";
+  }
+
+  return "🕘";
+}
+
+function getRuleViewUserHtml(user) {
+
+  const encodedUser =
+    encodeURIComponent(user);
+
+  const rawDays =
+    Object.keys(rules?.[user] || {});
+
+  const days = rawDays
+    .filter(day =>
+      getRulesForDay(user, day)
+        .length > 0
+    )
+    .sort((a, b) =>
+      Number(a) - Number(b)
+    );
+
+  const ruleCount = days.reduce(
+    (sum, day) =>
+      sum +
+      getRulesForDay(user, day)
+        .length,
+    0
+  );
+
+  const isOpen =
+    ruleViewAllOpen ||
+    ruleViewOpenUsers.has(user);
+
+  const unitText =
+    currentUnit === "all"
+      ? `・${escapeHtml(
+          getUnitName(
+            userUnits[user] || ""
+          )
+        )}`
+      : "";
+
+  let bodyHtml = "";
+
+  if (ruleCount === 0) {
+
+    bodyHtml = `
+      <div class="rule-view-no-rule">
+        個別ルールは登録されていません
+      </div>
+    `;
+
+  } else {
+
+    bodyHtml = `
+      <div class="rule-view-timeline">
+        ${days.map(day => {
+
+          const dayRules =
+            getRulesForDay(user, day);
+
+          return `
+            <div class="rule-view-day-block">
+
+              <div class="rule-view-day-head">
+                <div class="rule-view-day-label">
+                  未排便 ${escapeHtml(day)}日目
+                </div>
+                <div class="rule-view-day-count">
+                  ${dayRules.length}件
+                </div>
+              </div>
+
+              ${dayRules.map(rule => `
+                <div class="rule-view-row">
+
+                  <span class="rule-view-kind ${escapeHtml(rule.kind)}">
+                    ${getRuleKindIcon(rule)}
+                    ${escapeHtml(getRuleKindLabel(rule))}
+                  </span>
+
+                  <span class="rule-view-content">
+                    ${escapeHtml(rule.content)}
+                  </span>
+
+                  <span class="rule-view-time">
+                    ${getRuleViewTimingIcon(rule)}
+                    ${escapeHtml(getRuleTimingLabel(rule))}
+                  </span>
+
+                </div>
+              `).join("")}
+
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  return `
+    <div
+      class="rule-view-user-card${isOpen ? " open" : ""}"
+      data-rule-user="${escapeHtml(encodedUser)}"
+    >
+
+      <button
+        type="button"
+        class="rule-view-user-head"
+        onclick="toggleRuleViewUser(this)"
+      >
+
+        <div class="rule-view-user-main">
+          <div class="rule-view-user-name">
+            ${escapeHtml(user)}
+          </div>
+          <div class="rule-view-user-meta">
+            ${ruleCount}件のルール${unitText}
+          </div>
+        </div>
+
+        <div class="rule-view-chevron">›</div>
+
+      </button>
+
+      <div class="rule-view-user-body">
+        ${bodyHtml}
+      </div>
+
+    </div>
+  `;
+}
+
+function renderRuleView() {
+
+  const list =
+    document.getElementById(
+      "ruleViewList"
+    );
+
+  const count =
+    document.getElementById(
+      "ruleViewCount"
+    );
+
+  const search =
+    document.getElementById(
+      "ruleViewSearch"
+    );
+
+  if (!list) {
+    return;
+  }
+
+  updateRuleViewUnitFilter();
+
+  const query =
+    String(search?.value || "")
+      .trim()
+      .toLowerCase();
+
+  const selectedUnit =
+    getRuleViewSelectedUnit();
+
+  const users =
+    getRuleViewAllUsers()
+      .filter(user => {
+
+        const unit =
+          String(
+            userUnits[user] || ""
+          ).trim();
+
+        if (
+          currentUnit !== "all" &&
+          unit !== String(currentUnit)
+        ) {
+          return false;
+        }
+
+        if (
+          currentUnit === "all" &&
+          selectedUnit &&
+          unit !== selectedUnit
+        ) {
+          return false;
+        }
+
+        if (
+          query &&
+          !String(user)
+            .toLowerCase()
+            .includes(query)
+        ) {
+          return false;
+        }
+
+        return true;
+      });
+
+  if (count) {
+    count.textContent =
+      users.length + "名";
+  }
+
+  if (users.length === 0) {
+    list.innerHTML = `
+      <div class="rule-view-empty">
+        該当する利用者はいません
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML =
+    users
+      .map(getRuleViewUserHtml)
+      .join("");
+}
+
+function toggleRuleViewUser(button) {
+
+  const card =
+    button?.closest(
+      ".rule-view-user-card"
+    );
+
+  if (!card) {
+    return;
+  }
+
+  const encodedUser =
+    String(
+      card.dataset.ruleUser || ""
+    );
+
+  let user = "";
+
+  try {
+    user = decodeURIComponent(
+      encodedUser
+    );
+  } catch (error) {
+    user = encodedUser;
+  }
+
+  if (!user) {
+    return;
+  }
+
+  if (card.classList.contains("open")) {
+    ruleViewOpenUsers.delete(user);
+    card.classList.remove("open");
+  } else {
+    ruleViewOpenUsers.add(user);
+    card.classList.add("open");
+  }
+}
+
+function toggleAllRuleViewUsers() {
+
+  ruleViewAllOpen =
+    !ruleViewAllOpen;
+
+  if (!ruleViewAllOpen) {
+    ruleViewOpenUsers.clear();
+  }
+
+  renderRuleView();
+}
+
+function clearRuleViewFilters() {
+
+  const search =
+    document.getElementById(
+      "ruleViewSearch"
+    );
+
+  const unit =
+    document.getElementById(
+      "ruleViewUnitFilter"
+    );
+
+  if (search) {
+    search.value = "";
+  }
+
+  if (unit) {
+    unit.value = "";
+  }
+
+  renderRuleView();
+}
+
 function getRuleListHtml(editable = true) {
 
   let result = "";
@@ -14221,8 +15010,7 @@ function updateRuleDisplays() {
     document.getElementById("ruleViewList");
 
   if (ruleViewList) {
-    ruleViewList.innerHTML =
-      getRuleListHtml(false);
+    renderRuleView();
   }
 }
 
