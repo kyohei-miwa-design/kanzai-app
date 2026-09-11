@@ -1803,7 +1803,7 @@ h3 {
 
 
 /* =========================
-   Ver.0.8.30 履歴ページ UI刷新
+   Ver.0.8.31 履歴ページ UI刷新
 ========================= */
 
 .history-ui-tabs {
@@ -2628,7 +2628,7 @@ h3 {
 
 
 /* =========================
-   Ver.0.8.42 その他ページ UI刷新
+   Ver.0.8.43 その他ページ UI刷新
 ========================= */
 
 .other-page-head {
@@ -4106,7 +4106,7 @@ h3 {
 
 
 /* ==================================================
-   Ver.0.8.30 排便ページ UI刷新
+   Ver.0.8.31 排便ページ UI刷新
 ================================================== */
 
 :root {
@@ -4435,7 +4435,7 @@ h3 {
 
 
 /* ==================================================
-   Ver.0.8.30 ホーム画面 UI刷新
+   Ver.0.8.31 ホーム画面 UI刷新
 ================================================== */
 
 .home-dashboard-head {
@@ -4968,7 +4968,7 @@ h3 {
 
 
 /* ==================================================
-   Ver.0.8.30 対応ページ UI刷新
+   Ver.0.8.31 対応ページ UI刷新
 ================================================== */
 
 .action-ui-head {
@@ -5368,7 +5368,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.42</p>
+      <p class="app-version">Ver.0.8.43</p>
     </div>
 
     <button
@@ -5919,7 +5919,7 @@ h3 {
   </section>
 
   <!-- =========================
-       履歴 Ver.0.8.30
+       履歴 Ver.0.8.31
   ========================== -->
   <section
     id="historyPage"
@@ -6138,7 +6138,7 @@ h3 {
 
 
   <!-- =========================
-       その他 Ver.0.8.42
+       その他 Ver.0.8.43
   ========================== -->
   <section
     id="otherPage"
@@ -6452,7 +6452,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.42
+          Ver.0.8.43
         </span>
       </div>
 
@@ -6461,7 +6461,7 @@ h3 {
           GAS
         </span>
         <span class="other-info-value">
-          Ver.0.8.30
+          Ver.0.8.31
         </span>
       </div>
 
@@ -6706,7 +6706,7 @@ let currentUnit = "";
 let currentRole = "";
 
 /*
-  Ver.0.8.42
+  Ver.0.8.43
   ログイン復元時に initialize() から参照されるため、
   APIセッショントークンのメモリ変数は
   initialize() 呼出より前に必ず初期化する。
@@ -6721,7 +6721,7 @@ let points = {
 
 let histories = [];
 
-// Ver.0.8.30 履歴画面
+// Ver.0.8.31 履歴画面
 let historyViewMode = "today";
 let historyVisiblePastCount = 50;
 
@@ -6732,7 +6732,7 @@ let ruleViewOpenUsers = new Set();
 // 看護師が今回限りで登録する個別対応指示
 let nurseInstructions = [];
 
-// Ver.0.8.30 ホーム表示用キャッシュ
+// Ver.0.8.31 ホーム表示用キャッシュ
 let latestDailyConfirms = [];
 let latestHomeActionMetrics = {
   totalCount: 0,
@@ -6752,12 +6752,22 @@ let newDataMessageTimer = null;
 let isRefreshing = false;
 let autoRefreshTimer = null;
 
-// Ver.0.8.42
+// Ver.0.8.43
 // 「30秒ごと」ではなく「同期完了から30秒後」に次を実行する。
 const AUTO_REFRESH_DELAY_MS = 30000;
 const AUTO_REFRESH_WRITE_RETRY_MS = 5000;
 const AUTO_SYNC_WARNING_THRESHOLD = 2;
+
+/*
+  Ver.0.8.43
+  通常は軽量同期。
+  rules / staffMaster / unitMaster は5分ごとの全同期。
+*/
+const FULL_SYNC_INTERVAL_MS =
+  5 * 60 * 1000;
+
 let syncConsecutiveFailureCount = 0;
+let lastFullSyncCompletedAt = 0;
 
 // Ver.0.8.22
 // 書き込み処理中に30秒自動同期が割り込むのを防ぐ
@@ -10314,7 +10324,7 @@ function updateHomeMedicineStatus() {
 }
 
 // ============================================================
-// Ver.0.8.42 ローカルキャッシュのデータスコープ分離
+// Ver.0.8.43 ローカルキャッシュのデータスコープ分離
 // ============================================================
 
 const DATA_SCOPE_CACHE_KEY =
@@ -11070,6 +11080,20 @@ function startAutoRefresh() {
 }
 
 
+function shouldRunFullSync() {
+
+  if (!lastFullSyncCompletedAt) {
+    return true;
+  }
+
+  return (
+    Date.now() -
+    lastFullSyncCompletedAt >=
+    FULL_SYNC_INTERVAL_MS
+  );
+}
+
+
 async function initialize() {
 
   /*
@@ -11084,7 +11108,7 @@ async function initialize() {
 
 
   /*
-    Ver.0.8.42
+    Ver.0.8.43
     旧版の全ユニットキャッシュや、
     別ユニット/全ユニット権限のキャッシュを
     読み込む前に破棄する。
@@ -11225,13 +11249,55 @@ async function refreshFromGoogle(
 
 
     // =========================
-    // Ver.0.8.42
-    // 読み取り同期は1本化済み。
-    // 一時的な404/429/5xxは
-    // requestInitialDataFromServer側で再試行する。
+    // Ver.0.8.43
+    // 通常は軽量同期。
+    // 5分ごとだけ全同期を行う。
     // =========================
 
-    await loadSyncDataFromGoogle();
+    const runFullSync =
+      shouldRunFullSync();
+
+
+    if (runFullSync) {
+
+      console.log(
+        "5分周期の全同期を実行します"
+      );
+
+
+      try {
+
+        await loadSyncDataFromGoogle();
+
+      } catch (fullSyncError) {
+
+        /*
+          全同期だけが一時的に失敗した場合、
+          現場で変わるデータだけは軽量同期で更新する。
+        */
+        if (
+          isTransientApiError(
+            fullSyncError
+          )
+        ) {
+
+          console.warn(
+            "全同期に失敗したため軽量同期へフォールバックします",
+            fullSyncError
+          );
+
+          await loadLightSyncDataFromGoogle();
+
+        } else {
+
+          throw fullSyncError;
+        }
+      }
+
+    } else {
+
+      await loadLightSyncDataFromGoogle();
+    }
 
 
     const afterData =
@@ -13967,7 +14033,7 @@ async function changeUserUnit() {
 
 
 /*
-  Ver.0.8.42
+  Ver.0.8.43
   initialize() より後方に定義されていても TDZ にならないよう、
   起動時に参照される「その他」UI状態は var で宣言する。
 */
@@ -14503,7 +14569,7 @@ async function login() {
 
   try {
     /*
-      Ver.0.8.42
+      Ver.0.8.43
       ID・パスワードはURLへ載せず、
       POST本文で送信する。
     */
@@ -14524,7 +14590,7 @@ async function login() {
     }
 
     /*
-      Ver.0.8.42
+      Ver.0.8.43
       GASが発行したセッショントークンを保存。
     */
     if (!result.sessionToken) {
@@ -14588,7 +14654,7 @@ async function login() {
 
 
     /*
-      Ver.0.8.42
+      Ver.0.8.43
       直前に管理者/看護師/別ユニットで使った
       利用者データを新しい権限へ持ち越さない。
     */
@@ -14826,7 +14892,7 @@ async function loadInitialDataFromGoogle() {
     }
 
     /*
-      Ver.0.8.42
+      Ver.0.8.43
       GASが現在のログイン権限に対応したスコープで
       データを返したことを確認してから反映する。
     */
@@ -14897,7 +14963,7 @@ async function loadInitialDataFromGoogle() {
         : [];
 
     /*
-      Ver.0.8.42
+      Ver.0.8.43
       勤務帯確認も初期データ一括取得から反映。
     */
     applyDailyConfirmStatus(
@@ -14945,6 +15011,9 @@ saveData();
 markSyncSuccess(
   data.serverTime || ""
 );
+
+lastFullSyncCompletedAt =
+  Date.now();
 
     if (
       data.pointMigration &&
@@ -19540,7 +19609,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.8.42 APIセッション認証
+// Ver.0.8.43 APIセッション認証
 // ============================================================
 
 /*
@@ -19791,7 +19860,7 @@ function throwIfApiAuthError(parsed) {
 
 
   /*
-    Ver.0.8.42
+    Ver.0.8.43
 
     SESSION_EXPIRED:
       GAS側で本当にセッションが存在しない/期限切れ。
@@ -20262,6 +20331,134 @@ async function requestInitialDataFromServer(
     )
   );
 }
+
+
+/*
+  Ver.0.8.43
+  30秒同期専用の軽量API。
+*/
+async function requestSyncDataFromServer(
+  retries = 3
+) {
+
+  let lastError = null;
+
+
+  for (
+    let attempt = 1;
+    attempt <= retries;
+    attempt++
+  ) {
+
+    try {
+
+      const data =
+        await postJsonApiOnce(
+          {
+            action:
+              "getSyncData"
+          },
+          30000
+        );
+
+
+      if (
+        data &&
+        data.error
+      ) {
+
+        const error =
+          new Error(
+            data.message ||
+            "軽量同期データの取得に失敗しました"
+          );
+
+        error.code =
+          String(
+            data.code || ""
+          );
+
+        error.retryable =
+          Boolean(
+            data.retryable
+          );
+
+        error.transient =
+          error.retryable;
+
+        throw error;
+      }
+
+
+      return data;
+
+
+    } catch (error) {
+
+      lastError =
+        error;
+
+
+      console.warn(
+        `軽量同期失敗 ${attempt}/${retries}`,
+        error
+      );
+
+
+      /*
+        timeout後はGAS側の処理が残る可能性があるので
+        同じ同期内で即再送しない。
+      */
+      if (
+        error &&
+        String(
+          error.message || ""
+        ).includes(
+          "タイムアウト"
+        )
+      ) {
+        throw error;
+      }
+
+
+      if (
+        !isTransientApiError(
+          error
+        )
+      ) {
+        throw error;
+      }
+
+
+      if (
+        attempt < retries
+      ) {
+
+        const delay =
+          getRetryBackoffMs(
+            attempt
+          );
+
+        console.log(
+          `軽量同期を${delay}ms後に再試行します`
+        );
+
+        await wait(
+          delay
+        );
+      }
+    }
+  }
+
+
+  throw (
+    lastError ||
+    new Error(
+      "軽量同期データを取得できませんでした"
+    )
+  );
+}
+
 
 /*
   排便登録。
@@ -22502,6 +22699,202 @@ function openPage(pageId) {
   });
 }
 
+async function loadLightSyncDataFromGoogle() {
+
+  const data =
+    await requestSyncDataFromServer();
+
+
+  if (
+    data &&
+    Number.isFinite(
+      Number(
+        data.syncDataDurationMs
+      )
+    )
+  ) {
+
+    console.log(
+      "GAS軽量同期処理時間:",
+      Number(
+        data.syncDataDurationMs
+      ),
+      "ms"
+    );
+  }
+
+
+  if (
+    data &&
+    data.error
+  ) {
+
+    throw new Error(
+      data.message ||
+      "軽量同期データの取得に失敗しました"
+    );
+  }
+
+
+  if (
+    Number(
+      data.bowelPointRuleVersion || 0
+    ) !==
+    BOWEL_POINT_RULE_VERSION
+  ) {
+
+    throw new Error(
+      "GASが旧排便量基準のままです。"
+    );
+  }
+
+
+  verifyServerDataScope(
+    data
+  );
+
+
+  // =========================
+  // users
+  // =========================
+
+  points = {};
+  lastDates = {};
+  userUnits = {};
+
+
+  for (
+    const user of
+    (
+      Array.isArray(
+        data.users
+      )
+        ? data.users
+        : []
+    )
+  ) {
+
+    points[user.name] =
+      Number(
+        user.point || 0
+      );
+
+    userUnits[user.name] =
+      String(
+        user.unit || "1"
+      ).trim();
+
+    lastDates[user.name] =
+      user.lastDate
+        ? String(
+            user.lastDate
+          ).slice(0, 10)
+        : "";
+  }
+
+
+  // =========================
+  // 変動データ
+  // =========================
+
+  checks =
+    data.checks || {};
+
+
+  histories =
+    Array.isArray(
+      data.histories
+    )
+      ? data.histories
+      : [];
+
+
+  resolvePendingBowelOperationAfterSync();
+
+
+  nurseInstructions =
+    Array.isArray(
+      data.nurseInstructions
+    )
+      ? data.nurseInstructions
+      : [];
+
+
+  applyDailyConfirmStatus(
+    data.dailyConfirms
+  );
+
+
+  // =========================
+  // 画面更新
+  // rules / staffMaster / unitMaster は維持
+  // =========================
+
+  updateUserSelects();
+
+
+  document.getElementById(
+    "status"
+  ).innerHTML =
+    getStatusHtml();
+
+
+  document.getElementById(
+    "todayTarget"
+  ).innerHTML =
+    getTodayTarget();
+
+
+  document.getElementById(
+    "history"
+  ).innerHTML =
+    getHistoryHtml();
+
+
+  document.getElementById(
+    "completedList"
+  ).innerHTML =
+    getCompletedListHtml();
+
+
+  updateHomeMedicineStatus();
+
+
+  const dayResult =
+    document.getElementById(
+      "bowelCheckResult"
+    );
+
+  if (
+    dayResult &&
+    dayResult.innerHTML.trim() !== ""
+  ) {
+    checkTodayBowelStatus();
+  }
+
+
+  const nightResult =
+    document.getElementById(
+      "nightBowelCheckResult"
+    );
+
+  if (
+    nightResult &&
+    nightResult.innerHTML.trim() !== ""
+  ) {
+    checkNightBowelStatus();
+  }
+
+
+  markSyncSuccess(
+    data.serverTime || ""
+  );
+
+
+  saveData();
+}
+
+
 async function loadSyncDataFromGoogle() {
 
   const data =
@@ -22665,6 +23058,9 @@ async function loadSyncDataFromGoogle() {
   markSyncSuccess(
     data.serverTime || ""
   );
+
+  lastFullSyncCompletedAt =
+    Date.now();
 
   saveData();
 }
