@@ -1803,7 +1803,7 @@ h3 {
 
 
 /* =========================
-   Ver.0.8.31 履歴ページ UI刷新
+   Ver.0.8.32 履歴ページ UI刷新
 ========================= */
 
 .history-ui-tabs {
@@ -2628,7 +2628,7 @@ h3 {
 
 
 /* =========================
-   Ver.0.8.43 その他ページ UI刷新
+   Ver.0.8.44 その他ページ UI刷新
 ========================= */
 
 .other-page-head {
@@ -2952,7 +2952,7 @@ h3 {
 
 
 /* =========================
-   Ver.0.8.31 ルール閲覧ページ UI刷新
+   Ver.0.8.32 ルール閲覧ページ UI刷新
 ========================= */
 
 .rule-view-page-head {
@@ -4106,7 +4106,7 @@ h3 {
 
 
 /* ==================================================
-   Ver.0.8.31 排便ページ UI刷新
+   Ver.0.8.32 排便ページ UI刷新
 ================================================== */
 
 :root {
@@ -4435,7 +4435,7 @@ h3 {
 
 
 /* ==================================================
-   Ver.0.8.31 ホーム画面 UI刷新
+   Ver.0.8.32 ホーム画面 UI刷新
 ================================================== */
 
 .home-dashboard-head {
@@ -4968,7 +4968,7 @@ h3 {
 
 
 /* ==================================================
-   Ver.0.8.31 対応ページ UI刷新
+   Ver.0.8.32 対応ページ UI刷新
 ================================================== */
 
 .action-ui-head {
@@ -5368,7 +5368,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.43</p>
+      <p class="app-version">Ver.0.8.44</p>
     </div>
 
     <button
@@ -5919,7 +5919,7 @@ h3 {
   </section>
 
   <!-- =========================
-       履歴 Ver.0.8.31
+       履歴 Ver.0.8.32
   ========================== -->
   <section
     id="historyPage"
@@ -6053,7 +6053,7 @@ h3 {
 
 
   <!-- =========================
-       ルール Ver.0.8.31
+       ルール Ver.0.8.32
        全職種・閲覧専用
   ========================== -->
   <section
@@ -6138,7 +6138,7 @@ h3 {
 
 
   <!-- =========================
-       その他 Ver.0.8.43
+       その他 Ver.0.8.44
   ========================== -->
   <section
     id="otherPage"
@@ -6452,7 +6452,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.43
+          Ver.0.8.44
         </span>
       </div>
 
@@ -6461,7 +6461,7 @@ h3 {
           GAS
         </span>
         <span class="other-info-value">
-          Ver.0.8.31
+          Ver.0.8.32
         </span>
       </div>
 
@@ -6706,7 +6706,7 @@ let currentUnit = "";
 let currentRole = "";
 
 /*
-  Ver.0.8.43
+  Ver.0.8.44
   ログイン復元時に initialize() から参照されるため、
   APIセッショントークンのメモリ変数は
   initialize() 呼出より前に必ず初期化する。
@@ -6721,18 +6721,18 @@ let points = {
 
 let histories = [];
 
-// Ver.0.8.31 履歴画面
+// Ver.0.8.32 履歴画面
 let historyViewMode = "today";
 let historyVisiblePastCount = 50;
 
-// Ver.0.8.31 ルール閲覧画面
+// Ver.0.8.32 ルール閲覧画面
 let ruleViewAllOpen = false;
 let ruleViewOpenUsers = new Set();
 
 // 看護師が今回限りで登録する個別対応指示
 let nurseInstructions = [];
 
-// Ver.0.8.31 ホーム表示用キャッシュ
+// Ver.0.8.32 ホーム表示用キャッシュ
 let latestDailyConfirms = [];
 let latestHomeActionMetrics = {
   totalCount: 0,
@@ -6752,14 +6752,14 @@ let newDataMessageTimer = null;
 let isRefreshing = false;
 let autoRefreshTimer = null;
 
-// Ver.0.8.43
+// Ver.0.8.44
 // 「30秒ごと」ではなく「同期完了から30秒後」に次を実行する。
 const AUTO_REFRESH_DELAY_MS = 30000;
 const AUTO_REFRESH_WRITE_RETRY_MS = 5000;
 const AUTO_SYNC_WARNING_THRESHOLD = 2;
 
 /*
-  Ver.0.8.43
+  Ver.0.8.44
   通常は軽量同期。
   rules / staffMaster / unitMaster は5分ごとの全同期。
 */
@@ -10324,7 +10324,7 @@ function updateHomeMedicineStatus() {
 }
 
 // ============================================================
-// Ver.0.8.43 ローカルキャッシュのデータスコープ分離
+// Ver.0.8.44 ローカルキャッシュのデータスコープ分離
 // ============================================================
 
 const DATA_SCOPE_CACHE_KEY =
@@ -10980,14 +10980,39 @@ async function loadHistoriesFromGoogle() {
 }
 
 async function addHistoryToGoogle(history) {
+
   try {
-    await fetchApi(
-      API_URL +
-        "?action=addHistory&history=" +
-        encodeURIComponent(JSON.stringify(history))
-    );
+
+    const result =
+      await postJsonApiOnce(
+        {
+          action: "addHistory",
+          history: history
+        },
+        20000
+      );
+
+    if (
+      !result ||
+      result.ok !== true
+    ) {
+      throw new Error(
+        result && result.message
+          ? result.message
+          : "履歴保存に失敗しました"
+      );
+    }
+
+    return true;
+
   } catch (error) {
-    console.error("履歴保存エラー", error);
+
+    console.error(
+      "履歴保存エラー",
+      error
+    );
+
+    throw error;
   }
 }
 
@@ -11108,7 +11133,7 @@ async function initialize() {
 
 
   /*
-    Ver.0.8.43
+    Ver.0.8.44
     旧版の全ユニットキャッシュや、
     別ユニット/全ユニット権限のキャッシュを
     読み込む前に破棄する。
@@ -11249,7 +11274,7 @@ async function refreshFromGoogle(
 
 
     // =========================
-    // Ver.0.8.43
+    // Ver.0.8.44
     // 通常は軽量同期。
     // 5分ごとだけ全同期を行う。
     // =========================
@@ -14033,7 +14058,7 @@ async function changeUserUnit() {
 
 
 /*
-  Ver.0.8.43
+  Ver.0.8.44
   initialize() より後方に定義されていても TDZ にならないよう、
   起動時に参照される「その他」UI状態は var で宣言する。
 */
@@ -14569,7 +14594,7 @@ async function login() {
 
   try {
     /*
-      Ver.0.8.43
+      Ver.0.8.44
       ID・パスワードはURLへ載せず、
       POST本文で送信する。
     */
@@ -14590,7 +14615,7 @@ async function login() {
     }
 
     /*
-      Ver.0.8.43
+      Ver.0.8.44
       GASが発行したセッショントークンを保存。
     */
     if (!result.sessionToken) {
@@ -14654,7 +14679,7 @@ async function login() {
 
 
     /*
-      Ver.0.8.43
+      Ver.0.8.44
       直前に管理者/看護師/別ユニットで使った
       利用者データを新しい権限へ持ち越さない。
     */
@@ -14892,7 +14917,7 @@ async function loadInitialDataFromGoogle() {
     }
 
     /*
-      Ver.0.8.43
+      Ver.0.8.44
       GASが現在のログイン権限に対応したスコープで
       データを返したことを確認してから反映する。
     */
@@ -14963,7 +14988,7 @@ async function loadInitialDataFromGoogle() {
         : [];
 
     /*
-      Ver.0.8.43
+      Ver.0.8.44
       勤務帯確認も初期データ一括取得から反映。
     */
     applyDailyConfirmStatus(
@@ -18167,15 +18192,27 @@ async function confirmNoBowelUsers(
     return;
   }
 
-  for (let user of checkedUsers) {
+  try {
 
-    await addHistoryToGoogle({
-      user: user,
-      type: "なし",
-      point: points[user],
-      confirmType: "day",
-      targetDate: targetDateText
-    });
+    for (let user of checkedUsers) {
+
+      await addHistoryToGoogle({
+        user: user,
+        type: "なし",
+        point: points[user],
+        confirmType: "day",
+        targetDate: targetDateText
+      });
+    }
+
+  } catch (error) {
+
+    alert(
+      "排便なし記録の保存に失敗したため、日中帯の確定を中止しました。\n\n" +
+      error.message
+    );
+
+    return;
   }
 
   await loadHistoriesFromGoogle();
@@ -18757,18 +18794,26 @@ function updateHomeConfirmStatus(
 async function changeLastDate() {
 
   const user =
-    document.getElementById("userSelect").value;
+    document.getElementById(
+      "userSelect"
+    ).value;
 
   const newDate =
-    document.getElementById("lastDate").value;
+    document.getElementById(
+      "lastDate"
+    ).value;
 
   if (user === "") {
-    alert("利用者を選択してください");
+    alert(
+      "利用者を選択してください"
+    );
     return;
   }
 
   if (newDate === "") {
-    alert("日付を選択してください");
+    alert(
+      "日付を選択してください"
+    );
     return;
   }
 
@@ -18783,26 +18828,76 @@ async function changeLastDate() {
     return;
   }
 
-  lastDates[user] = newDate;
 
-  await saveUsersToGoogle(false);
+  try {
 
-  document.getElementById("status").innerHTML =
-    getStatusHtml();
+    const result =
+      await postJsonApiOnce(
+        {
+          action:
+            "updateUserLastDate",
+          user: user,
+          lastDate: newDate
+        },
+        20000
+      );
 
-  document.getElementById("todayTarget").innerHTML =
-    getTodayTarget();
+    if (
+      !result ||
+      result.ok !== true
+    ) {
+      throw new Error(
+        result && result.message
+          ? result.message
+          : "最終排便日の変更に失敗しました"
+      );
+    }
 
-  saveData();
 
-  updateBowelTargetUI({
-    updateResult: false
-  });
+    /*
+      GAS保存成功後にローカルへ反映する。
+    */
+    lastDates[user] =
+      String(
+        result.lastDate ||
+        newDate
+      ).slice(0, 10);
 
-  alert(
-    user +
-    "の最終排便日を変更しました"
-  );
+
+    document.getElementById(
+      "status"
+    ).innerHTML =
+      getStatusHtml();
+
+    document.getElementById(
+      "todayTarget"
+    ).innerHTML =
+      getTodayTarget();
+
+    saveData();
+
+    updateBowelTargetUI({
+      updateResult: false
+    });
+
+    alert(
+      user +
+      "の最終排便日を変更しました"
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "最終排便日変更エラー",
+      error
+    );
+
+    alert(
+      "最終排便日の変更に失敗しました。\n\n" +
+      error.message
+    );
+  }
 }
 
 function checkNightBowelStatus(
@@ -19609,7 +19704,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.8.43 APIセッション認証
+// Ver.0.8.44 APIセッション認証
 // ============================================================
 
 /*
@@ -19860,7 +19955,7 @@ function throwIfApiAuthError(parsed) {
 
 
   /*
-    Ver.0.8.43
+    Ver.0.8.44
 
     SESSION_EXPIRED:
       GAS側で本当にセッションが存在しない/期限切れ。
@@ -20334,7 +20429,7 @@ async function requestInitialDataFromServer(
 
 
 /*
-  Ver.0.8.43
+  Ver.0.8.44
   30秒同期専用の軽量API。
 */
 async function requestSyncDataFromServer(
