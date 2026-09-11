@@ -2612,7 +2612,7 @@ h3 {
 
 
 /* =========================
-   Ver.0.8.33 その他ページ UI刷新
+   Ver.0.8.34 その他ページ UI刷新
 ========================= */
 
 .other-page-head {
@@ -5352,7 +5352,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.33</p>
+      <p class="app-version">Ver.0.8.34</p>
     </div>
 
     <button
@@ -6122,7 +6122,7 @@ h3 {
 
 
   <!-- =========================
-       その他 Ver.0.8.33
+       その他 Ver.0.8.34
   ========================== -->
   <section
     id="otherPage"
@@ -6436,7 +6436,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.33
+          Ver.0.8.34
         </span>
       </div>
 
@@ -8426,6 +8426,22 @@ function isRuleChecked(user, day, rule) {
   return Boolean(checks[key]);
 }
 
+
+function formatResidentName(value) {
+
+  const name =
+    String(value ?? "").trim();
+
+  if (!name) {
+    return "";
+  }
+
+  return name.endsWith("様")
+    ? name
+    : name + "様";
+}
+
+
 function escapeHtml(value) {
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -9051,7 +9067,7 @@ function getTodayTarget() {
               <div class="action-card-top">
                 <div class="action-card-user-wrap">
                   <div class="action-card-user">
-                    ${escapeHtml(item.user)} 様
+                    ${escapeHtml(formatResidentName(item.user))}
                   </div>
                   <div class="action-badges">
                     <span class="action-badge ${rule.kind === "procedure" ? "procedure" : "med"}">
@@ -9081,7 +9097,7 @@ function getTodayTarget() {
               </div>
 
               <div class="action-target-confirm">
-                ${escapeHtml(item.user)} 様への対応です
+                ${escapeHtml(formatResidentName(item.user))}への対応です
               </div>
 
               <button
@@ -9131,7 +9147,7 @@ function getTodayTarget() {
                 <div class="action-card-top">
                   <div class="action-card-user-wrap">
                     <div class="action-card-user">
-                      ${escapeHtml(item.user)} 様
+                      ${escapeHtml(formatResidentName(item.user))}
                     </div>
                     <div class="action-badges">
                       <span class="action-badge nurse">
@@ -9186,7 +9202,7 @@ function getTodayTarget() {
               <div class="action-card-top">
                 <div class="action-card-user-wrap">
                   <div class="action-card-user">
-                    ${escapeHtml(item.user)} 様
+                    ${escapeHtml(formatResidentName(item.user))}
                   </div>
                   <div class="action-badges">
                     <span class="action-badge nurse">
@@ -9225,7 +9241,7 @@ function getTodayTarget() {
               </div>
 
               <div class="action-target-confirm">
-                ${escapeHtml(item.user)} 様への看護師指示です
+                ${escapeHtml(formatResidentName(item.user))}への看護師指示です
               </div>
 
               ${
@@ -9282,7 +9298,7 @@ function getTodayTarget() {
               <div class="action-card-top">
                 <div class="action-card-user-wrap">
                   <div class="action-card-user">
-                    ${escapeHtml(item.user)} 様
+                    ${escapeHtml(formatResidentName(item.user))}
                   </div>
                   <div class="action-badges">
                     <span class="action-badge future">
@@ -9559,7 +9575,7 @@ function getHomeUrgentDetailHtml() {
     rows.push(`
       <div class="home-urgent-detail-row">
         <strong>
-          🚨 ${escapeHtml(info.user)} 様
+          🚨 ${escapeHtml(formatResidentName(info.user))}
         </strong>
 
         <span>
@@ -11244,7 +11260,7 @@ function openNurseInstructionModal(user) {
       <div class="nurse-form">
 
         <div class="nurse-form-summary">
-          <span class="nurse-form-user">${escapeHtml(user)} 様</span>
+          <span class="nurse-form-user">${escapeHtml(formatResidentName(user))}</span>
           未排便 ${days}日<br>
           設定最終日：${maxRuleDay === null ? "なし" : `未排便${maxRuleDay}日`}
         </div>
@@ -11461,7 +11477,7 @@ function openCancelNurseInstructionModal(instructionId) {
     bodyHtml: `
       <div class="nurse-form">
         <div class="nurse-form-summary">
-          <span class="nurse-form-user">${escapeHtml(item.user)} 様</span>
+          <span class="nurse-form-user">${escapeHtml(formatResidentName(item.user))}</span>
           ${getNurseInstructionKindIcon(item)}
           ${escapeHtml(item.content || getNurseInstructionKindLabel(item))}
         </div>
@@ -11625,7 +11641,7 @@ function getNurseInstructionTargetHtml(hour) {
     html += `
       <div class="target-card nurse-target-card">
         <div class="nurse-target-label">🩺 看護師指示</div>
-        <div class="nurse-target-user">${escapeHtml(item.user)} 様</div>
+        <div class="nurse-target-user">${escapeHtml(formatResidentName(item.user))}</div>
         未排便日数：${Math.max(0, getNoBowelDays(item.user))}日
 
         <div class="nurse-instruction-content">
@@ -13539,7 +13555,7 @@ async function changeUserUnit() {
 
 
 /*
-  Ver.0.8.33
+  Ver.0.8.34
   initialize() より後方に定義されていても TDZ にならないよう、
   起動時に参照される「その他」UI状態は var で宣言する。
 */
@@ -16263,7 +16279,7 @@ function getCompletedListHtml() {
         <div class="action-card-top">
           <div class="action-card-user-wrap">
             <div class="action-card-user">
-              ${escapeHtml(detail.user)} 様
+              ${escapeHtml(formatResidentName(detail.user))}
             </div>
             <div class="action-badges">
               <span class="action-badge done">
@@ -16319,7 +16335,7 @@ function getCompletedListHtml() {
         <div class="action-card-top">
           <div class="action-card-user-wrap">
             <div class="action-card-user">
-              ${escapeHtml(item.user)} 様
+              ${escapeHtml(formatResidentName(item.user))}
             </div>
             <div class="action-badges">
               <span class="action-badge done">
