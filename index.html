@@ -982,7 +982,7 @@ button {
 
 #bowelCheckResult,
 #nightBowelCheckResult {
-  scroll-margin-top: 92px;
+  scroll-margin-top: 190px;
 }
 
 /* =========================
@@ -3203,6 +3203,335 @@ h3 {
 
 }
 
+
+
+/* ==================================================
+   Ver.0.8.27 排便ページ UI刷新
+================================================== */
+
+:root {
+  --bowel-sticky-top: 74px;
+}
+
+.bowel-target-bar {
+  position: sticky;
+  top: var(--bowel-sticky-top);
+  z-index: 95;
+
+  margin: 0 0 16px;
+  padding: 11px 14px 12px;
+
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #dfe5e8;
+  border-radius: 15px;
+  box-shadow: 0 4px 14px rgba(38, 50, 56, 0.13);
+
+  backdrop-filter: blur(8px);
+}
+
+.bowel-target-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bowel-target-caption {
+  margin-bottom: 2px;
+
+  color: #78909c;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.bowel-target-name {
+  color: #263238;
+  font-size: 26px;
+  font-weight: 950;
+  line-height: 1.18;
+  word-break: break-word;
+}
+
+.bowel-target-change-button {
+  width: auto !important;
+  min-height: 38px !important;
+  margin: 0 !important;
+  padding: 7px 13px !important;
+
+  border: 1px solid #b8c5ca !important;
+  border-radius: 10px !important;
+
+  background: #f8fafb !important;
+  color: #37474f !important;
+
+  font-size: 14px !important;
+  font-weight: 850 !important;
+  white-space: nowrap;
+}
+
+.bowel-target-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+
+  margin-top: 8px;
+}
+
+.bowel-target-pill {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 27px;
+  padding: 4px 8px;
+
+  border-radius: 999px;
+
+  background: #eef2f4;
+  color: #546e7a;
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.bowel-target-pill.days {
+  background: #fff3e0;
+  color: #9a4b00;
+}
+
+.bowel-target-pill.point {
+  background: #eef0ff;
+  color: #3949ab;
+}
+
+.bowel-user-select-source {
+  display: none !important;
+}
+
+.bowel-page-section-title {
+  margin: 4px 2px 10px;
+
+  color: #607d8b;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.bowel-entry-card {
+  margin-bottom: 14px;
+  padding: 16px;
+
+  background: #fff;
+  border: 1px solid #e1e7ea;
+  border-radius: 15px;
+
+  box-shadow: 0 2px 9px rgba(38, 50, 56, 0.055);
+}
+
+.bowel-entry-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  margin-bottom: 13px;
+}
+
+.bowel-entry-title h3 {
+  margin: 0;
+
+  color: #263238;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.bowel-field-label {
+  display: block;
+
+  margin: 0 0 6px;
+
+  color: #455a64;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.bowel-register-preview {
+  margin: 12px 0 9px;
+  padding: 10px 11px;
+
+  border-radius: 10px;
+
+  background: #f5f7ff;
+  color: #3949ab;
+
+  font-size: 14px;
+  font-weight: 850;
+  text-align: center;
+  line-height: 1.55;
+}
+
+.bowel-register-preview.needs-input {
+  background: #f5f7f8;
+  color: #78909c;
+}
+
+.bowel-result-message {
+  margin: 10px 0 0 !important;
+  padding: 10px 11px !important;
+
+  border-radius: 10px !important;
+
+  background: #f7fafb !important;
+  color: #546e7a !important;
+
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.6 !important;
+}
+
+.bowel-last-date-current {
+  margin-bottom: 12px;
+}
+
+.bowel-last-date-value {
+  margin-top: 2px;
+
+  color: #263238;
+  font-size: 23px;
+  font-weight: 950;
+  line-height: 1.25;
+}
+
+.bowel-today-empty {
+  padding: 13px 10px;
+
+  color: #90a4ae;
+  font-size: 13px;
+  text-align: center;
+}
+
+.bowel-today-item {
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+
+  padding: 10px 0;
+
+  border-top: 1px solid #edf1f3;
+}
+
+.bowel-today-item:first-child {
+  border-top: none;
+}
+
+.bowel-today-time {
+  color: #78909c;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.bowel-today-type {
+  color: #263238;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.bowel-today-point {
+  color: #3949ab;
+  font-size: 12px;
+  font-weight: 850;
+  text-align: right;
+}
+
+.bowel-history-detail-button {
+  margin-top: 9px !important;
+  background: #607d8b !important;
+}
+
+.bowel-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+
+  background: rgba(25, 35, 40, 0.46);
+}
+
+.bowel-picker-overlay.open {
+  display: flex;
+}
+
+.bowel-picker-sheet {
+  width: 100%;
+  max-width: 900px;
+  max-height: 72vh;
+  overflow-y: auto;
+
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.20);
+}
+
+.bowel-picker-title {
+  margin: 0 0 10px;
+
+  color: #263238;
+  font-size: 19px;
+  font-weight: 900;
+}
+
+.bowel-picker-option {
+  width: 100% !important;
+  min-height: 50px !important;
+  margin: 0 !important;
+  padding: 12px 9px !important;
+
+  border-top: 1px solid #edf1f3 !important;
+  border-radius: 0 !important;
+
+  background: #fff !important;
+  color: #263238 !important;
+
+  font-size: 17px !important;
+  font-weight: 850 !important;
+  text-align: left;
+}
+
+.bowel-picker-option:first-child {
+  border-top: none !important;
+}
+
+.bowel-picker-option.selected {
+  background: #f3f5ff !important;
+  color: #3949ab !important;
+}
+
+.bowel-picker-close {
+  margin-top: 10px !important;
+  background: #eceff1 !important;
+  color: #455a64 !important;
+}
+
+@media (max-width: 480px) {
+  .bowel-target-bar {
+    margin-left: -2px;
+    margin-right: -2px;
+  }
+
+  .bowel-target-name {
+    font-size: 23px;
+  }
+
+  .bowel-today-item {
+    grid-template-columns: 58px minmax(0, 1fr) auto;
+  }
+}
+
 </style>
 </head>
 
@@ -3242,7 +3571,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.25</p>
+      <p class="app-version">Ver.0.8.27</p>
     </div>
 
     <button
@@ -3364,30 +3693,111 @@ h3 {
     class="app-page"
   >
 
-    <h2>排便を入力</h2>
+    <!-- 対象者は排便ページ内だけで保持 -->
+    <div
+      id="bowelTargetBar"
+      class="bowel-target-bar"
+    >
+      <div class="bowel-target-main">
 
-    <div class="user-card">
+        <div>
+          <div class="bowel-target-caption">
+            👤 現在の対象者
+          </div>
 
-      <p>利用者</p>
+          <div
+            id="bowelTargetName"
+            class="bowel-target-name"
+          >
+            利用者未選択
+          </div>
+        </div>
 
-      <select id="userSelect">
-        <option>A様</option>
-        <option>B様</option>
-        <option>C様</option>
+        <button
+          type="button"
+          class="bowel-target-change-button"
+          onclick="openBowelUserPicker()"
+        >
+          変更
+        </button>
+
+      </div>
+
+      <div class="bowel-target-meta">
+
+        <span
+          id="bowelTargetDays"
+          class="bowel-target-pill days"
+        >
+          未排便 -
+        </span>
+
+        <span
+          id="bowelTargetPoint"
+          class="bowel-target-pill point"
+        >
+          現在 -
+        </span>
+
+        <span
+          id="bowelTargetLastDate"
+          class="bowel-target-pill"
+        >
+          最終排便 -
+        </span>
+
+      </div>
+    </div>
+
+
+    <!-- 既存ロジックの参照元。画面上は専用ピッカーを使用 -->
+    <select
+      id="userSelect"
+      class="bowel-user-select-source"
+      aria-hidden="true"
+      tabindex="-1"
+    ></select>
+
+
+    <div class="bowel-page-section-title">
+      排便入力
+    </div>
+
+
+    <div class="bowel-entry-card">
+
+      <div class="bowel-entry-title">
+        <h3>💩 排便を登録</h3>
+      </div>
+
+      <label
+        class="bowel-field-label"
+        for="bowelTypeSelect"
+      >
+        排便量
+      </label>
+
+      <select
+        id="bowelTypeSelect"
+        onchange="updateBowelRegisterPreview()"
+      >
+        <option value="なし">
+          排便量を選択してください
+        </option>
+        <option value="少">少</option>
+        <option value="少1">少1</option>
+        <option value="少2">少2</option>
+        <option value="普通">普通</option>
       </select>
 
 
-      <p>排便種類</p>
+      <div
+        id="bowelRegisterPreview"
+        class="bowel-register-preview needs-input"
+      >
+        対象者と排便量を確認してください
+      </div>
 
-      <select id="bowelTypeSelect">
-        <option>なし</option>
-        <option>少</option>
-        <option>少1</option>
-        <option>少2</option>
-        <option>普通</option>
-      </select>
-
-      <br><br>
 
       <button
         id="registerButton"
@@ -3397,7 +3807,41 @@ h3 {
       </button>
 
 
-      <p>最終排便日</p>
+      <p
+        id="result"
+        class="bowel-result-message"
+      >
+        現在の状態を表示します
+      </p>
+
+    </div>
+
+
+    <div class="bowel-entry-card">
+
+      <div class="bowel-entry-title">
+        <h3>📅 最終排便日</h3>
+      </div>
+
+      <div class="bowel-last-date-current">
+        <div class="bowel-target-caption">
+          現在の最終排便日
+        </div>
+
+        <div
+          id="bowelLastDateCurrent"
+          class="bowel-last-date-value"
+        >
+          -
+        </div>
+      </div>
+
+      <label
+        class="bowel-field-label"
+        for="lastDate"
+      >
+        修正する日付
+      </label>
 
       <input
         type="date"
@@ -3408,9 +3852,32 @@ h3 {
         最終排便日を変更
       </button>
 
-      <p id="result">
-        現在ポイント：0
-      </p>
+    </div>
+
+
+    <div class="bowel-entry-card">
+
+      <div class="bowel-entry-title">
+        <h3>📋 今日の記録</h3>
+        <span
+          id="bowelTodayDateLabel"
+          class="bowel-target-caption"
+        ></span>
+      </div>
+
+      <div id="bowelTodayHistory">
+        <div class="bowel-today-empty">
+          今日の記録はありません
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="bowel-history-detail-button"
+        onclick="openPage('historyPage')"
+      >
+        履歴を詳しく見る
+      </button>
 
     </div>
 
@@ -3756,6 +4223,44 @@ h3 {
     </button>
 
   </nav>
+
+
+  <!-- =========================
+       排便ページ 利用者選択
+  ========================== -->
+  <div
+    id="bowelUserPicker"
+    class="bowel-picker-overlay"
+    onclick="closeBowelUserPickerByOverlay(event)"
+  >
+
+    <div
+      class="bowel-picker-sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="bowelUserPickerTitle"
+    >
+
+      <div
+        id="bowelUserPickerTitle"
+        class="bowel-picker-title"
+      >
+        対象者を選択
+      </div>
+
+      <div id="bowelUserPickerList"></div>
+
+      <button
+        type="button"
+        class="bowel-picker-close"
+        onclick="closeBowelUserPicker()"
+      >
+        閉じる
+      </button>
+
+    </div>
+
+  </div>
 
 
   <!-- =========================
@@ -4265,6 +4770,561 @@ function showNewDataMessage() {
   );
 }
 
+
+function updateBowelStickyOffset() {
+
+  const header =
+    document.querySelector(
+      ".app-header"
+    );
+
+  const height =
+    header
+      ? Math.ceil(
+          header.getBoundingClientRect().height
+        )
+      : 72;
+
+  document.documentElement.style.setProperty(
+    "--bowel-sticky-top",
+    (height + 2) + "px"
+  );
+}
+
+
+function getSelectedBowelUser() {
+
+  const select =
+    document.getElementById(
+      "userSelect"
+    );
+
+  return select
+    ? String(select.value || "")
+    : "";
+}
+
+
+function formatBowelTargetShortDate(
+  dateText
+) {
+
+  const text =
+    String(dateText || "")
+      .slice(0, 10);
+
+  if (!text) {
+    return "-";
+  }
+
+  const parts =
+    text.split("-");
+
+  if (parts.length !== 3) {
+    return text;
+  }
+
+  return (
+    Number(parts[1]) +
+    "/" +
+    Number(parts[2])
+  );
+}
+
+
+function getBowelHistoryTimeText(
+  dateText
+) {
+
+  const text =
+    String(dateText || "")
+      .replace("T", " ");
+
+  const match =
+    text.match(
+      /(\d{2}):(\d{2})/
+    );
+
+  return match
+    ? match[1] + ":" + match[2]
+    : "--:--";
+}
+
+
+function getBowelTodayHistoryHtml(
+  user
+) {
+
+  if (!user) {
+    return `
+      <div class="bowel-today-empty">
+        対象者を選択してください
+      </div>
+    `;
+  }
+
+  const todayText =
+    getTodayText();
+
+  const items =
+    histories
+      .filter(history =>
+        history.user === user &&
+        String(history.date || "")
+          .slice(0, 10) ===
+          todayText &&
+        String(history.status || "") !==
+          "cancelled"
+      )
+      .slice()
+      .sort(
+        (a, b) =>
+          new Date(b.date) -
+          new Date(a.date)
+      );
+
+
+  if (items.length === 0) {
+
+    return `
+      <div class="bowel-today-empty">
+        今日の記録はありません
+      </div>
+    `;
+  }
+
+
+  return items
+    .map(history => {
+
+      const type =
+        String(
+          history.type || ""
+        );
+
+      const pointText =
+        type === "なし"
+          ? "確認記録"
+          : (
+              "累計 " +
+              getBowelPointText(
+                Number(history.point || 0)
+              )
+            );
+
+      return `
+        <div class="bowel-today-item">
+
+          <div class="bowel-today-time">
+            ${escapeHtml(
+              getBowelHistoryTimeText(
+                history.date
+              )
+            )}
+          </div>
+
+          <div class="bowel-today-type">
+            ${escapeHtml(type)}
+          </div>
+
+          <div class="bowel-today-point">
+            ${escapeHtml(pointText)}
+          </div>
+
+        </div>
+      `;
+    })
+    .join("");
+}
+
+
+function updateBowelRegisterPreview() {
+
+  const preview =
+    document.getElementById(
+      "bowelRegisterPreview"
+    );
+
+  if (!preview) {
+    return;
+  }
+
+
+  const user =
+    getSelectedBowelUser();
+
+  const typeSelect =
+    document.getElementById(
+      "bowelTypeSelect"
+    );
+
+  const type =
+    typeSelect
+      ? String(typeSelect.value || "")
+      : "";
+
+
+  if (
+    !user ||
+    !type ||
+    type === "なし"
+  ) {
+
+    preview.classList.add(
+      "needs-input"
+    );
+
+    preview.textContent =
+      user
+        ? user +
+          "：排便量を選択してください"
+        : "対象者と排便量を確認してください";
+
+    return;
+  }
+
+
+  preview.classList.remove(
+    "needs-input"
+  );
+
+  preview.textContent =
+    user +
+    " に「" +
+    type +
+    "」を登録します";
+}
+
+
+function updateBowelTargetUI(
+  options = {}
+) {
+
+  const user =
+    getSelectedBowelUser();
+
+  const nameArea =
+    document.getElementById(
+      "bowelTargetName"
+    );
+
+  const daysArea =
+    document.getElementById(
+      "bowelTargetDays"
+    );
+
+  const pointArea =
+    document.getElementById(
+      "bowelTargetPoint"
+    );
+
+  const lastArea =
+    document.getElementById(
+      "bowelTargetLastDate"
+    );
+
+  const lastCurrent =
+    document.getElementById(
+      "bowelLastDateCurrent"
+    );
+
+  const lastInput =
+    document.getElementById(
+      "lastDate"
+    );
+
+  const todayHistory =
+    document.getElementById(
+      "bowelTodayHistory"
+    );
+
+  const todayLabel =
+    document.getElementById(
+      "bowelTodayDateLabel"
+    );
+
+
+  if (!user) {
+
+    if (nameArea) {
+      nameArea.textContent =
+        "利用者未選択";
+    }
+
+    if (daysArea) {
+      daysArea.textContent =
+        "未排便 -";
+    }
+
+    if (pointArea) {
+      pointArea.textContent =
+        "現在 -";
+    }
+
+    if (lastArea) {
+      lastArea.textContent =
+        "最終排便 -";
+    }
+
+    if (lastCurrent) {
+      lastCurrent.textContent =
+        "-";
+    }
+
+    if (lastInput) {
+      lastInput.value = "";
+    }
+
+    if (todayHistory) {
+      todayHistory.innerHTML =
+        getBowelTodayHistoryHtml("");
+    }
+
+    updateBowelRegisterPreview();
+    return;
+  }
+
+
+  const days =
+    Math.max(
+      0,
+      Number(
+        getNoBowelDays(user)
+      ) || 0
+    );
+
+  const point =
+    Number(
+      points[user] || 0
+    );
+
+  const lastDate =
+    String(
+      lastDates[user] || ""
+    ).slice(0, 10);
+
+
+  if (nameArea) {
+    nameArea.textContent =
+      user;
+  }
+
+  if (daysArea) {
+    daysArea.textContent =
+      "未排便 " +
+      days +
+      "日";
+  }
+
+  if (pointArea) {
+    pointArea.textContent =
+      "現在 " +
+      getBowelPointText(point);
+  }
+
+  if (lastArea) {
+    lastArea.textContent =
+      "最終排便 " +
+      formatBowelTargetShortDate(
+        lastDate
+      );
+  }
+
+  if (lastCurrent) {
+    lastCurrent.textContent =
+      lastDate || "未設定";
+  }
+
+  if (lastInput) {
+    lastInput.value =
+      lastDate;
+  }
+
+  if (todayHistory) {
+    todayHistory.innerHTML =
+      getBowelTodayHistoryHtml(
+        user
+      );
+  }
+
+  if (todayLabel) {
+
+    const today =
+      new Date();
+
+    todayLabel.textContent =
+      (today.getMonth() + 1) +
+      "/" +
+      today.getDate();
+  }
+
+
+  updateBowelRegisterPreview();
+
+
+  if (options.updateResult) {
+
+    const result =
+      document.getElementById(
+        "result"
+      );
+
+    if (result) {
+      result.textContent =
+        user +
+        "　現在ポイント：" +
+        getBowelPointText(point);
+    }
+  }
+}
+
+
+function openBowelUserPicker() {
+
+  const picker =
+    document.getElementById(
+      "bowelUserPicker"
+    );
+
+  const list =
+    document.getElementById(
+      "bowelUserPickerList"
+    );
+
+  const source =
+    document.getElementById(
+      "userSelect"
+    );
+
+  if (
+    !picker ||
+    !list ||
+    !source
+  ) {
+    return;
+  }
+
+
+  const selected =
+    String(
+      source.value || ""
+    );
+
+
+  list.innerHTML =
+    Array
+      .from(source.options)
+      .map(option => {
+
+        const name =
+          String(
+            option.value ||
+            option.textContent ||
+            ""
+          );
+
+        const safeJsName =
+          name
+            .replace(/\\/g, "\\\\")
+            .replace(/'/g, "\\'");
+
+        return `
+          <button
+            type="button"
+            class="bowel-picker-option ${
+              name === selected
+                ? "selected"
+                : ""
+            }"
+            onclick="selectBowelUser('${safeJsName}')"
+          >
+            ${escapeHtml(name)}
+          </button>
+        `;
+      })
+      .join("");
+
+
+  picker.classList.add(
+    "open"
+  );
+
+  document.body.style.overflow =
+    "hidden";
+}
+
+
+function closeBowelUserPicker() {
+
+  const picker =
+    document.getElementById(
+      "bowelUserPicker"
+    );
+
+  if (picker) {
+    picker.classList.remove(
+      "open"
+    );
+  }
+
+  document.body.style.overflow =
+    "";
+}
+
+
+function closeBowelUserPickerByOverlay(
+  event
+) {
+
+  if (
+    event &&
+    event.target &&
+    event.target.id ===
+      "bowelUserPicker"
+  ) {
+    closeBowelUserPicker();
+  }
+}
+
+
+function selectBowelUser(
+  user
+) {
+
+  const select =
+    document.getElementById(
+      "userSelect"
+    );
+
+  if (!select) {
+    return;
+  }
+
+
+  const exists =
+    Array
+      .from(select.options)
+      .some(option =>
+        String(option.value) ===
+        String(user)
+      );
+
+  if (!exists) {
+    return;
+  }
+
+
+  select.value =
+    user;
+
+  updateBowelTargetUI({
+    updateResult: true
+  });
+
+  closeBowelUserPicker();
+}
+
+
 async function register() {
 
   const user =
@@ -4707,6 +5767,10 @@ async function register() {
       registerButton.style.opacity =
         "";
     }
+
+    updateBowelTargetUI({
+      updateResult: false
+    });
   }
 }
 
@@ -5962,6 +7026,11 @@ async function initialize() {
 }
 
 initialize();
+
+window.addEventListener(
+  "resize",
+  updateBowelStickyOffset
+);
 
 async function refreshFromGoogle() {
 
@@ -8463,34 +9532,136 @@ function getSelectedStaff(selectId) {
 
 
 function updateUserSelects() {
-  const userSelect = document.getElementById("userSelect");
-  const ruleUserSelect = document.getElementById("ruleUserSelect");
-  const unitUserSelect = document.getElementById("unitUserSelect");
 
-  userSelect.innerHTML = "";
-  ruleUserSelect.innerHTML = "";
-  unitUserSelect.innerHTML = "";
+  const userSelect =
+    document.getElementById(
+      "userSelect"
+    );
+
+  const ruleUserSelect =
+    document.getElementById(
+      "ruleUserSelect"
+    );
+
+  const unitUserSelect =
+    document.getElementById(
+      "unitUserSelect"
+    );
+
+
+  /*
+    30秒同期でselectを作り直しても、
+    排便ページで操作中の対象者を勝手に先頭へ戻さない。
+  */
+  const previousBowelUser =
+    userSelect
+      ? String(userSelect.value || "")
+      : "";
+
+
+  if (userSelect) {
+    userSelect.innerHTML = "";
+  }
+
+  if (ruleUserSelect) {
+    ruleUserSelect.innerHTML = "";
+  }
+
+  if (unitUserSelect) {
+    unitUserSelect.innerHTML = "";
+  }
+
 
   for (let user in points) {
 
     // ユニット変更用は全利用者を表示
-    const option3 = document.createElement("option");
-    option3.textContent = user;
-    unitUserSelect.appendChild(option3);
+    if (unitUserSelect) {
+
+      const option3 =
+        document.createElement(
+          "option"
+        );
+
+      option3.value =
+        user;
+
+      option3.textContent =
+        user;
+
+      unitUserSelect.appendChild(
+        option3
+      );
+    }
+
 
     // ここから下は現在のユニットだけ表示
-    if (currentUnit !== "all" && userUnits[user] !== currentUnit) {
+    if (
+      currentUnit !== "all" &&
+      userUnits[user] !==
+        currentUnit
+    ) {
       continue;
     }
 
-    const option1 = document.createElement("option");
-    option1.textContent = user;
-    userSelect.appendChild(option1);
 
-    const option2 = document.createElement("option");
-    option2.textContent = user;
-    ruleUserSelect.appendChild(option2);
+    if (userSelect) {
+
+      const option1 =
+        document.createElement(
+          "option"
+        );
+
+      option1.value =
+        user;
+
+      option1.textContent =
+        user;
+
+      userSelect.appendChild(
+        option1
+      );
+    }
+
+
+    if (ruleUserSelect) {
+
+      const option2 =
+        document.createElement(
+          "option"
+        );
+
+      option2.value =
+        user;
+
+      option2.textContent =
+        user;
+
+      ruleUserSelect.appendChild(
+        option2
+      );
+    }
   }
+
+
+  if (
+    userSelect &&
+    previousBowelUser &&
+    Array
+      .from(userSelect.options)
+      .some(option =>
+        String(option.value) ===
+        previousBowelUser
+      )
+  ) {
+
+    userSelect.value =
+      previousBowelUser;
+  }
+
+
+  updateBowelTargetUI({
+    updateResult: true
+  });
 }
 
 async function changeUserUnit() {
@@ -11745,6 +12916,10 @@ async function changeLastDate() {
 
   saveData();
 
+  updateBowelTargetUI({
+    updateResult: false
+  });
+
   alert(
     user +
     "の最終排便日を変更しました"
@@ -14947,6 +16122,16 @@ function openPage(pageId) {
 
   if (targetPage) {
     targetPage.classList.add("active");
+  }
+
+
+  if (pageId === "bowelPage") {
+
+    updateBowelStickyOffset();
+
+    updateBowelTargetUI({
+      updateResult: false
+    });
   }
 
 
