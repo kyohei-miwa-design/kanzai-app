@@ -2628,7 +2628,7 @@ h3 {
 
 
 /* =========================
-   Ver.0.8.41 その他ページ UI刷新
+   Ver.0.8.42 その他ページ UI刷新
 ========================= */
 
 .other-page-head {
@@ -5368,7 +5368,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.41</p>
+      <p class="app-version">Ver.0.8.42</p>
     </div>
 
     <button
@@ -6138,7 +6138,7 @@ h3 {
 
 
   <!-- =========================
-       その他 Ver.0.8.41
+       その他 Ver.0.8.42
   ========================== -->
   <section
     id="otherPage"
@@ -6452,7 +6452,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.41
+          Ver.0.8.42
         </span>
       </div>
 
@@ -6705,6 +6705,14 @@ let unitMaster = {};
 let currentUnit = "";
 let currentRole = "";
 
+/*
+  Ver.0.8.42
+  ログイン復元時に initialize() から参照されるため、
+  APIセッショントークンのメモリ変数は
+  initialize() 呼出より前に必ず初期化する。
+*/
+let apiSessionTokenMemory = "";
+
 let points = {
   "A様": 0,
   "B様": 0,
@@ -6744,7 +6752,7 @@ let newDataMessageTimer = null;
 let isRefreshing = false;
 let autoRefreshTimer = null;
 
-// Ver.0.8.41
+// Ver.0.8.42
 // 「30秒ごと」ではなく「同期完了から30秒後」に次を実行する。
 const AUTO_REFRESH_DELAY_MS = 30000;
 const AUTO_REFRESH_WRITE_RETRY_MS = 5000;
@@ -10306,7 +10314,7 @@ function updateHomeMedicineStatus() {
 }
 
 // ============================================================
-// Ver.0.8.41 ローカルキャッシュのデータスコープ分離
+// Ver.0.8.42 ローカルキャッシュのデータスコープ分離
 // ============================================================
 
 const DATA_SCOPE_CACHE_KEY =
@@ -11076,7 +11084,7 @@ async function initialize() {
 
 
   /*
-    Ver.0.8.41
+    Ver.0.8.42
     旧版の全ユニットキャッシュや、
     別ユニット/全ユニット権限のキャッシュを
     読み込む前に破棄する。
@@ -11217,7 +11225,7 @@ async function refreshFromGoogle(
 
 
     // =========================
-    // Ver.0.8.41
+    // Ver.0.8.42
     // 読み取り同期は1本化済み。
     // 一時的な404/429/5xxは
     // requestInitialDataFromServer側で再試行する。
@@ -13959,7 +13967,7 @@ async function changeUserUnit() {
 
 
 /*
-  Ver.0.8.41
+  Ver.0.8.42
   initialize() より後方に定義されていても TDZ にならないよう、
   起動時に参照される「その他」UI状態は var で宣言する。
 */
@@ -14495,7 +14503,7 @@ async function login() {
 
   try {
     /*
-      Ver.0.8.41
+      Ver.0.8.42
       ID・パスワードはURLへ載せず、
       POST本文で送信する。
     */
@@ -14516,7 +14524,7 @@ async function login() {
     }
 
     /*
-      Ver.0.8.41
+      Ver.0.8.42
       GASが発行したセッショントークンを保存。
     */
     if (!result.sessionToken) {
@@ -14580,7 +14588,7 @@ async function login() {
 
 
     /*
-      Ver.0.8.41
+      Ver.0.8.42
       直前に管理者/看護師/別ユニットで使った
       利用者データを新しい権限へ持ち越さない。
     */
@@ -14818,7 +14826,7 @@ async function loadInitialDataFromGoogle() {
     }
 
     /*
-      Ver.0.8.41
+      Ver.0.8.42
       GASが現在のログイン権限に対応したスコープで
       データを返したことを確認してから反映する。
     */
@@ -14889,7 +14897,7 @@ async function loadInitialDataFromGoogle() {
         : [];
 
     /*
-      Ver.0.8.41
+      Ver.0.8.42
       勤務帯確認も初期データ一括取得から反映。
     */
     applyDailyConfirmStatus(
@@ -19532,16 +19540,16 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.8.41 APIセッション認証
+// Ver.0.8.42 APIセッション認証
 // ============================================================
 
 /*
   APIトークンはStorageだけに毎回依存せず、
   このページを開いている間はメモリにも保持する。
+  メモリ変数そのものは初期グローバル領域で宣言済み。
 
   トークンの値そのものはConsoleへ出さない。
 */
-let apiSessionTokenMemory = "";
 
 
 function rememberApiSessionToken(
@@ -19783,7 +19791,7 @@ function throwIfApiAuthError(parsed) {
 
 
   /*
-    Ver.0.8.41
+    Ver.0.8.42
 
     SESSION_EXPIRED:
       GAS側で本当にセッションが存在しない/期限切れ。
