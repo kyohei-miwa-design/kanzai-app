@@ -2618,7 +2618,7 @@ h3 {
 
 
 /* =========================
-   Ver.0.8.38 その他ページ UI刷新
+   Ver.0.8.39 その他ページ UI刷新
 ========================= */
 
 .other-page-head {
@@ -4096,7 +4096,7 @@ h3 {
 
 
 /* ==================================================
-   Ver.0.8.29 排便ページ UI刷新
+   Ver.0.8.30 排便ページ UI刷新
 ================================================== */
 
 :root {
@@ -4425,7 +4425,7 @@ h3 {
 
 
 /* ==================================================
-   Ver.0.8.29 ホーム画面 UI刷新
+   Ver.0.8.30 ホーム画面 UI刷新
 ================================================== */
 
 .home-dashboard-head {
@@ -4958,7 +4958,7 @@ h3 {
 
 
 /* ==================================================
-   Ver.0.8.29 対応ページ UI刷新
+   Ver.0.8.30 対応ページ UI刷新
 ================================================== */
 
 .action-ui-head {
@@ -5358,7 +5358,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.38</p>
+      <p class="app-version">Ver.0.8.39</p>
     </div>
 
     <button
@@ -6128,7 +6128,7 @@ h3 {
 
 
   <!-- =========================
-       その他 Ver.0.8.38
+       その他 Ver.0.8.39
   ========================== -->
   <section
     id="otherPage"
@@ -6442,7 +6442,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.38
+          Ver.0.8.39
         </span>
       </div>
 
@@ -6451,7 +6451,7 @@ h3 {
           GAS
         </span>
         <span class="other-info-value">
-          Ver.0.8.29
+          Ver.0.8.30
         </span>
       </div>
 
@@ -6714,7 +6714,7 @@ let ruleViewOpenUsers = new Set();
 // 看護師が今回限りで登録する個別対応指示
 let nurseInstructions = [];
 
-// Ver.0.8.29 ホーム表示用キャッシュ
+// Ver.0.8.30 ホーム表示用キャッシュ
 let latestDailyConfirms = [];
 let latestHomeActionMetrics = {
   totalCount: 0,
@@ -10254,7 +10254,7 @@ function updateHomeMedicineStatus() {
 }
 
 // ============================================================
-// Ver.0.8.38 ローカルキャッシュのデータスコープ分離
+// Ver.0.8.39 ローカルキャッシュのデータスコープ分離
 // ============================================================
 
 const DATA_SCOPE_CACHE_KEY =
@@ -10987,7 +10987,7 @@ async function initialize() {
 
 
   /*
-    Ver.0.8.38
+    Ver.0.8.39
     旧版の全ユニットキャッシュや、
     別ユニット/全ユニット権限のキャッシュを
     読み込む前に破棄する。
@@ -11104,17 +11104,12 @@ async function refreshFromGoogle() {
 
 
     // =========================
-    // 最新データ一式と
-    // 確定状況を並列取得
+    // Ver.0.8.39
+    // 最新データ一式を1回の認証済みAPIで取得。
+    // dailyConfirmもこの中に含まれる。
     // =========================
 
-    await Promise.all([
-
-      loadSyncDataFromGoogle(),
-
-      loadDailyConfirmStatus()
-
-    ]);
+    await loadSyncDataFromGoogle();
 
 
     const afterData =
@@ -13815,7 +13810,7 @@ async function changeUserUnit() {
 
 
 /*
-  Ver.0.8.38
+  Ver.0.8.39
   initialize() より後方に定義されていても TDZ にならないよう、
   起動時に参照される「その他」UI状態は var で宣言する。
 */
@@ -14341,7 +14336,7 @@ async function login() {
 
   try {
     /*
-      Ver.0.8.38
+      Ver.0.8.39
       ID・パスワードはURLへ載せず、
       POST本文で送信する。
     */
@@ -14362,7 +14357,7 @@ async function login() {
     }
 
     /*
-      Ver.0.8.38
+      Ver.0.8.39
       GASが発行したセッショントークンを保存。
     */
     if (!result.sessionToken) {
@@ -14429,7 +14424,7 @@ async function login() {
 
 
     /*
-      Ver.0.8.38
+      Ver.0.8.39
       直前に管理者/看護師/別ユニットで使った
       利用者データを新しい権限へ持ち越さない。
     */
@@ -14662,7 +14657,7 @@ async function loadInitialDataFromGoogle() {
     }
 
     /*
-      Ver.0.8.38
+      Ver.0.8.39
       GASが現在のログイン権限に対応したスコープで
       データを返したことを確認してから反映する。
     */
@@ -14731,6 +14726,14 @@ async function loadInitialDataFromGoogle() {
       Array.isArray(data.nurseInstructions)
         ? data.nurseInstructions
         : [];
+
+    /*
+      Ver.0.8.39
+      勤務帯確認も初期データ一括取得から反映。
+    */
+    applyDailyConfirmStatus(
+      data.dailyConfirms
+    );
 
     // =========================
     // staffMaster / unitMaster
@@ -14810,20 +14813,6 @@ markSyncSuccess(
 
     console.timeEnd(
       "初期データ一括取得"
-    );
-
-    /*
-      夜勤・日勤確定状態だけは、
-      今は既存処理をそのまま使用する。
-    */
-    console.time(
-      "集計状況取得"
-    );
-
-    await loadDailyConfirmStatus();
-
-    console.timeEnd(
-      "集計状況取得"
     );
 
   } catch (error) {
@@ -18070,6 +18059,161 @@ function copyMedicineReport() {
     });
 }
 
+function applyDailyConfirmStatus(
+  confirms
+) {
+
+  const safeConfirms =
+    Array.isArray(confirms)
+      ? confirms
+      : [];
+
+  latestDailyConfirms =
+    safeConfirms;
+
+  const now = new Date();
+  const today =
+    getLocalDateText(now);
+
+  const nightTarget =
+    getDefaultNightTargetDateText(
+      now
+    );
+
+  let html = "";
+
+  const units =
+    currentUnit === "all"
+      ? [1, 2, 3, 4]
+      : [Number(currentUnit)];
+
+  for (const unit of units) {
+
+    if (!Number.isFinite(unit)) {
+      continue;
+    }
+
+    const dayConfirm =
+      getConfirmFor(
+        safeConfirms,
+        unit,
+        "day",
+        today
+      );
+
+    const nightConfirm =
+      getConfirmFor(
+        safeConfirms,
+        unit,
+        "night",
+        nightTarget
+      );
+
+    html += `
+      <div class="user-card">
+        <strong>${getUnitName(unit)}</strong>
+        <br><br>
+    `;
+
+    for (const item of [
+      {
+        type: "night",
+        title: "🌙 夜勤",
+        confirm: nightConfirm,
+        targetDate: nightTarget
+      },
+      {
+        type: "day",
+        title: "☀ 日勤",
+        confirm: dayConfirm,
+        targetDate: today
+      }
+    ]) {
+
+      html += `
+        <div class="confirm-block">
+          <div class="confirm-title">
+            ${item.title}
+          </div>
+      `;
+
+      if (item.confirm) {
+
+        const late =
+          String(
+            item.confirm.status || ""
+          ) === "late";
+
+        html += `
+          <div class="${late ? "confirm-late" : "confirm-ok"}">
+            ${late ? "⏰ 遅延確認" : "✅ 確定済み"}
+          </div>
+
+          <div class="confirm-info">
+            ${escapeHtml(item.confirm.time || "")}
+          </div>
+
+          <div class="confirm-signed-by">
+            ✍️ ${escapeHtml(item.confirm.name || "確認者不明")}
+          </div>
+        `;
+
+      } else {
+
+        const timing =
+          getShiftTiming(
+            item.type,
+            item.targetDate
+          );
+
+        let statusText =
+          "⚠ 未確定";
+
+        if (!timing.canConfirm) {
+          statusText =
+            item.type === "day"
+              ? "15:00から確認可"
+              : "5:00から確認可";
+        } else if (
+          !timing.isLate
+        ) {
+          statusText =
+            "○ 確認可能";
+        }
+
+        html += `
+          <div class="confirm-ng">
+            ${statusText}
+          </div>
+        `;
+      }
+
+      html += `</div>`;
+    }
+
+    html += "</div>";
+  }
+
+  updateShiftOverdueAlert(
+    safeConfirms
+  );
+
+  const dailyConfirmStatus =
+    document.getElementById(
+      "dailyConfirmStatus"
+    );
+
+  if (dailyConfirmStatus) {
+    dailyConfirmStatus.innerHTML =
+      html;
+  }
+
+  updateHomeConfirmStatus(
+    safeConfirms
+  );
+}
+
+
 async function loadDailyConfirmStatus() {
 
   try {
@@ -18085,130 +18229,7 @@ async function loadDailyConfirmStatus() {
         20000
       );
 
-    latestDailyConfirms =
-      Array.isArray(confirms)
-        ? confirms
-        : [];
-
-    const now = new Date();
-    const today = getLocalDateText(now);
-    const nightTarget =
-      getDefaultNightTargetDateText(now);
-
-    let html = "";
-
-    for (let unit = 1; unit <= 4; unit++) {
-
-      const dayConfirm =
-        getConfirmFor(
-          confirms,
-          unit,
-          "day",
-          today
-        );
-
-      const nightConfirm =
-        getConfirmFor(
-          confirms,
-          unit,
-          "night",
-          nightTarget
-        );
-
-      html += `
-        <div class="user-card">
-          <strong>${getUnitName(unit)}</strong>
-          <br><br>
-      `;
-
-      for (const item of [
-        {
-          type: "night",
-          title: "🌙 夜勤",
-          confirm: nightConfirm,
-          targetDate: nightTarget
-        },
-        {
-          type: "day",
-          title: "☀ 日勤",
-          confirm: dayConfirm,
-          targetDate: today
-        }
-      ]) {
-
-        html += `
-          <div class="confirm-block">
-            <div class="confirm-title">
-              ${item.title}
-            </div>
-        `;
-
-        if (item.confirm) {
-
-          const late =
-            String(item.confirm.status || "") ===
-              "late";
-
-          html += `
-            <div class="${late ? "confirm-late" : "confirm-ok"}">
-              ${late ? "⏰ 遅延確認" : "✅ 確定済み"}
-            </div>
-
-            <div class="confirm-info">
-              ${escapeHtml(item.confirm.time || "")}
-            </div>
-
-            <div class="confirm-signed-by">
-              ✍️ ${escapeHtml(item.confirm.name || "確認者不明")}
-            </div>
-          `;
-
-        } else {
-
-          const timing =
-            getShiftTiming(
-              item.type,
-              item.targetDate
-            );
-
-          let statusText = "⚠ 未確定";
-
-          if (!timing.canConfirm) {
-            statusText =
-              item.type === "day"
-                ? "15:00から確認可"
-                : "5:00から確認可";
-          } else if (!timing.isLate) {
-            statusText = "○ 確認可能";
-          }
-
-          html += `
-            <div class="confirm-ng">
-              ${statusText}
-            </div>
-          `;
-        }
-
-        html += `</div>`;
-      }
-
-      html += "</div>";
-    }
-
-    updateShiftOverdueAlert(
-      confirms
-    );
-
-    const dailyConfirmStatus =
-      document.getElementById(
-        "dailyConfirmStatus"
-      );
-
-    if (dailyConfirmStatus) {
-      dailyConfirmStatus.innerHTML = html;
-    }
-
-    updateHomeConfirmStatus(
+    applyDailyConfirmStatus(
       confirms
     );
 
@@ -18230,6 +18251,7 @@ async function loadDailyConfirmStatus() {
     }
   }
 }
+
 
 function updateHomeConfirmStatus(
   confirms
@@ -19349,7 +19371,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.8.38 APIセッション認証
+// Ver.0.8.39 APIセッション認証
 // ============================================================
 
 function getApiSessionToken() {
@@ -19506,7 +19528,7 @@ function throwIfApiAuthError(parsed) {
 
 
   /*
-    Ver.0.8.38
+    Ver.0.8.39
 
     SESSION_EXPIRED:
       GAS側で本当にセッションが存在しない/期限切れ。
@@ -22081,6 +22103,10 @@ async function loadSyncDataFromGoogle() {
     );
   }
 
+  verifyServerDataScope(
+    data
+  );
+
 
   // =========================
   // users
@@ -22140,6 +22166,10 @@ async function loadSyncDataFromGoogle() {
     Array.isArray(data.nurseInstructions)
       ? data.nurseInstructions
       : [];
+
+  applyDailyConfirmStatus(
+    data.dailyConfirms
+  );
 
   setMasterDataFromServer(data);
 
