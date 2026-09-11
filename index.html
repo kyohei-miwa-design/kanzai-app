@@ -2610,6 +2610,312 @@ h3 {
 }
 
 
+
+/* =========================
+   Ver.0.8.32 その他ページ UI刷新
+========================= */
+
+.other-page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.other-page-head h2 {
+  margin: 0;
+}
+
+.other-role-pill {
+  flex: none;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #eceff1;
+  color: #546e7a;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.other-section-title {
+  margin: 18px 2px 9px;
+  color: #546e7a;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.other-account-card,
+.other-status-card,
+.other-menu-list,
+.other-system-card,
+.other-admin-panel {
+  overflow: hidden;
+  margin-bottom: 12px;
+  border: 1px solid #dfe5e8;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(38, 50, 56, 0.05);
+}
+
+.other-account-card {
+  padding: 14px;
+}
+
+.other-account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.other-account-name {
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.other-account-sub {
+  margin-top: 3px;
+  color: #78909c;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.other-logout-button {
+  width: auto;
+  flex: none;
+  margin: 0;
+  padding: 8px 11px;
+  border: 1px solid #ffcdd2;
+  border-radius: 10px;
+  background: #fff;
+  color: #c62828;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.other-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 13px;
+}
+
+.other-summary-card {
+  padding: 11px 6px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.other-summary-card.nurse {
+  background: #fff1f1;
+  color: #c62828;
+}
+
+.other-summary-card.action {
+  background: #fff4e5;
+  color: #ef6c00;
+}
+
+.other-summary-card.other {
+  background: #edf8f0;
+  color: #2e7d32;
+}
+
+.other-summary-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.other-summary-card strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.other-card-link,
+.other-menu-row {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  background: #fff;
+  color: #455a64;
+  text-align: left;
+}
+
+.other-card-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid #edf1f3;
+  border-radius: 0;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.other-status-panel {
+  display: none;
+  margin-top: 10px;
+}
+
+.other-status-panel.open {
+  display: block;
+}
+
+.other-status-panel .status-toolbar {
+  margin-top: 0;
+}
+
+.other-menu-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border-top: 1px solid #edf1f3;
+  border-radius: 0;
+}
+
+.other-menu-row:first-child {
+  border-top: 0;
+}
+
+.other-menu-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.other-menu-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 11px;
+  background: #f1f4f5;
+  font-size: 19px;
+}
+
+.other-menu-icon.user {
+  background: #f1f3ff;
+}
+
+.other-menu-icon.rule {
+  background: #f3e5f5;
+}
+
+.other-menu-title {
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.other-menu-sub {
+  margin-top: 3px;
+  color: #78909c;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.other-menu-chevron {
+  flex: none;
+  color: #90a4ae;
+  font-size: 22px;
+}
+
+.other-admin-panel {
+  display: none;
+  padding: 14px;
+}
+
+.other-admin-panel.open {
+  display: block;
+}
+
+.other-admin-panel h3 {
+  margin: 20px 0 10px !important;
+  padding-bottom: 7px;
+  border-bottom: 1px solid #eceff1;
+}
+
+.other-admin-panel h3:first-child {
+  margin-top: 0 !important;
+}
+
+.other-admin-panel p {
+  margin-bottom: 6px;
+}
+
+.other-danger-note {
+  margin: 8px 0;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: #fff7f7;
+  color: #b71c1c;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.other-system-card {
+  padding: 4px 14px;
+}
+
+.other-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid #edf1f3;
+}
+
+.other-info-row:first-child {
+  border-top: 0;
+}
+
+.other-info-label {
+  color: #607d8b;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.other-info-value {
+  font-size: 12px;
+  font-weight: 900;
+  text-align: right;
+}
+
+.other-info-value.ok {
+  color: #2e7d32;
+}
+
+.other-info-value.error {
+  color: #c62828;
+}
+
+@media (max-width: 390px) {
+  .other-summary-grid {
+    gap: 6px;
+  }
+
+  .other-summary-card {
+    padding: 10px 4px;
+  }
+
+  .other-summary-label {
+    font-size: 9px;
+  }
+
+  .other-summary-card strong {
+    font-size: 20px;
+  }
+}
+
 /* =========================
    通知領域
 ========================= */
@@ -5046,7 +5352,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.31</p>
+      <p class="app-version">Ver.0.8.32</p>
     </div>
 
     <button
@@ -5816,131 +6122,334 @@ h3 {
 
 
   <!-- =========================
-       その他
+       その他 Ver.0.8.32
   ========================== -->
   <section
     id="otherPage"
     class="app-page"
   >
 
-    <h2>利用者状況</h2>
+    <div class="other-page-head">
+      <h2>その他</h2>
+      <div
+        id="otherRolePill"
+        class="other-role-pill"
+      >
+        -
+      </div>
+    </div>
 
-    <div id="status">
-      利用者状況を読み込んでいます...
+    <section class="other-account-card">
+      <div class="other-account-row">
+
+        <div>
+          <div
+            id="otherAccountName"
+            class="other-account-name"
+          >
+            ログイン情報
+          </div>
+
+          <div
+            id="otherAccountSub"
+            class="other-account-sub"
+          >
+            読み込み中...
+          </div>
+        </div>
+
+        <button
+          class="other-logout-button"
+          onclick="logout()"
+        >
+          ログアウト
+        </button>
+
+      </div>
+    </section>
+
+
+    <div class="other-section-title">
+      利用者状況
+    </div>
+
+    <section class="other-status-card">
+
+      <div
+        id="otherStatusSummary"
+        class="other-summary-grid"
+      >
+        <div class="other-summary-card other">
+          <span class="other-summary-label">
+            読み込み中
+          </span>
+          <strong>-</strong>
+        </div>
+      </div>
+
+      <button
+        id="otherStatusToggleButton"
+        class="other-card-link"
+        onclick="toggleOtherStatusPanel()"
+      >
+        <span>利用者状況の一覧を見る</span>
+        <span>›</span>
+      </button>
+
+    </section>
+
+    <div
+      id="otherStatusPanel"
+      class="other-status-panel"
+    >
+      <div id="status">
+        利用者状況を読み込んでいます...
+      </div>
     </div>
 
 
     <!-- 管理者機能 -->
     <div id="adminArea">
 
-      <h2>管理者設定</h2>
-
-
-      <h3>利用者追加</h3>
-
-      <input
-        type="text"
-        id="newUserName"
-        placeholder="例：D様"
-      >
-
-      <button onclick="addUser()">
-        追加
-      </button>
-
-
-      <h3>利用者削除</h3>
-
-      <button onclick="deleteUser()">
-        削除
-      </button>
-
-
-      <h3>所属ユニット変更</h3>
-
-      <p>対象利用者</p>
-
-      <select id="unitUserSelect"></select>
-
-
-      <p>所属ユニット</p>
-
-      <select id="unitSelect">
-        <option value="1">1ユニット</option>
-        <option value="2">2ユニット</option>
-        <option value="3">3ユニット</option>
-        <option value="4">4ユニット</option>
-      </select>
-
-      <button onclick="changeUserUnit()">
-        ユニット変更
-      </button>
-
-
-      <h3>緩下剤・排便処置ルール編集</h3>
-
-
-      <h3>登録済みルール一覧</h3>
-
-      <div id="ruleList">
-        まだルールはありません
+      <div class="other-section-title">
+        管理者メニュー
       </div>
 
+      <section class="other-menu-list">
 
-      <p>対象利用者</p>
+        <button
+          class="other-menu-row"
+          onclick="toggleOtherAdminPanel('user')"
+        >
+          <div class="other-menu-left">
+            <div class="other-menu-icon user">
+              👤
+            </div>
 
-      <select id="ruleUserSelect"></select>
+            <div>
+              <div class="other-menu-title">
+                利用者管理
+              </div>
+              <div class="other-menu-sub">
+                追加・削除・所属ユニット変更
+              </div>
+            </div>
+          </div>
+
+          <div class="other-menu-chevron">
+            ›
+          </div>
+        </button>
+
+        <button
+          class="other-menu-row"
+          onclick="toggleOtherAdminPanel('rule')"
+        >
+          <div class="other-menu-left">
+            <div class="other-menu-icon rule">
+              📋
+            </div>
+
+            <div>
+              <div class="other-menu-title">
+                ルール管理
+              </div>
+              <div class="other-menu-sub">
+                個別ルールの追加・削除
+              </div>
+            </div>
+          </div>
+
+          <div class="other-menu-chevron">
+            ›
+          </div>
+        </button>
+
+      </section>
 
 
-      <p>未排便日数</p>
-
-      <input
-        type="number"
-        id="ruleDay"
-        placeholder="例：2"
+      <section
+        id="otherAdminUserPanel"
+        class="other-admin-panel"
       >
 
+        <h3>利用者追加</h3>
 
-      <p>種類</p>
+        <p>利用者名</p>
 
-      <select
-        id="ruleKind"
-        onchange="onRuleKindChange()"
+        <input
+          type="text"
+          id="newUserName"
+          placeholder="例：D様"
+        >
+
+        <p>所属ユニット</p>
+
+        <select id="newUserUnitSelect">
+          <option value="1">1ユニット</option>
+          <option value="2">2ユニット</option>
+          <option value="3">3ユニット</option>
+          <option value="4">4ユニット</option>
+        </select>
+
+        <button onclick="addUser()">
+          追加
+        </button>
+
+
+        <h3>利用者削除</h3>
+
+        <p>対象利用者</p>
+
+        <select id="deleteUserSelect"></select>
+
+        <div class="other-danger-note">
+          削除すると利用者マスターから外れます。対象者をよく確認してください。
+        </div>
+
+        <button onclick="deleteUser()">
+          削除
+        </button>
+
+
+        <h3>所属ユニット変更</h3>
+
+        <p>対象利用者</p>
+
+        <select id="unitUserSelect"></select>
+
+        <p>所属ユニット</p>
+
+        <select id="unitSelect">
+          <option value="1">1ユニット</option>
+          <option value="2">2ユニット</option>
+          <option value="3">3ユニット</option>
+          <option value="4">4ユニット</option>
+        </select>
+
+        <button onclick="changeUserUnit()">
+          ユニット変更
+        </button>
+
+      </section>
+
+
+      <section
+        id="otherAdminRulePanel"
+        class="other-admin-panel"
       >
-        <option value="laxative">緩下剤</option>
-        <option value="procedure">排便処置</option>
-      </select>
 
+        <h3>緩下剤・排便処置ルール編集</h3>
 
-      <p>内容</p>
+        <h3>登録済みルール一覧</h3>
 
-      <input
-        type="text"
-        id="ruleMedicine"
-        placeholder="例：ピコ15滴 / テレミン"
-      >
+        <div id="ruleList">
+          まだルールはありません
+        </div>
 
+        <p>対象利用者</p>
 
-      <p>時間帯</p>
+        <select id="ruleUserSelect"></select>
 
-      <select id="ruleTiming">
-        <option value="">選択してください</option>
-        <option value="morning">朝</option>
-        <option value="lunch">昼</option>
-        <option value="evening">夕</option>
-        <option value="daytime">日中</option>
-      </select>
+        <p>未排便日数</p>
 
-      <div class="rule-form-note">
-        朝：0:00～10:00 ／ 昼・夕・日中：9:00～18:30<br>
-        排便処置を選ぶと、時間帯は「日中」を初期選択します。
-      </div>
+        <input
+          type="number"
+          id="ruleDay"
+          placeholder="例：2"
+        >
 
-      <button onclick="saveRule()">
-        ルール保存
-      </button>
+        <p>種類</p>
+
+        <select
+          id="ruleKind"
+          onchange="onRuleKindChange()"
+        >
+          <option value="laxative">緩下剤</option>
+          <option value="procedure">排便処置</option>
+        </select>
+
+        <p>内容</p>
+
+        <input
+          type="text"
+          id="ruleMedicine"
+          placeholder="例：ピコ15滴 / テレミン"
+        >
+
+        <p>時間帯</p>
+
+        <select id="ruleTiming">
+          <option value="">選択してください</option>
+          <option value="morning">朝</option>
+          <option value="lunch">昼</option>
+          <option value="evening">夕</option>
+          <option value="daytime">日中</option>
+        </select>
+
+        <div class="rule-form-note">
+          朝：0:00～10:00 ／ 昼・夕・日中：9:00～18:30<br>
+          排便処置を選ぶと、時間帯は「日中」を初期選択します。
+        </div>
+
+        <button onclick="saveRule()">
+          ルール保存
+        </button>
+
+      </section>
 
     </div>
+
+
+    <div class="other-section-title">
+      アプリ情報
+    </div>
+
+    <section class="other-system-card">
+
+      <div class="other-info-row">
+        <span class="other-info-label">
+          通信状態
+        </span>
+        <span
+          id="otherSyncState"
+          class="other-info-value"
+        >
+          -
+        </span>
+      </div>
+
+      <div class="other-info-row">
+        <span class="other-info-label">
+          最終同期
+        </span>
+        <span
+          id="otherLastSync"
+          class="other-info-value"
+        >
+          -
+        </span>
+      </div>
+
+      <div class="other-info-row">
+        <span class="other-info-label">
+          HTML
+        </span>
+        <span class="other-info-value">
+          Ver.0.8.32
+        </span>
+      </div>
+
+      <div class="other-info-row">
+        <span class="other-info-label">
+          GAS
+        </span>
+        <span class="other-info-value">
+          Ver.0.8.26
+        </span>
+      </div>
+
+    </section>
 
   </section>
 
@@ -6408,6 +6917,8 @@ function markSyncSuccess(serverTime = "") {
     getSyncDisplayText(
       lastSuccessfulSyncAt
     );
+
+  updateOtherAppInfo();
 }
 
 
@@ -6439,6 +6950,8 @@ function markSyncError() {
           )
         )
       : "⚠ 更新失敗 / 同期履歴なし";
+
+  updateOtherAppInfo();
 }
 
 
@@ -10377,8 +10890,18 @@ async function addUser() {
     return;
   }
 
+  const newUserUnitSelect =
+    document.getElementById(
+      "newUserUnitSelect"
+    );
+
+  const newUserUnit =
+    newUserUnitSelect
+      ? String(newUserUnitSelect.value || "1")
+      : "1";
+
   points[name] = 0;
-  userUnits[name] = "1";
+  userUnits[name] = newUserUnit;
   lastDates[name] = new Date().toISOString().slice(0, 10);
 
   
@@ -10398,6 +10921,8 @@ async function addUser() {
   await saveUsersToGoogle();
 
   await loadUsersFromGoogle();
+
+  updateOtherPageUI();
 }
 
 function setStatusSortMode(value) {
@@ -12396,7 +12921,21 @@ function openUserStatusDetail(user) {
 
 
 async function deleteUser() {
-  const name = document.getElementById("userSelect").value;
+
+  const deleteSelect =
+    document.getElementById(
+      "deleteUserSelect"
+    );
+
+  const fallbackSelect =
+    document.getElementById(
+      "userSelect"
+    );
+
+  const name =
+    deleteSelect
+      ? String(deleteSelect.value || "")
+      : String(fallbackSelect?.value || "");
 
   if (name === "") {
     alert("削除する利用者名を入力してください");
@@ -12409,15 +12948,38 @@ async function deleteUser() {
 
   }
 
+  const ok =
+    confirm(
+      name +
+      " を利用者マスターから削除しますか？"
+    );
+
+  if (!ok) {
+    return;
+  }
+
   delete points[name];
   delete lastDates[name];
   delete userUnits[name];
 
-  const select = document.getElementById("userSelect");
-  for (let i = 0; i < select.options.length; i++) {
-    if (select.options[i].textContent === name) {
-      select.remove(i);
-      break;
+  const select =
+    document.getElementById(
+      "userSelect"
+    );
+
+  if (select) {
+    for (
+      let i = 0;
+      i < select.options.length;
+      i++
+    ) {
+      if (
+        select.options[i].textContent ===
+        name
+      ) {
+        select.remove(i);
+        break;
+      }
     }
   }
 
@@ -12431,6 +12993,7 @@ await saveUsersToGoogle();
 await loadUsersFromGoogle();
 
 updateUserSelects();
+updateOtherPageUI();
 }
 
 function normalizeMasterActive(value) {
@@ -12533,10 +13096,19 @@ function getUnitName(unitId) {
 
 function updateUnitMasterDisplays() {
 
-  const unitSelect =
-    document.getElementById("unitSelect");
+  const unitSelectIds = [
+    "unitSelect",
+    "newUserUnitSelect"
+  ];
 
-  if (unitSelect) {
+  for (const selectId of unitSelectIds) {
+
+    const unitSelect =
+      document.getElementById(selectId);
+
+    if (!unitSelect) {
+      continue;
+    }
 
     const currentValue =
       unitSelect.value;
@@ -12798,6 +13370,11 @@ function updateUserSelects() {
       "unitUserSelect"
     );
 
+  const deleteUserSelect =
+    document.getElementById(
+      "deleteUserSelect"
+    );
+
 
   /*
     30秒同期でselectを作り直しても、
@@ -12821,10 +13398,14 @@ function updateUserSelects() {
     unitUserSelect.innerHTML = "";
   }
 
+  if (deleteUserSelect) {
+    deleteUserSelect.innerHTML = "";
+  }
+
 
   for (let user in points) {
 
-    // ユニット変更用は全利用者を表示
+    // 管理者用の利用者管理は全利用者を表示
     if (unitUserSelect) {
 
       const option3 =
@@ -12840,6 +13421,24 @@ function updateUserSelects() {
 
       unitUserSelect.appendChild(
         option3
+      );
+    }
+
+    if (deleteUserSelect) {
+
+      const option4 =
+        document.createElement(
+          "option"
+        );
+
+      option4.value =
+        user;
+
+      option4.textContent =
+        user;
+
+      deleteUserSelect.appendChild(
+        option4
       );
     }
 
@@ -12933,8 +13532,332 @@ async function changeUserUnit() {
 
   updateUserSelects();
 
+  updateOtherPageUI();
+
   alert(user + "を「" + getUnitName(newUnit) + "」に変更しました");
 }
+
+
+let otherStatusPanelOpen = false;
+let otherAdminPanel = "";
+
+
+function getOtherStatusCounts() {
+
+  const infos = [];
+
+  for (const user in points) {
+
+    if (
+      currentUnit !== "all" &&
+      userUnits[user] !== currentUnit
+    ) {
+      continue;
+    }
+
+    infos.push(
+      getUserStatusInfo(user)
+    );
+  }
+
+  const nurseCount =
+    infos.filter(
+      info =>
+        info.state === "nurse"
+    ).length;
+
+  const actionCount =
+    infos.filter(
+      info =>
+        [
+          "missed",
+          "active",
+          "upcoming",
+          "nurse-instruction"
+        ].includes(info.state)
+    ).length;
+
+  return {
+    nurseCount: nurseCount,
+    actionCount: actionCount,
+    otherCount:
+      Math.max(
+        0,
+        infos.length -
+        nurseCount -
+        actionCount
+      ),
+    totalCount:
+      infos.length
+  };
+}
+
+
+function getOtherRoleLabel() {
+
+  if (currentRole === "admin") {
+    return "管理者";
+  }
+
+  if (currentRole === "nurse") {
+    return "看護師";
+  }
+
+  return "介護職";
+}
+
+
+function updateOtherAppInfo() {
+
+  const state =
+    document.getElementById(
+      "otherSyncState"
+    );
+
+  const last =
+    document.getElementById(
+      "otherLastSync"
+    );
+
+  if (state) {
+
+    const syncBar =
+      document.getElementById(
+        "syncStatusBar"
+      );
+
+    const hasError =
+      syncBar &&
+      syncBar.classList.contains(
+        "sync-error"
+      );
+
+    state.textContent =
+      hasError
+        ? "⚠ 更新失敗"
+        : "● 正常";
+
+    state.className =
+      "other-info-value " +
+      (
+        hasError
+          ? "error"
+          : "ok"
+      );
+  }
+
+  if (last) {
+
+    last.textContent =
+      lastSuccessfulSyncAt
+        ? getSyncDisplayText(
+            lastSuccessfulSyncAt
+          )
+        : "同期履歴なし";
+  }
+}
+
+
+function updateOtherPageUI() {
+
+  const rolePill =
+    document.getElementById(
+      "otherRolePill"
+    );
+
+  const accountName =
+    document.getElementById(
+      "otherAccountName"
+    );
+
+  const accountSub =
+    document.getElementById(
+      "otherAccountSub"
+    );
+
+  const summary =
+    document.getElementById(
+      "otherStatusSummary"
+    );
+
+  const loginName =
+    getLoginSessionValue(
+      "loginName"
+    ) || "ログイン中";
+
+  const roleLabel =
+    getOtherRoleLabel();
+
+  const unitLabel =
+    currentUnit === "all"
+      ? "全ユニット"
+      : getUnitName(
+          currentUnit
+        );
+
+
+  if (rolePill) {
+    rolePill.textContent =
+      roleLabel;
+  }
+
+  if (accountName) {
+    accountName.textContent =
+      loginName;
+  }
+
+  if (accountSub) {
+    accountSub.textContent =
+      unitLabel +
+      " ・ " +
+      roleLabel +
+      "アカウント";
+  }
+
+
+  if (summary) {
+
+    const counts =
+      getOtherStatusCounts();
+
+    summary.innerHTML = `
+      <div class="other-summary-card nurse">
+        <span class="other-summary-label">
+          🚨 看護師確認
+        </span>
+        <strong>
+          ${counts.nurseCount}
+        </strong>
+      </div>
+
+      <div class="other-summary-card action">
+        <span class="other-summary-label">
+          ⚠ 本日対応
+        </span>
+        <strong>
+          ${counts.actionCount}
+        </strong>
+      </div>
+
+      <div class="other-summary-card other">
+        <span class="other-summary-label">
+          ○ その他
+        </span>
+        <strong>
+          ${counts.otherCount}
+        </strong>
+      </div>
+    `;
+  }
+
+
+  const statusPanel =
+    document.getElementById(
+      "otherStatusPanel"
+    );
+
+  const statusButton =
+    document.getElementById(
+      "otherStatusToggleButton"
+    );
+
+  if (statusPanel) {
+
+    statusPanel.classList.toggle(
+      "open",
+      otherStatusPanelOpen
+    );
+  }
+
+  if (statusButton) {
+
+    statusButton.innerHTML =
+      otherStatusPanelOpen
+        ? `
+            <span>利用者状況を閉じる</span>
+            <span>⌃</span>
+          `
+        : `
+            <span>利用者状況の一覧を見る</span>
+            <span>›</span>
+          `;
+  }
+
+
+  if (otherStatusPanelOpen) {
+
+    const statusArea =
+      document.getElementById(
+        "status"
+      );
+
+    if (statusArea) {
+      statusArea.innerHTML =
+        getStatusHtml();
+    }
+  }
+
+
+  updateOtherAppInfo();
+}
+
+
+function toggleOtherStatusPanel() {
+
+  otherStatusPanelOpen =
+    !otherStatusPanelOpen;
+
+  updateOtherPageUI();
+}
+
+
+function toggleOtherAdminPanel(
+  panel
+) {
+
+  if (currentRole !== "admin") {
+    return;
+  }
+
+  otherAdminPanel =
+    otherAdminPanel === panel
+      ? ""
+      : panel;
+
+  const userPanel =
+    document.getElementById(
+      "otherAdminUserPanel"
+    );
+
+  const rulePanel =
+    document.getElementById(
+      "otherAdminRulePanel"
+    );
+
+  if (userPanel) {
+    userPanel.classList.toggle(
+      "open",
+      otherAdminPanel === "user"
+    );
+  }
+
+  if (rulePanel) {
+    rulePanel.classList.toggle(
+      "open",
+      otherAdminPanel === "rule"
+    );
+  }
+
+  if (otherAdminPanel === "rule") {
+    updateRuleDisplays();
+  }
+
+  if (otherAdminPanel === "user") {
+    updateUserSelects();
+    updateUnitMasterDisplays();
+  }
+}
+
 
 function updateRoleUI() {
   const adminArea =
@@ -12948,10 +13871,12 @@ function updateRoleUI() {
 
 
   // 管理者メニュー
-  if (currentRole === "admin") {
-    adminArea.style.display = "block";
-  } else {
-    adminArea.style.display = "none";
+  if (adminArea) {
+    if (currentRole === "admin") {
+      adminArea.style.display = "block";
+    } else {
+      adminArea.style.display = "none";
+    }
   }
 
 
@@ -12979,6 +13904,8 @@ function updateRoleUI() {
 
   // ルール一覧は全職種で閲覧可能
   updateRuleDisplays();
+
+  updateOtherPageUI();
 }
 
 
@@ -20470,16 +21397,9 @@ function openPage(pageId) {
   }
 
 
-  // 利用者状況も開くたびに最新状態で再描画
+  // その他画面も開くたびに最新状態で再描画
   if (pageId === "otherPage") {
-
-    const statusArea =
-      document.getElementById("status");
-
-    if (statusArea) {
-      statusArea.innerHTML =
-        getStatusHtml();
-    }
+    updateOtherPageUI();
   }
 
 
