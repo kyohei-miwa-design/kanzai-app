@@ -2618,7 +2618,7 @@ h3 {
 
 
 /* =========================
-   Ver.0.8.36 その他ページ UI刷新
+   Ver.0.8.37 その他ページ UI刷新
 ========================= */
 
 .other-page-head {
@@ -4096,7 +4096,7 @@ h3 {
 
 
 /* ==================================================
-   Ver.0.8.27 排便ページ UI刷新
+   Ver.0.8.28 排便ページ UI刷新
 ================================================== */
 
 :root {
@@ -5358,7 +5358,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.36</p>
+      <p class="app-version">Ver.0.8.37</p>
     </div>
 
     <button
@@ -6128,7 +6128,7 @@ h3 {
 
 
   <!-- =========================
-       その他 Ver.0.8.36
+       その他 Ver.0.8.37
   ========================== -->
   <section
     id="otherPage"
@@ -6442,7 +6442,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.36
+          Ver.0.8.37
         </span>
       </div>
 
@@ -6451,7 +6451,7 @@ h3 {
           GAS
         </span>
         <span class="other-info-value">
-          Ver.0.8.27
+          Ver.0.8.28
         </span>
       </div>
 
@@ -10252,7 +10252,246 @@ function updateHomeMedicineStatus() {
   updateHomeUrgentSummary();
   updateHomeCompletionStatus();
 }
+
+// ============================================================
+// Ver.0.8.37 ローカルキャッシュのデータスコープ分離
+// ============================================================
+
+const DATA_SCOPE_CACHE_KEY =
+  "apiDataScopeKeyV1";
+
+
+function getDataScopeKeyForRoleUnit(
+  role,
+  unit
+) {
+
+  const normalizedRole =
+    String(role || "").trim();
+
+  const normalizedUnit =
+    String(unit || "").trim();
+
+  if (
+    normalizedRole === "nurse" ||
+    normalizedRole === "admin"
+  ) {
+    return "all";
+  }
+
+  if (normalizedUnit) {
+    return (
+      "unit:" +
+      normalizedUnit
+    );
+  }
+
+  return "";
+}
+
+
+function getCurrentDataScopeKey() {
+
+  return getDataScopeKeyForRoleUnit(
+    currentRole,
+    currentUnit
+  );
+}
+
+
+function getSavedLoginDataScopeKey() {
+
+  return getDataScopeKeyForRoleUnit(
+    getLoginSessionValue(
+      "loginRole"
+    ),
+    getLoginSessionValue(
+      "loginUnit"
+    )
+  );
+}
+
+
+function clearResidentScopedMemory() {
+
+  points = {};
+  lastDates = {};
+  userUnits = {};
+  histories = [];
+  nurseInstructions = [];
+  rules = {};
+  checks = {};
+  checkDate =
+    new Date()
+      .toISOString()
+      .slice(0, 10);
+}
+
+
+function clearResidentScopedCache() {
+
+  const keys = [
+    "points",
+    "lastDates",
+    "userUnits",
+    "histories",
+    "nurseInstructions",
+    "rules",
+    "checks",
+    "checkDate",
+    DATA_SCOPE_CACHE_KEY
+  ];
+
+  for (const key of keys) {
+
+    try {
+      localStorage.removeItem(
+        key
+      );
+    } catch (error) {
+
+      console.warn(
+        "利用者キャッシュ削除失敗",
+        key,
+        error
+      );
+    }
+  }
+
+  clearResidentScopedMemory();
+}
+
+
+function prepareScopedCacheForScope(
+  expectedScopeKey
+) {
+
+  const expected =
+    String(
+      expectedScopeKey || ""
+    ).trim();
+
+  let cached = "";
+
+  try {
+    cached =
+      String(
+        localStorage.getItem(
+          DATA_SCOPE_CACHE_KEY
+        ) || ""
+      ).trim();
+  } catch (error) {
+
+    console.warn(
+      "データスコープ読込失敗",
+      error
+    );
+  }
+
+
+  /*
+    0.8.36以前はscopeKeyを保存していないため、
+    その旧キャッシュは一度破棄する。
+  */
+  if (
+    !expected ||
+    !cached ||
+    cached !== expected
+  ) {
+
+    clearResidentScopedCache();
+
+    if (expected) {
+
+      try {
+        localStorage.setItem(
+          DATA_SCOPE_CACHE_KEY,
+          expected
+        );
+      } catch (error) {
+
+        console.warn(
+          "データスコープ保存失敗",
+          error
+        );
+      }
+    }
+
+    return false;
+  }
+
+  return true;
+}
+
+
+function prepareScopedCacheForSavedLogin() {
+
+  return prepareScopedCacheForScope(
+    getSavedLoginDataScopeKey()
+  );
+}
+
+
+function prepareScopedCacheForCurrentLogin() {
+
+  return prepareScopedCacheForScope(
+    getCurrentDataScopeKey()
+  );
+}
+
+
+function verifyServerDataScope(
+  data
+) {
+
+  const expected =
+    getCurrentDataScopeKey();
+
+  const serverScope =
+    String(
+      data &&
+      data.dataScope &&
+      data.dataScope.scopeKey
+        ? data.dataScope.scopeKey
+        : ""
+    ).trim();
+
+  if (
+    !expected ||
+    !serverScope
+  ) {
+    throw new Error(
+      "APIデータスコープを確認できませんでした"
+    );
+  }
+
+  if (
+    expected !== serverScope
+  ) {
+    throw new Error(
+      "APIデータスコープ不一致：" +
+      "端末=" +
+      expected +
+      " / サーバー=" +
+      serverScope
+    );
+  }
+
+  return true;
+}
+
+
 function saveData() {
+
+  const dataScopeKey =
+    getCurrentDataScopeKey();
+
+  if (dataScopeKey) {
+    localStorage.setItem(
+      DATA_SCOPE_CACHE_KEY,
+      dataScopeKey
+    );
+  }
 
   localStorage.setItem(
     "bowelPointRuleVersion",
@@ -10745,6 +10984,15 @@ async function initialize() {
   */
 
   restoreSyncStatus();
+
+
+  /*
+    Ver.0.8.37
+    旧版の全ユニットキャッシュや、
+    別ユニット/全ユニット権限のキャッシュを
+    読み込む前に破棄する。
+  */
+  prepareScopedCacheForSavedLogin();
 
 
   try {
@@ -13567,7 +13815,7 @@ async function changeUserUnit() {
 
 
 /*
-  Ver.0.8.36
+  Ver.0.8.37
   initialize() より後方に定義されていても TDZ にならないよう、
   起動時に参照される「その他」UI状態は var で宣言する。
 */
@@ -14053,7 +14301,8 @@ function clearCachedAppData() {
     "nurseInstructions",
     "rules",
     "checks",
-    "checkDate"
+    "checkDate",
+    DATA_SCOPE_CACHE_KEY
   ];
 
 
@@ -14092,7 +14341,7 @@ async function login() {
 
   try {
     /*
-      Ver.0.8.36
+      Ver.0.8.37
       ID・パスワードはURLへ載せず、
       POST本文で送信する。
     */
@@ -14113,7 +14362,7 @@ async function login() {
     }
 
     /*
-      Ver.0.8.36
+      Ver.0.8.37
       GASが発行したセッショントークンを保存。
     */
     if (!result.sessionToken) {
@@ -14177,6 +14426,15 @@ async function login() {
         result.name || ""
       ).trim()
     );
+
+
+    /*
+      Ver.0.8.37
+      直前に管理者/看護師/別ユニットで使った
+      利用者データを新しい権限へ持ち越さない。
+    */
+    prepareScopedCacheForCurrentLogin();
+
 
     /*
       GASが返した正式ユニット名を即時反映。
@@ -14402,6 +14660,16 @@ async function loadInitialDataFromGoogle() {
         "GASが旧排便量基準のままです。Ver.0.8.24のGASへ更新してください。"
       );
     }
+
+    /*
+      Ver.0.8.37
+      GASが現在のログイン権限に対応したスコープで
+      データを返したことを確認してから反映する。
+    */
+    verifyServerDataScope(
+      data
+    );
+
 
     // =========================
     // users
@@ -16668,6 +16936,11 @@ async function logout() {
     );
   }
 
+
+  /*
+    共有端末へ利用者データを残さない。
+  */
+  clearResidentScopedCache();
 
   clearLocalLoginSession();
 
@@ -19072,7 +19345,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.8.36 APIセッション認証
+// Ver.0.8.37 APIセッション認証
 // ============================================================
 
 function getApiSessionToken() {
@@ -19161,6 +19434,7 @@ function clearLocalLoginSession() {
 
 function forceApiRelogin(message) {
 
+  clearResidentScopedCache();
   clearLocalLoginSession();
 
   currentRole = "";
