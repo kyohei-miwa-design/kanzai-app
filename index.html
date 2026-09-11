@@ -2618,7 +2618,7 @@ h3 {
 
 
 /* =========================
-   Ver.0.8.35 その他ページ UI刷新
+   Ver.0.8.36 その他ページ UI刷新
 ========================= */
 
 .other-page-head {
@@ -5358,7 +5358,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.35</p>
+      <p class="app-version">Ver.0.8.36</p>
     </div>
 
     <button
@@ -6128,7 +6128,7 @@ h3 {
 
 
   <!-- =========================
-       その他 Ver.0.8.35
+       その他 Ver.0.8.36
   ========================== -->
   <section
     id="otherPage"
@@ -6442,7 +6442,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.35
+          Ver.0.8.36
         </span>
       </div>
 
@@ -6451,7 +6451,7 @@ h3 {
           GAS
         </span>
         <span class="other-info-value">
-          Ver.0.8.26
+          Ver.0.8.27
         </span>
       </div>
 
@@ -10493,7 +10493,7 @@ async function saveRulesToGoogle() {
             "text/plain;charset=utf-8"
         },
 
-        body: JSON.stringify({
+        body: jsonBodyWithSession({
           action: "saveRulesV2",
           rules: rules
         }),
@@ -10510,7 +10510,10 @@ async function saveRulesToGoogle() {
   }
 
   const result =
-    await response.json();
+    await parseApiJsonResponse(
+      response,
+      "API"
+    );
 
   if (!result.ok) {
     throw new Error(
@@ -10559,7 +10562,7 @@ async function saveUsersToGoogle(showAlert = true) {
         "Content-Type": "text/plain;charset=utf-8"
       },
 
-      body: JSON.stringify({
+      body: jsonBodyWithSession({
         action: "saveUsers",
         users: users
       }),
@@ -10616,7 +10619,7 @@ async function saveCheckToGoogle(
             "text/plain;charset=utf-8"
         },
 
-        body: JSON.stringify({
+        body: jsonBodyWithSession({
           action: "setCheck",
           key: key,
           checked: checked
@@ -10634,7 +10637,10 @@ async function saveCheckToGoogle(
   }
 
   const result =
-    await response.json();
+    await parseApiJsonResponse(
+      response,
+      "API"
+    );
 
   if (!result.ok) {
     throw new Error(
@@ -11426,7 +11432,7 @@ async function saveNurseInstructionFromModal(user) {
         headers: {
           "Content-Type": "text/plain;charset=utf-8"
         },
-        body: JSON.stringify({
+        body: jsonBodyWithSession({
           action: "saveNurseInstruction",
           sourceRole: currentRole,
           user: user,
@@ -11441,7 +11447,7 @@ async function saveNurseInstructionFromModal(user) {
       }
     );
 
-    const result = await response.json();
+    const result = await parseApiJsonResponse(response, "API");
 
     if (!response.ok || !result.ok) {
       throw new Error(result.message || "看護師指示を保存できませんでした");
@@ -11533,7 +11539,7 @@ async function cancelNurseInstructionFromModal(instructionId) {
       {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
+        body: jsonBodyWithSession({
           action: "setNurseInstructionStatus",
           statusAction: "cancel",
           instructionId: instructionId,
@@ -11545,7 +11551,7 @@ async function cancelNurseInstructionFromModal(instructionId) {
       }
     );
 
-    const result = await response.json();
+    const result = await parseApiJsonResponse(response, "API");
     if (!response.ok || !result.ok) {
       throw new Error(result.message || "指示を取り消せませんでした");
     }
@@ -11575,7 +11581,7 @@ async function setNurseInstructionExecution(instructionId, statusAction) {
       {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
+        body: jsonBodyWithSession({
           action: "setNurseInstructionStatus",
           statusAction: statusAction,
           instructionId: instructionId,
@@ -11585,7 +11591,7 @@ async function setNurseInstructionExecution(instructionId, statusAction) {
       }
     );
 
-    const result = await response.json();
+    const result = await parseApiJsonResponse(response, "API");
     if (!response.ok || !result.ok) {
       throw new Error(result.message || "保存できませんでした");
     }
@@ -13561,7 +13567,7 @@ async function changeUserUnit() {
 
 
 /*
-  Ver.0.8.35
+  Ver.0.8.36
   initialize() より後方に定義されていても TDZ にならないよう、
   起動時に参照される「その他」UI状態は var で宣言する。
 */
@@ -14085,31 +14091,51 @@ async function login() {
   loginMessage.textContent = "ログイン確認中...";
 
   try {
-    const url =
-      API_URL +
-      "?action=login" +
-      "&userId=" + encodeURIComponent(userId) +
-      "&password=" + encodeURIComponent(password);
-
     /*
-      Ver.0.8.22
-      ログイン通信にもタイムアウト/再試行を適用する。
+      Ver.0.8.36
+      ID・パスワードはURLへ載せず、
+      POST本文で送信する。
     */
-    const response =
-      await fetchApi(
-        url,
-        4,
+    const result =
+      await postJsonApiOnce(
+        {
+          action: "login",
+          userId: userId,
+          password: password
+        },
         20000
       );
-
-    const result =
-      await response.json();
 
     if (!result.success) {
       loginMessage.textContent =
         result.message || "IDまたはパスワードが違います";
       return;
     }
+
+    /*
+      Ver.0.8.36
+      GASが発行したセッショントークンを保存。
+    */
+    if (!result.sessionToken) {
+      throw new Error(
+        "認証トークンを取得できませんでした"
+      );
+    }
+
+    setLoginSessionValue(
+      "apiSessionToken",
+      String(
+        result.sessionToken
+      )
+    );
+
+    setLoginSessionValue(
+      "apiSessionExpiresAt",
+      String(
+        result.sessionExpiresAt || ""
+      )
+    );
+
 
     /*
       ここで「認証」は完了。
@@ -14254,7 +14280,40 @@ function restoreLogin() {
       "loginUnit"
     );
 
-  if (!savedRole) {
+  const savedToken =
+    getLoginSessionValue(
+      "apiSessionToken"
+    );
+
+  const savedExpiresAt =
+    Number(
+      getLoginSessionValue(
+        "apiSessionExpiresAt"
+      ) || 0
+    );
+
+
+  /*
+    0.8.35以前のログイン情報には
+    APIトークンがないので一度再ログインする。
+  */
+  if (
+    !savedRole ||
+    !savedToken ||
+    (
+      savedExpiresAt > 0 &&
+      Date.now() >= savedExpiresAt
+    )
+  ) {
+
+    if (
+      savedRole ||
+      savedUnit ||
+      savedToken
+    ) {
+      clearLocalLoginSession();
+    }
+
     return;
   }
 
@@ -16578,38 +16637,62 @@ async function cancelCompletedCheck(key) {
   }
 }
 
-function logout() {
-  const ok = confirm("ログアウトしますか？");
+async function logout() {
+
+  const ok =
+    confirm(
+      "ログアウトしますか？"
+    );
 
   if (!ok) {
     return;
   }
 
-  removeLoginSessionValue(
-    "loginRole"
-  );
+  try {
 
-  removeLoginSessionValue(
-    "loginUnit"
-  );
+    if (getApiSessionToken()) {
 
-  removeLoginSessionValue(
-    "loginName"
-  );
+      await postJsonApiOnce(
+        {
+          action: "logout"
+        },
+        8000
+      );
+    }
+
+  } catch (error) {
+
+    console.warn(
+      "サーバーログアウト失敗",
+      error
+    );
+  }
+
+
+  clearLocalLoginSession();
 
   currentRole = "";
   currentUnit = "";
 
   stopAutoRefresh();
 
-  document.getElementById("appArea").style.display =
+  document.getElementById(
+    "appArea"
+  ).style.display =
     "none";
 
-  document.getElementById("loginArea").style.display =
+  document.getElementById(
+    "loginArea"
+  ).style.display =
     "block";
 
-  document.getElementById("loginPassword").value = "";
-  document.getElementById("loginMessage").textContent = "";
+  document.getElementById(
+    "loginPassword"
+  ).value = "";
+
+  document.getElementById(
+    "loginMessage"
+  ).textContent = "";
 }
 
 function createMedicineReport() {
@@ -18987,6 +19070,176 @@ function getRetryBackoffMs(
   Ver.0.8.22
   fetchが通信待ちのまま永久に残らないようにする。
 */
+
+// ============================================================
+// Ver.0.8.36 APIセッション認証
+// ============================================================
+
+function getApiSessionToken() {
+  return String(
+    getLoginSessionValue(
+      "apiSessionToken"
+    ) || ""
+  ).trim();
+}
+
+
+function withApiSessionToken(payload) {
+
+  const source =
+    payload &&
+    typeof payload === "object"
+      ? payload
+      : {};
+
+  if (
+    source.action === "login" ||
+    source.action === "ping"
+  ) {
+    return {
+      ...source
+    };
+  }
+
+  return {
+    ...source,
+    sessionToken:
+      getApiSessionToken()
+  };
+}
+
+
+function jsonBodyWithSession(payload) {
+  return JSON.stringify(
+    withApiSessionToken(
+      payload
+    )
+  );
+}
+
+
+function appendApiSessionToken(url) {
+
+  const token =
+    getApiSessionToken();
+
+  if (!token) {
+    return url;
+  }
+
+  const separator =
+    url.includes("?")
+      ? "&"
+      : "?";
+
+  return (
+    url +
+    separator +
+    "sessionToken=" +
+    encodeURIComponent(token)
+  );
+}
+
+
+function clearLocalLoginSession() {
+
+  const keys = [
+    "loginRole",
+    "loginUnit",
+    "loginName",
+    "apiSessionToken",
+    "apiSessionExpiresAt"
+  ];
+
+  for (const key of keys) {
+    removeLoginSessionValue(
+      key
+    );
+  }
+}
+
+
+function forceApiRelogin(message) {
+
+  clearLocalLoginSession();
+
+  currentRole = "";
+  currentUnit = "";
+
+  stopAutoRefresh();
+
+  const appArea =
+    document.getElementById(
+      "appArea"
+    );
+
+  const loginArea =
+    document.getElementById(
+      "loginArea"
+    );
+
+  const loginMessage =
+    document.getElementById(
+      "loginMessage"
+    );
+
+  if (appArea) {
+    appArea.style.display =
+      "none";
+  }
+
+  if (loginArea) {
+    loginArea.style.display =
+      "block";
+  }
+
+  if (loginMessage) {
+    loginMessage.textContent =
+      message ||
+      "ログインの有効期限が切れました。再ログインしてください";
+  }
+}
+
+
+function throwIfApiAuthError(parsed) {
+
+  if (
+    !parsed ||
+    typeof parsed !== "object"
+  ) {
+    return;
+  }
+
+  const code =
+    String(
+      parsed.code || ""
+    );
+
+  if (
+    code !== "AUTH_REQUIRED" &&
+    code !== "SESSION_EXPIRED"
+  ) {
+    return;
+  }
+
+  const message =
+    parsed.message ||
+    "ログインの有効期限が切れました。再ログインしてください";
+
+  forceApiRelogin(
+    message
+  );
+
+  const error =
+    new Error(message);
+
+  error.code = code;
+  error.transient = false;
+
+  throw error;
+}
+
+
 async function fetchWithTimeout(
   url,
   options = {},
@@ -19075,8 +19328,29 @@ async function parseApiJsonResponse(
   }
 
   try {
-    return JSON.parse(text);
+
+    const parsed =
+      JSON.parse(text);
+
+    throwIfApiAuthError(
+      parsed
+    );
+
+    return parsed;
+
   } catch (error) {
+
+    if (
+      error &&
+      (
+        error.code ===
+          "AUTH_REQUIRED" ||
+        error.code ===
+          "SESSION_EXPIRED"
+      )
+    ) {
+      throw error;
+    }
 
     const parseError =
       new Error(
@@ -19107,7 +19381,9 @@ async function postJsonApiOnce(
         },
 
         body:
-          JSON.stringify(payload),
+          jsonBodyWithSession(
+            payload
+          ),
 
         cache: "no-store"
       },
@@ -19632,14 +19908,19 @@ async function fetchApi(
 
     try {
 
+      const authenticatedUrl =
+        appendApiSessionToken(
+          url
+        );
+
       const separator =
-        url.includes("?")
+        authenticatedUrl.includes("?")
           ? "&"
           : "?";
 
       const response =
         await fetchWithTimeout(
-          url +
+          authenticatedUrl +
             separator +
             "_=" +
             Date.now(),
@@ -19696,8 +19977,17 @@ async function fetchApi(
           async () => text,
 
         json:
-          async () =>
-            JSON.parse(text)
+          async () => {
+
+            const parsed =
+              JSON.parse(text);
+
+            throwIfApiAuthError(
+              parsed
+            );
+
+            return parsed;
+          }
       };
 
     } catch (error) {
@@ -20203,7 +20493,7 @@ async function saveEditedHistory(recordId) {
               "text/plain;charset=utf-8"
           },
 
-          body: JSON.stringify({
+          body: jsonBodyWithSession({
 
             action:
               "editHistoryFast",
@@ -21110,7 +21400,7 @@ async function confirmCancelHistory(recordId) {
               "text/plain;charset=utf-8"
           },
 
-          body: JSON.stringify({
+          body: jsonBodyWithSession({
 
             action:
               "cancelHistoryFast",
