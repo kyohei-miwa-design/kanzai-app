@@ -2618,7 +2618,7 @@ h3 {
 
 
 /* =========================
-   Ver.0.8.37 その他ページ UI刷新
+   Ver.0.8.38 その他ページ UI刷新
 ========================= */
 
 .other-page-head {
@@ -4096,7 +4096,7 @@ h3 {
 
 
 /* ==================================================
-   Ver.0.8.28 排便ページ UI刷新
+   Ver.0.8.29 排便ページ UI刷新
 ================================================== */
 
 :root {
@@ -4425,7 +4425,7 @@ h3 {
 
 
 /* ==================================================
-   Ver.0.8.28 ホーム画面 UI刷新
+   Ver.0.8.29 ホーム画面 UI刷新
 ================================================== */
 
 .home-dashboard-head {
@@ -5358,7 +5358,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.37</p>
+      <p class="app-version">Ver.0.8.38</p>
     </div>
 
     <button
@@ -6128,7 +6128,7 @@ h3 {
 
 
   <!-- =========================
-       その他 Ver.0.8.37
+       その他 Ver.0.8.38
   ========================== -->
   <section
     id="otherPage"
@@ -6442,7 +6442,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.37
+          Ver.0.8.38
         </span>
       </div>
 
@@ -6451,7 +6451,7 @@ h3 {
           GAS
         </span>
         <span class="other-info-value">
-          Ver.0.8.28
+          Ver.0.8.29
         </span>
       </div>
 
@@ -6714,7 +6714,7 @@ let ruleViewOpenUsers = new Set();
 // 看護師が今回限りで登録する個別対応指示
 let nurseInstructions = [];
 
-// Ver.0.8.28 ホーム表示用キャッシュ
+// Ver.0.8.29 ホーム表示用キャッシュ
 let latestDailyConfirms = [];
 let latestHomeActionMetrics = {
   totalCount: 0,
@@ -10254,7 +10254,7 @@ function updateHomeMedicineStatus() {
 }
 
 // ============================================================
-// Ver.0.8.37 ローカルキャッシュのデータスコープ分離
+// Ver.0.8.38 ローカルキャッシュのデータスコープ分離
 // ============================================================
 
 const DATA_SCOPE_CACHE_KEY =
@@ -10987,7 +10987,7 @@ async function initialize() {
 
 
   /*
-    Ver.0.8.37
+    Ver.0.8.38
     旧版の全ユニットキャッシュや、
     別ユニット/全ユニット権限のキャッシュを
     読み込む前に破棄する。
@@ -13815,7 +13815,7 @@ async function changeUserUnit() {
 
 
 /*
-  Ver.0.8.37
+  Ver.0.8.38
   initialize() より後方に定義されていても TDZ にならないよう、
   起動時に参照される「その他」UI状態は var で宣言する。
 */
@@ -14341,7 +14341,7 @@ async function login() {
 
   try {
     /*
-      Ver.0.8.37
+      Ver.0.8.38
       ID・パスワードはURLへ載せず、
       POST本文で送信する。
     */
@@ -14362,7 +14362,7 @@ async function login() {
     }
 
     /*
-      Ver.0.8.37
+      Ver.0.8.38
       GASが発行したセッショントークンを保存。
     */
     if (!result.sessionToken) {
@@ -14429,7 +14429,7 @@ async function login() {
 
 
     /*
-      Ver.0.8.37
+      Ver.0.8.38
       直前に管理者/看護師/別ユニットで使った
       利用者データを新しい権限へ持ち越さない。
     */
@@ -14662,7 +14662,7 @@ async function loadInitialDataFromGoogle() {
     }
 
     /*
-      Ver.0.8.37
+      Ver.0.8.38
       GASが現在のログイン権限に対応したスコープで
       データを返したことを確認してから反映する。
     */
@@ -17994,41 +17994,50 @@ async function saveDailyConfirmToGoogle(
   const confirmType =
     String(type || "").trim();
 
-  const url =
-    API_URL +
-    "?action=saveDailyConfirm" +
-    "&unit=" + encodeURIComponent(currentUnit) +
-    "&type=" + encodeURIComponent(confirmType) +
-    "&targetDate=" + encodeURIComponent(targetDate) +
-    "&staffId=" + encodeURIComponent(staff.staffId) +
-    "&name=" + encodeURIComponent(staff.name) +
-    "&role=" + encodeURIComponent(currentRole);
-
   try {
 
-    const response =
-      await fetchApi(url);
-
     const result =
-      await response.text();
+      await postJsonApiOnce(
+        {
+          action:
+            "saveDailyConfirm",
+          unit:
+            currentUnit,
+          type:
+            confirmType,
+          targetDate:
+            targetDate,
+          staffId:
+            staff.staffId,
+          name:
+            staff.name
+        },
+        20000
+      );
 
     console.log(
       "排便集計確定:",
       result
     );
 
-    if (result === "TOO_EARLY") {
+    if (
+      result &&
+      result.code ===
+        "TOO_EARLY"
+    ) {
+
       alert(
         confirmType === "day"
           ? "日中帯は15:00から確定できます"
           : "夜勤帯は5:00から確定できます"
       );
+
       return false;
     }
 
-    return (
-      result === "OK" ||
-      result === "UPDATED"
+    return Boolean(
+      result &&
+      result.ok
     );
 
   } catch (error) {
@@ -18065,21 +18074,16 @@ async function loadDailyConfirmStatus() {
 
   try {
 
-    const response = await fetchApi(
-      API_URL +
-      "?action=getDailyConfirms" +
-      "&days=3" +
-      "&timestamp=" + Date.now()
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        "集計状況の取得に失敗しました"
-      );
-    }
-
     const confirms =
-      await response.json();
+      await postJsonApiOnce(
+        {
+          action:
+            "getDailyConfirms",
+          days:
+            3
+        },
+        20000
+      );
 
     latestDailyConfirms =
       Array.isArray(confirms)
@@ -19345,7 +19349,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.8.37 APIセッション認証
+// Ver.0.8.38 APIセッション認証
 // ============================================================
 
 function getApiSessionToken() {
@@ -19500,15 +19504,49 @@ function throwIfApiAuthError(parsed) {
     parsed.message ||
     "ログインの有効期限が切れました。再ログインしてください";
 
-  forceApiRelogin(
-    message
-  );
+
+  /*
+    Ver.0.8.38
+
+    SESSION_EXPIRED:
+      GAS側で本当にセッションが存在しない/期限切れ。
+      → 強制再ログイン。
+
+    AUTH_REQUIRED:
+      リクエストにトークンが届いていない。
+      ただし端末側にトークンが残っている場合は、
+      一時的な通信/経路問題である可能性があるため
+      セッションを消さない。
+  */
+  if (
+    code === "SESSION_EXPIRED" ||
+    (
+      code === "AUTH_REQUIRED" &&
+      !getApiSessionToken()
+    )
+  ) {
+
+    forceApiRelogin(
+      message
+    );
+  }
 
   const error =
     new Error(message);
 
   error.code = code;
-  error.transient = false;
+
+  /*
+    端末側にトークンがあるAUTH_REQUIREDだけは
+    次回同期で回復可能な通信エラーとして扱う。
+  */
+  error.transient =
+    (
+      code === "AUTH_REQUIRED" &&
+      Boolean(
+        getApiSessionToken()
+      )
+    );
 
   throw error;
 }
