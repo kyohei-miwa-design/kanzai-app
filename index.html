@@ -1786,6 +1786,287 @@ h3 {
 }
 
 
+/* =========================
+   Ver.0.8.30 履歴ページ UI刷新
+========================= */
+
+.history-ui-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+
+  margin-bottom: 12px;
+  padding: 4px;
+
+  border-radius: 12px;
+  background: #e8edef;
+}
+
+.history-ui-tabs button {
+  min-height: 42px;
+  margin: 0;
+  padding: 9px 8px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: transparent;
+  color: #607d8b;
+
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.history-ui-tabs button.active {
+  background: #fff;
+  color: #263238;
+
+  box-shadow: 0 1px 5px rgba(38, 50, 56, 0.12);
+}
+
+.history-filter-card {
+  margin-bottom: 13px;
+  padding: 13px;
+
+  border: 1px solid #dfe5e8;
+  border-radius: 15px;
+
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(38, 50, 56, 0.05);
+}
+
+.history-filter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  margin-bottom: 10px;
+}
+
+.history-filter-title {
+  color: #455a64;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.history-account-note {
+  color: #78909c;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.history-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.history-filter-field label {
+  display: block;
+  margin-bottom: 5px;
+
+  color: #607d8b;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.history-filter-field select,
+.history-filter-field input {
+  width: 100%;
+  min-height: 42px;
+  margin: 0;
+  padding: 9px 10px;
+
+  border: 1px solid #cfd8dc;
+  border-radius: 10px;
+
+  background: #fff;
+  color: #263238;
+
+  font-size: 14px;
+}
+
+.history-unit-filter-wrap {
+  margin-top: 9px;
+}
+
+.history-filter-clear {
+  width: 100%;
+  min-height: 40px;
+  margin: 9px 0 0;
+  padding: 8px 10px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: #eceff1;
+  color: #455a64;
+
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.history-ui-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  margin: 15px 2px 8px;
+
+  color: #546e7a;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.history-ui-count {
+  padding: 4px 8px;
+
+  border-radius: 999px;
+  background: #e9eef1;
+
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#historyPage #history {
+  margin-top: 0;
+}
+
+#historyPage .history-card {
+  position: relative;
+
+  margin-bottom: 10px;
+  padding: 13px 48px 13px 14px;
+
+  border: 1px solid #dfe5e8;
+  border-left: 1px solid #dfe5e8;
+  border-radius: 15px;
+
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(38, 50, 56, 0.05);
+
+  color: #263238;
+  line-height: 1.45;
+  opacity: 1;
+  text-decoration: none;
+}
+
+#historyPage .history-card.history-card-cancelled {
+  background: #f3f5f6;
+  color: #607d8b;
+  opacity: 0.72;
+  text-decoration: none;
+}
+
+.history-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.history-card-user {
+  min-width: 0;
+
+  font-size: 20px;
+  font-weight: 950;
+  line-height: 1.2;
+}
+
+.history-card-datetime {
+  flex: none;
+
+  color: #78909c;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.35;
+  text-align: right;
+}
+
+.history-card-type-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+
+  margin-top: 9px;
+}
+
+.history-card-type {
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.history-card-badge {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 4px 8px;
+
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.history-card-badge.unit {
+  background: #eef2f4;
+  color: #546e7a;
+}
+
+.history-card-badge.point {
+  background: #f1f3ff;
+  color: #3949ab;
+}
+
+.history-card-badge.cancelled {
+  background: #eceff1;
+  color: #607d8b;
+}
+
+.history-empty {
+  padding: 30px 12px;
+
+  color: #90a4ae;
+  font-size: 13px;
+  font-weight: 750;
+  text-align: center;
+}
+
+.history-load-more {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 4px;
+  padding: 10px 12px;
+
+  border: 1px solid #b9c5ca;
+  border-radius: 11px;
+
+  background: #fff;
+  color: #455a64;
+
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.history-load-more small {
+  display: block;
+  margin-top: 2px;
+
+  color: #78909c;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+@media (max-width: 390px) {
+  .history-filter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 /* =========================
    利用者状況 Ver.0.8.15
@@ -4468,7 +4749,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.29</p>
+      <p class="app-version">Ver.0.8.30</p>
     </div>
 
     <button
@@ -5019,7 +5300,7 @@ h3 {
   </section>
 
   <!-- =========================
-       履歴
+       履歴 Ver.0.8.30
   ========================== -->
   <section
     id="historyPage"
@@ -5030,16 +5311,122 @@ h3 {
 
     <div class="history-section">
 
-      <button
-        class="history-clear-button"
-        onclick="clearHistory()"
-      >
-        履歴を全削除
-      </button>
+      <div class="history-ui-tabs">
+        <button
+          id="historyTodayTab"
+          type="button"
+          class="active"
+          onclick="setHistoryViewMode('today')"
+        >
+          今日
+        </button>
+
+        <button
+          id="historyPastTab"
+          type="button"
+          onclick="setHistoryViewMode('past')"
+        >
+          過去
+        </button>
+      </div>
+
+      <div class="history-filter-card">
+
+        <div class="history-filter-head">
+          <div class="history-filter-title">
+            絞り込み
+          </div>
+
+          <div
+            id="historyAccountNote"
+            class="history-account-note"
+          ></div>
+        </div>
+
+        <div class="history-filter-grid">
+
+          <div class="history-filter-field">
+            <label for="historyUserFilter">
+              利用者
+            </label>
+
+            <select
+              id="historyUserFilter"
+              onchange="onHistoryFilterChange()"
+            >
+              <option value="">全利用者</option>
+            </select>
+          </div>
+
+          <div
+            id="historyDateFilterWrap"
+            class="history-filter-field hidden"
+          >
+            <label for="historyDateFilter">
+              日付
+            </label>
+
+            <input
+              id="historyDateFilter"
+              type="date"
+              onchange="onHistoryFilterChange()"
+            >
+          </div>
+
+        </div>
+
+        <div
+          id="historyUnitFilterWrap"
+          class="history-filter-field history-unit-filter-wrap hidden"
+        >
+          <label for="historyUnitFilter">
+            ユニット
+          </label>
+
+          <select
+            id="historyUnitFilter"
+            onchange="onHistoryUnitFilterChange()"
+          >
+            <option value="">全ユニット</option>
+          </select>
+        </div>
+
+        <button
+          type="button"
+          class="history-filter-clear"
+          onclick="clearHistoryFilters()"
+        >
+          絞り込みを解除
+        </button>
+
+      </div>
+
+      <div class="history-ui-summary">
+        <span id="historyListTitle">
+          今日の記録
+        </span>
+
+        <span
+          id="historyCountPill"
+          class="history-ui-count"
+        >
+          0件
+        </span>
+      </div>
 
       <div id="history">
         まだ履歴はありません
       </div>
+
+      <button
+        id="historyLoadMoreButton"
+        type="button"
+        class="history-load-more hidden"
+        onclick="loadMoreHistory()"
+      >
+        さらに50件表示
+        <small id="historyLoadMoreText"></small>
+      </button>
 
     </div>
 
@@ -5440,6 +5827,10 @@ let points = {
 };
 
 let histories = [];
+
+// Ver.0.8.30 履歴画面
+let historyViewMode = "today";
+let historyVisiblePastCount = 50;
 
 // 看護師が今回限りで登録する個別対応指示
 let nurseInstructions = [];
@@ -12820,91 +13211,580 @@ function addHistory(user, type) {
   document.getElementById("history").innerHTML = getHistoryHtml();
 }
 
-function getHistoryHtml() {
+function getHistoryDateKey(dateText) {
 
-  if (histories.length === 0) {
-    return "まだ履歴はありません";
+  return String(dateText || "")
+    .trim()
+    .slice(0, 10)
+    .replace(/\//g, "-");
+}
+
+
+function getHistorySortKey(history) {
+
+  return String(
+    history && history.date
+      ? history.date
+      : ""
+  )
+    .trim()
+    .replace(/\//g, "-");
+}
+
+
+function getHistoryDisplayParts(dateText) {
+
+  const normalized =
+    String(dateText || "")
+      .trim()
+      .replace(/-/g, "/");
+
+  return {
+    date: normalized.slice(0, 10),
+    time: normalized.length > 10
+      ? normalized.slice(11, 19)
+      : ""
+  };
+}
+
+
+function getHistoryDisplayType(type) {
+
+  const value =
+    String(type || "").trim();
+
+  if (value === "なし") {
+    return "排便なし";
   }
+
+  return value || "記録";
+}
+
+
+function isHistoryAllUnitAccount() {
+
+  return (
+    currentRole === "nurse" ||
+    currentRole === "admin"
+  );
+}
+
+
+function updateHistoryFilterControls() {
+
+  const todayTab =
+    document.getElementById(
+      "historyTodayTab"
+    );
+
+  const pastTab =
+    document.getElementById(
+      "historyPastTab"
+    );
+
+  const dateWrap =
+    document.getElementById(
+      "historyDateFilterWrap"
+    );
+
+  const userSelect =
+    document.getElementById(
+      "historyUserFilter"
+    );
+
+  const unitWrap =
+    document.getElementById(
+      "historyUnitFilterWrap"
+    );
+
+  const unitSelect =
+    document.getElementById(
+      "historyUnitFilter"
+    );
+
+  const accountNote =
+    document.getElementById(
+      "historyAccountNote"
+    );
+
+
+  if (todayTab) {
+    todayTab.classList.toggle(
+      "active",
+      historyViewMode === "today"
+    );
+  }
+
+  if (pastTab) {
+    pastTab.classList.toggle(
+      "active",
+      historyViewMode === "past"
+    );
+  }
+
+  if (dateWrap) {
+    dateWrap.classList.toggle(
+      "hidden",
+      historyViewMode !== "past"
+    );
+  }
+
+
+  const allUnitAccount =
+    isHistoryAllUnitAccount();
+
+  if (unitWrap) {
+    unitWrap.classList.toggle(
+      "hidden",
+      !allUnitAccount
+    );
+  }
+
+
+  if (unitSelect) {
+
+    const oldUnitValue =
+      unitSelect.value;
+
+    let options =
+      `<option value="">全ユニット</option>`;
+
+    for (
+      let unit = 1;
+      unit <= 4;
+      unit++
+    ) {
+
+      const unitId =
+        String(unit);
+
+      options += `
+        <option value="${unitId}">
+          ${escapeHtml(getUnitName(unitId))}
+        </option>
+      `;
+    }
+
+    unitSelect.innerHTML =
+      options;
+
+    if (
+      allUnitAccount &&
+      ["", "1", "2", "3", "4"]
+        .includes(String(oldUnitValue))
+    ) {
+      unitSelect.value =
+        String(oldUnitValue);
+    } else {
+      unitSelect.value = "";
+    }
+  }
+
+
+  const selectedUnit =
+    allUnitAccount && unitSelect
+      ? String(unitSelect.value || "")
+      : String(currentUnit || "");
+
+
+  if (accountNote) {
+
+    if (allUnitAccount) {
+
+      accountNote.textContent =
+        selectedUnit
+          ? getUnitName(selectedUnit) +
+            "を表示"
+          : "全ユニット表示";
+
+    } else {
+
+      accountNote.textContent =
+        getUnitName(currentUnit) +
+        "のみ表示";
+    }
+  }
+
+
+  if (userSelect) {
+
+    const oldUserValue =
+      userSelect.value;
+
+    const users =
+      Object.keys(userUnits)
+        .filter(user => {
+
+          const userUnit =
+            String(
+              userUnits[user] || ""
+            );
+
+          if (allUnitAccount) {
+            return (
+              !selectedUnit ||
+              userUnit === selectedUnit
+            );
+          }
+
+          return (
+            userUnit ===
+            String(currentUnit)
+          );
+        })
+        .sort((a, b) =>
+          a.localeCompare(
+            b,
+            "ja"
+          )
+        );
+
+    userSelect.innerHTML =
+      `<option value="">全利用者</option>` +
+      users
+        .map(user => `
+          <option value="${escapeHtml(user)}">
+            ${escapeHtml(user)}
+          </option>
+        `)
+        .join("");
+
+    if (users.includes(oldUserValue)) {
+      userSelect.value = oldUserValue;
+    } else {
+      userSelect.value = "";
+    }
+  }
+}
+
+
+function getFilteredHistoriesForView() {
 
   const now = new Date();
 
   const todayText =
     now.getFullYear() + "-" +
-    String(now.getMonth() + 1).padStart(2, "0") + "-" +
-    String(now.getDate()).padStart(2, "0");
+    String(
+      now.getMonth() + 1
+    ).padStart(2, "0") + "-" +
+    String(
+      now.getDate()
+    ).padStart(2, "0");
 
-  const todayHistories = [];
-  const pastHistories = [];
+  const userSelect =
+    document.getElementById(
+      "historyUserFilter"
+    );
 
-  for (let history of histories) {
+  const dateInput =
+    document.getElementById(
+      "historyDateFilter"
+    );
 
-    const historyDate =
-      String(history.date).slice(0, 10);
+  const unitSelect =
+    document.getElementById(
+      "historyUnitFilter"
+    );
 
-    if (historyDate === todayText) {
-      todayHistories.push(history);
-    } else {
-      pastHistories.push(history);
-    }
-  }
+  const selectedUser =
+    userSelect
+      ? String(userSelect.value || "")
+      : "";
 
-  let html = "";
+  const selectedDate =
+    dateInput
+      ? String(dateInput.value || "")
+      : "";
 
-  html += `
-    <div class="history-group-title">
-      📅 今日の記録
-    </div>
-  `;
+  const allUnitAccount =
+    isHistoryAllUnitAccount();
 
-  if (todayHistories.length === 0) {
+  const selectedUnit =
+    allUnitAccount && unitSelect
+      ? String(unitSelect.value || "")
+      : String(currentUnit || "");
 
-    html += `
-      <div class="user-card">
-        今日の記録はありません
-      </div>
-    `;
 
-  } else {
+  return histories
+    .filter(history => {
 
-    for (let history of todayHistories) {
-      html += getHistoryCardHtml(
-        history,
-        "today"
-      );
-    }
-  }
+      const user =
+        String(
+          history.user || ""
+        );
 
-  html += `
-    <div class="history-group-title">
-      🗂 過去の記録
-    </div>
-  `;
+      const userUnit =
+        String(
+          userUnits[user] || ""
+        );
 
-  if (pastHistories.length === 0) {
+      const dateKey =
+        getHistoryDateKey(
+          history.date
+        );
 
-    html += `
-      <div class="user-card">
-        過去の記録はありません
-      </div>
-    `;
 
-  } else {
+      // ユニット共通アカウントは自ユニットだけ
+      if (!allUnitAccount) {
 
-    for (let history of pastHistories) {
-      html += getHistoryCardHtml(
-        history,
-        "past"
-      );
-    }
-  }
+        if (
+          userUnit !==
+          String(currentUnit)
+        ) {
+          return false;
+        }
 
-  return html;
+      } else if (
+        selectedUnit &&
+        userUnit !== selectedUnit
+      ) {
+        return false;
+      }
+
+
+      if (
+        selectedUser &&
+        user !== selectedUser
+      ) {
+        return false;
+      }
+
+
+      if (historyViewMode === "today") {
+
+        if (dateKey !== todayText) {
+          return false;
+        }
+
+      } else {
+
+        if (dateKey === todayText) {
+          return false;
+        }
+
+        if (
+          selectedDate &&
+          dateKey !== selectedDate
+        ) {
+          return false;
+        }
+      }
+
+
+      return true;
+    })
+    .sort((a, b) =>
+      getHistorySortKey(b)
+        .localeCompare(
+          getHistorySortKey(a)
+        )
+    );
 }
+
+
+function setHistoryViewMode(mode) {
+
+  historyViewMode =
+    mode === "past"
+      ? "past"
+      : "today";
+
+  historyVisiblePastCount = 50;
+
+  renderHistoryView();
+}
+
+
+function onHistoryFilterChange() {
+
+  historyVisiblePastCount = 50;
+  renderHistoryView();
+}
+
+
+function onHistoryUnitFilterChange() {
+
+  const userSelect =
+    document.getElementById(
+      "historyUserFilter"
+    );
+
+  if (userSelect) {
+    userSelect.value = "";
+  }
+
+  historyVisiblePastCount = 50;
+  renderHistoryView();
+}
+
+
+function clearHistoryFilters() {
+
+  const userSelect =
+    document.getElementById(
+      "historyUserFilter"
+    );
+
+  const dateInput =
+    document.getElementById(
+      "historyDateFilter"
+    );
+
+  const unitSelect =
+    document.getElementById(
+      "historyUnitFilter"
+    );
+
+  if (userSelect) {
+    userSelect.value = "";
+  }
+
+  if (dateInput) {
+    dateInput.value = "";
+  }
+
+  if (
+    unitSelect &&
+    isHistoryAllUnitAccount()
+  ) {
+    unitSelect.value = "";
+  }
+
+  historyVisiblePastCount = 50;
+  renderHistoryView();
+}
+
+
+function loadMoreHistory() {
+
+  historyVisiblePastCount += 50;
+  renderHistoryView();
+}
+
+
+function renderHistoryView() {
+
+  const historyElement =
+    document.getElementById(
+      "history"
+    );
+
+  if (!historyElement) {
+    return;
+  }
+
+  historyElement.innerHTML =
+    getHistoryHtml();
+}
+
+
+function getHistoryHtml() {
+
+  updateHistoryFilterControls();
+
+  const filtered =
+    getFilteredHistoriesForView();
+
+  const totalCount =
+    filtered.length;
+
+  const visible =
+    historyViewMode === "past"
+      ? filtered.slice(
+          0,
+          historyVisiblePastCount
+        )
+      : filtered;
+
+
+  const listTitle =
+    document.getElementById(
+      "historyListTitle"
+    );
+
+  const countPill =
+    document.getElementById(
+      "historyCountPill"
+    );
+
+  const loadMoreButton =
+    document.getElementById(
+      "historyLoadMoreButton"
+    );
+
+  const loadMoreText =
+    document.getElementById(
+      "historyLoadMoreText"
+    );
+
+
+  if (listTitle) {
+    listTitle.textContent =
+      historyViewMode === "today"
+        ? "今日の記録"
+        : "過去の記録";
+  }
+
+  if (countPill) {
+    countPill.textContent =
+      totalCount + "件";
+  }
+
+
+  if (loadMoreButton) {
+
+    const hasMore =
+      historyViewMode === "past" &&
+      totalCount >
+        historyVisiblePastCount;
+
+    loadMoreButton.classList.toggle(
+      "hidden",
+      !hasMore
+    );
+
+    if (
+      hasMore &&
+      loadMoreText
+    ) {
+      loadMoreText.textContent =
+        "残り " +
+        (
+          totalCount -
+          historyVisiblePastCount
+        ) +
+        "件";
+    }
+  }
+
+
+  if (visible.length === 0) {
+
+    return `
+      <div class="history-empty">
+        該当する履歴はありません
+      </div>
+    `;
+  }
+
+
+  return visible
+    .map(history =>
+      getHistoryCardHtml(
+        history,
+        historyViewMode
+      )
+    )
+    .join("");
+}
+
 
 function getHistoryCardHtml(history, group) {
 
   const isCancelled =
-    String(history.status).trim() === "cancelled";
+    String(
+      history.status || ""
+    ).trim() === "cancelled";
 
   let cardClass =
     group === "today"
@@ -12912,8 +13792,30 @@ function getHistoryCardHtml(history, group) {
       : "history-card-past";
 
   if (isCancelled) {
-    cardClass += " history-card-cancelled";
+    cardClass +=
+      " history-card-cancelled";
   }
+
+
+  const dateParts =
+    getHistoryDisplayParts(
+      history.date
+    );
+
+  const unitId =
+    String(
+      userUnits[
+        String(history.user || "")
+      ] || ""
+    );
+
+  const showUnitBadge =
+    isHistoryAllUnitAccount();
+
+  const safeRecordId =
+    String(history.id || "")
+      .replace(/'/g, "\\'");
+
 
   return `
     <div class="history-card ${cardClass}">
@@ -12923,7 +13825,8 @@ function getHistoryCardHtml(history, group) {
           ? `
             <button
               class="history-menu-button"
-              onclick="openHistoryMenu('${history.id}')"
+              type="button"
+              onclick="openHistoryMenu('${safeRecordId}')"
               aria-label="履歴メニューを開く"
             >
               ⋮
@@ -12932,24 +13835,54 @@ function getHistoryCardHtml(history, group) {
           : ""
       }
 
-      <strong>${history.user}</strong><br>
+      <div class="history-card-head">
 
-      ${history.type}<br>
+        <div class="history-card-user">
+          ${escapeHtml(history.user || "")}
+        </div>
 
-      ${history.date}<br>
+        <div class="history-card-datetime">
+          ${escapeHtml(dateParts.date)}
+          ${
+            dateParts.time
+              ? `<br>${escapeHtml(dateParts.time)}`
+              : ""
+          }
+        </div>
 
-      現在ポイント：${getBowelPointText(history.point)}
+      </div>
 
-      ${
-        isCancelled
-          ? `
-            <br>
-            <span class="history-status">
-              取消済み
-            </span>
-          `
-          : ""
-      }
+      <div class="history-card-type-row">
+
+        <span class="history-card-type">
+          ${escapeHtml(getHistoryDisplayType(history.type))}
+        </span>
+
+        ${
+          showUnitBadge && unitId
+            ? `
+              <span class="history-card-badge unit">
+                ${escapeHtml(getUnitName(unitId))}
+              </span>
+            `
+            : ""
+        }
+
+        <span class="history-card-badge point">
+          登録後 ${escapeHtml(getBowelPointText(history.point))}
+        </span>
+
+        ${
+          isCancelled
+            ? `
+              <span class="history-card-badge cancelled">
+                取消済み
+              </span>
+            `
+            : ""
+        }
+
+      </div>
 
     </div>
   `;
@@ -12984,15 +13917,24 @@ function openHistoryMenu(recordId) {
         <br><br>
 
         排便種類：
-        <strong>${history.type}</strong>
+        <strong>${getHistoryDisplayType(history.type)}</strong>
 
         <br>
 
         日時：${history.date}
 
+        ${
+          isHistoryAllUnitAccount()
+            ? `
+              <br>
+              ユニット：${getUnitName(userUnits[history.user] || "")}
+            `
+            : ""
+        }
+
         <br>
 
-        現在ポイント：${getBowelPointText(history.point)}
+        登録後ポイント：${getBowelPointText(history.point)}
 
       </div>
     `,
