@@ -1170,6 +1170,16 @@ input {
   background: #2e7d32;
 }
 
+.sync-status-bar.sync-warning {
+  border-color: #f0d58c;
+  background: #fff9e8;
+  color: #8a6500;
+}
+
+.sync-status-bar.sync-warning .sync-status-dot {
+  background: #d99a00;
+}
+
 .sync-status-bar.sync-error {
   border-color: #efb4b4;
   background: #fff3f3;
@@ -2618,7 +2628,7 @@ h3 {
 
 
 /* =========================
-   Ver.0.8.39 その他ページ UI刷新
+   Ver.0.8.40 その他ページ UI刷新
 ========================= */
 
 .other-page-head {
@@ -5358,7 +5368,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.39</p>
+      <p class="app-version">Ver.0.8.40</p>
     </div>
 
     <button
@@ -6128,7 +6138,7 @@ h3 {
 
 
   <!-- =========================
-       その他 Ver.0.8.39
+       その他 Ver.0.8.40
   ========================== -->
   <section
     id="otherPage"
@@ -6442,7 +6452,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.39
+          Ver.0.8.40
         </span>
       </div>
 
@@ -6734,6 +6744,13 @@ let newDataMessageTimer = null;
 let isRefreshing = false;
 let autoRefreshTimer = null;
 
+// Ver.0.8.40
+// 「30秒ごと」ではなく「同期完了から30秒後」に次を実行する。
+const AUTO_REFRESH_DELAY_MS = 30000;
+const AUTO_REFRESH_WRITE_RETRY_MS = 5000;
+const AUTO_SYNC_WARNING_THRESHOLD = 2;
+let syncConsecutiveFailureCount = 0;
+
 // Ver.0.8.22
 // 書き込み処理中に30秒自動同期が割り込むのを防ぐ
 let activeWriteCount = 0;
@@ -6956,6 +6973,41 @@ function markSyncError() {
           )
         )
       : "⚠ 更新失敗 / 同期履歴なし";
+
+  updateOtherAppInfo();
+}
+
+
+function markSyncWarning() {
+
+  const bar =
+    document.getElementById(
+      "syncStatusBar"
+    );
+
+  const text =
+    document.getElementById(
+      "syncStatusText"
+    );
+
+  if (!bar || !text) {
+    return;
+  }
+
+  if (!lastSuccessfulSyncAt) {
+    markSyncError();
+    return;
+  }
+
+  bar.className =
+    "sync-status-bar sync-warning";
+
+  text.textContent =
+    "⚠ 通信不安定 / 前回同期：" +
+    getSyncDisplayText(
+      lastSuccessfulSyncAt
+    ) +
+    "（自動再試行中）";
 
   updateOtherAppInfo();
 }
@@ -10254,7 +10306,7 @@ function updateHomeMedicineStatus() {
 }
 
 // ============================================================
-// Ver.0.8.39 ローカルキャッシュのデータスコープ分離
+// Ver.0.8.40 ローカルキャッシュのデータスコープ分離
 // ============================================================
 
 const DATA_SCOPE_CACHE_KEY =
@@ -10932,43 +10984,80 @@ async function clearHistoriesFromGoogle() {
 }
 
 
-function stopAutoRefresh() {
+function clearAutoRefreshTimer() {
 
   if (autoRefreshTimer !== null) {
 
-    clearInterval(
+    clearTimeout(
       autoRefreshTimer
     );
 
-    autoRefreshTimer =
-      null;
+    autoRefreshTimer = null;
   }
 }
 
 
-function startAutoRefresh() {
+function stopAutoRefresh() {
 
-  /*
-    二重タイマーを防ぐ。
-    ログイン済みの場合だけ30秒同期を開始する。
-  */
-  stopAutoRefresh();
+  clearAutoRefreshTimer();
+}
 
+
+function scheduleNextAutoRefresh(
+  delayMs = AUTO_REFRESH_DELAY_MS
+) {
+
+  clearAutoRefreshTimer();
 
   if (currentRole === "") {
     return;
   }
 
-
-  autoRefreshTimer =
-    setInterval(
-      refreshFromGoogle,
-      30000
+  const safeDelay =
+    Math.max(
+      1000,
+      Number(delayMs || AUTO_REFRESH_DELAY_MS)
     );
 
+  autoRefreshTimer =
+    setTimeout(
+      () => {
+
+        autoRefreshTimer = null;
+
+        refreshFromGoogle({
+          source: "auto"
+        }).catch(error => {
+
+          /*
+            refreshFromGoogle内部で処理済み。
+            Promise未処理警告だけ防ぐ。
+          */
+          console.warn(
+            "自動同期呼出エラー",
+            error
+          );
+        });
+      },
+      safeDelay
+    );
+}
+
+
+function startAutoRefresh() {
+
+  stopAutoRefresh();
+
+  if (currentRole === "") {
+    return;
+  }
+
+  scheduleNextAutoRefresh(
+    AUTO_REFRESH_DELAY_MS
+  );
 
   console.log(
-    "30秒自動同期を開始しました"
+    "同期完了から30秒後に次回自動同期します"
   );
 }
 
@@ -10987,7 +11076,7 @@ async function initialize() {
 
 
   /*
-    Ver.0.8.39
+    Ver.0.8.40
     旧版の全ユニットキャッシュや、
     別ユニット/全ユニット権限のキャッシュを
     読み込む前に破棄する。
@@ -11069,22 +11158,46 @@ window.addEventListener(
   updateBowelStickyOffset
 );
 
-async function refreshFromGoogle() {
+async function refreshFromGoogle(
+  options = {}
+) {
+
+  const source =
+    String(
+      options.source || "manual"
+    );
+
+  /*
+    手動同期が走った場合も、待機中タイマーを一旦破棄。
+    完了後に30秒を数え直す。
+  */
+  clearAutoRefreshTimer();
+
 
   if (isRefreshing) {
 
     console.log(
-      "更新中のため今回の自動更新をスキップ"
+      "更新中のため今回の同期要求をスキップ"
     );
 
     return;
   }
 
+
   if (isWriteActivityActive()) {
 
     console.log(
-      "保存処理中のため今回の自動更新をスキップ"
+      "保存処理中のため自動同期を5秒後へ延期"
     );
+
+    if (
+      source === "auto" &&
+      currentRole !== ""
+    ) {
+      scheduleNextAutoRefresh(
+        AUTO_REFRESH_WRITE_RETRY_MS
+      );
+    }
 
     return;
   }
@@ -11104,9 +11217,10 @@ async function refreshFromGoogle() {
 
 
     // =========================
-    // Ver.0.8.39
-    // 最新データ一式を1回の認証済みAPIで取得。
-    // dailyConfirmもこの中に含まれる。
+    // Ver.0.8.40
+    // 読み取り同期は1本化済み。
+    // 一時的な404/429/5xxは
+    // requestInitialDataFromServer側で再試行する。
     // =========================
 
     await loadSyncDataFromGoogle();
@@ -11126,6 +11240,7 @@ async function refreshFromGoogle() {
 
 
     initialSyncFinished = true;
+    syncConsecutiveFailureCount = 0;
 
 
     console.log(
@@ -11135,12 +11250,33 @@ async function refreshFromGoogle() {
 
   } catch (error) {
 
-    console.error(
-      "自動更新に失敗しました",
+    syncConsecutiveFailureCount++;
+
+    console.warn(
+      "自動更新失敗 " +
+      syncConsecutiveFailureCount +
+      "回目",
       error
     );
 
-    markSyncError();
+    /*
+      前回成功データがある場合、1回だけの失敗では
+      現場画面を赤/黄にしない。
+
+      2回連続で同期全体が失敗したときだけ
+      「通信不安定」を表示する。
+    */
+    if (!lastSuccessfulSyncAt) {
+
+      markSyncError();
+
+    } else if (
+      syncConsecutiveFailureCount >=
+      AUTO_SYNC_WARNING_THRESHOLD
+    ) {
+
+      markSyncWarning();
+    }
 
 
   } finally {
@@ -11150,8 +11286,21 @@ async function refreshFromGoogle() {
     );
 
     isRefreshing = false;
+
+    /*
+      setIntervalは使わない。
+      今回の同期が成功でも失敗でも「完了した時点」から
+      30秒後に次の同期を予約する。
+    */
+    if (currentRole !== "") {
+
+      scheduleNextAutoRefresh(
+        AUTO_REFRESH_DELAY_MS
+      );
+    }
   }
 }
+
 
 async function addUser() {
   const name = document.getElementById("newUserName").value;
@@ -13810,7 +13959,7 @@ async function changeUserUnit() {
 
 
 /*
-  Ver.0.8.39
+  Ver.0.8.40
   initialize() より後方に定義されていても TDZ にならないよう、
   起動時に参照される「その他」UI状態は var で宣言する。
 */
@@ -13908,15 +14057,25 @@ function updateOtherAppInfo() {
         "sync-error"
       );
 
+    const hasWarning =
+      syncBar &&
+      syncBar.classList.contains(
+        "sync-warning"
+      );
+
     state.textContent =
       hasError
         ? "⚠ 更新失敗"
-        : "● 正常";
+        : (
+            hasWarning
+              ? "⚠ 通信不安定"
+              : "● 正常"
+          );
 
     state.className =
       "other-info-value " +
       (
-        hasError
+        hasError || hasWarning
           ? "error"
           : "ok"
       );
@@ -14336,7 +14495,7 @@ async function login() {
 
   try {
     /*
-      Ver.0.8.39
+      Ver.0.8.40
       ID・パスワードはURLへ載せず、
       POST本文で送信する。
     */
@@ -14357,7 +14516,7 @@ async function login() {
     }
 
     /*
-      Ver.0.8.39
+      Ver.0.8.40
       GASが発行したセッショントークンを保存。
     */
     if (!result.sessionToken) {
@@ -14424,7 +14583,7 @@ async function login() {
 
 
     /*
-      Ver.0.8.39
+      Ver.0.8.40
       直前に管理者/看護師/別ユニットで使った
       利用者データを新しい権限へ持ち越さない。
     */
@@ -14657,7 +14816,7 @@ async function loadInitialDataFromGoogle() {
     }
 
     /*
-      Ver.0.8.39
+      Ver.0.8.40
       GASが現在のログイン権限に対応したスコープで
       データを返したことを確認してから反映する。
     */
@@ -14728,7 +14887,7 @@ async function loadInitialDataFromGoogle() {
         : [];
 
     /*
-      Ver.0.8.39
+      Ver.0.8.40
       勤務帯確認も初期データ一括取得から反映。
     */
     applyDailyConfirmStatus(
@@ -19371,7 +19530,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.8.39 APIセッション認証
+// Ver.0.8.40 APIセッション認証
 // ============================================================
 
 function getApiSessionToken() {
@@ -19528,7 +19687,7 @@ function throwIfApiAuthError(parsed) {
 
 
   /*
-    Ver.0.8.39
+    Ver.0.8.40
 
     SESSION_EXPIRED:
       GAS側で本当にセッションが存在しない/期限切れ。
