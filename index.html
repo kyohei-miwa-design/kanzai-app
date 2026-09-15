@@ -2,13 +2,9 @@
 <html>
 
 <head>
-  <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="緩下剤管理">
-  <meta name="theme-color" content="#1fb7c9">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>緩下剤管理</title>
+  <title></title>
   <style>
 
 .hidden {
@@ -5372,7 +5368,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.44</p>
+      <p class="app-version">Ver.0.8.45</p>
     </div>
 
     <button
@@ -6456,7 +6452,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.44
+          Ver.0.8.45
         </span>
       </div>
 
@@ -18692,15 +18688,26 @@ function updateHomeConfirmStatus(
       }
 
 
-      card.classList.add(
+      /*
+        Ver.0.8.45
+        管理者・看護師（全ユニット表示）で
+        wait状態のとき、空文字をclassList.add()へ
+        渡さないようにする。
+      */
+      const cardStateClass =
         stateClass === "ok"
           ? "state-ok"
           : stateClass === "late"
             ? "state-late"
             : stateClass === "ready"
               ? "state-ready"
-              : ""
-      );
+              : "";
+
+      if (cardStateClass) {
+        card.classList.add(
+          cardStateClass
+        );
+      }
 
 
       card.innerHTML = `
