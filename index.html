@@ -972,6 +972,61 @@ button {
   line-height: 1.6;
 }
 
+.rule-evaluation-alert.scheduled-due {
+  border-color: #f9a825;
+  background: #fffde7;
+}
+
+.rule-admin-filter-card {
+  margin: 10px 0 16px;
+  padding: 12px;
+  border: 1px solid #d7e2e7;
+  border-radius: 12px;
+  background: #f8fbfc;
+}
+
+.rule-admin-filter-label {
+  margin-bottom: 6px;
+  font-weight: bold;
+  color: #455a64;
+}
+
+.rule-admin-user-card {
+  margin: 18px 0;
+  padding: 0 14px 14px;
+  border: 2px solid #d6e1e6;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+.rule-admin-user-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 -14px 12px;
+  padding: 12px 14px;
+  background: #f2f7f8;
+  border-bottom: 1px solid #d6e1e6;
+}
+
+.rule-admin-user-name {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.rule-admin-unit-badge {
+  display: inline-block;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #e8f5f3;
+  color: #176b63;
+  font-size: 12px;
+  font-weight: bold;
+}
+
 
 .history-edit-form {
   display: grid;
@@ -5556,7 +5611,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.50</p>
+      <p class="app-version">Ver.0.8.51</p>
     </div>
 
     <button
@@ -6549,6 +6604,22 @@ h3 {
 
         <h3>登録済みルール一覧</h3>
 
+        <div class="rule-admin-filter-card">
+          <div class="rule-admin-filter-label">
+            表示ユニット
+          </div>
+          <select
+            id="adminRuleUnitFilter"
+            onchange="onAdminRuleUnitFilterChange()"
+          >
+            <option value="">全ユニット</option>
+            <option value="1">1ユニット</option>
+            <option value="2">2ユニット</option>
+            <option value="3">3ユニット</option>
+            <option value="4">4ユニット</option>
+          </select>
+        </div>
+
         <div id="ruleEvaluationAdminList"></div>
 
         <div id="ruleList">
@@ -6686,7 +6757,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.50
+          Ver.0.8.51
         </span>
       </div>
 
@@ -6695,7 +6766,7 @@ h3 {
           GAS
         </span>
         <span class="other-info-value">
-          Ver.0.8.37
+          Ver.0.8.38
         </span>
       </div>
 
@@ -6895,6 +6966,7 @@ const BOWEL_RESET_POINT = 6;
 
 let ruleCycleSnapshots = {};
 let ruleEvaluations = [];
+let adminRuleUnitFilter = "";
 
 let rules = {
   "A様": {
@@ -8803,32 +8875,14 @@ function hasPendingNextCycleRuleChange(
   user
 ) {
 
-  const snapshot =
-    getCurrentRuleCycleSnapshot(
+  const diff =
+    getPlannedRuleDiff(
       user
     );
 
-  if (!snapshot) {
-    return false;
-  }
-
-  const activeText =
-    JSON.stringify(
-      normalizeRuleDayMap(
-        snapshot.rules || {}
-      )
-    );
-
-  const configuredText =
-    JSON.stringify(
-      normalizeRuleDayMap(
-        rules[user] || {}
-      )
-    );
-
   return (
-    activeText !==
-    configuredText
+    diff.added.length > 0 ||
+    diff.removed.length > 0
   );
 }
 
@@ -14357,6 +14411,8 @@ function updateUnitMasterDisplays() {
     homeUnitName.textContent =
       getUnitName(currentUnit);
   }
+
+  updateAdminRuleUnitFilterLabels();
 }
 
 
@@ -14557,6 +14613,115 @@ function getSelectedStaff(selectId) {
 }
 
 
+function getAdminRuleUnitFilterValue() {
+
+  const select =
+    document.getElementById(
+      "adminRuleUnitFilter"
+    );
+
+  if (select) {
+    adminRuleUnitFilter =
+      String(
+        select.value || ""
+      );
+  }
+
+  return String(
+    adminRuleUnitFilter || ""
+  );
+}
+
+
+function updateAdminRuleUnitFilterLabels() {
+
+  const select =
+    document.getElementById(
+      "adminRuleUnitFilter"
+    );
+
+  if (!select) {
+    return;
+  }
+
+  const previous =
+    String(
+      adminRuleUnitFilter ||
+      select.value ||
+      ""
+    );
+
+  select.innerHTML =
+    '<option value="">全ユニット</option>';
+
+  for (
+    let unit = 1;
+    unit <= 4;
+    unit++
+  ) {
+
+    const option =
+      document.createElement(
+        "option"
+      );
+
+    option.value =
+      String(unit);
+
+    option.textContent =
+      getUnitName(unit);
+
+    select.appendChild(
+      option
+    );
+  }
+
+  if (
+    ["", "1", "2", "3", "4"]
+      .includes(previous)
+  ) {
+    select.value =
+      previous;
+  }
+
+  adminRuleUnitFilter =
+    String(
+      select.value || ""
+    );
+}
+
+
+function isUserVisibleInAdminRuleFilter(
+  user
+) {
+
+  const filter =
+    getAdminRuleUnitFilterValue();
+
+  return (
+    !filter ||
+    String(
+      userUnits[user] || ""
+    ) === filter
+  );
+}
+
+
+function onAdminRuleUnitFilterChange() {
+
+  adminRuleUnitFilter =
+    String(
+      document.getElementById(
+        "adminRuleUnitFilter"
+      )?.value || ""
+    );
+
+  updateUserSelects();
+  updateRuleDisplays();
+  renderRuleEvaluationAdminList();
+}
+
+
 function updateUserSelects() {
 
   const userSelect =
@@ -14581,12 +14746,34 @@ function updateUserSelects() {
 
 
   /*
+    Ver.0.8.51
     30秒同期でselectを作り直しても、
-    排便ページで操作中の対象者を勝手に先頭へ戻さない。
+    操作中の利用者選択を勝手に先頭へ戻さない。
   */
   const previousBowelUser =
     userSelect
       ? String(userSelect.value || "")
+      : "";
+
+  const previousRuleUser =
+    ruleUserSelect
+      ? String(
+          ruleUserSelect.value || ""
+        )
+      : "";
+
+  const previousUnitUser =
+    unitUserSelect
+      ? String(
+          unitUserSelect.value || ""
+        )
+      : "";
+
+  const previousDeleteUser =
+    deleteUserSelect
+      ? String(
+          deleteUserSelect.value || ""
+        )
       : "";
 
 
@@ -14609,7 +14796,6 @@ function updateUserSelects() {
 
   for (let user in points) {
 
-    // 管理者用の利用者管理は全利用者を表示
     if (unitUserSelect) {
 
       const option3 =
@@ -14617,11 +14803,8 @@ function updateUserSelects() {
           "option"
         );
 
-      option3.value =
-        user;
-
-      option3.textContent =
-        user;
+      option3.value = user;
+      option3.textContent = user;
 
       unitUserSelect.appendChild(
         option3
@@ -14635,11 +14818,8 @@ function updateUserSelects() {
           "option"
         );
 
-      option4.value =
-        user;
-
-      option4.textContent =
-        user;
+      option4.value = user;
+      option4.textContent = user;
 
       deleteUserSelect.appendChild(
         option4
@@ -14647,7 +14827,6 @@ function updateUserSelects() {
     }
 
 
-    // ここから下は現在のユニットだけ表示
     if (
       currentUnit !== "all" &&
       userUnits[user] !==
@@ -14664,11 +14843,8 @@ function updateUserSelects() {
           "option"
         );
 
-      option1.value =
-        user;
-
-      option1.textContent =
-        user;
+      option1.value = user;
+      option1.textContent = user;
 
       userSelect.appendChild(
         option1
@@ -14676,18 +14852,23 @@ function updateUserSelects() {
     }
 
 
-    if (ruleUserSelect) {
+    if (
+      ruleUserSelect &&
+      (
+        currentRole !== "admin" ||
+        isUserVisibleInAdminRuleFilter(
+          user
+        )
+      )
+    ) {
 
       const option2 =
         document.createElement(
           "option"
         );
 
-      option2.value =
-        user;
-
-      option2.textContent =
-        user;
+      option2.value = user;
+      option2.textContent = user;
 
       ruleUserSelect.appendChild(
         option2
@@ -14696,20 +14877,56 @@ function updateUserSelects() {
   }
 
 
-  if (
-    userSelect &&
-    previousBowelUser &&
-    Array
-      .from(userSelect.options)
-      .some(option =>
-        String(option.value) ===
-        previousBowelUser
-      )
-  ) {
+  const restoreValue = (
+    select,
+    previousValue
+  ) => {
 
-    userSelect.value =
-      previousBowelUser;
-  }
+    if (
+      !select ||
+      !previousValue
+    ) {
+      return;
+    }
+
+    const exists =
+      Array
+        .from(
+          select.options
+        )
+        .some(option =>
+          String(
+            option.value
+          ) ===
+          previousValue
+        );
+
+    if (exists) {
+      select.value =
+        previousValue;
+    }
+  };
+
+
+  restoreValue(
+    userSelect,
+    previousBowelUser
+  );
+
+  restoreValue(
+    ruleUserSelect,
+    previousRuleUser
+  );
+
+  restoreValue(
+    unitUserSelect,
+    previousUnitUser
+  );
+
+  restoreValue(
+    deleteUserSelect,
+    previousDeleteUser
+  );
 
 
   updateBowelTargetUI({
@@ -15068,6 +15285,8 @@ function toggleOtherAdminPanel(
   }
 
   if (otherAdminPanel === "rule") {
+    updateAdminRuleUnitFilterLabels();
+    updateUserSelects();
     updateRuleDisplays();
   }
 
@@ -15291,7 +15510,7 @@ function createClientRequestId(
 
 
 /*
-  Ver.0.8.50
+  Ver.0.8.51
 
   ログインはGoogle Apps Scriptの一時的な
   404 / timeout を考慮して最大3回まで再試行する。
@@ -16733,40 +16952,144 @@ function getRuleEvaluationRuleLabel(item) {
     getRuleKindLabel(n) + " / " + n.content + " / " + getRuleTimingLabel(n);
 }
 
+function isScheduledRuleEvaluationDateReached(
+  item
+) {
+
+  if (
+    !item ||
+    String(
+      item.status || ""
+    ) !== "scheduled"
+  ) {
+    return false;
+  }
+
+  const date =
+    String(
+      item.evaluationDate || ""
+    ).slice(0, 10);
+
+  return Boolean(
+    date &&
+    date <= getTodayText()
+  );
+}
+
+
 function updateRuleEvaluationAlerts() {
-  const area = document.getElementById("ruleEvaluationAlertArea");
-  if (!area) return;
 
-  const due = getActiveRuleEvaluations()
-    .filter(isRuleEvaluationDue)
-    .filter(item => currentUnit === "all" || userUnits[item.user] === currentUnit);
+  const area =
+    document.getElementById(
+      "ruleEvaluationAlertArea"
+    );
 
-  if (due.length === 0) {
+  if (!area) {
+    return;
+  }
+
+  const items =
+    getActiveRuleEvaluations()
+      .filter(item =>
+        currentUnit === "all" ||
+        userUnits[item.user] ===
+          currentUnit
+      )
+      .filter(item =>
+        isRuleEvaluationDue(
+          item
+        ) ||
+        isScheduledRuleEvaluationDateReached(
+          item
+        )
+      );
+
+  if (items.length === 0) {
     area.innerHTML = "";
     return;
   }
 
-  area.innerHTML = due.map(item => {
-    const safeId = encodeURIComponent(String(item.evaluationId || ""));
-    const canEvaluate = currentRole === "nurse" || currentRole === "admin";
-    return `
-      <div class="rule-evaluation-alert due">
-        <div class="rule-evaluation-alert-title">🧪 ルール評価日です</div>
-        <div class="rule-evaluation-alert-meta">
-          <strong>${escapeHtml(formatResidentName(item.user))}</strong><br>
-          ${escapeHtml(getRuleEvaluationRuleLabel(item))}<br>
-          評価日：${escapeHtml(String(item.evaluationDate || ""))}
-          ${item.startDate ? `<br>評価開始日：${escapeHtml(String(item.startDate))}` : ""}
+  area.innerHTML =
+    items.map(item => {
+
+      const safeId =
+        encodeURIComponent(
+          String(
+            item.evaluationId || ""
+          )
+        );
+
+      const canEvaluate =
+        currentRole === "nurse" ||
+        currentRole === "admin";
+
+      const scheduled =
+        String(
+          item.status || ""
+        ) === "scheduled";
+
+      if (scheduled) {
+
+        return `
+          <div class="rule-evaluation-alert scheduled-due">
+            <div class="rule-evaluation-alert-title">
+              🧪 評価予定日ですが、次回サイクル開始待ちです
+            </div>
+
+            <div class="rule-evaluation-alert-meta">
+              <strong>
+                ${escapeHtml(formatResidentName(item.user))}
+              </strong><br>
+              ${escapeHtml(getRuleEvaluationRuleLabel(item))}<br>
+              評価予定日：
+              ${escapeHtml(String(item.evaluationDate || ""))}<br>
+              現在の排便サイクルが終了し、
+              次回ルールが有効になってから評価を開始します。
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="rule-evaluation-alert due">
+          <div class="rule-evaluation-alert-title">
+            🧪 ルール評価日です
+          </div>
+
+          <div class="rule-evaluation-alert-meta">
+            <strong>
+              ${escapeHtml(formatResidentName(item.user))}
+            </strong><br>
+            ${escapeHtml(getRuleEvaluationRuleLabel(item))}<br>
+            評価日：
+            ${escapeHtml(String(item.evaluationDate || ""))}
+            ${
+              item.startDate
+                ? `<br>評価開始日：${escapeHtml(String(item.startDate))}`
+                : ""
+            }
+          </div>
+
+          ${
+            canEvaluate
+              ? `
+                <button
+                  onclick="openRuleEvaluationReview(
+                    decodeURIComponent('${safeId}')
+                  )"
+                >
+                  評価を実施する
+                </button>
+              `
+              : `
+                <div class="rule-form-note">
+                  看護師・管理者へ評価実施を依頼してください。
+                </div>
+              `
+          }
         </div>
-        ${canEvaluate ? `
-          <button onclick="openRuleEvaluationReview(decodeURIComponent('${safeId}'))">
-            評価を実施する
-          </button>
-        ` : `
-          <div class="rule-form-note">看護師・管理者へ評価実施を依頼してください。</div>
-        `}
-      </div>`;
-  }).join("");
+      `;
+    }).join("");
 }
 
 function renderRuleEvaluationAdminList() {
@@ -16777,7 +17100,18 @@ function renderRuleEvaluationAdminList() {
     return;
   }
 
-  const items = getActiveRuleEvaluations();
+  const unitFilter =
+    getAdminRuleUnitFilterValue();
+
+  const items =
+    getActiveRuleEvaluations()
+      .filter(item =>
+        !unitFilter ||
+        String(
+          userUnits[item.user] || ""
+        ) === unitFilter
+      );
+
   if (items.length === 0) {
     area.innerHTML = "";
     return;
@@ -18461,6 +18795,20 @@ async function savePlannedRuleEdit(
     return;
   }
 
+  const matchingEvaluations =
+    getMatchingRuleEvaluations(
+      user,
+      oldDay,
+      oldRule
+    );
+
+  const scheduledEvaluation =
+    matchingEvaluations.find(item =>
+      String(
+        item.status || ""
+      ) === "scheduled"
+    ) || null;
+
   const previousRules =
     JSON.parse(
       JSON.stringify(rules)
@@ -18524,7 +18872,21 @@ async function savePlannedRuleEdit(
       activeRulesAfter:
         cloneRuleDayMap(
           snapshot?.rules || {}
-        )
+        ),
+      updateScheduledEvaluation:
+        scheduledEvaluation
+          ? {
+              evaluationId:
+                scheduledEvaluation.evaluationId,
+              trialDay:
+                newDay,
+              trialRule: {
+                kind: kind,
+                content: content,
+                timing: timing
+              }
+            }
+          : null
     });
 
     updateRuleDisplays();
@@ -18565,6 +18927,75 @@ async function savePlannedRuleEdit(
 }
 
 
+
+function getMatchingRuleEvaluations(
+  user,
+  day,
+  rule
+) {
+
+  const target =
+    buildRuleCheckToken(
+      rule
+    );
+
+  return getActiveRuleEvaluations()
+    .filter(item => {
+
+      if (
+        item.user !== user ||
+        String(
+          item.trialDay || ""
+        ) !== String(
+          day || ""
+        )
+      ) {
+        return false;
+      }
+
+      let trialRule = {};
+
+      try {
+        trialRule =
+          JSON.parse(
+            String(
+              item.trialRuleJson ||
+              "{}"
+            )
+          );
+      } catch (_) {
+        trialRule = {};
+      }
+
+      return (
+        buildRuleCheckToken(
+          trialRule
+        ) === target
+      );
+    });
+}
+
+
+function getScheduledEvaluationIdsForUser(
+  user
+) {
+
+  return getActiveRuleEvaluations()
+    .filter(item =>
+      item.user === user &&
+      String(
+        item.status || ""
+      ) === "scheduled"
+    )
+    .map(item =>
+      String(
+        item.evaluationId || ""
+      )
+    )
+    .filter(Boolean);
+}
+
+
 async function removePlannedRule(
   user,
   encodedDay,
@@ -18585,6 +19016,45 @@ async function removePlannedRule(
   if (!rule) {
     return;
   }
+
+  const matchingEvaluations =
+    getMatchingRuleEvaluations(
+      user,
+      day,
+      rule
+    );
+
+  const activeEvaluation =
+    matchingEvaluations.find(item =>
+      String(
+        item.status || ""
+      ) === "active"
+    );
+
+  if (activeEvaluation) {
+
+    showToast(
+      "🧪 このルールは評価中です。評価画面から操作してください。",
+      "info",
+      4500
+    );
+
+    return;
+  }
+
+  const scheduledEvaluationIds =
+    matchingEvaluations
+      .filter(item =>
+        String(
+          item.status || ""
+        ) === "scheduled"
+      )
+      .map(item =>
+        String(
+          item.evaluationId || ""
+        )
+      )
+      .filter(Boolean);
 
   const ok = confirm(
     "次回適用予定から\n" +
@@ -18653,7 +19123,13 @@ async function removePlannedRule(
       activeRulesAfter:
         cloneRuleDayMap(
           snapshot?.rules || {}
-        )
+        ),
+      clearSnapshot:
+        !hasPendingNextCycleRuleChange(
+          user
+        ),
+      cancelEvaluationIds:
+        scheduledEvaluationIds
     });
 
     updateRuleDisplays();
@@ -18906,7 +19382,11 @@ async function discardAllPlannedRuleChanges(
       activeRulesAfter:
         currentRules,
       clearSnapshot:
-        true
+        true,
+      cancelEvaluationIds:
+        getScheduledEvaluationIdsForUser(
+          user
+        )
     });
 
     updateRuleDisplays();
@@ -18966,6 +19446,17 @@ function getRuleListHtml(editable = true) {
   for (const user in userSource) {
 
     if (
+      editable &&
+      currentRole === "admin" &&
+      !isUserVisibleInAdminRuleFilter(
+        user
+      )
+    ) {
+      continue;
+    }
+
+    if (
+      !editable &&
       currentUnit !== "all" &&
       userUnits[user] !== currentUnit
     ) {
@@ -18973,11 +19464,31 @@ function getRuleListHtml(editable = true) {
     }
 
 
-    result +=
-      "<div class='user-card'>" +
-      "<strong>" +
-      escapeHtml(user) +
-      "</strong><br>";
+    if (editable) {
+
+      result +=
+        "<div class='user-card rule-admin-user-card'>" +
+        "<div class='rule-admin-user-head'>" +
+        "<span class='rule-admin-user-name'>" +
+        escapeHtml(user) +
+        "</span>" +
+        "<span class='rule-admin-unit-badge'>" +
+        escapeHtml(
+          getUnitName(
+            userUnits[user]
+          )
+        ) +
+        "</span>" +
+        "</div>";
+
+    } else {
+
+      result +=
+        "<div class='user-card'>" +
+        "<strong>" +
+        escapeHtml(user) +
+        "</strong><br>";
+    }
 
 
     const sourceRules =
@@ -21528,7 +22039,7 @@ async function changeLastDate() {
     /*
       GAS保存成功後にローカルへ反映する。
 
-      Ver.0.8.50
+      Ver.0.8.51
       手動の最終排便日訂正は「新しい排便成立」ではない。
       現在サイクル用の固定ルールがある場合は、
       サイクルキーだけ新しい日付へ移す。
@@ -22421,7 +22932,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.8.50 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
+// Ver.0.8.51 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
 // Ver.0.8.44 APIセッション認証
 // ============================================================
 
@@ -23219,7 +23730,7 @@ async function requestSyncDataFromServer(
 
 
       /*
-        Ver.0.8.50
+        Ver.0.8.51
 
         getSyncData は読み取り専用なので、
         timeout後でも同じ同期内で安全に再試行できる。
@@ -25603,7 +26114,7 @@ async function loadLightSyncDataFromGoogle() {
 
   // =========================
   // ルール / サイクル固定ルール
-  // Ver.0.8.50
+  // Ver.0.8.51
   // ルール変更を30秒以内に他端末へ反映する。
   // =========================
 
