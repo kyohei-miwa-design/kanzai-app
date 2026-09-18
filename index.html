@@ -785,6 +785,109 @@ button {
 }
 
 
+.planned-rule-banner {
+  margin: 12px 0 6px;
+  padding: 12px;
+  border: 1px solid #ffcc80;
+  border-radius: 12px;
+  background: #fff8e1;
+  color: #7a5100;
+}
+
+.planned-rule-banner strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 15px;
+}
+
+.planned-rule-banner button {
+  margin-top: 8px;
+  background: #ef6c00;
+}
+
+.planned-rule-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0 14px;
+}
+
+.planned-rule-summary > div {
+  padding: 10px;
+  border-radius: 10px;
+  background: #f5f7f8;
+  text-align: center;
+  font-weight: bold;
+}
+
+.planned-rule-section {
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid #dfe5e8;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.planned-rule-section h4 {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+
+.planned-rule-row {
+  margin: 8px 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f7f9fa;
+}
+
+.planned-rule-row.added {
+  border-left: 4px solid #2e7d32;
+}
+
+.planned-rule-row.removed {
+  border-left: 4px solid #d32f2f;
+}
+
+.planned-rule-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.planned-rule-row-actions button {
+  width: auto;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.planned-rule-current-note {
+  margin-bottom: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #eef6ff;
+  color: #35556f;
+  line-height: 1.6;
+}
+
+.planned-rule-danger {
+  background: #d32f2f;
+}
+
+.planned-rule-empty {
+  padding: 12px;
+  border-radius: 10px;
+  background: #f5f5f5;
+  color: #666;
+  text-align: center;
+}
+
+.planned-rule-edit-form {
+  display: grid;
+  gap: 12px;
+}
+
 .history-edit-form {
   display: grid;
   gap: 14px;
@@ -5368,7 +5471,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.47</p>
+      <p class="app-version">Ver.0.8.49</p>
     </div>
 
     <button
@@ -6408,6 +6511,23 @@ h3 {
           排便処置を選ぶと、時間帯は「日中」を初期選択します。
         </div>
 
+        <p>適用時期</p>
+
+        <select id="ruleApplyMode">
+          <option value="next" selected>
+            次回の排便成立後から（推奨）
+          </option>
+          <option value="current">
+            今回の未排便サイクルから
+          </option>
+        </select>
+
+        <div class="rule-form-note">
+          「次回から」を選ぶと、現在進行中の未排便サイクルは
+          変更前のルールを継続します。<br>
+          「今回から」は現在のサイクルへ即時反映します。
+        </div>
+
         <button onclick="saveRule()">
           ルール保存
         </button>
@@ -6452,7 +6572,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.47
+          Ver.0.8.49
         </span>
       </div>
 
@@ -6461,7 +6581,7 @@ h3 {
           GAS
         </span>
         <span class="other-info-value">
-          Ver.0.8.34
+          Ver.0.8.36
         </span>
       </div>
 
@@ -6658,6 +6778,8 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzq9qSuPmvSzAbv_uLFbIrX
 // =========================
 const BOWEL_POINT_RULE_VERSION = 2;
 const BOWEL_RESET_POINT = 6;
+
+let ruleCycleSnapshots = {};
 
 let rules = {
   "A様": {
@@ -8382,7 +8504,156 @@ function isRuleActiveNow(rule, hour) {
   return false;
 }
 
-function getRulesForDay(user, day) {
+function normalizeRuleDayMap(
+  source
+) {
+
+  const wrapped =
+    normalizeRulesObject({
+      __cycle__: source || {}
+    });
+
+  return (
+    wrapped.__cycle__ || {}
+  );
+}
+
+
+function normalizeRuleCycleSnapshotsObject(
+  source
+) {
+
+  const normalized = {};
+
+  if (
+    !source ||
+    typeof source !== "object"
+  ) {
+    return normalized;
+  }
+
+  for (const user in source) {
+
+    const cycles =
+      source[user];
+
+    if (
+      !cycles ||
+      typeof cycles !== "object"
+    ) {
+      continue;
+    }
+
+    normalized[user] = {};
+
+    for (const cycleLastDate in cycles) {
+
+      const item =
+        cycles[cycleLastDate] || {};
+
+      const cycleKey =
+        String(
+          item.cycleLastDate ||
+          cycleLastDate ||
+          ""
+        )
+          .trim()
+          .slice(0, 10);
+
+      if (!cycleKey) {
+        continue;
+      }
+
+      normalized[user][cycleKey] = {
+        cycleLastDate:
+          cycleKey,
+        rules:
+          normalizeRuleDayMap(
+            item.rules || {}
+          ),
+        updatedAt:
+          String(
+            item.updatedAt || ""
+          ).trim()
+      };
+    }
+
+    if (
+      Object.keys(
+        normalized[user]
+      ).length === 0
+    ) {
+      delete normalized[user];
+    }
+  }
+
+  return normalized;
+}
+
+
+function getCurrentRuleCycleKey(
+  user
+) {
+
+  return String(
+    lastDates[user] || ""
+  )
+    .trim()
+    .slice(0, 10);
+}
+
+
+function getCurrentRuleCycleSnapshot(
+  user
+) {
+
+  const cycleKey =
+    getCurrentRuleCycleKey(
+      user
+    );
+
+  if (!cycleKey) {
+    return null;
+  }
+
+  const item =
+    ruleCycleSnapshots?.[user]?.[
+      cycleKey
+    ];
+
+  if (!item) {
+    return null;
+  }
+
+  return item;
+}
+
+
+function getEffectiveRulesForUser(
+  user
+) {
+
+  const snapshot =
+    getCurrentRuleCycleSnapshot(
+      user
+    );
+
+  if (snapshot) {
+    return (
+      snapshot.rules || {}
+    );
+  }
+
+  return (
+    rules[user] || {}
+  );
+}
+
+
+function getConfiguredRulesForDay(
+  user,
+  day
+) {
 
   return (
     rules[user]?.[day] || []
@@ -8391,6 +8662,222 @@ function getRulesForDay(user, day) {
     .filter(rule =>
       rule.content &&
       RULE_TIMING_LABELS[rule.timing]
+    );
+}
+
+
+function getRulesForDay(user, day) {
+
+  const source =
+    getEffectiveRulesForUser(
+      user
+    );
+
+  return (
+    source?.[day] || []
+  )
+    .map(normalizeRuleItem)
+    .filter(rule =>
+      rule.content &&
+      RULE_TIMING_LABELS[rule.timing]
+    );
+}
+
+
+function hasPendingNextCycleRuleChange(
+  user
+) {
+
+  const snapshot =
+    getCurrentRuleCycleSnapshot(
+      user
+    );
+
+  if (!snapshot) {
+    return false;
+  }
+
+  const activeText =
+    JSON.stringify(
+      normalizeRuleDayMap(
+        snapshot.rules || {}
+      )
+    );
+
+  const configuredText =
+    JSON.stringify(
+      normalizeRuleDayMap(
+        rules[user] || {}
+      )
+    );
+
+  return (
+    activeText !==
+    configuredText
+  );
+}
+
+
+function getRuleApplyMode() {
+
+  const select =
+    document.getElementById(
+      "ruleApplyMode"
+    );
+
+  const value =
+    String(
+      select?.value || "next"
+    ).trim();
+
+  return (
+    value === "current"
+      ? "current"
+      : "next"
+  );
+}
+
+
+function getRuleApplyModeLabel(
+  mode
+) {
+
+  return (
+    mode === "current"
+      ? "今回の未排便サイクルから"
+      : "次回の排便成立後から"
+  );
+}
+
+
+function cloneRuleDayMap(
+  source
+) {
+
+  return normalizeRuleDayMap(
+    JSON.parse(
+      JSON.stringify(
+        source || {}
+      )
+    )
+  );
+}
+
+
+function ensureCurrentCycleSnapshot(
+  user,
+  activeRulesBefore
+) {
+
+  const cycleKey =
+    getCurrentRuleCycleKey(
+      user
+    );
+
+  if (!cycleKey) {
+    return;
+  }
+
+  if (
+    ruleCycleSnapshots?.[user]?.[
+      cycleKey
+    ]
+  ) {
+    return;
+  }
+
+  if (!ruleCycleSnapshots[user]) {
+    ruleCycleSnapshots[user] = {};
+  }
+
+  ruleCycleSnapshots[user][
+    cycleKey
+  ] = {
+    cycleLastDate:
+      cycleKey,
+    rules:
+      cloneRuleDayMap(
+        activeRulesBefore
+      ),
+    updatedAt: ""
+  };
+}
+
+
+function addRuleToCurrentSnapshotIfNeeded(
+  user,
+  day,
+  rule
+) {
+
+  const snapshot =
+    getCurrentRuleCycleSnapshot(
+      user
+    );
+
+  if (!snapshot) {
+    return;
+  }
+
+  if (!snapshot.rules[day]) {
+    snapshot.rules[day] = [];
+  }
+
+  snapshot.rules[day].push(
+    normalizeRuleItem(rule)
+  );
+
+  snapshot.rules =
+    normalizeRuleDayMap(
+      snapshot.rules
+    );
+}
+
+
+function removeMatchingRuleFromCurrentSnapshotIfNeeded(
+  user,
+  day,
+  rule
+) {
+
+  const snapshot =
+    getCurrentRuleCycleSnapshot(
+      user
+    );
+
+  if (!snapshot) {
+    return;
+  }
+
+  const targetToken =
+    buildRuleCheckToken(
+      rule
+    );
+
+  const items =
+    Array.isArray(
+      snapshot.rules?.[day]
+    )
+      ? snapshot.rules[day]
+      : [];
+
+  const index =
+    items.findIndex(item =>
+      buildRuleCheckToken(item) ===
+      targetToken
+    );
+
+  if (index >= 0) {
+    items.splice(index, 1);
+  }
+
+  if (items.length === 0) {
+    delete snapshot.rules[day];
+  }
+
+  snapshot.rules =
+    normalizeRuleDayMap(
+      snapshot.rules
     );
 }
 
@@ -10407,6 +10894,7 @@ function clearResidentScopedCache() {
     "histories",
     "nurseInstructions",
     "rules",
+    "ruleCycleSnapshots",
     "checks",
     "checkDate",
     DATA_SCOPE_CACHE_KEY
@@ -10609,6 +11097,13 @@ function saveData() {
   );
 
   localStorage.setItem(
+    "ruleCycleSnapshots",
+    JSON.stringify(
+      ruleCycleSnapshots
+    )
+  );
+
+  localStorage.setItem(
     "checks",
     JSON.stringify(checks)
   );
@@ -10635,6 +11130,10 @@ function loadData() {
   const savedHistories = localStorage.getItem("histories");
   const savedNurseInstructions = localStorage.getItem("nurseInstructions");
   const savedRules = localStorage.getItem("rules");
+  const savedRuleCycleSnapshots =
+    localStorage.getItem(
+      "ruleCycleSnapshots"
+    );
   const savedChecks = localStorage.getItem("checks");
   const savedCheckDate = localStorage.getItem("checkDate");
 
@@ -10658,6 +11157,17 @@ function loadData() {
     rules = normalizeRulesObject(
       JSON.parse(savedRules)
     );
+  }
+
+  if (
+    savedRuleCycleSnapshots !== null
+  ) {
+    ruleCycleSnapshots =
+      normalizeRuleCycleSnapshotsObject(
+        JSON.parse(
+          savedRuleCycleSnapshots
+        )
+      );
   }
 
   if (savedHistories !== null) {
@@ -10789,45 +11299,29 @@ async function loadChecksFromGoogle() {
   updateHomeMedicineStatus();
 }
 
-async function saveRulesToGoogle() {
-
-  const response =
-    await fetch(
-      API_URL,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "text/plain;charset=utf-8"
-        },
-
-        body: jsonBodyWithSession({
-          action: "saveRulesV2",
-          rules: rules
-        }),
-
-        cache: "no-store"
-      }
-    );
-
-  if (!response.ok) {
-    throw new Error(
-      "ルール保存失敗：HTTP " +
-      response.status
-    );
-  }
+async function saveRulesToGoogle(
+  change = {}
+) {
 
   const result =
-    await parseApiJsonResponse(
-      response,
-      "API"
+    await postJsonApiOnce(
+      {
+        action:
+          "saveRulesV3",
+        rules: rules,
+        change: change
+      },
+      30000
     );
 
-  if (!result.ok) {
+  if (
+    !result ||
+    result.ok !== true
+  ) {
     throw new Error(
-      result.message ||
-      "ルール保存に失敗しました"
+      result && result.message
+        ? result.message
+        : "ルール保存に失敗しました"
     );
   }
 
@@ -10836,16 +11330,14 @@ async function saveRulesToGoogle() {
       result.rules || rules
     );
 
-  document.getElementById(
-    "todayTarget"
-  ).innerHTML =
-    getTodayTarget();
+  ruleCycleSnapshots =
+    normalizeRuleCycleSnapshotsObject(
+      result.ruleCycleSnapshots ||
+      ruleCycleSnapshots ||
+      {}
+    );
 
-  updateRuleDisplays();
-
-  updateHomeMedicineStatus();
-
-  saveData();
+  return result;
 }
 
 async function saveUsersToGoogle(showAlert = true) {
@@ -11497,15 +11989,20 @@ function getRuleWindowState(rule, hour) {
 
 function getMaxRuleDay(user) {
 
+  const effectiveRules =
+    getEffectiveRulesForUser(
+      user
+    );
+
   if (
-    !rules[user] ||
-    typeof rules[user] !== "object"
+    !effectiveRules ||
+    typeof effectiveRules !== "object"
   ) {
     return null;
   }
 
   const days =
-    Object.keys(rules[user])
+    Object.keys(effectiveRules)
       .map(day => Number(day))
       .filter(day =>
         Number.isFinite(day) &&
@@ -12448,15 +12945,20 @@ function getNextRuleSchedule(
   currentDays
 ) {
 
+  const effectiveRules =
+    getEffectiveRulesForUser(
+      user
+    );
+
   if (
-    !rules[user] ||
-    typeof rules[user] !== "object"
+    !effectiveRules ||
+    typeof effectiveRules !== "object"
   ) {
     return null;
   }
 
   const futureDays =
-    Object.keys(rules[user])
+    Object.keys(effectiveRules)
       .map(day => Number(day))
       .filter(day =>
         Number.isFinite(day) &&
@@ -13087,9 +13589,14 @@ function getStatusHtml() {
 
 function getUserRulesDetailHtml(user) {
 
+  const effectiveRules =
+    getEffectiveRulesForUser(
+      user
+    );
+
   if (
-    !rules[user] ||
-    typeof rules[user] !== "object"
+    !effectiveRules ||
+    typeof effectiveRules !== "object"
   ) {
 
     return `
@@ -13101,7 +13608,7 @@ function getUserRulesDetailHtml(user) {
 
 
   const days =
-    Object.keys(rules[user])
+    Object.keys(effectiveRules)
       .map(day => Number(day))
       .filter(day =>
         Number.isFinite(day) &&
@@ -13121,6 +13628,20 @@ function getUserRulesDetailHtml(user) {
 
 
   let html = "";
+
+  if (
+    hasPendingNextCycleRuleChange(
+      user
+    )
+  ) {
+
+    html += `
+      <div class="status-detail-empty" style="border-color:#ffcc80;background:#fff8e1;color:#8a5a00;">
+        ⚠ 次回の排便成立後から適用されるルール変更があります。<br>
+        現在の未排便サイクルは変更前のルールを継続しています。
+      </div>
+    `;
+  }
 
 
   for (const day of days) {
@@ -14606,7 +15127,7 @@ function createClientRequestId(
 
 
 /*
-  Ver.0.8.47
+  Ver.0.8.49
 
   ログインはGoogle Apps Scriptの一時的な
   404 / timeout を考慮して最大3回まで再試行する。
@@ -15080,6 +15601,12 @@ async function loadInitialDataFromGoogle() {
       normalizeRulesObject(
         data.rulesV2 ||
         data.rules ||
+        {}
+      );
+
+    ruleCycleSnapshots =
+      normalizeRuleCycleSnapshotsObject(
+        data.ruleCycleSnapshots ||
         {}
       );
 
@@ -16024,6 +16551,9 @@ async function saveRule() {
       "ruleTiming"
     ).value;
 
+  const applyMode =
+    getRuleApplyMode();
+
 
   if (
     !user ||
@@ -16043,10 +16573,48 @@ async function saveRule() {
   }
 
 
+  const newRule = {
+    kind: kind,
+    content: content,
+    timing: timing
+  };
+
   const previousRules =
     JSON.parse(
       JSON.stringify(rules)
     );
+
+  const previousSnapshots =
+    JSON.parse(
+      JSON.stringify(
+        ruleCycleSnapshots
+      )
+    );
+
+  const activeRulesBefore =
+    cloneRuleDayMap(
+      getEffectiveRulesForUser(
+        user
+      )
+    );
+
+  const cycleLastDate =
+    getCurrentRuleCycleKey(
+      user
+    );
+
+
+  /*
+    次回適用の場合は、
+    変更前の現在ルールを現在サイクル用として固定する。
+  */
+  if (applyMode === "next") {
+
+    ensureCurrentCycleSnapshot(
+      user,
+      activeRulesBefore
+    );
+  }
 
 
   if (!rules[user]) {
@@ -16058,15 +16626,38 @@ async function saveRule() {
   }
 
 
-  rules[user][day].push({
-    kind: kind,
-    content: content,
-    timing: timing
-  });
+  rules[user][day].push(
+    newRule
+  );
 
 
   rules =
     normalizeRulesObject(rules);
+
+
+  /*
+    今回から適用の場合、
+    すでに「次回から」の固定スナップショットが存在しても
+    過去の次回変更を一緒に前倒ししない。
+
+    今回追加した1件だけを現在サイクルにも反映する。
+  */
+  if (applyMode === "current") {
+
+    addRuleToCurrentSnapshotIfNeeded(
+      user,
+      day,
+      newRule
+    );
+  }
+
+
+  const activeRulesAfter =
+    cloneRuleDayMap(
+      getEffectiveRulesForUser(
+        user
+      )
+    );
 
 
   document.getElementById(
@@ -16088,21 +16679,40 @@ async function saveRule() {
 
   try {
 
-    await saveRulesToGoogle();
+    await saveRulesToGoogle({
+      user: user,
+      applyMode: applyMode,
+      cycleLastDate:
+        cycleLastDate,
+      activeRulesBefore:
+        activeRulesBefore,
+      activeRulesAfter:
+        activeRulesAfter
+    });
 
     document.getElementById(
       "ruleMedicine"
     ).value = "";
 
+    updateRuleDisplays();
+    updateHomeMedicineStatus();
+    saveData();
+
     showToast(
-      "✓ ルールを保存しました",
+      "✓ ルールを保存しました（" +
+      getRuleApplyModeLabel(
+        applyMode
+      ) +
+      "）",
       "success",
-      2500
+      3500
     );
 
   } catch (error) {
 
     rules = previousRules;
+    ruleCycleSnapshots =
+      previousSnapshots;
 
     document.getElementById(
       "todayTarget"
@@ -16552,12 +17162,1093 @@ function clearRuleViewFilters() {
   renderRuleView();
 }
 
+
+function getRuleMapEntries(
+  source
+) {
+
+  const entries = [];
+
+  const normalized =
+    normalizeRuleDayMap(
+      source || {}
+    );
+
+  const days =
+    Object.keys(normalized)
+      .map(day => Number(day))
+      .filter(day =>
+        Number.isFinite(day)
+      )
+      .sort((a, b) => a - b);
+
+  for (const dayNumber of days) {
+
+    const day =
+      String(dayNumber);
+
+    const items =
+      Array.isArray(
+        normalized[day]
+      )
+        ? normalized[day]
+        : [];
+
+    items.forEach(
+      (rule, index) => {
+
+        entries.push({
+          day: day,
+          index: index,
+          rule:
+            normalizeRuleItem(
+              rule
+            ),
+          matchKey:
+            day +
+            "|" +
+            buildRuleCheckToken(
+              rule
+            )
+        });
+      }
+    );
+  }
+
+  return entries;
+}
+
+
+function getPlannedRuleDiff(
+  user
+) {
+
+  const snapshot =
+    getCurrentRuleCycleSnapshot(
+      user
+    );
+
+  if (!snapshot) {
+    return {
+      active: [],
+      planned: [],
+      added: [],
+      removed: []
+    };
+  }
+
+  const active =
+    getRuleMapEntries(
+      snapshot.rules || {}
+    );
+
+  const planned =
+    getRuleMapEntries(
+      rules[user] || {}
+    );
+
+  const usedActive =
+    new Set();
+
+  const usedPlanned =
+    new Set();
+
+  planned.forEach(
+    (plannedItem, plannedIndex) => {
+
+      const activeIndex =
+        active.findIndex(
+          (activeItem, index) =>
+            !usedActive.has(index) &&
+            activeItem.matchKey ===
+              plannedItem.matchKey
+        );
+
+      if (activeIndex >= 0) {
+        usedActive.add(activeIndex);
+        usedPlanned.add(plannedIndex);
+      }
+    }
+  );
+
+  const added =
+    planned.filter(
+      (_, index) =>
+        !usedPlanned.has(index)
+    );
+
+  const removed =
+    active.filter(
+      (_, index) =>
+        !usedActive.has(index)
+    );
+
+  return {
+    active: active,
+    planned: planned,
+    added: added,
+    removed: removed
+  };
+}
+
+
+function getPlannedRuleSummaryText(
+  user
+) {
+
+  const diff =
+    getPlannedRuleDiff(
+      user
+    );
+
+  return (
+    "追加・変更 " +
+    diff.added.length +
+    "件 / 削除 " +
+    diff.removed.length +
+    "件"
+  );
+}
+
+
+function getPlannedRuleEntryHtml(
+  item,
+  cssClass = "",
+  actionsHtml = ""
+) {
+
+  const rule =
+    item.rule;
+
+  return `
+    <div class="planned-rule-row ${escapeHtml(cssClass)}">
+      <strong>
+        未排便${escapeHtml(item.day)}日
+      </strong><br>
+      ${getRuleKindIcon(rule)}
+      ${escapeHtml(getRuleKindLabel(rule))}
+      /
+      ${escapeHtml(rule.content)}
+      /
+      ${escapeHtml(getRuleTimingLabel(rule))}
+      ${actionsHtml}
+    </div>
+  `;
+}
+
+
+function openPlannedRuleChanges(
+  user
+) {
+
+  if (
+    currentRole !== "admin"
+  ) {
+    showToast(
+      "管理者アカウントから確認してください",
+      "error",
+      3000
+    );
+    return;
+  }
+
+  const snapshot =
+    getCurrentRuleCycleSnapshot(
+      user
+    );
+
+  if (!snapshot) {
+
+    showToast(
+      "変更予定はありません",
+      "info",
+      2500
+    );
+    return;
+  }
+
+  const diff =
+    getPlannedRuleDiff(
+      user
+    );
+
+  if (
+    diff.added.length === 0 &&
+    diff.removed.length === 0
+  ) {
+
+    showToast(
+      "変更予定はありません",
+      "info",
+      2500
+    );
+    return;
+  }
+
+  const safeUser =
+    encodeURIComponent(
+      user
+    );
+
+  const addedHtml =
+    diff.added.length > 0
+      ? diff.added.map(item => {
+
+          const actions = `
+            <div class="planned-rule-row-actions">
+              <button
+                class="modal-action-edit"
+                onclick="openPlannedRuleEdit(
+                  decodeURIComponent('${safeUser}'),
+                  '${encodeURIComponent(item.day)}',
+                  ${item.index}
+                )"
+              >
+                ✏️ 修正
+              </button>
+              <button
+                class="modal-action-cancel"
+                onclick="removePlannedRule(
+                  decodeURIComponent('${safeUser}'),
+                  '${encodeURIComponent(item.day)}',
+                  ${item.index}
+                )"
+              >
+                予定から削除
+              </button>
+            </div>
+          `;
+
+          return getPlannedRuleEntryHtml(
+            item,
+            "added",
+            actions
+          );
+        }).join("")
+      : `<div class="planned-rule-empty">追加・変更予定はありません</div>`;
+
+  const removedHtml =
+    diff.removed.length > 0
+      ? diff.removed.map(item => {
+
+          const ruleJson =
+            encodeURIComponent(
+              JSON.stringify(
+                item.rule
+              )
+            );
+
+          const actions = `
+            <div class="planned-rule-row-actions">
+              <button
+                class="modal-action-edit"
+                onclick="restorePlannedRemovedRule(
+                  decodeURIComponent('${safeUser}'),
+                  '${encodeURIComponent(item.day)}',
+                  decodeURIComponent('${ruleJson}')
+                )"
+              >
+                ↩️ 削除予定を取り消す
+              </button>
+            </div>
+          `;
+
+          return getPlannedRuleEntryHtml(
+            item,
+            "removed",
+            actions
+          );
+        }).join("")
+      : `<div class="planned-rule-empty">削除予定はありません</div>`;
+
+  const plannedAllHtml =
+    diff.planned.length > 0
+      ? diff.planned.map(item => {
+
+          const actions = `
+            <div class="planned-rule-row-actions">
+              <button
+                class="modal-action-edit"
+                onclick="openPlannedRuleEdit(
+                  decodeURIComponent('${safeUser}'),
+                  '${encodeURIComponent(item.day)}',
+                  ${item.index}
+                )"
+              >
+                ✏️ 次回ルールを修正
+              </button>
+            </div>
+          `;
+
+          return getPlannedRuleEntryHtml(
+            item,
+            "",
+            actions
+          );
+        }).join("")
+      : `<div class="planned-rule-empty">次回ルールは空です</div>`;
+
+  openCommonModal({
+    title:
+      "変更予定のルール",
+    bodyHtml: `
+      <div class="planned-rule-current-note">
+        <strong>${escapeHtml(formatResidentName(user))}</strong><br>
+        現在サイクル開始基準：
+        ${escapeHtml(snapshot.cycleLastDate || "")}<br>
+        現在の未排便サイクルでは変更前ルールを継続し、
+        次に排便成立して最終排便日が更新された時点から
+        下記の予定ルールへ切り替わります。
+      </div>
+
+      <div class="planned-rule-summary">
+        <div>
+          追加・変更<br>
+          ${diff.added.length}件
+        </div>
+        <div>
+          削除予定<br>
+          ${diff.removed.length}件
+        </div>
+      </div>
+
+      <div class="planned-rule-section">
+        <h4>🟢 追加・変更予定</h4>
+        ${addedHtml}
+      </div>
+
+      <div class="planned-rule-section">
+        <h4>🔴 削除予定</h4>
+        ${removedHtml}
+      </div>
+
+      <div class="planned-rule-section">
+        <h4>📋 次回適用予定の全ルール</h4>
+        ${plannedAllHtml}
+      </div>
+
+      <div class="rule-form-note">
+        ※ 内容変更は、
+        「旧内容の削除予定」＋「新内容の追加予定」
+        として表示されます。
+      </div>
+    `,
+    buttonsHtml: `
+      <button
+        class="modal-action-cancel planned-rule-danger"
+        onclick="discardAllPlannedRuleChanges(
+          decodeURIComponent('${safeUser}')
+        )"
+      >
+        変更予定をすべて破棄
+      </button>
+      <button
+        class="modal-action-close"
+        onclick="closeCommonModal()"
+      >
+        閉じる
+      </button>
+    `
+  });
+}
+
+
+function openPlannedRuleEdit(
+  user,
+  encodedDay,
+  index
+) {
+
+  const day =
+    decodeURIComponent(
+      String(encodedDay || "")
+    );
+
+  const rule =
+    getConfiguredRulesForDay(
+      user,
+      day
+    )[index];
+
+  if (!rule) {
+
+    showToast(
+      "修正対象のルールが見つかりません",
+      "error",
+      3000
+    );
+
+    return;
+  }
+
+  const safeUser =
+    encodeURIComponent(
+      user
+    );
+
+  openCommonModal({
+    title:
+      "次回ルールを修正",
+    bodyHtml: `
+      <div class="planned-rule-edit-form">
+
+        <div>
+          <strong>
+            ${escapeHtml(formatResidentName(user))}
+          </strong>
+        </div>
+
+        <div>
+          <div class="nurse-form-label">未排便日数</div>
+          <input
+            type="number"
+            id="plannedRuleEditDay"
+            min="0"
+            value="${escapeHtml(day)}"
+          >
+        </div>
+
+        <div>
+          <div class="nurse-form-label">種類</div>
+          <select id="plannedRuleEditKind">
+            <option
+              value="laxative"
+              ${rule.kind === "laxative" ? "selected" : ""}
+            >
+              緩下剤
+            </option>
+            <option
+              value="procedure"
+              ${rule.kind === "procedure" ? "selected" : ""}
+            >
+              排便処置
+            </option>
+          </select>
+        </div>
+
+        <div>
+          <div class="nurse-form-label">内容</div>
+          <input
+            type="text"
+            id="plannedRuleEditContent"
+            value="${escapeHtml(rule.content)}"
+          >
+        </div>
+
+        <div>
+          <div class="nurse-form-label">時間帯</div>
+          <select id="plannedRuleEditTiming">
+            <option value="morning" ${rule.timing === "morning" ? "selected" : ""}>朝</option>
+            <option value="lunch" ${rule.timing === "lunch" ? "selected" : ""}>昼</option>
+            <option value="evening" ${rule.timing === "evening" ? "selected" : ""}>夕</option>
+            <option value="daytime" ${rule.timing === "daytime" ? "selected" : ""}>日中</option>
+          </select>
+        </div>
+
+        <div class="rule-form-note">
+          この修正は「次回の排便成立後から」の予定だけを変更します。
+          現在進行中のサイクルには影響しません。
+        </div>
+
+      </div>
+    `,
+    buttonsHtml: `
+      <button
+        class="modal-action-edit"
+        onclick="savePlannedRuleEdit(
+          decodeURIComponent('${safeUser}'),
+          '${encodeURIComponent(day)}',
+          ${index}
+        )"
+      >
+        修正を保存
+      </button>
+      <button
+        class="modal-action-close"
+        onclick="openPlannedRuleChanges(
+          decodeURIComponent('${safeUser}')
+        )"
+      >
+        戻る
+      </button>
+    `
+  });
+}
+
+
+async function savePlannedRuleEdit(
+  user,
+  encodedOldDay,
+  index
+) {
+
+  const oldDay =
+    decodeURIComponent(
+      String(encodedOldDay || "")
+    );
+
+  const oldRule =
+    getConfiguredRulesForDay(
+      user,
+      oldDay
+    )[index];
+
+  if (!oldRule) {
+    showToast(
+      "修正対象が見つかりません",
+      "error",
+      3000
+    );
+    return;
+  }
+
+  const newDay =
+    String(
+      document.getElementById(
+        "plannedRuleEditDay"
+      )?.value || ""
+    ).trim();
+
+  const kind =
+    String(
+      document.getElementById(
+        "plannedRuleEditKind"
+      )?.value || ""
+    ).trim();
+
+  const content =
+    String(
+      document.getElementById(
+        "plannedRuleEditContent"
+      )?.value || ""
+    ).trim();
+
+  const timing =
+    String(
+      document.getElementById(
+        "plannedRuleEditTiming"
+      )?.value || ""
+    ).trim();
+
+  if (
+    newDay === "" ||
+    !kind ||
+    !content ||
+    !timing
+  ) {
+
+    showToast(
+      "未排便日数・種類・内容・時間帯を入力してください",
+      "error",
+      3500
+    );
+
+    return;
+  }
+
+  const previousRules =
+    JSON.parse(
+      JSON.stringify(rules)
+    );
+
+  const previousSnapshots =
+    JSON.parse(
+      JSON.stringify(
+        ruleCycleSnapshots
+      )
+    );
+
+  try {
+
+    rules[user][oldDay].splice(
+      index,
+      1
+    );
+
+    if (
+      rules[user][oldDay].length === 0
+    ) {
+      delete rules[user][oldDay];
+    }
+
+    if (!rules[user]) {
+      rules[user] = {};
+    }
+
+    if (!rules[user][newDay]) {
+      rules[user][newDay] = [];
+    }
+
+    rules[user][newDay].push({
+      kind: kind,
+      content: content,
+      timing: timing
+    });
+
+    rules =
+      normalizeRulesObject(
+        rules
+      );
+
+    const snapshot =
+      getCurrentRuleCycleSnapshot(
+        user
+      );
+
+    await saveRulesToGoogle({
+      user: user,
+      applyMode: "next",
+      cycleLastDate:
+        getCurrentRuleCycleKey(
+          user
+        ),
+      activeRulesBefore:
+        cloneRuleDayMap(
+          snapshot?.rules || {}
+        ),
+      activeRulesAfter:
+        cloneRuleDayMap(
+          snapshot?.rules || {}
+        )
+    });
+
+    updateRuleDisplays();
+    updateHomeMedicineStatus();
+    saveData();
+
+    showToast(
+      "✓ 変更予定を修正しました",
+      "success",
+      2500
+    );
+
+    openPlannedRuleChanges(
+      user
+    );
+
+  } catch (error) {
+
+    rules = previousRules;
+    ruleCycleSnapshots =
+      previousSnapshots;
+
+    updateRuleDisplays();
+    updateHomeMedicineStatus();
+    saveData();
+
+    console.error(
+      "変更予定修正エラー",
+      error
+    );
+
+    showToast(
+      "⚠ 変更予定の修正に失敗しました",
+      "error",
+      4000
+    );
+  }
+}
+
+
+async function removePlannedRule(
+  user,
+  encodedDay,
+  index
+) {
+
+  const day =
+    decodeURIComponent(
+      String(encodedDay || "")
+    );
+
+  const rule =
+    getConfiguredRulesForDay(
+      user,
+      day
+    )[index];
+
+  if (!rule) {
+    return;
+  }
+
+  const ok = confirm(
+    "次回適用予定から\n" +
+    "未排便" +
+    day +
+    "日 " +
+    rule.content +
+    "（" +
+    getRuleTimingLabel(rule) +
+    "）\nを削除しますか？\n\n現在サイクルには影響しません。"
+  );
+
+  if (!ok) {
+    return;
+  }
+
+  const previousRules =
+    JSON.parse(
+      JSON.stringify(rules)
+    );
+
+  const previousSnapshots =
+    JSON.parse(
+      JSON.stringify(
+        ruleCycleSnapshots
+      )
+    );
+
+  try {
+
+    rules[user][day].splice(
+      index,
+      1
+    );
+
+    if (
+      rules[user][day].length === 0
+    ) {
+      delete rules[user][day];
+    }
+
+    if (
+      Object.keys(
+        rules[user] || {}
+      ).length === 0
+    ) {
+      delete rules[user];
+    }
+
+    const snapshot =
+      getCurrentRuleCycleSnapshot(
+        user
+      );
+
+    await saveRulesToGoogle({
+      user: user,
+      applyMode: "next",
+      cycleLastDate:
+        getCurrentRuleCycleKey(
+          user
+        ),
+      activeRulesBefore:
+        cloneRuleDayMap(
+          snapshot?.rules || {}
+        ),
+      activeRulesAfter:
+        cloneRuleDayMap(
+          snapshot?.rules || {}
+        )
+    });
+
+    updateRuleDisplays();
+    updateHomeMedicineStatus();
+    saveData();
+
+    showToast(
+      "✓ 次回ルールから削除しました",
+      "success",
+      2500
+    );
+
+    if (
+      hasPendingNextCycleRuleChange(
+        user
+      )
+    ) {
+      openPlannedRuleChanges(
+        user
+      );
+    } else {
+      closeCommonModal();
+    }
+
+  } catch (error) {
+
+    rules = previousRules;
+    ruleCycleSnapshots =
+      previousSnapshots;
+
+    updateRuleDisplays();
+    updateHomeMedicineStatus();
+    saveData();
+
+    console.error(
+      "次回ルール削除エラー",
+      error
+    );
+
+    showToast(
+      "⚠ 次回ルールの削除に失敗しました",
+      "error",
+      4000
+    );
+  }
+}
+
+
+async function restorePlannedRemovedRule(
+  user,
+  encodedDay,
+  encodedRuleJson
+) {
+
+  const day =
+    decodeURIComponent(
+      String(encodedDay || "")
+    );
+
+  let rule;
+
+  try {
+
+    rule =
+      normalizeRuleItem(
+        JSON.parse(
+          decodeURIComponent(
+            String(
+              encodedRuleJson || ""
+            )
+          )
+        )
+      );
+
+  } catch (error) {
+
+    showToast(
+      "削除予定の復元情報が正しくありません",
+      "error",
+      3000
+    );
+
+    return;
+  }
+
+  const previousRules =
+    JSON.parse(
+      JSON.stringify(rules)
+    );
+
+  const previousSnapshots =
+    JSON.parse(
+      JSON.stringify(
+        ruleCycleSnapshots
+      )
+    );
+
+  try {
+
+    if (!rules[user]) {
+      rules[user] = {};
+    }
+
+    if (!rules[user][day]) {
+      rules[user][day] = [];
+    }
+
+    rules[user][day].push(
+      rule
+    );
+
+    rules =
+      normalizeRulesObject(
+        rules
+      );
+
+    const snapshot =
+      getCurrentRuleCycleSnapshot(
+        user
+      );
+
+    await saveRulesToGoogle({
+      user: user,
+      applyMode: "next",
+      cycleLastDate:
+        getCurrentRuleCycleKey(
+          user
+        ),
+      activeRulesBefore:
+        cloneRuleDayMap(
+          snapshot?.rules || {}
+        ),
+      activeRulesAfter:
+        cloneRuleDayMap(
+          snapshot?.rules || {}
+        )
+    });
+
+    updateRuleDisplays();
+    updateHomeMedicineStatus();
+    saveData();
+
+    showToast(
+      "✓ 削除予定を取り消しました",
+      "success",
+      2500
+    );
+
+    if (
+      hasPendingNextCycleRuleChange(
+        user
+      )
+    ) {
+      openPlannedRuleChanges(
+        user
+      );
+    } else {
+      closeCommonModal();
+    }
+
+  } catch (error) {
+
+    rules = previousRules;
+    ruleCycleSnapshots =
+      previousSnapshots;
+
+    updateRuleDisplays();
+    updateHomeMedicineStatus();
+    saveData();
+
+    console.error(
+      "削除予定取消エラー",
+      error
+    );
+
+    showToast(
+      "⚠ 削除予定の取消に失敗しました",
+      "error",
+      4000
+    );
+  }
+}
+
+
+async function discardAllPlannedRuleChanges(
+  user
+) {
+
+  const snapshot =
+    getCurrentRuleCycleSnapshot(
+      user
+    );
+
+  if (!snapshot) {
+    closeCommonModal();
+    return;
+  }
+
+  const ok = confirm(
+    user +
+    " の変更予定をすべて破棄し、\n" +
+    "次回ルールを現在適用中のルールへ戻しますか？\n\n" +
+    "現在進行中の排便サイクルには影響しません。"
+  );
+
+  if (!ok) {
+    return;
+  }
+
+  const previousRules =
+    JSON.parse(
+      JSON.stringify(rules)
+    );
+
+  const previousSnapshots =
+    JSON.parse(
+      JSON.stringify(
+        ruleCycleSnapshots
+      )
+    );
+
+  try {
+
+    const currentRules =
+      cloneRuleDayMap(
+        snapshot.rules || {}
+      );
+
+    if (
+      Object.keys(
+        currentRules
+      ).length > 0
+    ) {
+      rules[user] =
+        currentRules;
+    } else {
+      delete rules[user];
+    }
+
+    await saveRulesToGoogle({
+      user: user,
+      applyMode: "next",
+      cycleLastDate:
+        snapshot.cycleLastDate ||
+        getCurrentRuleCycleKey(
+          user
+        ),
+      activeRulesBefore:
+        currentRules,
+      activeRulesAfter:
+        currentRules,
+      clearSnapshot:
+        true
+    });
+
+    updateRuleDisplays();
+    updateHomeMedicineStatus();
+    saveData();
+
+    closeCommonModal();
+
+    showToast(
+      "✓ 変更予定をすべて破棄しました",
+      "success",
+      3000
+    );
+
+  } catch (error) {
+
+    rules = previousRules;
+    ruleCycleSnapshots =
+      previousSnapshots;
+
+    updateRuleDisplays();
+    updateHomeMedicineStatus();
+    saveData();
+
+    console.error(
+      "変更予定破棄エラー",
+      error
+    );
+
+    showToast(
+      "⚠ 変更予定の破棄に失敗しました",
+      "error",
+      4000
+    );
+  }
+}
+
+
 function getRuleListHtml(editable = true) {
 
   let result = "";
 
+  const userSource =
+    editable
+      ? rules
+      : Object.fromEntries(
+          Object.keys(userUnits || {})
+            .map(user => [
+              user,
+              getEffectiveRulesForUser(
+                user
+              )
+            ])
+        );
 
-  for (const user in rules) {
+
+  for (const user in userSource) {
 
     if (
       currentUnit !== "all" &&
@@ -16574,13 +18265,57 @@ function getRuleListHtml(editable = true) {
       "</strong><br>";
 
 
-    for (const day in rules[user]) {
+    const sourceRules =
+      editable
+        ? (rules[user] || {})
+        : getEffectiveRulesForUser(
+            user
+          );
+
+    if (
+      editable &&
+      hasPendingNextCycleRuleChange(
+        user
+      )
+    ) {
+
+      const safeUser =
+        encodeURIComponent(
+          user
+        );
+
+      result +=
+        "<div class='planned-rule-banner'>" +
+        "<strong>🕒 変更予定あり</strong>" +
+        "現在の未排便サイクルは変更前ルールを継続中。<br>" +
+        "次回適用予定：" +
+        escapeHtml(
+          getPlannedRuleSummaryText(
+            user
+          )
+        ) +
+        "<br>" +
+        "<button onclick=\"openPlannedRuleChanges(decodeURIComponent('" +
+        safeUser +
+        "'))\">" +
+        "変更予定を見る・修正する" +
+        "</button>" +
+        "</div>";
+    }
+
+
+    for (const day in sourceRules) {
 
       const dayRules =
-        getRulesForDay(
-          user,
-          day
-        );
+        editable
+          ? getConfiguredRulesForDay(
+              user,
+              day
+            )
+          : getRulesForDay(
+              user,
+              day
+            );
 
       if (dayRules.length === 0) {
         continue;
@@ -16669,7 +18404,7 @@ async function deleteRuleByIndex(
 ) {
 
   const dayRules =
-    getRulesForDay(
+    getConfiguredRulesForDay(
       user,
       day
     );
@@ -16681,6 +18416,8 @@ async function deleteRuleByIndex(
     return;
   }
 
+  const applyMode =
+    getRuleApplyMode();
 
   const ok = confirm(
     user +
@@ -16692,7 +18429,10 @@ async function deleteRuleByIndex(
     rule.content +
     "（" +
     getRuleTimingLabel(rule) +
-    "）\n\nこのルールを削除しますか？"
+    "）\n\nこのルールを削除しますか？\n\n適用時期：" +
+    getRuleApplyModeLabel(
+      applyMode
+    )
   );
 
   if (!ok) {
@@ -16705,8 +18445,36 @@ async function deleteRuleByIndex(
       JSON.stringify(rules)
     );
 
+  const previousSnapshots =
+    JSON.parse(
+      JSON.stringify(
+        ruleCycleSnapshots
+      )
+    );
+
+  const activeRulesBefore =
+    cloneRuleDayMap(
+      getEffectiveRulesForUser(
+        user
+      )
+    );
+
+  const cycleLastDate =
+    getCurrentRuleCycleKey(
+      user
+    );
+
 
   try {
+
+    if (applyMode === "next") {
+
+      ensureCurrentCycleSnapshot(
+        user,
+        activeRulesBefore
+      );
+    }
+
 
     rules[user][day].splice(
       index,
@@ -16728,6 +18496,24 @@ async function deleteRuleByIndex(
     }
 
 
+    if (applyMode === "current") {
+
+      removeMatchingRuleFromCurrentSnapshotIfNeeded(
+        user,
+        day,
+        rule
+      );
+    }
+
+
+    const activeRulesAfter =
+      cloneRuleDayMap(
+        getEffectiveRulesForUser(
+          user
+        )
+      );
+
+
     updateRuleDisplays();
 
     document.getElementById(
@@ -16745,17 +18531,36 @@ async function deleteRuleByIndex(
       0
     );
 
-    await saveRulesToGoogle();
+    await saveRulesToGoogle({
+      user: user,
+      applyMode: applyMode,
+      cycleLastDate:
+        cycleLastDate,
+      activeRulesBefore:
+        activeRulesBefore,
+      activeRulesAfter:
+        activeRulesAfter
+    });
+
+    updateRuleDisplays();
+    updateHomeMedicineStatus();
+    saveData();
 
     showToast(
-      "✓ ルールを削除しました",
+      "✓ ルールを削除しました（" +
+      getRuleApplyModeLabel(
+        applyMode
+      ) +
+      "）",
       "success",
-      2500
+      3500
     );
 
   } catch (error) {
 
     rules = previousRules;
+    ruleCycleSnapshots =
+      previousSnapshots;
 
     updateRuleDisplays();
 
@@ -18982,12 +20787,58 @@ async function changeLastDate() {
 
     /*
       GAS保存成功後にローカルへ反映する。
+
+      Ver.0.8.49
+      手動の最終排便日訂正は「新しい排便成立」ではない。
+      現在サイクル用の固定ルールがある場合は、
+      サイクルキーだけ新しい日付へ移す。
     */
+    const oldCycleKey =
+      getCurrentRuleCycleKey(
+        user
+      );
+
+    const oldSnapshot =
+      oldCycleKey
+        ? ruleCycleSnapshots?.[user]?.[
+            oldCycleKey
+          ]
+        : null;
+
     lastDates[user] =
       String(
         result.lastDate ||
         newDate
       ).slice(0, 10);
+
+    const newCycleKey =
+      getCurrentRuleCycleKey(
+        user
+      );
+
+    if (
+      oldSnapshot &&
+      newCycleKey &&
+      oldCycleKey !==
+        newCycleKey
+    ) {
+
+      if (!ruleCycleSnapshots[user]) {
+        ruleCycleSnapshots[user] = {};
+      }
+
+      delete ruleCycleSnapshots[user][
+        oldCycleKey
+      ];
+
+      ruleCycleSnapshots[user][
+        newCycleKey
+      ] = {
+        ...oldSnapshot,
+        cycleLastDate:
+          newCycleKey
+      };
+    }
 
 
     document.getElementById(
@@ -19830,7 +21681,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.8.47 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
+// Ver.0.8.49 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
 // Ver.0.8.44 APIセッション認証
 // ============================================================
 
@@ -20628,7 +22479,7 @@ async function requestSyncDataFromServer(
 
 
       /*
-        Ver.0.8.47
+        Ver.0.8.49
 
         getSyncData は読み取り専用なので、
         timeout後でも同じ同期内で安全に再試行できる。
@@ -23009,6 +24860,28 @@ async function loadLightSyncDataFromGoogle() {
 
 
   // =========================
+  // ルール / サイクル固定ルール
+  // Ver.0.8.49
+  // ルール変更を30秒以内に他端末へ反映する。
+  // =========================
+
+  rules =
+    normalizeRulesObject(
+      data.rulesV2 ||
+      data.rules ||
+      rules ||
+      {}
+    );
+
+  ruleCycleSnapshots =
+    normalizeRuleCycleSnapshotsObject(
+      data.ruleCycleSnapshots ||
+      ruleCycleSnapshots ||
+      {}
+    );
+
+
+  // =========================
   // 変動データ
   // =========================
 
@@ -23072,6 +24945,7 @@ async function loadLightSyncDataFromGoogle() {
     getCompletedListHtml();
 
 
+  updateRuleDisplays();
   updateHomeMedicineStatus();
 
 
@@ -23176,6 +25050,12 @@ async function loadSyncDataFromGoogle() {
     normalizeRulesObject(
       data.rulesV2 ||
       data.rules ||
+      {}
+    );
+
+  ruleCycleSnapshots =
+    normalizeRuleCycleSnapshotsObject(
+      data.ruleCycleSnapshots ||
       {}
     );
 
