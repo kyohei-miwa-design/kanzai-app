@@ -5611,7 +5611,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.51</p>
+      <p class="app-version">Ver.0.8.52</p>
     </div>
 
     <button
@@ -6757,7 +6757,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.51
+          Ver.0.8.52
         </span>
       </div>
 
@@ -6766,7 +6766,7 @@ h3 {
           GAS
         </span>
         <span class="other-info-value">
-          Ver.0.8.38
+          Ver.0.8.39
         </span>
       </div>
 
@@ -14746,7 +14746,7 @@ function updateUserSelects() {
 
 
   /*
-    Ver.0.8.51
+    Ver.0.8.52
     30秒同期でselectを作り直しても、
     操作中の利用者選択を勝手に先頭へ戻さない。
   */
@@ -15510,7 +15510,7 @@ function createClientRequestId(
 
 
 /*
-  Ver.0.8.51
+  Ver.0.8.52
 
   ログインはGoogle Apps Scriptの一時的な
   404 / timeout を考慮して最大3回まで再試行する。
@@ -22039,7 +22039,7 @@ async function changeLastDate() {
     /*
       GAS保存成功後にローカルへ反映する。
 
-      Ver.0.8.51
+      Ver.0.8.52
       手動の最終排便日訂正は「新しい排便成立」ではない。
       現在サイクル用の固定ルールがある場合は、
       サイクルキーだけ新しい日付へ移す。
@@ -22573,19 +22573,14 @@ async function tryResolvePendingBowelOperationDirect() {
   try {
 
     const status =
-      await postJsonApiOnce(
-        {
-          action:
-            "getBowelOperationStatus",
-
-          operationId:
-            pending.operationId,
-
-          user:
-            pending.user
-        },
-        10000
-      );
+      await getBowelOperationStatusRobust({
+        operationId:
+          pending.operationId,
+        user:
+          pending.user,
+        postTimeoutMs:
+          10000
+      });
 
 
     if (
@@ -22806,17 +22801,13 @@ function resolvePendingBowelOperationAfterSync() {
   const found =
     histories.some(
       history =>
-        String(
-          history.operationId || ""
-        ) ===
-        String(
-          pending.operationId
-        )
+        String(history.operationId || "") ===
+        String(pending.operationId)
     );
 
-  clearPendingBowelOperation();
-
   if (found) {
+
+    clearPendingBowelOperation();
 
     showToast(
       "✓ 前回の排便登録済みを確認しました",
@@ -22824,14 +22815,22 @@ function resolvePendingBowelOperationAfterSync() {
       4500
     );
 
-  } else {
-
-    showToast(
-      "⚠ 前回の排便は保存されていません。もう一度登録してください",
-      "error",
-      6000
-    );
+    return;
   }
+
+  /*
+    Ver.0.8.52
+    timeout後もGAS側保存は続く可能性がある。
+    同期でまだ見えないだけでは未保存と断定しない。
+  */
+  console.log(
+    "同期では保留中の排便登録をまだ確認できません。状態確認APIで追跡します",
+    pending.operationId
+  );
+
+  schedulePendingBowelResolution(
+    1500
+  );
 }
 
 
@@ -22932,7 +22931,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.8.51 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
+// Ver.0.8.52 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
 // Ver.0.8.44 APIセッション認証
 // ============================================================
 
@@ -23730,7 +23729,7 @@ async function requestSyncDataFromServer(
 
 
       /*
-        Ver.0.8.51
+        Ver.0.8.52
 
         getSyncData は読み取り専用なので、
         timeout後でも同じ同期内で安全に再試行できる。
@@ -23783,6 +23782,68 @@ async function requestSyncDataFromServer(
   2) 応答が途切れた場合はoperationIdで保存済み確認
   3) 保存済みなら成功として復旧
 */
+
+/*
+  Ver.0.8.52 排便登録の保存結果確認。
+  POST確認が一時的に失敗したら、読み取り専用GETへ切り替える。
+*/
+async function getBowelOperationStatusRobust({
+  operationId,
+  user,
+  postTimeoutMs = 12000
+}) {
+
+  let postError = null;
+
+  try {
+    return await postJsonApiOnce(
+      {
+        action: "getBowelOperationStatus",
+        operationId: operationId,
+        user: user
+      },
+      postTimeoutMs
+    );
+  } catch (error) {
+    postError = error;
+
+    console.warn(
+      "排便保存確認POSTに失敗。GETへ切替えます",
+      error
+    );
+
+    if (!isTransientApiError(error)) {
+      throw error;
+    }
+  }
+
+  const url =
+    API_URL +
+    "?action=getBowelOperationStatus" +
+    "&operationId=" +
+    encodeURIComponent(String(operationId || "")) +
+    "&user=" +
+    encodeURIComponent(String(user || ""));
+
+  try {
+    const response =
+      await fetchApi(
+        url,
+        3,
+        15000
+      );
+
+    return await response.json();
+
+  } catch (getError) {
+    if (postError) {
+      getError.cause = postError;
+    }
+    throw getError;
+  }
+}
+
+
 async function registerBowelWithRecovery({
   operationId,
   user,
@@ -23934,19 +23995,14 @@ async function registerBowelWithRecovery({
     try {
 
       const status =
-        await postJsonApiOnce(
-          {
-            action:
-              "getBowelOperationStatus",
-
-            operationId:
-              operationId,
-
-            user:
-              user
-          },
-          10000
-        );
+        await getBowelOperationStatusRobust({
+          operationId:
+            operationId,
+          user:
+            user,
+          postTimeoutMs:
+            10000
+        });
 
 
       if (
@@ -24040,113 +24096,14 @@ async function registerBowelWithRecovery({
 
 
   /*
-    保存中マーカーが消えていた場合だけ、
-    初期同期を1回通して最終確認する。
+    Ver.0.8.52
+    保存確認APIも通信不能なら、この場で重い初期同期は投げない。
+    未保存とも保存済みとも断定せず、operationIdを保留して
+    バックグラウンド確認へ移す。
   */
-  try {
-
-    const data =
-      await requestInitialDataFromServer(
-        1
-      );
-
-    const historiesFromServer =
-      Array.isArray(
-        data.histories
-      )
-        ? data.histories
-        : [];
-
-    const matched =
-      historiesFromServer.find(
-        history =>
-          String(
-            history.operationId || ""
-          ) ===
-          String(operationId)
-      );
-
-
-    if (matched) {
-
-      const userRow =
-        (
-          Array.isArray(data.users)
-            ? data.users
-            : []
-        ).find(
-          item =>
-            String(
-              item.name
-            ) ===
-            String(user)
-        );
-
-      console.log(
-        "初期同期から排便登録済みを確認して復旧しました",
-        operationId
-      );
-
-      return {
-        ok: true,
-        found: true,
-        recovered: true,
-        history:
-          matched,
-        point:
-          userRow
-            ? Number(
-                userRow.point || 0
-              )
-            : Number(
-                matched.point || 0
-              ),
-        lastDate:
-          userRow &&
-          userRow.lastDate
-            ? String(
-                userRow.lastDate
-              ).slice(0, 10)
-            : ""
-      };
-    }
-
-
-    const notSavedError =
-      new Error(
-        "サーバー上に排便登録を確認できませんでした"
-      );
-
-    notSavedError.code =
-      "NOT_SAVED";
-
-    throw notSavedError;
-
-
-  } catch (syncError) {
-
-    if (
-      syncError &&
-      syncError.code ===
-        "NOT_SAVED"
-    ) {
-      throw syncError;
-    }
-
-    console.warn(
-      "排便登録の最終確認同期に失敗しました",
-      syncError
-    );
-
-    lastError =
-      syncError ||
-      lastError;
-  }
-
-
   const unknownError =
     new Error(
-      "排便登録の保存結果を確認できませんでした"
+      "排便登録の保存結果を確認中です"
     );
 
   unknownError.code =
@@ -26114,7 +26071,7 @@ async function loadLightSyncDataFromGoogle() {
 
   // =========================
   // ルール / サイクル固定ルール
-  // Ver.0.8.51
+  // Ver.0.8.52
   // ルール変更を30秒以内に他端末へ反映する。
   // =========================
 
