@@ -5574,7 +5574,7 @@ h3 {
 
 
 /* ============================================================
-   Ver.0.9.4 UI REFRESH
+   Ver.0.9.5 UI REFRESH
    既存ロジックを維持し、表示階層だけを再設計
 ============================================================ */
 
@@ -6224,7 +6224,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.4 排便入力
+   Ver.0.9.5 排便入力
 ============================================================ */
 
 .ui09-hidden-select {
@@ -6320,7 +6320,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.4 ポイント表示 / 通信状態
+   Ver.0.9.5 ポイント表示 / 通信状態
 ============================================================ */
 
 /*
@@ -6401,6 +6401,210 @@ body {
   }
 }
 
+
+/* ============================================================
+   Ver.0.9.5 排便入力：個人情報とユニット全体操作を分離
+============================================================ */
+
+.ui095-personal-details {
+  margin-top: 16px;
+}
+
+.ui095-details-summary {
+  min-height: 68px;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 16px !important;
+}
+
+.ui095-details-copy {
+  min-width: 0;
+}
+
+.ui095-details-title {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--ui09-text);
+}
+
+.ui095-details-sub {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ui09-muted);
+}
+
+.ui095-details-chevron {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ui09-soft);
+  color: var(--ui09-teal-dark);
+  font-size: 19px;
+  font-weight: 900;
+  transition: transform .18s ease;
+}
+
+.ui095-personal-details[open]
+.ui095-details-chevron {
+  transform: rotate(180deg);
+}
+
+.ui095-personal-body {
+  padding-bottom: 2px;
+}
+
+.ui095-personal-panel h3,
+.ui095-shift-section h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.ui095-subpanel-head {
+  margin-bottom: 12px;
+}
+
+.ui095-current-date-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: var(--ui09-grey-bg);
+}
+
+.ui095-current-date-row span {
+  font-size: 12px;
+  color: var(--ui09-muted);
+  font-weight: 800;
+}
+
+.ui095-current-date-row .ui09-big-value {
+  margin: 0;
+  font-size: 18px;
+}
+
+.ui095-field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 850;
+  color: var(--ui09-muted);
+}
+
+.ui095-today-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 850;
+  color: var(--ui09-muted);
+}
+
+.ui095-shift-section {
+  margin-top: 22px;
+}
+
+.ui095-shift-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.ui095-shift-head p {
+  margin: 6px 0 0;
+  max-width: 38em;
+  color: var(--ui09-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ui095-unit-badge {
+  flex: none;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #eef4f6;
+  color: #526b73;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.ui095-shift-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.ui095-shift-action-card {
+  padding: 13px;
+  border: 1px solid var(--ui09-line);
+  border-radius: 15px;
+  background: #fafcfc;
+}
+
+.ui095-shift-action-head {
+  margin-bottom: 10px;
+}
+
+.ui095-shift-action-head strong {
+  display: block;
+  font-size: 15px;
+}
+
+.ui095-shift-action-head span {
+  display: block;
+  margin-top: 3px;
+  color: var(--ui09-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ui095-confirm-status {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ui09-line);
+}
+
+.ui095-confirm-status-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+}
+
+.ui095-confirm-status-head strong {
+  font-size: 13px;
+}
+
+.ui095-refresh-button {
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--ui09-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ui09-teal-dark);
+  box-shadow: none;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+@media (min-width: 620px) {
+  .ui095-shift-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 </style>
 </head>
 
@@ -6440,7 +6644,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.4</div>
+      <div class="ui09-brand-version">Ver.0.9.5</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -6731,56 +6935,147 @@ body {
       </p>
     </section>
 
-    <details class="ui09-details">
-      <summary>詳細・修正・勤務帯確認</summary>
-
-      <section class="ui09-subpanel">
-        <div class="ui09-kicker">最終排便日</div>
-        <div id="bowelLastDateCurrent" class="ui09-big-value">-</div>
-        <input type="date" id="lastDate">
-        <button onclick="changeLastDate()">最終排便日を変更</button>
-      </section>
-
-      <section class="ui09-subpanel">
-        <div class="ui09-kicker">今日の記録</div>
-        <span id="bowelTodayDateLabel"></span>
-        <div id="bowelTodayHistory">
-          <div class="bowel-today-empty">今日の記録はありません</div>
+    <!-- 選択中の利用者だけに関係する情報 -->
+    <details class="ui09-details ui095-personal-details">
+      <summary class="ui095-details-summary">
+        <div class="ui095-details-copy">
+          <div class="ui095-details-title">
+            利用者の詳細・修正
+          </div>
+          <div class="ui095-details-sub">
+            最終排便日の変更・この利用者の履歴
+          </div>
         </div>
-        <button
-          type="button"
-          class="ui09-secondary-button"
-          onclick="openPage('historyPage')"
+        <span class="ui095-details-chevron" aria-hidden="true">⌄</span>
+      </summary>
+
+      <div class="ui095-personal-body">
+        <section class="ui09-subpanel ui095-personal-panel">
+          <div class="ui095-subpanel-head">
+            <div>
+              <div class="ui09-kicker">選択中の利用者</div>
+              <h3>最終排便日の変更</h3>
+            </div>
+          </div>
+
+          <div class="ui095-current-date-row">
+            <span>現在の最終排便日</span>
+            <strong id="bowelLastDateCurrent" class="ui09-big-value">-</strong>
+          </div>
+
+          <label class="ui095-field-label" for="lastDate">
+            変更後の日付
+          </label>
+          <input type="date" id="lastDate">
+
+          <button
+            type="button"
+            class="ui09-secondary-button"
+            onclick="changeLastDate()"
+          >
+            最終排便日を変更する
+          </button>
+        </section>
+
+        <section class="ui09-subpanel ui095-personal-panel">
+          <div class="ui095-subpanel-head">
+            <div>
+              <div class="ui09-kicker">選択中の利用者</div>
+              <h3>排便履歴</h3>
+            </div>
+          </div>
+
+          <div class="ui095-today-history-head">
+            <span>今日の記録</span>
+            <span id="bowelTodayDateLabel"></span>
+          </div>
+
+          <div id="bowelTodayHistory">
+            <div class="bowel-today-empty">今日の記録はありません</div>
+          </div>
+
+          <button
+            type="button"
+            class="ui09-secondary-button"
+            onclick="openSelectedResidentHistoryFromBowel()"
+          >
+            この利用者の履歴を見る
+          </button>
+        </section>
+      </div>
+    </details>
+
+    <!-- ユニット全体に関係する操作。個人詳細とは分離する -->
+    <section class="ui09-panel ui095-shift-section">
+      <div class="ui095-shift-head">
+        <div>
+          <div class="ui09-kicker">ユニット全体</div>
+          <h3>勤務帯確認</h3>
+          <p>
+            ユニット内の排便状況を確認し、勤務帯ごとに確定します。
+          </p>
+        </div>
+        <span class="ui095-unit-badge">全体確認</span>
+      </div>
+
+      <div class="ui095-shift-actions">
+        <section class="ui095-shift-action-card">
+          <div class="ui095-shift-action-head">
+            <div>
+              <strong>☀️ 日中帯</strong>
+              <span>8:00 ～ 16:00</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="ui09-secondary-button"
+            onclick="checkTodayBowelStatus()"
+          >
+            日中帯の排便状況を確認
+          </button>
+
+          <div id="bowelCheckResult"></div>
+        </section>
+
+        <section
+          id="nightConfirmArea"
+          class="ui095-shift-action-card"
         >
-          履歴を見る
-        </button>
-      </section>
+          <div class="ui095-shift-action-head">
+            <div>
+              <strong>🌙 夜勤帯</strong>
+              <span>16:00 ～ 翌8:00</span>
+            </div>
+          </div>
 
-      <section class="ui09-subpanel">
-        <h3>☀️ 日中帯</h3>
-        <p>8:00 ～ 16:00</p>
-        <button onclick="checkTodayBowelStatus()">日中帯の排便状況を確認</button>
-        <div id="bowelCheckResult"></div>
-      </section>
+          <button
+            type="button"
+            class="ui09-secondary-button"
+            onclick="checkNightBowelStatus()"
+          >
+            夜勤帯の排便状況を確認
+          </button>
 
-      <section id="nightConfirmArea" class="ui09-subpanel">
-        <h3>🌙 夜勤帯</h3>
-        <p>16:00 ～ 翌8:00</p>
-        <button onclick="checkNightBowelStatus()">夜勤帯の排便状況を確認</button>
-        <div id="nightBowelCheckResult"></div>
-      </section>
+          <div id="nightBowelCheckResult"></div>
+        </section>
+      </div>
 
-      <section id="dailyConfirmArea" class="ui09-subpanel">
-        <h3>排便確認状況</h3>
-        <button
-          id="dailyConfirmRefreshButton"
-          onclick="manualRefreshDailyConfirm()"
-        >
-          🔄 更新
-        </button>
+      <section id="dailyConfirmArea" class="ui095-confirm-status">
+        <div class="ui095-confirm-status-head">
+          <strong>現在の確認状況</strong>
+          <button
+            id="dailyConfirmRefreshButton"
+            type="button"
+            class="ui095-refresh-button"
+            onclick="manualRefreshDailyConfirm()"
+          >
+            🔄 更新
+          </button>
+        </div>
         <div id="dailyConfirmStatus">読み込み中...</div>
       </section>
-    </details>
+    </section>
 
   </section>
 
@@ -7503,7 +7798,7 @@ body {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.9.4
+          Ver.0.9.5
         </span>
       </div>
 
@@ -7824,7 +8119,7 @@ let pendingBowelResolveTimer = null;
 
 
 /*
-  Ver.0.9.4
+  Ver.0.9.5
   与薬実施チェックの保存結果が未確定な操作。
 
   安全原則：
@@ -8924,7 +9219,7 @@ function selectBowelUser(
     user;
 
   /*
-    Ver.0.9.4
+    Ver.0.9.5
     別利用者へ切り替えたとき、前の人の排便量選択を
     引き継がない。誤登録防止のため必ず未選択へ戻す。
   */
@@ -16350,7 +16645,7 @@ function updateUserSelects() {
 
 
   /*
-    Ver.0.9.4
+    Ver.0.9.5
     30秒同期でselectを作り直しても、
     操作中の利用者選択を勝手に先頭へ戻さない。
   */
@@ -17114,7 +17409,7 @@ function createClientRequestId(
 
 
 /*
-  Ver.0.9.4
+  Ver.0.9.5
 
   ログインはGoogle Apps Scriptの一時的な
   404 / timeout を考慮して最大3回まで再試行する。
@@ -23852,7 +24147,7 @@ async function changeLastDate() {
     /*
       GAS保存成功後にローカルへ反映する。
 
-      Ver.0.9.4
+      Ver.0.9.5
       手動の最終排便日訂正は「新しい排便成立」ではない。
       現在サイクル用の固定ルールがある場合は、
       サイクルキーだけ新しい日付へ移す。
@@ -24632,7 +24927,7 @@ function resolvePendingBowelOperationAfterSync() {
   }
 
   /*
-    Ver.0.9.4
+    Ver.0.9.5
     timeout後もGAS側保存は続く可能性がある。
     同期でまだ見えないだけでは未保存と断定しない。
   */
@@ -24744,7 +25039,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.9.4 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
+// Ver.0.9.5 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
 // Ver.0.8.44 APIセッション認証
 // ============================================================
 
@@ -25542,7 +25837,7 @@ async function requestSyncDataFromServer(
 
 
       /*
-        Ver.0.9.4
+        Ver.0.9.5
 
         getSyncData は読み取り専用なので、
         timeout後でも同じ同期内で安全に再試行できる。
@@ -25597,7 +25892,7 @@ async function requestSyncDataFromServer(
 */
 
 /*
-  Ver.0.9.4 排便登録の保存結果確認。
+  Ver.0.9.5 排便登録の保存結果確認。
   POST確認が一時的に失敗したら、読み取り専用GETへ切り替える。
 */
 async function getBowelOperationStatusRobust({
@@ -25909,7 +26204,7 @@ async function registerBowelWithRecovery({
 
 
   /*
-    Ver.0.9.4
+    Ver.0.9.5
     保存確認APIも通信不能なら、この場で重い初期同期は投げない。
     未保存とも保存済みとも断定せず、operationIdを保留して
     バックグラウンド確認へ移す。
@@ -27710,6 +28005,35 @@ function openSelectedResidentDetailFromBowel() {
 }
 
 
+function openSelectedResidentHistoryFromBowel() {
+
+  const user =
+    document.getElementById(
+      "userSelect"
+    )?.value || "";
+
+  if (!user) {
+
+    showToast(
+      "利用者を選択してください",
+      "warning",
+      3000
+    );
+
+    return;
+  }
+
+  openResidentDetail(
+    user,
+    "bowelPage"
+  );
+
+  setResidentDetailTab(
+    "history"
+  );
+}
+
+
 function openResidentDetail(
   user,
   backPage = "homePage"
@@ -28420,7 +28744,7 @@ async function loadLightSyncDataFromGoogle() {
 
   // =========================
   // ルール / サイクル固定ルール
-  // Ver.0.9.4
+  // Ver.0.9.5
   // ルール変更を30秒以内に他端末へ反映する。
   // =========================
 
