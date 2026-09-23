@@ -5611,7 +5611,7 @@ h3 {
 
     <div>
       <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.52</p>
+      <p class="app-version">Ver.0.8.53</p>
     </div>
 
     <button
@@ -6757,7 +6757,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.52
+          Ver.0.8.53
         </span>
       </div>
 
@@ -6766,7 +6766,7 @@ h3 {
           GAS
         </span>
         <span class="other-info-value">
-          Ver.0.8.39
+          Ver.0.8.40
         </span>
       </div>
 
@@ -7089,6 +7089,51 @@ let activeWriteCount = 0;
 */
 let pendingBowelOperation = null;
 let pendingBowelResolveTimer = null;
+
+
+/*
+  Ver.0.8.53
+  与薬実施チェックの保存結果が未確定な操作。
+
+  安全原則：
+  ・実施済みにした後の通信失敗だけで未実施へ戻さない
+  ・取消の保存未確定中も、実施済み表示を維持する
+  ・operationIdでサーバー確定状態を追跡する
+*/
+let pendingCheckOperations = {};
+let pendingCheckResolveTimer = null;
+
+try {
+
+  const raw =
+    localStorage.getItem(
+      "pendingCheckOperationsV1"
+    );
+
+  if (raw) {
+
+    const parsed =
+      JSON.parse(raw);
+
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      !Array.isArray(parsed)
+    ) {
+      pendingCheckOperations =
+        parsed;
+    }
+  }
+
+} catch (error) {
+
+  console.warn(
+    "保留中実施チェックの読込失敗",
+    error
+  );
+
+  pendingCheckOperations = {};
+}
 
 try {
   const savedPending =
@@ -11334,6 +11379,8 @@ function loadData() {
     saveData();
   }
 
+  applyPendingCheckOverrides();
+
   if (savedRules !== null) {
     rules = normalizeRulesObject(
       JSON.parse(savedRules)
@@ -11622,55 +11669,649 @@ async function saveUsersToGoogle(showAlert = true) {
   */
 }
 
-async function saveCheckToGoogle(
-  key,
-  checked
+
+function savePendingCheckOperations() {
+
+  try {
+
+    localStorage.setItem(
+      "pendingCheckOperationsV1",
+      JSON.stringify(
+        pendingCheckOperations || {}
+      )
+    );
+
+  } catch (error) {
+
+    console.warn(
+      "保留中実施チェックの保存失敗",
+      error
+    );
+  }
+}
+
+
+function getPendingCheckOperation(
+  key
 ) {
 
-  const response =
-    await fetch(
-      API_URL,
+  return (
+    pendingCheckOperations &&
+    pendingCheckOperations[key]
+      ? pendingCheckOperations[key]
+      : null
+  );
+}
+
+
+function setPendingCheckOperation(
+  key,
+  operation
+) {
+
+  if (!pendingCheckOperations) {
+    pendingCheckOperations = {};
+  }
+
+  if (operation) {
+
+    pendingCheckOperations[key] = {
+      ...operation,
+      key: key
+    };
+
+  } else {
+
+    delete pendingCheckOperations[key];
+  }
+
+  savePendingCheckOperations();
+}
+
+
+function hasPendingCheckOperation(
+  key
+) {
+
+  return Boolean(
+    getPendingCheckOperation(
+      key
+    )
+  );
+}
+
+
+function applyPendingCheckOverrides() {
+
+  /*
+    サーバー同期が一時的に古い値を返しても、
+    保存結果未確定中の「実施済み」を未実施へ戻さない。
+
+    取消保存中も安全側に倒し、
+    サーバー確定までは実施済み表示を維持する。
+  */
+  for (
+    const key in
+    pendingCheckOperations
+  ) {
+
+    const pending =
+      pendingCheckOperations[key];
+
+    if (!pending) {
+      continue;
+    }
+
+    checks[key] = true;
+  }
+}
+
+
+function refreshCheckRelatedUI() {
+
+  const pendingArea =
+    document.getElementById(
+      "todayTarget"
+    );
+
+  if (pendingArea) {
+    pendingArea.innerHTML =
+      getTodayTarget();
+  }
+
+  const completedArea =
+    document.getElementById(
+      "completedList"
+    );
+
+  if (completedArea) {
+    completedArea.innerHTML =
+      getCompletedListHtml();
+  }
+
+  updateHomeMedicineStatus();
+  updateActionPageMeta();
+}
+
+
+function getPendingCheckBadgeHtml(
+  key
+) {
+
+  const pending =
+    getPendingCheckOperation(
+      key
+    );
+
+  if (!pending) {
+    return "";
+  }
+
+  if (
+    pending.desiredChecked === false
+  ) {
+
+    return `
+      <span class="action-badge time">
+        🟠 取消保存確認中
+      </span>
+    `;
+  }
+
+  return `
+    <span class="action-badge time">
+      🟠 保存確認中
+    </span>
+  `;
+}
+
+
+async function getCheckOperationStatusRobust({
+  operationId,
+  key
+}) {
+
+  let postError = null;
+
+  try {
+
+    return await postJsonApiOnce(
       {
-        method: "POST",
+        action:
+          "getCheckOperationStatus",
+        operationId:
+          operationId,
+        key:
+          key
+      },
+      10000
+    );
 
-        headers: {
-          "Content-Type":
-            "text/plain;charset=utf-8"
-        },
+  } catch (error) {
 
-        body: jsonBodyWithSession({
-          action: "setCheck",
-          key: key,
-          checked: checked
-        }),
+    postError = error;
 
-        cache: "no-store"
+    console.warn(
+      "実施チェック保存確認POSTに失敗。GETへ切替えます",
+      error
+    );
+
+    if (
+      !isTransientApiError(
+        error
+      )
+    ) {
+      throw error;
+    }
+  }
+
+
+  const url =
+    API_URL +
+    "?action=getCheckOperationStatus" +
+    "&operationId=" +
+    encodeURIComponent(
+      String(operationId || "")
+    ) +
+    "&key=" +
+    encodeURIComponent(
+      String(key || "")
+    );
+
+  try {
+
+    const response =
+      await fetchApi(
+        url,
+        3,
+        15000
+      );
+
+    return await response.json();
+
+  } catch (getError) {
+
+    if (postError) {
+      getError.cause =
+        postError;
+    }
+
+    throw getError;
+  }
+}
+
+
+async function saveCheckWithRecovery({
+  key,
+  checked,
+  operationId
+}) {
+
+  let lastError = null;
+
+  /*
+    同じoperationIdで最大2回だけ書込みを試す。
+    GAS側はoperationIdで冪等化するため、
+    1回目が実は保存済みでも二重処理にならない。
+  */
+  for (
+    let writeAttempt = 1;
+    writeAttempt <= 2;
+    writeAttempt++
+  ) {
+
+    try {
+
+      const result =
+        await postJsonApiOnce(
+          {
+            action:
+              "setCheck",
+            key:
+              key,
+            checked:
+              checked,
+            operationId:
+              operationId
+          },
+          20000
+        );
+
+      if (
+        !result ||
+        result.ok !== true
+      ) {
+        throw new Error(
+          result?.message ||
+          "実施チェックを保存できませんでした"
+        );
       }
+
+      return result;
+
+    } catch (error) {
+
+      lastError = error;
+
+      if (
+        !isTransientApiError(
+          error
+        )
+      ) {
+        throw error;
+      }
+
+      console.warn(
+        `実施チェック保存通信失敗 ${writeAttempt}/2`,
+        error
+      );
+    }
+
+
+    /*
+      書込み応答を受け取れなかった場合、
+      再送前にoperationIdで保存済みか確認する。
+    */
+    for (
+      let confirmAttempt = 1;
+      confirmAttempt <= 3;
+      confirmAttempt++
+    ) {
+
+      try {
+
+        const status =
+          await getCheckOperationStatusRobust({
+            operationId:
+              operationId,
+            key:
+              key
+          });
+
+        if (
+          status &&
+          status.ok === true &&
+          status.found === true
+        ) {
+          return status;
+        }
+
+        if (
+          status &&
+          status.code === "BUSY"
+        ) {
+
+          await wait(
+            getRetryBackoffMs(
+              confirmAttempt
+            )
+          );
+
+          continue;
+        }
+
+        if (
+          status &&
+          status.ok === true &&
+          status.found === false
+        ) {
+
+          /*
+            サーバー側で処理中でも保存済みでもないと
+            確認できた場合だけ、同じoperationIdで再送する。
+          */
+          break;
+        }
+
+      } catch (statusError) {
+
+        lastError =
+          statusError;
+
+        if (
+          !isTransientApiError(
+            statusError
+          )
+        ) {
+          throw statusError;
+        }
+      }
+
+      await wait(
+        getRetryBackoffMs(
+          confirmAttempt
+        )
+      );
+    }
+
+
+    if (writeAttempt < 2) {
+      await wait(
+        getRetryBackoffMs(
+          writeAttempt
+        )
+      );
+    }
+  }
+
+
+  const unknownError =
+    new Error(
+      "実施記録の保存結果を確認中です"
     );
 
-  if (!response.ok) {
-    throw new Error(
-      "実施チェック保存失敗：HTTP " +
-      response.status
+  unknownError.code =
+    "CHECK_RESULT_UNKNOWN";
+
+  unknownError.operationId =
+    operationId;
+
+  unknownError.cause =
+    lastError;
+
+  throw unknownError;
+}
+
+
+async function tryResolvePendingCheckOperation(
+  key
+) {
+
+  const pending =
+    getPendingCheckOperation(
+      key
+    );
+
+  if (!pending) {
+    return true;
+  }
+
+  try {
+
+    const status =
+      await getCheckOperationStatusRobust({
+        operationId:
+          pending.operationId,
+        key:
+          key
+      });
+
+    if (
+      status &&
+      status.ok === true &&
+      status.found === true
+    ) {
+
+      checks[key] =
+        Boolean(
+          status.checked
+        );
+
+      setPendingCheckOperation(
+        key,
+        null
+      );
+
+      saveData();
+      refreshCheckRelatedUI();
+
+      showToast(
+        status.checked
+          ? "✓ 実施済みの保存を確認しました"
+          : "✓ 実施済み取消の保存を確認しました",
+        "success",
+        3500
+      );
+
+      return true;
+    }
+
+
+    if (
+      status &&
+      status.code === "BUSY"
+    ) {
+      return false;
+    }
+
+
+    if (
+      status &&
+      status.ok === true &&
+      status.found === false
+    ) {
+
+      /*
+        operationIdが未保存と確定したら、
+        実施者の操作を失わないよう同じoperationIdで再送する。
+      */
+      try {
+
+        const result =
+          await postJsonApiOnce(
+            {
+              action:
+                "setCheck",
+              key:
+                key,
+              checked:
+                Boolean(
+                  pending.desiredChecked
+                ),
+              operationId:
+                pending.operationId
+            },
+            20000
+          );
+
+        if (
+          result &&
+          result.ok === true
+        ) {
+
+          checks[key] =
+            Boolean(
+              result.checked
+            );
+
+          setPendingCheckOperation(
+            key,
+            null
+          );
+
+          saveData();
+          refreshCheckRelatedUI();
+
+          showToast(
+            result.checked
+              ? "✓ 実施済みを保存しました"
+              : "✓ 実施済み取消を保存しました",
+            "success",
+            3500
+          );
+
+          return true;
+        }
+
+      } catch (retryError) {
+
+        console.warn(
+          "保留中実施チェックの再送に失敗",
+          retryError
+        );
+      }
+    }
+
+  } catch (error) {
+
+    console.warn(
+      "保留中実施チェックの状態確認失敗",
+      error
     );
   }
 
-  const result =
-    await parseApiJsonResponse(
-      response,
-      "API"
+  return false;
+}
+
+
+async function resolvePendingCheckOperations() {
+
+  const keys =
+    Object.keys(
+      pendingCheckOperations || {}
     );
 
-  if (!result.ok) {
-    throw new Error(
-      result.message ||
-      "実施チェックの保存に失敗しました"
-    );
+  if (keys.length === 0) {
+    return true;
   }
 
-  // GAS側で確定した値を採用
-  checks[key] =
-    Boolean(result.checked);
+  let allResolved = true;
+
+  for (const key of keys) {
+
+    const resolved =
+      await tryResolvePendingCheckOperation(
+        key
+      );
+
+    if (!resolved) {
+      allResolved = false;
+    }
+  }
+
+  return allResolved;
+}
+
+
+function schedulePendingCheckResolution(
+  delayMs = 3000
+) {
+
+  if (
+    Object.keys(
+      pendingCheckOperations || {}
+    ).length === 0
+  ) {
+    return;
+  }
+
+  if (
+    pendingCheckResolveTimer !== null
+  ) {
+    return;
+  }
+
+  pendingCheckResolveTimer =
+    setTimeout(
+      async () => {
+
+        pendingCheckResolveTimer =
+          null;
+
+        if (
+          isWriteActivityActive()
+        ) {
+
+          schedulePendingCheckResolution(
+            3000
+          );
+
+          return;
+        }
+
+        const resolved =
+          await resolvePendingCheckOperations();
+
+        if (
+          !resolved &&
+          Object.keys(
+            pendingCheckOperations || {}
+          ).length > 0
+        ) {
+          schedulePendingCheckResolution(
+            10000
+          );
+        }
+      },
+      delayMs
+    );
+}
+
+
+async function saveCheckToGoogle(
+  key,
+  checked,
+  operationId
+) {
+
+  return await saveCheckWithRecovery({
+    key:
+      key,
+    checked:
+      checked,
+    operationId:
+      operationId
+  });
 }
 
 async function loadHistoriesFromGoogle() {
@@ -11913,6 +12554,18 @@ async function initialize() {
   */
   if (pendingBowelOperation) {
     schedulePendingBowelResolution(
+      1500
+    );
+  }
+
+  if (
+    Object.keys(
+      pendingCheckOperations || {}
+    ).length > 0
+  ) {
+    applyPendingCheckOverrides();
+    refreshCheckRelatedUI();
+    schedulePendingCheckResolution(
       1500
     );
   }
@@ -14746,7 +15399,7 @@ function updateUserSelects() {
 
 
   /*
-    Ver.0.8.52
+    Ver.0.8.53
     30秒同期でselectを作り直しても、
     操作中の利用者選択を勝手に先頭へ戻さない。
   */
@@ -15510,7 +16163,7 @@ function createClientRequestId(
 
 
 /*
-  Ver.0.8.52
+  Ver.0.8.53
 
   ログインはGoogle Apps Scriptの一時的な
   404 / timeout を考慮して最大3回まで再試行する。
@@ -16006,6 +16659,8 @@ async function loadInitialDataFromGoogle() {
 
     checks =
       data.checks || {};
+
+    applyPendingCheckOverrides();
 
     // =========================
     // histories
@@ -19838,76 +20493,167 @@ async function deleteRuleByIndex(
 
 async function toggleCheck(key) {
 
+  if (
+    hasPendingCheckOperation(
+      key
+    )
+  ) {
+
+    showToast(
+      "🟠 この実施記録は保存結果を確認中です",
+      "warning",
+      4000
+    );
+
+    return;
+  }
+
+
   const previousValue =
-    Boolean(checks[key]);
-
-  checks[key] =
-    !previousValue;
-
-
-  // =========================
-  // 画面を即時更新
-  // =========================
-
-  document.getElementById(
-    "todayTarget"
-  ).innerHTML =
-    getTodayTarget();
-
-
-  document.getElementById(
-    "completedList"
-  ).innerHTML =
-    getCompletedListHtml();
-
-
-  // ホームの投薬状況も更新
-  updateHomeMedicineStatus();
-
-
-  saveData();
-
-
-  try {
-
-    await saveCheckToGoogle(
-      key,
+    Boolean(
       checks[key]
     );
 
+  const desiredValue =
+    !previousValue;
+
+  /*
+    通常の未実施→実施で使用する。
+    実施済み取消はcancelCompletedCheckから行う。
+  */
+  if (!desiredValue) {
+    openCancelCompletedModal(
+      key
+    );
+    return;
+  }
+
+
+  const operationId =
+    createClientRequestId(
+      "check"
+    );
+
+  setPendingCheckOperation(
+    key,
+    {
+      operationId:
+        operationId,
+      previousChecked:
+        previousValue,
+      desiredChecked:
+        true,
+      createdAt:
+        new Date()
+          .toISOString()
+    }
+  );
+
+
+  /*
+    実際に実施済みボタンを押した事実は
+    通信失敗だけでは取り消さない。
+  */
+  checks[key] = true;
+
+  refreshCheckRelatedUI();
+  saveData();
+
+  showToast(
+    "実施済みを保存中…",
+    "saving",
+    0
+  );
+
+  beginWriteActivity();
+
+  try {
+
+    const result =
+      await saveCheckToGoogle(
+        key,
+        true,
+        operationId
+      );
+
+    checks[key] =
+      Boolean(
+        result.checked
+      );
+
+    setPendingCheckOperation(
+      key,
+      null
+    );
+
+    saveData();
+    refreshCheckRelatedUI();
+
+    showToast(
+      "✓ 実施済みを保存しました",
+      "success",
+      3000
+    );
 
   } catch (error) {
 
-    // =========================
-    // 保存失敗 → 元に戻す
-    // =========================
+    if (
+      error &&
+      error.code ===
+        "CHECK_RESULT_UNKNOWN"
+    ) {
 
-    checks[key] =
-      previousValue;
+      /*
+        ここが安全上の本体。
+        未実施には戻さない。
+      */
+      checks[key] = true;
 
+      saveData();
+      refreshCheckRelatedUI();
 
-    document.getElementById(
-      "todayTarget"
-    ).innerHTML =
-      getTodayTarget();
+      showToast(
+        "🟠 実施済みです。通信が不安定なため保存結果を確認中です",
+        "warning",
+        7000
+      );
 
+      schedulePendingCheckResolution(
+        1500
+      );
 
-    document.getElementById(
-      "completedList"
-    ).innerHTML =
-      getCompletedListHtml();
+    } else {
 
+      /*
+        サーバーが明確に拒否した等、
+        「保存されていない」と判断できるエラーだけ元へ戻す。
+      */
+      checks[key] =
+        previousValue;
 
-    // ホームも元に戻す
-    updateHomeMedicineStatus();
+      setPendingCheckOperation(
+        key,
+        null
+      );
 
+      saveData();
+      refreshCheckRelatedUI();
 
-    saveData();
+      console.error(
+        "実施チェック保存エラー",
+        error
+      );
 
+      showToast(
+        "⚠ 実施記録を保存できませんでした。責任者へ確認してください",
+        "error",
+        6000
+      );
+    }
 
-    alert(
-      error.message
-    );
+  } finally {
+
+    endWriteActivity();
   }
 }
 
@@ -20048,6 +20794,7 @@ function getCompletedListHtml() {
               <span class="action-badge time">
                 ${escapeHtml(getRuleTimingLabel(rule))}
               </span>
+              ${getPendingCheckBadgeHtml(key)}
             </div>
           </div>
           <button
@@ -20071,8 +20818,13 @@ function getCompletedListHtml() {
           type="button"
           class="action-cancel-button"
           onclick="openCancelCompletedModal('${safeKey}')"
+          ${hasPendingCheckOperation(key) ? "disabled" : ""}
         >
-          実施済みを取消
+          ${
+            hasPendingCheckOperation(key)
+              ? "保存確認中…"
+              : "実施済みを取消"
+          }
         </button>
       </div>
     `);
@@ -20162,6 +20914,21 @@ function getCompletedListHtml() {
 }
 
 function openCancelCompletedModal(key) {
+
+  if (
+    hasPendingCheckOperation(
+      key
+    )
+  ) {
+
+    showToast(
+      "🟠 保存結果を確認中です。確定するまで操作できません",
+      "warning",
+      4000
+    );
+
+    return;
+  }
 
   if (!checks[key]) {
 
@@ -20261,27 +21028,58 @@ function openCancelCompletedModal(key) {
 
 async function cancelCompletedCheck(key) {
 
+  if (
+    hasPendingCheckOperation(
+      key
+    )
+  ) {
+
+    closeCommonModal();
+
+    showToast(
+      "🟠 保存結果を確認中です。確定するまで操作できません",
+      "warning",
+      4000
+    );
+
+    return;
+  }
+
   if (!checks[key]) {
     closeCommonModal();
     return;
   }
 
 
-  checks[key] = false;
+  const operationId =
+    createClientRequestId(
+      "check"
+    );
 
-  document.getElementById(
-    "todayTarget"
-  ).innerHTML =
-    getTodayTarget();
+  /*
+    取消の保存が確定するまでは実施済み表示を維持。
+    取消失敗時に未実施へ見えてしまうことを防ぐ。
+  */
+  setPendingCheckOperation(
+    key,
+    {
+      operationId:
+        operationId,
+      previousChecked:
+        true,
+      desiredChecked:
+        false,
+      createdAt:
+        new Date()
+          .toISOString()
+    }
+  );
 
-  document.getElementById(
-    "completedList"
-  ).innerHTML =
-    getCompletedListHtml();
+  checks[key] = true;
 
-  updateHomeMedicineStatus();
-  saveData();
   closeCommonModal();
+  refreshCheckRelatedUI();
+  saveData();
 
   showToast(
     "取消を保存中…",
@@ -20289,42 +21087,84 @@ async function cancelCompletedCheck(key) {
     0
   );
 
+  beginWriteActivity();
 
   try {
 
-    await saveCheckToGoogle(
+    const result =
+      await saveCheckToGoogle(
+        key,
+        false,
+        operationId
+      );
+
+    checks[key] =
+      Boolean(
+        result.checked
+      );
+
+    setPendingCheckOperation(
       key,
-      false
+      null
     );
 
+    saveData();
+    refreshCheckRelatedUI();
+
     showToast(
-      "実施済みを取り消しました",
+      "✓ 実施済みを取り消しました",
       "success",
       3000
     );
 
   } catch (error) {
 
-    checks[key] = true;
+    if (
+      error &&
+      error.code ===
+        "CHECK_RESULT_UNKNOWN"
+    ) {
 
-    document.getElementById(
-      "todayTarget"
-    ).innerHTML =
-      getTodayTarget();
+      /*
+        取消結果が不明なら安全側で実施済みを維持。
+      */
+      checks[key] = true;
 
-    document.getElementById(
-      "completedList"
-    ).innerHTML =
-      getCompletedListHtml();
+      saveData();
+      refreshCheckRelatedUI();
 
-    updateHomeMedicineStatus();
-    saveData();
+      showToast(
+        "🟠 取消の保存結果を確認中です。確定するまで実施済みとして表示します",
+        "warning",
+        7000
+      );
 
-    showToast(
-      "⚠ 実施済みの取消を保存できませんでした",
-      "error",
-      4000
-    );
+      schedulePendingCheckResolution(
+        1500
+      );
+
+    } else {
+
+      checks[key] = true;
+
+      setPendingCheckOperation(
+        key,
+        null
+      );
+
+      saveData();
+      refreshCheckRelatedUI();
+
+      showToast(
+        "⚠ 取消を保存できませんでした。実施済みのまま維持します",
+        "error",
+        6000
+      );
+    }
+
+  } finally {
+
+    endWriteActivity();
   }
 }
 
@@ -22039,7 +22879,7 @@ async function changeLastDate() {
     /*
       GAS保存成功後にローカルへ反映する。
 
-      Ver.0.8.52
+      Ver.0.8.53
       手動の最終排便日訂正は「新しい排便成立」ではない。
       現在サイクル用の固定ルールがある場合は、
       サイクルキーだけ新しい日付へ移す。
@@ -22819,7 +23659,7 @@ function resolvePendingBowelOperationAfterSync() {
   }
 
   /*
-    Ver.0.8.52
+    Ver.0.8.53
     timeout後もGAS側保存は続く可能性がある。
     同期でまだ見えないだけでは未保存と断定しない。
   */
@@ -22931,7 +23771,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.8.52 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
+// Ver.0.8.53 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
 // Ver.0.8.44 APIセッション認証
 // ============================================================
 
@@ -23729,7 +24569,7 @@ async function requestSyncDataFromServer(
 
 
       /*
-        Ver.0.8.52
+        Ver.0.8.53
 
         getSyncData は読み取り専用なので、
         timeout後でも同じ同期内で安全に再試行できる。
@@ -23784,7 +24624,7 @@ async function requestSyncDataFromServer(
 */
 
 /*
-  Ver.0.8.52 排便登録の保存結果確認。
+  Ver.0.8.53 排便登録の保存結果確認。
   POST確認が一時的に失敗したら、読み取り専用GETへ切り替える。
 */
 async function getBowelOperationStatusRobust({
@@ -24096,7 +24936,7 @@ async function registerBowelWithRecovery({
 
 
   /*
-    Ver.0.8.52
+    Ver.0.8.53
     保存確認APIも通信不能なら、この場で重い初期同期は投げない。
     未保存とも保存済みとも断定せず、operationIdを保留して
     バックグラウンド確認へ移す。
@@ -26071,7 +26911,7 @@ async function loadLightSyncDataFromGoogle() {
 
   // =========================
   // ルール / サイクル固定ルール
-  // Ver.0.8.52
+  // Ver.0.8.53
   // ルール変更を30秒以内に他端末へ反映する。
   // =========================
 
@@ -26104,6 +26944,8 @@ async function loadLightSyncDataFromGoogle() {
 
   checks =
     data.checks || {};
+
+  applyPendingCheckOverrides();
 
 
   histories =
@@ -26287,6 +27129,8 @@ async function loadSyncDataFromGoogle() {
 
   checks =
     data.checks || {};
+
+  applyPendingCheckOverrides();
 
   histories =
     data.histories || [];
