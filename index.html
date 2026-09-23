@@ -5574,7 +5574,7 @@ h3 {
 
 
 /* ============================================================
-   Ver.0.9.0 UI REFRESH
+   Ver.0.9.1 UI REFRESH
    既存ロジックを維持し、表示階層だけを再設計
 ============================================================ */
 
@@ -6222,6 +6222,102 @@ body {
   display: none;
 }
 
+
+/* ============================================================
+   Ver.0.9.1 排便入力
+============================================================ */
+
+.ui09-hidden-select {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.ui091-bowel-amount-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 9px;
+  margin: 14px 0 10px;
+}
+
+.ui091-bowel-amount-button {
+  min-height: 58px;
+  padding: 8px 5px;
+  border: 1px solid var(--ui09-line);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--ui09-text);
+  box-shadow: none;
+  transition:
+    transform .08s ease,
+    border-color .12s ease,
+    background .12s ease,
+    color .12s ease;
+}
+
+.ui091-bowel-amount-button strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.ui091-bowel-amount-button:active {
+  transform: scale(.98);
+}
+
+.ui091-bowel-amount-button.selected {
+  background: var(--ui09-teal);
+  border-color: var(--ui09-teal);
+  color: #fff;
+  box-shadow:
+    0 4px 12px rgba(17,155,135,.18);
+}
+
+.ui091-picker-option {
+  width: 100%;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 58px;
+  padding: 12px 14px !important;
+  text-align: left;
+}
+
+.ui091-picker-name {
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.ui091-picker-days {
+  flex: none;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--ui09-grey-bg);
+  color: var(--ui09-muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.ui091-picker-option.selected .ui091-picker-days {
+  background: rgba(255,255,255,.18);
+  color: inherit;
+}
+
+@media (max-width: 390px) {
+  .ui091-bowel-amount-grid {
+    gap: 6px;
+  }
+
+  .ui091-bowel-amount-button {
+    min-height: 54px;
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+}
+
 </style>
 </head>
 
@@ -6261,7 +6357,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.0</div>
+      <div class="ui09-brand-version">Ver.0.9.1</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -6475,12 +6571,14 @@ body {
         </div>
       </div>
 
+      <!-- 既存ロジック互換用。値は4ボタンから設定する -->
       <select
         id="bowelTypeSelect"
-        class="ui09-main-select"
-        onchange="updateBowelRegisterPreview()"
+        class="ui09-hidden-select"
+        aria-hidden="true"
+        tabindex="-1"
       >
-        <option value="なし">排便量を選択してください</option>
+        <option value="">未選択</option>
         <option value="少">少</option>
         <option value="少1">少1</option>
         <option value="少2">少2</option>
@@ -6488,10 +6586,53 @@ body {
       </select>
 
       <div
+        id="bowelAmountButtons"
+        class="ui091-bowel-amount-grid"
+        role="group"
+        aria-label="排便量"
+      >
+        <button
+          type="button"
+          class="ui091-bowel-amount-button"
+          data-bowel-type="少"
+          onclick="selectBowelType('少')"
+        >
+          <strong>少</strong>
+        </button>
+
+        <button
+          type="button"
+          class="ui091-bowel-amount-button"
+          data-bowel-type="少1"
+          onclick="selectBowelType('少1')"
+        >
+          <strong>少1</strong>
+        </button>
+
+        <button
+          type="button"
+          class="ui091-bowel-amount-button"
+          data-bowel-type="少2"
+          onclick="selectBowelType('少2')"
+        >
+          <strong>少2</strong>
+        </button>
+
+        <button
+          type="button"
+          class="ui091-bowel-amount-button"
+          data-bowel-type="普通"
+          onclick="selectBowelType('普通')"
+        >
+          <strong>普通</strong>
+        </button>
+      </div>
+
+      <div
         id="bowelRegisterPreview"
         class="bowel-register-preview needs-input ui09-preview"
       >
-        対象者と排便量を確認してください
+        排便量を選択してください
       </div>
 
       <button
@@ -7279,7 +7420,7 @@ body {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.9.0
+          Ver.0.9.1
         </span>
       </div>
 
@@ -7600,7 +7741,7 @@ let pendingBowelResolveTimer = null;
 
 
 /*
-  Ver.0.9.0
+  Ver.0.9.1
   与薬実施チェックの保存結果が未確定な操作。
 
   安全原則：
@@ -8226,6 +8367,87 @@ function getBowelTodayHistoryHtml(
 }
 
 
+
+function selectBowelType(
+  type
+) {
+
+  const allowed =
+    ["少", "少1", "少2", "普通"];
+
+  const value =
+    allowed.includes(
+      String(type || "")
+    )
+      ? String(type)
+      : "";
+
+  const select =
+    document.getElementById(
+      "bowelTypeSelect"
+    );
+
+  if (select) {
+    select.value =
+      value;
+  }
+
+  updateBowelAmountButtons();
+  updateBowelRegisterPreview();
+}
+
+
+function clearSelectedBowelType() {
+
+  const select =
+    document.getElementById(
+      "bowelTypeSelect"
+    );
+
+  if (select) {
+    select.value = "";
+  }
+
+  updateBowelAmountButtons();
+  updateBowelRegisterPreview();
+}
+
+
+function updateBowelAmountButtons() {
+
+  const value =
+    String(
+      document.getElementById(
+        "bowelTypeSelect"
+      )?.value || ""
+    );
+
+  document
+    .querySelectorAll(
+      ".ui091-bowel-amount-button"
+    )
+    .forEach(button => {
+
+      const selected =
+        String(
+          button.dataset.bowelType || ""
+        ) === value;
+
+      button.classList.toggle(
+        "selected",
+        selected
+      );
+
+      button.setAttribute(
+        "aria-pressed",
+        selected
+          ? "true"
+          : "false"
+      );
+    });
+}
+
+
 function updateBowelRegisterPreview() {
 
   const preview =
@@ -8254,8 +8476,7 @@ function updateBowelRegisterPreview() {
 
   if (
     !user ||
-    !type ||
-    type === "なし"
+    !type
   ) {
 
     preview.classList.add(
@@ -8341,17 +8562,17 @@ function updateBowelTargetUI(
 
     if (daysArea) {
       daysArea.textContent =
-        "未排便 -";
+        "-";
     }
 
     if (pointArea) {
       pointArea.textContent =
-        "現在 -";
+        "- / 6点";
     }
 
     if (lastArea) {
       lastArea.textContent =
-        "最終排便 -";
+        "-";
     }
 
     if (lastCurrent) {
@@ -8399,20 +8620,18 @@ function updateBowelTargetUI(
 
   if (daysArea) {
     daysArea.textContent =
-      "未排便 " +
       days +
-      "日";
+      "日目";
   }
 
   if (pointArea) {
     pointArea.textContent =
-      "現在 " +
-      getBowelPointText(point);
+      getBowelPointText(point) +
+      " / 6点";
   }
 
   if (lastArea) {
     lastArea.textContent =
-      "最終排便 " +
       formatBowelTargetShortDate(
         lastDate
       );
@@ -8447,6 +8666,7 @@ function updateBowelTargetUI(
   }
 
 
+  updateBowelAmountButtons();
   updateBowelRegisterPreview();
 
 
@@ -8502,31 +8722,47 @@ function openBowelUserPicker() {
   list.innerHTML =
     Array
       .from(source.options)
-      .map(option => {
-
-        const name =
-          String(
-            option.value ||
-            option.textContent ||
-            ""
-          );
+      .map(option =>
+        String(
+          option.value ||
+          option.textContent ||
+          ""
+        ).trim()
+      )
+      .filter(Boolean)
+      .map(name => {
 
         const safeJsName =
           name
             .replace(/\\/g, "\\\\")
             .replace(/'/g, "\\'");
 
+        const days =
+          Math.max(
+            0,
+            Number(
+              getNoBowelDays(
+                name
+              )
+            ) || 0
+          );
+
         return `
           <button
             type="button"
-            class="bowel-picker-option ${
+            class="bowel-picker-option ui091-picker-option ${
               name === selected
                 ? "selected"
                 : ""
             }"
             onclick="selectBowelUser('${safeJsName}')"
           >
-            ${escapeHtml(name)}
+            <span class="ui091-picker-name">
+              ${escapeHtml(formatResidentName(name))}
+            </span>
+            <span class="ui091-picker-days">
+              未排便${days}日
+            </span>
           </button>
         `;
       })
@@ -8605,6 +8841,13 @@ function selectBowelUser(
   select.value =
     user;
 
+  /*
+    Ver.0.9.1
+    別利用者へ切り替えたとき、前の人の排便量選択を
+    引き継がない。誤登録防止のため必ず未選択へ戻す。
+  */
+  clearSelectedBowelType();
+
   updateBowelTargetUI({
     updateResult: true
   });
@@ -8638,7 +8881,10 @@ async function register() {
   }
 
 
-  if (type === "なし") {
+  if (
+    !["少", "少1", "少2", "普通"]
+      .includes(type)
+  ) {
 
     showToast(
       "⚠ 排便量を選択してください",
@@ -8928,6 +9174,8 @@ async function register() {
     // =========================
     // ⑧ 完了
     // =========================
+
+    clearSelectedBowelType();
 
     showToast(
       "✓ 登録しました",
@@ -16020,7 +16268,7 @@ function updateUserSelects() {
 
 
   /*
-    Ver.0.9.0
+    Ver.0.9.1
     30秒同期でselectを作り直しても、
     操作中の利用者選択を勝手に先頭へ戻さない。
   */
@@ -16784,7 +17032,7 @@ function createClientRequestId(
 
 
 /*
-  Ver.0.9.0
+  Ver.0.9.1
 
   ログインはGoogle Apps Scriptの一時的な
   404 / timeout を考慮して最大3回まで再試行する。
@@ -23522,7 +23770,7 @@ async function changeLastDate() {
     /*
       GAS保存成功後にローカルへ反映する。
 
-      Ver.0.9.0
+      Ver.0.9.1
       手動の最終排便日訂正は「新しい排便成立」ではない。
       現在サイクル用の固定ルールがある場合は、
       サイクルキーだけ新しい日付へ移す。
@@ -24302,7 +24550,7 @@ function resolvePendingBowelOperationAfterSync() {
   }
 
   /*
-    Ver.0.9.0
+    Ver.0.9.1
     timeout後もGAS側保存は続く可能性がある。
     同期でまだ見えないだけでは未保存と断定しない。
   */
@@ -24414,7 +24662,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.9.0 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
+// Ver.0.9.1 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
 // Ver.0.8.44 APIセッション認証
 // ============================================================
 
@@ -25212,7 +25460,7 @@ async function requestSyncDataFromServer(
 
 
       /*
-        Ver.0.9.0
+        Ver.0.9.1
 
         getSyncData は読み取り専用なので、
         timeout後でも同じ同期内で安全に再試行できる。
@@ -25267,7 +25515,7 @@ async function requestSyncDataFromServer(
 */
 
 /*
-  Ver.0.9.0 排便登録の保存結果確認。
+  Ver.0.9.1 排便登録の保存結果確認。
   POST確認が一時的に失敗したら、読み取り専用GETへ切り替える。
 */
 async function getBowelOperationStatusRobust({
@@ -25579,7 +25827,7 @@ async function registerBowelWithRecovery({
 
 
   /*
-    Ver.0.9.0
+    Ver.0.9.1
     保存確認APIも通信不能なら、この場で重い初期同期は投げない。
     未保存とも保存済みとも断定せず、operationIdを保留して
     バックグラウンド確認へ移す。
@@ -28089,7 +28337,7 @@ async function loadLightSyncDataFromGoogle() {
 
   // =========================
   // ルール / サイクル固定ルール
-  // Ver.0.9.0
+  // Ver.0.9.1
   // ルール変更を30秒以内に他端末へ反映する。
   // =========================
 
