@@ -5572,6 +5572,656 @@ h3 {
   }
 }
 
+
+/* ============================================================
+   Ver.0.9.0 UI REFRESH
+   既存ロジックを維持し、表示階層だけを再設計
+============================================================ */
+
+:root {
+  --ui09-bg: #f5f7f8;
+  --ui09-card: #ffffff;
+  --ui09-line: #e4eaec;
+  --ui09-text: #17323a;
+  --ui09-muted: #6d8187;
+  --ui09-teal: #119b87;
+  --ui09-teal-dark: #087b6d;
+  --ui09-soft: #e9f7f4;
+  --ui09-red: #d84d4d;
+  --ui09-red-bg: #fff0f0;
+  --ui09-orange: #d88419;
+  --ui09-orange-bg: #fff7e9;
+  --ui09-purple: #7457c8;
+  --ui09-purple-bg: #f3efff;
+  --ui09-green: #2b9a67;
+  --ui09-green-bg: #edf9f3;
+  --ui09-blue: #3d78c7;
+  --ui09-grey-bg: #f0f3f4;
+}
+
+body {
+  background: var(--ui09-bg);
+  color: var(--ui09-text);
+}
+
+#appArea {
+  max-width: 760px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--ui09-bg);
+}
+
+.ui09-header.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px 18px;
+  background: rgba(255,255,255,.96);
+  border-bottom: 1px solid var(--ui09-line);
+  box-shadow: none;
+}
+
+.ui09-brand-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: .01em;
+}
+
+.ui09-brand-version {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--ui09-muted);
+}
+
+.ui09-header-unit {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ui09-muted);
+}
+
+.app-page.ui09-page,
+#rulePage,
+#otherPage {
+  padding: 16px 14px 104px;
+}
+
+.ui09-page-head,
+.ui09-simple-head,
+.ui09-detail-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 4px 0 16px;
+}
+
+.ui09-page-title,
+.ui09-simple-head h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 850;
+}
+
+.ui09-date {
+  font-size: 16px;
+  font-weight: 850;
+}
+
+.ui09-unit {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--ui09-muted);
+  font-weight: 700;
+}
+
+.ui09-kicker {
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ui09-muted);
+}
+
+.ui09-panel,
+.ui09-resident-card,
+.ui09-subpanel {
+  background: var(--ui09-card);
+  border: 1px solid var(--ui09-line);
+  border-radius: 18px;
+  box-shadow: 0 4px 15px rgba(31,70,78,.05);
+}
+
+.ui09-panel,
+.ui09-subpanel {
+  padding: 16px;
+}
+
+.ui09-panel-head,
+.ui09-section-head,
+.ui09-resident-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ui09-panel-head h3,
+.ui09-section-head h2 {
+  margin: 0;
+}
+
+.ui09-count-pill {
+  flex: none;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 850;
+  background: var(--ui09-grey-bg);
+}
+
+.ui09-special {
+  margin-bottom: 20px;
+}
+
+.ui09-special:not(.all-clear) {
+  border-color: #f0c4c4;
+  background: #fffafb;
+}
+
+.ui09-special-list {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.ui09-special-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 10px;
+  border-radius: 11px;
+  background: rgba(245,247,248,.85);
+  font-size: 13px;
+}
+
+.ui09-text-button {
+  border: 0;
+  background: transparent;
+  color: var(--ui09-teal-dark);
+  padding: 8px 0 0;
+  font-size: 13px;
+  font-weight: 850;
+  box-shadow: none;
+}
+
+.ui09-text-button.compact {
+  padding: 0;
+}
+
+.ui09-section {
+  margin: 22px 0;
+}
+
+.ui09-section-head {
+  margin-bottom: 10px;
+}
+
+.ui09-shift-list {
+  display: grid;
+  gap: 10px;
+}
+
+.ui09-shift-card {
+  width: 100%;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  padding: 14px !important;
+  border: 1px solid var(--ui09-line) !important;
+  border-radius: 16px !important;
+  background: var(--ui09-card) !important;
+  color: var(--ui09-text) !important;
+}
+
+.ui09-resident-card {
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.ui09-resident-name {
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.ui09-inline-actions {
+  display: flex;
+  gap: 7px;
+}
+
+.ui09-mini-button,
+.ui09-filter-button {
+  min-height: 38px;
+  padding: 8px 12px;
+  border-radius: 11px;
+  background: var(--ui09-soft);
+  color: var(--ui09-teal-dark);
+  border: 1px solid #cdebe5;
+  font-size: 12px;
+  font-weight: 850;
+  box-shadow: none;
+}
+
+.ui09-state-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 15px;
+}
+
+.ui09-state-box {
+  padding: 12px;
+  border-radius: 14px;
+  background: #f7f9fa;
+}
+
+.ui09-state-box.wide {
+  grid-column: 1 / -1;
+}
+
+.ui09-state-box.danger {
+  background: var(--ui09-red-bg);
+}
+
+.ui09-state-box span {
+  display: block;
+  font-size: 11px;
+  color: var(--ui09-muted);
+  font-weight: 800;
+}
+
+.ui09-state-box strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 18px;
+}
+
+.ui09-entry-panel {
+  margin-top: 12px;
+}
+
+.ui09-main-select {
+  margin: 14px 0 10px;
+  min-height: 52px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.ui09-preview,
+.ui09-result {
+  margin-top: 10px;
+}
+
+.ui09-primary-button {
+  width: 100%;
+  min-height: 54px;
+  margin-top: 12px;
+  border-radius: 14px;
+  background: var(--ui09-teal);
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.ui09-secondary-button {
+  width: 100%;
+  margin-top: 10px;
+  background: var(--ui09-soft);
+  color: var(--ui09-teal-dark);
+}
+
+.ui09-details {
+  margin-top: 14px;
+  border: 1px solid var(--ui09-line);
+  border-radius: 16px;
+  background: var(--ui09-card);
+  overflow: hidden;
+}
+
+.ui09-details summary {
+  cursor: pointer;
+  padding: 14px 16px;
+  font-weight: 850;
+  list-style: none;
+}
+
+.ui09-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.ui09-details[open] summary {
+  border-bottom: 1px solid var(--ui09-line);
+}
+
+.ui09-details.compact {
+  margin-top: 16px;
+}
+
+.ui09-subpanel {
+  margin: 12px;
+  box-shadow: none;
+}
+
+.ui09-big-value {
+  font-size: 20px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.ui09-segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  background: #e9eef0;
+}
+
+.ui09-segmented button,
+.action-ui-tabs button,
+.history-ui-tabs button {
+  border: 0 !important;
+  min-height: 42px;
+  border-radius: 10px !important;
+  background: transparent !important;
+  color: #60757b !important;
+  box-shadow: none !important;
+  font-weight: 850;
+}
+
+.ui09-segmented button.active,
+.action-ui-tabs button.active,
+.history-ui-tabs button.active {
+  background: var(--ui09-card) !important;
+  color: var(--ui09-teal-dark) !important;
+  box-shadow: 0 1px 5px rgba(31,70,78,.08) !important;
+}
+
+.ui09-action-meta {
+  display: flex;
+  gap: 16px;
+  margin: -4px 0 14px;
+  padding: 0 4px;
+  font-size: 12px;
+  color: var(--ui09-muted);
+}
+
+.action-item-card {
+  border: 1px solid var(--ui09-line) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 4px 14px rgba(31,70,78,.05) !important;
+}
+
+.action-card-user {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+}
+
+.action-execute-button {
+  min-height: 48px;
+  border-radius: 13px !important;
+  background: #57baa8 !important;
+}
+
+.ui09-history-search {
+  margin-bottom: 12px;
+}
+
+.ui09-history-search input {
+  width: 100%;
+  min-height: 46px;
+  border-radius: 13px;
+  background: var(--ui09-card);
+}
+
+.ui09-filter-panel {
+  border: 0 !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+}
+
+.history-card {
+  border: 1px solid var(--ui09-line) !important;
+  border-radius: 15px !important;
+  box-shadow: none !important;
+  margin-bottom: 9px !important;
+  padding: 13px !important;
+}
+
+.history-card-user {
+  font-size: 16px !important;
+  font-weight: 900 !important;
+}
+
+.ui09-detail-topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  margin-bottom: 14px;
+}
+
+.ui09-back-button {
+  justify-self: start;
+  border: 0;
+  background: transparent;
+  color: var(--ui09-teal-dark);
+  box-shadow: none;
+  padding: 6px 0;
+  font-weight: 850;
+}
+
+.ui09-resident-tabs {
+  grid-auto-flow: column;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.ui09-detail-header-card {
+  margin-bottom: 12px;
+}
+
+.ui09-detail-section {
+  margin: 12px 0;
+}
+
+.ui09-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ui09-line);
+}
+
+.ui09-detail-row:last-child {
+  border-bottom: 0;
+}
+
+.ui09-rule-item {
+  padding: 13px;
+  margin-bottom: 9px;
+  border: 1px solid var(--ui09-line);
+  border-radius: 14px;
+  background: var(--ui09-card);
+}
+
+.ui09-rule-item .title {
+  font-weight: 900;
+}
+
+.ui09-rule-item .meta {
+  margin-top: 5px;
+  color: var(--ui09-muted);
+  font-size: 12px;
+}
+
+.ui09-empty {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--ui09-muted);
+  background: var(--ui09-card);
+  border: 1px dashed #cfdadd;
+  border-radius: 16px;
+}
+
+#otherPage .other-status-card,
+#otherStatusPanel {
+  display: none !important;
+}
+
+#otherPage .other-account-card,
+#otherPage .other-menu-list,
+#otherPage .other-system-card {
+  border: 1px solid var(--ui09-line);
+  box-shadow: none;
+  border-radius: 16px;
+}
+
+.ui09-bottom-nav.bottom-nav {
+  max-width: 760px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 7px 9px calc(7px + env(safe-area-inset-bottom));
+  background: rgba(255,255,255,.97);
+  border-top: 1px solid var(--ui09-line);
+  box-shadow: 0 -4px 16px rgba(31,70,78,.05);
+}
+
+.ui09-bottom-nav .nav-button {
+  min-width: 0;
+  gap: 1px;
+  border-radius: 12px;
+}
+
+.ui09-bottom-nav .nav-button span {
+  font-size: 19px;
+}
+
+.ui09-bottom-nav .nav-button small {
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.ui09-bottom-nav .nav-button.active {
+  color: var(--ui09-teal-dark);
+  background: var(--ui09-soft);
+}
+
+#rulePage {
+  padding-bottom: 104px;
+}
+
+@media (min-width: 680px) {
+  .ui09-state-grid {
+    grid-template-columns: 1fr 1fr 1.4fr;
+  }
+
+  .ui09-state-box.wide {
+    grid-column: auto;
+  }
+
+  .ui09-shift-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+
+.ui09-home-action-list {
+  display: grid;
+  gap: 9px;
+}
+
+.ui09-home-action-item {
+  width: 100%;
+  min-height: 66px;
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  text-align: left;
+  background: var(--ui09-card);
+  color: var(--ui09-text);
+  border: 1px solid var(--ui09-line);
+  border-radius: 15px;
+  box-shadow: none;
+}
+
+.ui09-home-action-item.nurse {
+  background: #fbf9ff;
+  border-color: #e7defc;
+}
+
+.ui09-home-action-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ui09-orange-bg);
+  font-size: 20px;
+}
+
+.ui09-home-action-item.nurse .ui09-home-action-icon {
+  background: var(--ui09-purple-bg);
+}
+
+.ui09-home-action-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ui09-home-action-copy strong {
+  font-size: 15px;
+}
+
+.ui09-home-action-copy span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  color: #536a70;
+}
+
+.ui09-more-note {
+  padding: 8px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ui09-muted);
+}
+
+.ui09-resident-link {
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--ui09-text) !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  text-align: left;
+}
+
+.ui09-inline-alert-area:empty {
+  display: none;
+}
+
 </style>
 </head>
 
@@ -5607,21 +6257,15 @@ h3 {
   <!-- =========================
        アプリヘッダー
   ========================== -->
-  <header class="app-header">
-
-    <div>
-      <h1>緩下剤管理アプリ</h1>
-      <p class="app-version">Ver.0.8.53</p>
+  
+  <header class="app-header ui09-header">
+    <div class="ui09-brand">
+      <div class="ui09-brand-title">緩下剤管理アプリ</div>
+      <div class="ui09-brand-version">Ver.0.9.0</div>
     </div>
-
-    <button
-      class="logout-button"
-      onclick="logout()"
-    >
-      ログアウト
-    </button>
-
+    <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
+
 
 
   <div
@@ -5639,274 +6283,141 @@ h3 {
 
 
   <!-- =========================
-       ホーム
+       ホーム Ver.0.9
   ========================== -->
   <section
     id="homePage"
-    class="app-page active"
+    class="app-page active ui09-page"
   >
 
-    <div id="ruleEvaluationAlertArea"></div>
-
-    <div class="home-dashboard-head">
-
+    <div class="ui09-page-head">
       <div>
-        <div
-          id="homeUnitName"
-          class="home-dashboard-unit"
-        >
-          現在のユニット
-        </div>
-
-        <h2 class="home-dashboard-title">
-          今日の状況
-        </h2>
+        <div id="homeTodayDate" class="ui09-date"></div>
+        <div id="homeUnitName" class="ui09-unit"></div>
       </div>
-
-      <div
-        id="homeTodayDate"
-        class="home-dashboard-date"
-      ></div>
-
+      <div class="ui09-page-title">ホーム</div>
     </div>
 
+    <div id="ruleEvaluationAlertArea" class="ui09-inline-alert-area"></div>
 
-    <div
+    <section
       id="homeUrgentCard"
-      class="home-urgent-card all-clear"
+      class="ui09-panel ui09-special all-clear"
     >
-
-      <div class="home-urgent-head">
-        <strong id="homeUrgentTitle">
-          ✅ 要確認なし
-        </strong>
-
-        <span
-          id="homeUrgentCount"
-          class="home-urgent-badge"
-        >
-          0件
-        </span>
+      <div class="ui09-panel-head">
+        <div>
+          <div class="ui09-kicker">特別な確認事項</div>
+          <strong id="homeUrgentTitle">✅ 特別な確認事項なし</strong>
+        </div>
+        <span id="homeUrgentCount" class="ui09-count-pill">0件</span>
       </div>
 
-      <div class="home-urgent-list">
-
-        <div class="home-urgent-row">
-          <span class="home-urgent-label">
-            排便確認未完了
-          </span>
-
-          <span
-            id="homeUrgentShiftCount"
-            class="home-urgent-count"
-          >
-            0件
-          </span>
+      <div class="ui09-special-list">
+        <div class="ui09-special-row">
+          <span>排便確認未完了</span>
+          <strong id="homeUrgentShiftCount">0件</strong>
         </div>
-
-        <div class="home-urgent-row">
-          <span class="home-urgent-label">
-            看護師確認待ち
-          </span>
-
-          <span
-            id="homeUrgentNurseCount"
-            class="home-urgent-count"
-          >
-            0件
-          </span>
+        <div class="ui09-special-row">
+          <span>看護師確認待ち</span>
+          <strong id="homeUrgentNurseCount">0件</strong>
         </div>
-
+        <div class="ui09-special-row">
+          <span>評価期限</span>
+          <strong id="homeUrgentEvaluationCount">0件</strong>
+        </div>
+        <div class="ui09-special-row">
+          <span>保存確認中</span>
+          <strong id="homeUrgentSaveCount">0件</strong>
+        </div>
       </div>
 
-      <div class="home-urgent-action">
+      <button
+        type="button"
+        class="ui09-text-button"
+        onclick="openHomeUrgentDetail()"
+      >
+        確認する →
+      </button>
+    </section>
+
+    <section class="ui09-section">
+      <div class="ui09-section-head">
+        <div>
+          <div class="ui09-kicker">今やる対応</div>
+          <h2>現在の対応</h2>
+        </div>
         <button
           type="button"
-          onclick="openHomeUrgentDetail()"
+          class="ui09-text-button compact"
+          onclick="openPage('medicinePage'); showActionPageMode('current');"
         >
-          確認する →
+          すべて見る
         </button>
       </div>
+      <div id="homeMedicineStatus"></div>
+    </section>
 
-    </div>
-
-
-    <div class="home-section-label">
-      すぐ使う
-    </div>
-
-    <button
-      type="button"
-      class="home-quick-bowel"
-      onclick="openPage('bowelPage')"
-    >
-      <span class="home-quick-bowel-main">
-        <span class="home-quick-bowel-icon">
-          💩
-        </span>
-
-        <span>
-          <span class="home-quick-bowel-title">
-            排便を入力する
-          </span>
-
-          <span class="home-quick-bowel-sub">
-            対象者を選んで記録
-          </span>
-        </span>
-      </span>
-
-      <span class="home-quick-bowel-arrow">
-        ›
-      </span>
-    </button>
-
-
-    <div class="home-section-label">
-      排便確認
-    </div>
-
-    <div class="home-shift-grid">
-
-      <button
-        id="homeDayConfirmCard"
-        type="button"
-        class="home-shift-card"
-        onclick="openPage('bowelPage'); checkTodayBowelStatus();"
-      >
-        <div class="home-shift-name">
-          ☀️ 日中帯
+    <section class="ui09-section">
+      <div class="ui09-section-head">
+        <div>
+          <div class="ui09-kicker">勤務帯確認</div>
+          <h2>排便確認</h2>
         </div>
-
-        <div class="home-shift-time">
-          8:00 ～ 16:00
-        </div>
-
-        <div class="home-shift-state wait">
-          読み込み中…
-        </div>
-      </button>
-
-
-      <button
-        id="homeNightConfirmCard"
-        type="button"
-        class="home-shift-card"
-        onclick="openPage('bowelPage'); checkNightBowelStatus();"
-      >
-        <div class="home-shift-name">
-          🌙 夜勤帯
-        </div>
-
-        <div class="home-shift-time">
-          16:00 ～ 翌8:00
-        </div>
-
-        <div class="home-shift-state wait">
-          読み込み中…
-        </div>
-      </button>
-
-    </div>
-
-
-    <div class="home-section-label">
-      現在の対応
-    </div>
-
-    <div id="homeMedicineStatus">
-      <div class="home-current-action-card">
-        対応状況を確認しています…
       </div>
-    </div>
 
+      <div class="ui09-shift-list">
+        <button
+          id="homeDayConfirmCard"
+          type="button"
+          class="home-shift-card ui09-shift-card"
+          onclick="openPage('bowelPage'); checkTodayBowelStatus();"
+        >
+          <div>
+            <div class="home-shift-name">☀️ 日中帯</div>
+            <div class="home-shift-time">8:00 ～ 16:00</div>
+          </div>
+          <div class="home-shift-state wait">読み込み中…</div>
+        </button>
 
-    <div class="home-section-label">
-      完了状況
-    </div>
+        <button
+          id="homeNightConfirmCard"
+          type="button"
+          class="home-shift-card ui09-shift-card"
+          onclick="openPage('bowelPage'); checkNightBowelStatus();"
+        >
+          <div>
+            <div class="home-shift-name">🌙 夜勤帯</div>
+            <div class="home-shift-time">16:00 ～ 翌8:00</div>
+          </div>
+          <div class="home-shift-state wait">読み込み中…</div>
+        </button>
+      </div>
+    </section>
 
-    <div
-      id="homeCompletionStatus"
-      class="home-completion-card"
-    >
-      読み込み中…
-    </div>
-
-
-    <!-- 既存処理との互換用。詳細表示は対応ページへ集約 -->
-    <div
-      id="homeNurseAlert"
-      class="home-hidden-compat"
-    ></div>
+    <div id="homeCompletionStatus" class="home-hidden-compat"></div>
+    <div id="homeNurseAlert" class="home-hidden-compat"></div>
 
   </section>
 
   <!-- =========================
-       排便
+       排便入力 Ver.0.9
   ========================== -->
   <section
     id="bowelPage"
-    class="app-page"
+    class="app-page ui09-page"
   >
 
-    <!-- 対象者は排便ページ内だけで保持 -->
-    <div
-      id="bowelTargetBar"
-      class="bowel-target-bar"
-    >
-      <div class="bowel-target-main">
-
-        <div>
-          <div class="bowel-target-caption">
-            👤 現在の対象者
-          </div>
-
-          <div
-            id="bowelTargetName"
-            class="bowel-target-name"
-          >
-            利用者未選択
-          </div>
-        </div>
-
-        <button
-          type="button"
-          class="bowel-target-change-button"
-          onclick="openBowelUserPicker()"
-        >
-          変更
-        </button>
-
-      </div>
-
-      <div class="bowel-target-meta">
-
-        <span
-          id="bowelTargetDays"
-          class="bowel-target-pill days"
-        >
-          未排便 -
-        </span>
-
-        <span
-          id="bowelTargetPoint"
-          class="bowel-target-pill point"
-        >
-          現在 -
-        </span>
-
-        <span
-          id="bowelTargetLastDate"
-          class="bowel-target-pill"
-        >
-          最終排便 -
-        </span>
-
-      </div>
+    <div class="ui09-simple-head">
+      <h2>排便入力</h2>
+      <button
+        type="button"
+        class="ui09-filter-button"
+        onclick="openBowelUserPicker()"
+      >
+        利用者を選ぶ
+      </button>
     </div>
 
-
-    <!-- 既存ロジックの参照元。画面上は専用ピッカーを使用 -->
     <select
       id="userSelect"
       class="bowel-user-select-source"
@@ -5914,306 +6425,265 @@ h3 {
       tabindex="-1"
     ></select>
 
-
-    <div class="bowel-page-section-title">
-      排便入力
-    </div>
-
-
-    <div class="bowel-entry-card">
-
-      <div class="bowel-entry-title">
-        <h3>💩 排便を登録</h3>
+    <section id="bowelTargetBar" class="ui09-resident-card">
+      <div class="ui09-resident-card-head">
+        <div>
+          <div class="ui09-kicker">現在の対象者</div>
+          <div id="bowelTargetName" class="ui09-resident-name">
+            利用者未選択
+          </div>
+        </div>
+        <div class="ui09-inline-actions">
+          <button
+            type="button"
+            class="ui09-mini-button"
+            onclick="openSelectedResidentDetailFromBowel()"
+          >
+            詳細
+          </button>
+          <button
+            type="button"
+            class="ui09-mini-button"
+            onclick="openBowelUserPicker()"
+          >
+            変更
+          </button>
+        </div>
       </div>
 
-      <label
-        class="bowel-field-label"
-        for="bowelTypeSelect"
-      >
-        排便量
-      </label>
+      <div class="ui09-state-grid">
+        <div class="ui09-state-box danger">
+          <span>未排便</span>
+          <strong id="bowelTargetDays">-</strong>
+        </div>
+        <div class="ui09-state-box">
+          <span>現在</span>
+          <strong id="bowelTargetPoint">-</strong>
+        </div>
+        <div class="ui09-state-box wide">
+          <span>最終排便</span>
+          <strong id="bowelTargetLastDate">-</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="ui09-panel ui09-entry-panel">
+      <div class="ui09-panel-head">
+        <div>
+          <div class="ui09-kicker">排便量を選択</div>
+          <h3>排便を登録</h3>
+        </div>
+      </div>
 
       <select
         id="bowelTypeSelect"
+        class="ui09-main-select"
         onchange="updateBowelRegisterPreview()"
       >
-        <option value="なし">
-          排便量を選択してください
-        </option>
+        <option value="なし">排便量を選択してください</option>
         <option value="少">少</option>
         <option value="少1">少1</option>
         <option value="少2">少2</option>
         <option value="普通">普通</option>
       </select>
 
-
       <div
         id="bowelRegisterPreview"
-        class="bowel-register-preview needs-input"
+        class="bowel-register-preview needs-input ui09-preview"
       >
         対象者と排便量を確認してください
       </div>
 
-
       <button
         id="registerButton"
+        class="ui09-primary-button"
         onclick="register()"
       >
         排便を登録
       </button>
 
-
-      <p
-        id="result"
-        class="bowel-result-message"
-      >
+      <p id="result" class="bowel-result-message ui09-result">
         現在の状態を表示します
       </p>
+    </section>
 
-    </div>
+    <details class="ui09-details">
+      <summary>詳細・修正・勤務帯確認</summary>
 
+      <section class="ui09-subpanel">
+        <div class="ui09-kicker">最終排便日</div>
+        <div id="bowelLastDateCurrent" class="ui09-big-value">-</div>
+        <input type="date" id="lastDate">
+        <button onclick="changeLastDate()">最終排便日を変更</button>
+      </section>
 
-    <div class="bowel-entry-card">
-
-      <div class="bowel-entry-title">
-        <h3>📅 最終排便日</h3>
-      </div>
-
-      <div class="bowel-last-date-current">
-        <div class="bowel-target-caption">
-          現在の最終排便日
+      <section class="ui09-subpanel">
+        <div class="ui09-kicker">今日の記録</div>
+        <span id="bowelTodayDateLabel"></span>
+        <div id="bowelTodayHistory">
+          <div class="bowel-today-empty">今日の記録はありません</div>
         </div>
-
-        <div
-          id="bowelLastDateCurrent"
-          class="bowel-last-date-value"
+        <button
+          type="button"
+          class="ui09-secondary-button"
+          onclick="openPage('historyPage')"
         >
-          -
-        </div>
-      </div>
+          履歴を見る
+        </button>
+      </section>
 
-      <label
-        class="bowel-field-label"
-        for="lastDate"
-      >
-        修正する日付
-      </label>
+      <section class="ui09-subpanel">
+        <h3>☀️ 日中帯</h3>
+        <p>8:00 ～ 16:00</p>
+        <button onclick="checkTodayBowelStatus()">日中帯の排便状況を確認</button>
+        <div id="bowelCheckResult"></div>
+      </section>
 
-      <input
-        type="date"
-        id="lastDate"
-      >
+      <section id="nightConfirmArea" class="ui09-subpanel">
+        <h3>🌙 夜勤帯</h3>
+        <p>16:00 ～ 翌8:00</p>
+        <button onclick="checkNightBowelStatus()">夜勤帯の排便状況を確認</button>
+        <div id="nightBowelCheckResult"></div>
+      </section>
 
-      <button onclick="changeLastDate()">
-        最終排便日を変更
-      </button>
-
-    </div>
-
-
-    <div class="bowel-entry-card">
-
-      <div class="bowel-entry-title">
-        <h3>📋 今日の記録</h3>
-        <span
-          id="bowelTodayDateLabel"
-          class="bowel-target-caption"
-        ></span>
-      </div>
-
-      <div id="bowelTodayHistory">
-        <div class="bowel-today-empty">
-          今日の記録はありません
-        </div>
-      </div>
-
-      <button
-        type="button"
-        class="bowel-history-detail-button"
-        onclick="openPage('historyPage')"
-      >
-        履歴を詳しく見る
-      </button>
-
-    </div>
-
-
-    <h2>勤務帯の排便確認</h2>
-
-
-    <!-- 日中 -->
-    <div class="summary-card">
-
-      <h3>☀️ 日中帯</h3>
-
-      <p>8:00 ～ 16:00</p>
-
-      <button onclick="checkTodayBowelStatus()">
-        日中帯の排便状況を確認
-      </button>
-
-      <div id="bowelCheckResult"></div>
-
-    </div>
-
-
-    <!-- 夜勤 -->
-    <div
-      id="nightConfirmArea"
-      class="summary-card"
-    >
-
-      <h3>🌙 夜勤帯</h3>
-
-      <p>
-        16:00 ～ 翌8:00
-      </p>
-
-      <button onclick="checkNightBowelStatus()">
-        夜勤帯の排便状況を確認
-      </button>
-
-      <div id="nightBowelCheckResult"></div>
-
-    </div>
-
-
-    <!-- 集計状況 -->
-    <div id="dailyConfirmArea">
-
-      <h2>排便確認状況</h2>
-
-      <button
-        id="dailyConfirmRefreshButton"
-        onclick="manualRefreshDailyConfirm()"
-      >
-        🔄 更新
-      </button>
-
-      <div id="dailyConfirmStatus">
-        読み込み中...
-      </div>
-
-    </div>
+      <section id="dailyConfirmArea" class="ui09-subpanel">
+        <h3>排便確認状況</h3>
+        <button
+          id="dailyConfirmRefreshButton"
+          onclick="manualRefreshDailyConfirm()"
+        >
+          🔄 更新
+        </button>
+        <div id="dailyConfirmStatus">読み込み中...</div>
+      </section>
+    </details>
 
   </section>
 
 
   <!-- =========================
-       投薬
+       対応 Ver.0.9
   ========================== -->
   <section
     id="medicinePage"
-    class="app-page"
+    class="app-page ui09-page"
   >
 
-    <div class="action-ui-head">
-      <div class="action-ui-title">対応</div>
-      <div id="actionTodayDate" class="action-ui-date"></div>
+    <div class="ui09-page-head">
+      <div>
+        <div id="actionTodayDate" class="ui09-date"></div>
+        <div class="ui09-unit">対応</div>
+      </div>
+      <div class="ui09-page-title">対応</div>
     </div>
 
     <div id="medicineNurseAlert"></div>
 
-    <div class="action-ui-summary">
-      <div class="action-ui-summary-card">
-        <div class="action-ui-summary-label">未実施</div>
-        <div id="actionPendingCount" class="action-ui-summary-number">0<span>件</span></div>
-      </div>
-      <div class="action-ui-summary-card">
-        <div class="action-ui-summary-label">実施済み</div>
-        <div id="actionCompletedCount" class="action-ui-summary-number">0<span>件</span></div>
-      </div>
-    </div>
-
-    <div class="action-ui-tabs">
+    <div class="ui09-segmented action-ui-tabs">
       <button
-        id="actionPendingTab"
+        id="actionCurrentTab"
         type="button"
         class="active"
-        onclick="showActionPageMode('pending')"
+        onclick="showActionPageMode('current')"
       >
-        未実施
+        現在
+      </button>
+      <button
+        id="actionPlannedTab"
+        type="button"
+        onclick="showActionPageMode('planned')"
+      >
+        予定
       </button>
       <button
         id="actionCompletedTab"
         type="button"
         onclick="showActionPageMode('completed')"
       >
-        実施済み
+        完了
       </button>
     </div>
 
-    <div id="actionPendingPanel" class="action-ui-panel">
-      <div id="todayTarget">まだ対象者はいません</div>
+    <div class="ui09-action-meta">
+      <span>現在 <strong id="actionPendingCount">0件</strong></span>
+      <span>完了 <strong id="actionCompletedCount">0件</strong></span>
+    </div>
+
+    <div id="actionCurrentPanel" class="action-ui-panel">
+      <div id="todayTarget">現在の対応を確認しています...</div>
+    </div>
+
+    <div id="actionPlannedPanel" class="action-ui-panel hidden">
+      <div id="plannedTarget">予定を確認しています...</div>
     </div>
 
     <div id="actionCompletedPanel" class="action-ui-panel hidden">
       <div id="completedList">まだ実施記録はありません</div>
     </div>
 
-    <details class="action-report-panel">
-      <summary>📋 対応報告を作成</summary>
+    <details class="ui09-details compact">
+      <summary>対応報告を作成</summary>
       <div class="action-report-body">
-        <button onclick="createMedicineReport()">
-          対応報告を作成
-        </button>
+        <button onclick="createMedicineReport()">対応報告を作成</button>
         <div id="medicineReport"></div>
       </div>
     </details>
 
+    <!-- 旧JS互換 -->
+    <button id="actionPendingTab" type="button" class="home-hidden-compat"></button>
+    <div id="actionPendingPanel" class="home-hidden-compat"></div>
+
   </section>
 
   <!-- =========================
-       履歴 Ver.0.8.32
+       履歴 Ver.0.9
   ========================== -->
   <section
     id="historyPage"
-    class="app-page"
+    class="app-page ui09-page"
   >
 
-    <h2>履歴</h2>
+    <div class="ui09-simple-head">
+      <h2>履歴</h2>
+      <span id="historyCountPill" class="ui09-count-pill">0件</span>
+    </div>
 
-    <div class="history-section">
+    <div class="ui09-history-search">
+      <input
+        id="ui09HistorySearch"
+        type="search"
+        placeholder="利用者名で検索"
+        oninput="renderHistoryView()"
+      >
+    </div>
 
-      <div class="history-ui-tabs">
-        <button
-          id="historyTodayTab"
-          type="button"
-          class="active"
-          onclick="setHistoryViewMode('today')"
-        >
-          今日
-        </button>
+    <div class="ui09-segmented history-ui-tabs">
+      <button
+        id="historyTodayTab"
+        type="button"
+        class="active"
+        onclick="setHistoryViewMode('today')"
+      >
+        今日
+      </button>
+      <button
+        id="historyPastTab"
+        type="button"
+        onclick="setHistoryViewMode('past')"
+      >
+        過去
+      </button>
+    </div>
 
-        <button
-          id="historyPastTab"
-          type="button"
-          onclick="setHistoryViewMode('past')"
-        >
-          過去
-        </button>
-      </div>
+    <details class="ui09-details compact">
+      <summary>絞り込み</summary>
 
-      <div class="history-filter-card">
-
-        <div class="history-filter-head">
-          <div class="history-filter-title">
-            絞り込み
-          </div>
-
-          <div
-            id="historyAccountNote"
-            class="history-account-note"
-          ></div>
-        </div>
+      <div class="history-filter-card ui09-filter-panel">
+        <div id="historyAccountNote" class="history-account-note"></div>
 
         <div class="history-filter-grid">
-
           <div class="history-filter-field">
-            <label for="historyUserFilter">
-              利用者
-            </label>
-
+            <label for="historyUserFilter">利用者</label>
             <select
               id="historyUserFilter"
               onchange="onHistoryFilterChange()"
@@ -6226,27 +6696,20 @@ h3 {
             id="historyDateFilterWrap"
             class="history-filter-field hidden"
           >
-            <label for="historyDateFilter">
-              日付
-            </label>
-
+            <label for="historyDateFilter">日付</label>
             <input
               id="historyDateFilter"
               type="date"
               onchange="onHistoryFilterChange()"
             >
           </div>
-
         </div>
 
         <div
           id="historyUnitFilterWrap"
           class="history-filter-field history-unit-filter-wrap hidden"
         >
-          <label for="historyUnitFilter">
-            ユニット
-          </label>
-
+          <label for="historyUnitFilter">ユニット</label>
           <select
             id="historyUnitFilter"
             onchange="onHistoryUnitFilterChange()"
@@ -6258,42 +6721,74 @@ h3 {
         <button
           type="button"
           class="history-filter-clear"
-          onclick="clearHistoryFilters()"
+          onclick="clearHistoryFilters(); document.getElementById('ui09HistorySearch').value='';"
         >
           絞り込みを解除
         </button>
-
       </div>
+    </details>
 
-      <div class="history-ui-summary">
-        <span id="historyListTitle">
-          今日の記録
-        </span>
-
-        <span
-          id="historyCountPill"
-          class="history-ui-count"
-        >
-          0件
-        </span>
-      </div>
-
-      <div id="history">
-        まだ履歴はありません
-      </div>
-
-      <button
-        id="historyLoadMoreButton"
-        type="button"
-        class="history-load-more hidden"
-        onclick="loadMoreHistory()"
-      >
-        さらに50件表示
-        <small id="historyLoadMoreText"></small>
-      </button>
-
+    <div class="history-ui-summary">
+      <span id="historyListTitle">今日の記録</span>
     </div>
 
+    <div id="history">まだ履歴はありません</div>
+
+    <button
+      id="historyLoadMoreButton"
+      type="button"
+      class="history-load-more hidden"
+      onclick="loadMoreHistory()"
+    >
+      さらに50件表示
+      <small id="historyLoadMoreText"></small>
+    </button>
+
+  </section>
+
+
+  <!-- =========================
+       利用者詳細 Ver.0.9
+  ========================== -->
+  <section
+    id="residentDetailPage"
+    class="app-page ui09-page"
+  >
+    <div class="ui09-detail-topbar">
+      <button
+        type="button"
+        class="ui09-back-button"
+        onclick="closeResidentDetail()"
+      >
+        ‹ 戻る
+      </button>
+      <strong>利用者詳細</strong>
+      <span></span>
+    </div>
+
+    <div id="residentDetailHeader"></div>
+
+    <div class="ui09-segmented ui09-resident-tabs">
+      <button
+        id="residentTabSummary"
+        class="active"
+        onclick="setResidentDetailTab('summary')"
+      >サマリー</button>
+      <button
+        id="residentTabRules"
+        onclick="setResidentDetailTab('rules')"
+      >ルール</button>
+      <button
+        id="residentTabHistory"
+        onclick="setResidentDetailTab('history')"
+      >履歴</button>
+      <button
+        id="residentTabEvaluation"
+        onclick="setResidentDetailTab('evaluation')"
+      >評価</button>
+    </div>
+
+    <div id="residentDetailBody"></div>
   </section>
 
 
@@ -6307,6 +6802,13 @@ h3 {
   >
 
     <div class="rule-view-page-head">
+      <button
+        type="button"
+        class="ui09-back-button"
+        onclick="openPage('otherPage')"
+      >
+        ‹ その他
+      </button>
       <h2>個別ルール</h2>
       <div class="rule-view-readonly">閲覧専用</div>
     </div>
@@ -6468,6 +6970,26 @@ h3 {
       </div>
     </div>
 
+
+    <div class="other-section-title">
+      確認
+    </div>
+
+    <section class="other-menu-list">
+      <button
+        class="other-menu-row"
+        onclick="openRuleListFromOther()"
+      >
+        <div class="other-menu-left">
+          <div class="other-menu-icon rule">📋</div>
+          <div>
+            <div class="other-menu-title">個別ルール一覧</div>
+            <div class="other-menu-sub">利用者ごとのルールを確認</div>
+          </div>
+        </div>
+        <div class="other-menu-chevron">›</div>
+      </button>
+    </section>
 
     <!-- 管理者機能 -->
     <div id="adminArea">
@@ -6757,7 +7279,7 @@ h3 {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.8.53
+          Ver.0.9.0
         </span>
       </div>
 
@@ -6776,9 +7298,9 @@ h3 {
 
 
   <!-- =========================
-       下部ナビ
+       下部ナビ Ver.0.9
   ========================== -->
-  <nav class="bottom-nav">
+  <nav class="bottom-nav ui09-bottom-nav">
 
     <button
       class="nav-button active"
@@ -6789,26 +7311,23 @@ h3 {
       <small>ホーム</small>
     </button>
 
-
     <button
       class="nav-button"
       data-page="bowelPage"
       onclick="openPage('bowelPage')"
     >
-      <span>💩</span>
-      <small>排便</small>
+      <span>◇</span>
+      <small>排便入力</small>
     </button>
-
 
     <button
       class="nav-button"
       data-page="medicinePage"
       onclick="openPage('medicinePage')"
     >
-      <span>💊</span>
+      <span>●</span>
       <small>対応</small>
     </button>
-
 
     <button
       class="nav-button"
@@ -6818,17 +7337,6 @@ h3 {
       <span>◷</span>
       <small>履歴</small>
     </button>
-
-
-    <button
-      class="nav-button"
-      data-page="rulePage"
-      onclick="openPage('rulePage')"
-    >
-      <span>📋</span>
-      <small>ルール</small>
-    </button>
-
 
     <button
       class="nav-button"
@@ -7092,7 +7600,7 @@ let pendingBowelResolveTimer = null;
 
 
 /*
-  Ver.0.8.53
+  Ver.0.9.0
   与薬実施チェックの保存結果が未確定な操作。
 
   安全原則：
@@ -9242,7 +9750,7 @@ function getNoBowelDays(user) {
 }
 
 
-let actionPageMode = "pending";
+let actionPageMode = "current";
 
 
 function getActionPendingData() {
@@ -9432,11 +9940,14 @@ function updateActionPageMeta() {
   const completed =
     getActionCompletedData();
 
-  const pendingCount =
+  const currentCount =
     pending.regular.length +
     pending.nurse.filter(item =>
       item.status === "pending"
     ).length;
+
+  const plannedCount =
+    getActionPlannedData().length;
 
   const completedCount =
     completed.regular.length +
@@ -9453,20 +9964,23 @@ function updateActionPageMeta() {
     );
 
   if (pendingArea) {
-    pendingArea.innerHTML =
-      pendingCount +
-      "<span>件</span>";
+    pendingArea.textContent =
+      currentCount + "件";
   }
 
   if (completedArea) {
-    completedArea.innerHTML =
-      completedCount +
-      "<span>件</span>";
+    completedArea.textContent =
+      completedCount + "件";
   }
 
-  const pendingTab =
+  const currentTab =
     document.getElementById(
-      "actionPendingTab"
+      "actionCurrentTab"
+    );
+
+  const plannedTab =
+    document.getElementById(
+      "actionPlannedTab"
     );
 
   const completedTab =
@@ -9474,14 +9988,19 @@ function updateActionPageMeta() {
       "actionCompletedTab"
     );
 
-  if (pendingTab) {
-    pendingTab.textContent =
-      "未実施 " + pendingCount;
+  if (currentTab) {
+    currentTab.textContent =
+      "現在 (" + currentCount + ")";
+  }
+
+  if (plannedTab) {
+    plannedTab.textContent =
+      "予定 (" + plannedCount + ")";
   }
 
   if (completedTab) {
     completedTab.textContent =
-      "実施済み " + completedCount;
+      "完了 (" + completedCount + ")";
   }
 }
 
@@ -9489,59 +10008,209 @@ function updateActionPageMeta() {
 function showActionPageMode(mode) {
 
   actionPageMode =
-    mode === "completed"
-      ? "completed"
-      : "pending";
+    ["current","planned","completed"]
+      .includes(mode)
+        ? mode
+        : "current";
 
-  const pendingPanel =
-    document.getElementById(
-      "actionPendingPanel"
-    );
+  const panels = {
+    current:
+      document.getElementById(
+        "actionCurrentPanel"
+      ),
+    planned:
+      document.getElementById(
+        "actionPlannedPanel"
+      ),
+    completed:
+      document.getElementById(
+        "actionCompletedPanel"
+      )
+  };
 
-  const completedPanel =
-    document.getElementById(
-      "actionCompletedPanel"
-    );
+  const tabs = {
+    current:
+      document.getElementById(
+        "actionCurrentTab"
+      ),
+    planned:
+      document.getElementById(
+        "actionPlannedTab"
+      ),
+    completed:
+      document.getElementById(
+        "actionCompletedTab"
+      )
+  };
 
-  const pendingTab =
-    document.getElementById(
-      "actionPendingTab"
-    );
-
-  const completedTab =
-    document.getElementById(
-      "actionCompletedTab"
-    );
-
-  if (pendingPanel) {
-    pendingPanel.classList.toggle(
+  for (const key in panels) {
+    panels[key]?.classList.toggle(
       "hidden",
-      actionPageMode !== "pending"
+      key !== actionPageMode
     );
   }
 
-  if (completedPanel) {
-    completedPanel.classList.toggle(
-      "hidden",
-      actionPageMode !== "completed"
-    );
-  }
-
-  if (pendingTab) {
-    pendingTab.classList.toggle(
+  for (const key in tabs) {
+    tabs[key]?.classList.toggle(
       "active",
-      actionPageMode === "pending"
+      key === actionPageMode
     );
   }
 
-  if (completedTab) {
-    completedTab.classList.toggle(
-      "active",
-      actionPageMode === "completed"
-    );
-  }
-
+  renderActionPlannedPanel();
   updateActionPageMeta();
+}
+
+
+function getActionPlannedData() {
+
+  const now = new Date();
+
+  const hour =
+    now.getHours() +
+    now.getMinutes() / 60;
+
+  const result = [];
+
+  for (const user in lastDates) {
+
+    if (
+      currentUnit !== "all" &&
+      userUnits[user] !== currentUnit
+    ) {
+      continue;
+    }
+
+    const days =
+      getNoBowelDays(user);
+
+    for (
+      const rule of
+      getRulesForDay(
+        user,
+        days
+      )
+    ) {
+
+      if (
+        getRuleWindowState(
+          rule,
+          hour
+        ) === "upcoming" &&
+        !isRuleChecked(
+          user,
+          days,
+          rule
+        )
+      ) {
+        result.push({
+          user,
+          days,
+          rule,
+          when: "本日予定"
+        });
+      }
+    }
+  }
+
+  const base =
+    getActionPendingData();
+
+  for (
+    const item of
+    base.tomorrow
+  ) {
+    result.push({
+      ...item,
+      when: "明日朝"
+    });
+  }
+
+  return result;
+}
+
+
+function renderActionPlannedPanel() {
+
+  const area =
+    document.getElementById(
+      "plannedTarget"
+    );
+
+  if (!area) {
+    return;
+  }
+
+  const items =
+    getActionPlannedData();
+
+  if (items.length === 0) {
+    area.innerHTML = `
+      <div class="action-empty">
+        現在、予定されている対応はありません
+      </div>
+    `;
+    return;
+  }
+
+  area.innerHTML =
+    items.map(item => {
+
+      const rule =
+        item.rule;
+
+      const detail =
+        getActionRuleDetailPayload(
+          item.user,
+          item.days,
+          rule
+        );
+
+      const safeUser =
+        encodeURIComponent(
+          item.user
+        );
+
+      return `
+        <div class="action-item-card future">
+          <div class="action-card-top">
+            <div>
+              <button
+                type="button"
+                class="ui09-resident-link"
+                onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
+              >
+                ${escapeHtml(formatResidentName(item.user))}
+              </button>
+              <div class="action-badges">
+                <span class="action-badge future">
+                  ${escapeHtml(item.when)}
+                </span>
+                <span class="action-badge time">
+                  ${escapeHtml(getRuleTimingLabel(rule))}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="action-detail-button"
+              onclick="openActionRuleDetail('${detail}')"
+            >
+              詳細
+            </button>
+          </div>
+
+          <div class="action-content-main">
+            ${getRuleKindIcon(rule)}
+            ${escapeHtml(rule.content)}
+          </div>
+
+          <div class="action-content-sub">
+            未排便${item.days}日目
+          </div>
+        </div>
+      `;
+    }).join("");
 }
 
 
@@ -9802,6 +10471,8 @@ function renderActionPage() {
     completed.innerHTML =
       getCompletedListHtml();
   }
+
+  renderActionPlannedPanel();
 
   updateActionPageMeta();
 
@@ -10196,9 +10867,32 @@ function getHomeUrgentData() {
         !info.instruction
       );
 
+  const evaluationDue =
+    getActiveRuleEvaluations()
+      .filter(item =>
+        isRuleEvaluationDue(
+          item
+        ) ||
+        isScheduledRuleEvaluationDateReached(
+          item
+        )
+      );
+
+  const pendingSaveCount =
+    Object.keys(
+      pendingCheckOperations || {}
+    ).length +
+    (
+      pendingBowelOperation
+        ? 1
+        : 0
+    );
+
   return {
     pendingShifts,
-    nurseWaiting
+    nurseWaiting,
+    evaluationDue,
+    pendingSaveCount
   };
 }
 
@@ -10224,9 +10918,19 @@ function updateHomeUrgentSummary() {
   const nurseCount =
     data.nurseWaiting.length;
 
+  const evaluationCount =
+    data.evaluationDue.length;
+
+  const saveCount =
+    Number(
+      data.pendingSaveCount || 0
+    );
+
   const total =
     shiftCount +
-    nurseCount;
+    nurseCount +
+    evaluationCount +
+    saveCount;
 
 
   const title =
@@ -10249,6 +10953,16 @@ function updateHomeUrgentSummary() {
       "homeUrgentNurseCount"
     );
 
+  const evaluationArea =
+    document.getElementById(
+      "homeUrgentEvaluationCount"
+    );
+
+  const saveArea =
+    document.getElementById(
+      "homeUrgentSaveCount"
+    );
+
 
   if (total === 0) {
 
@@ -10258,7 +10972,7 @@ function updateHomeUrgentSummary() {
 
     if (title) {
       title.textContent =
-        "✅ 要確認なし";
+        "✅ 特別な確認事項なし";
     }
 
   } else {
@@ -10287,6 +11001,16 @@ function updateHomeUrgentSummary() {
   if (nurseArea) {
     nurseArea.textContent =
       nurseCount + "件";
+  }
+
+  if (evaluationArea) {
+    evaluationArea.textContent =
+      evaluationCount + "件";
+  }
+
+  if (saveArea) {
+    saveArea.textContent =
+      saveCount + "件";
   }
 }
 
@@ -10788,14 +11512,8 @@ function updateHomeCompletionStatus() {
 
 function updateHomeMedicineStatus() {
 
-  /*
-    対応ページ用の看護師アラートは
-    従来どおり更新する。
-    ホームでは件数だけを要約表示。
-  */
   updateNurseAlerts();
   updateHomeDashboardMeta();
-
 
   const area =
     document.getElementById(
@@ -10806,219 +11524,122 @@ function updateHomeMedicineStatus() {
     return;
   }
 
+  const data =
+    getActionPendingData();
 
-  const now = new Date();
-
-  const hour =
-    now.getHours() +
-    now.getMinutes() / 60;
-
-  let totalCount = 0;
-  let completedCount = 0;
-  let remainingCount = 0;
-
-  let remainingLaxative = 0;
-  let remainingProcedure = 0;
-  let remainingNurse = 0;
-
-
-  for (const user in lastDates) {
-
-    if (
-      currentUnit !== "all" &&
-      userUnits[user] !==
-        currentUnit
-    ) {
-      continue;
-    }
-
-    const days =
-      getNoBowelDays(user);
-
-    const activeRules =
-      getRulesForDay(
-        user,
-        days
-      )
-      .filter(rule =>
-        isRuleActiveNow(
-          rule,
-          hour
-        )
-      );
-
-
-    for (
-      const rule of
-        activeRules
-    ) {
-
-      totalCount++;
-
-      if (
-        isRuleChecked(
-          user,
-          days,
-          rule
-        )
-      ) {
-
-        completedCount++;
-
-      } else {
-
-        remainingCount++;
-
-        if (
-          rule.kind ===
-            "procedure"
-        ) {
-          remainingProcedure++;
-        } else {
-          remainingLaxative++;
-        }
-      }
-    }
-  }
-
-
-  const todayText =
-    getTodayText();
-
+  const items = [];
 
   for (
     const item of
-      nurseInstructions
-        .map(
-          normalizeNurseInstruction
-        )
+    data.regular
   ) {
-
-    if (
-      currentUnit !== "all" &&
-      userUnits[item.user] !==
-        currentUnit
-    ) {
-      continue;
-    }
-
-
-    if (
-      item.status === "pending" &&
-      isNurseInstructionCurrentCycle(
-        item
-      ) &&
-      item.targetDate <=
-        todayText
-    ) {
-
-      totalCount++;
-      remainingCount++;
-      remainingNurse++;
-    }
-
-
-    if (
-      item.status === "completed" &&
-      String(
-        item.completedAt || ""
-      ).slice(0, 10) ===
-        todayText
-    ) {
-
-      totalCount++;
-      completedCount++;
-    }
+    items.push({
+      type: "rule",
+      user: item.user,
+      rule: item.rule
+    });
   }
 
+  for (
+    const item of
+    data.nurse.filter(
+      item =>
+        item.status === "pending"
+    )
+  ) {
+    items.push({
+      type: "nurse",
+      user: item.user,
+      item: item
+    });
+  }
 
-  latestHomeActionMetrics = {
-    totalCount,
-    completedCount,
-    remainingCount,
-    remainingLaxative,
-    remainingProcedure,
-    remainingNurse
-  };
+  if (items.length === 0) {
 
+    area.innerHTML = `
+      <div class="ui09-empty">
+        ✅ 現在、対応が必要なものはありません
+      </div>
+    `;
 
-  const title =
-    remainingCount > 0
-      ? "💊 未実施"
-      : totalCount > 0
-        ? "✅ 対応完了"
-        : "🎉 対象なし";
+    updateHomeUrgentSummary();
+    updateHomeCompletionStatus();
+    return;
+  }
 
+  const visible =
+    items.slice(
+      0,
+      3
+    );
 
   area.innerHTML = `
-    <div class="home-current-action-card">
-
-      <div class="home-current-action-main">
-
-        <div>
-          <div class="home-current-action-title">
-            ${title}
-          </div>
-
-          <div class="home-current-action-note">
-            ${
-              remainingCount > 0
-                ? "まだ対応が必要なもの"
-                : totalCount > 0
-                  ? "現在表示中の対応は完了しています"
-                  : "現在の対応対象者はいません"
-            }
-          </div>
-        </div>
-
-        <div class="home-current-action-number">
-          ${remainingCount}
-          <small>件</small>
-        </div>
-
-      </div>
-
-      <div class="home-action-breakdown">
-
-        <div class="home-action-stat">
-          <strong>${remainingLaxative}</strong>
-          <span>緩下剤</span>
-        </div>
-
-        <div class="home-action-stat">
-          <strong>${remainingProcedure}</strong>
-          <span>排便処置</span>
-        </div>
-
-        <div class="home-action-stat">
-          <strong>${remainingNurse}</strong>
-          <span>看護師指示</span>
-        </div>
-
-      </div>
-
+    <div class="ui09-home-action-list">
       ${
-        remainingCount === 0 &&
-        totalCount > 0
+        visible.map(entry => {
+
+          const safeUser =
+            encodeURIComponent(
+              entry.user
+            );
+
+          if (
+            entry.type === "nurse"
+          ) {
+
+            const item =
+              entry.item;
+
+            return `
+              <button
+                type="button"
+                class="ui09-home-action-item nurse"
+                onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'homePage')"
+              >
+                <div class="ui09-home-action-icon">🩺</div>
+                <div class="ui09-home-action-copy">
+                  <strong>${escapeHtml(formatResidentName(entry.user))}</strong>
+                  <span>${escapeHtml(item.content || "看護師指示あり")}</span>
+                </div>
+                <span class="action-badge nurse">看護師</span>
+              </button>
+            `;
+          }
+
+          const rule =
+            entry.rule;
+
+          return `
+            <button
+              type="button"
+              class="ui09-home-action-item"
+              onclick="openPage('medicinePage'); showActionPageMode('current');"
+            >
+              <div class="ui09-home-action-icon">
+                ${getRuleKindIcon(rule)}
+              </div>
+              <div class="ui09-home-action-copy">
+                <strong>${escapeHtml(formatResidentName(entry.user))}</strong>
+                <span>${escapeHtml(rule.content)}</span>
+              </div>
+              <span class="action-badge time">
+                ${escapeHtml(getRuleTimingLabel(rule))}
+              </span>
+            </button>
+          `;
+        }).join("")
+      }
+      ${
+        items.length > 3
           ? `
-            <div class="home-current-action-complete">
-              ✅ 現在表示中の対応はすべて実施済みです
+            <div class="ui09-more-note">
+              ほか ${items.length - 3}件
             </div>
           `
           : ""
       }
-
-      <button
-        type="button"
-        class="home-current-action-link"
-        onclick="openPage('medicinePage')"
-      >
-        対応を見る →
-      </button>
-
     </div>
   `;
-
 
   updateHomeUrgentSummary();
   updateHomeCompletionStatus();
@@ -15399,7 +16020,7 @@ function updateUserSelects() {
 
 
   /*
-    Ver.0.8.53
+    Ver.0.9.0
     30秒同期でselectを作り直しても、
     操作中の利用者選択を勝手に先頭へ戻さない。
   */
@@ -16163,7 +16784,7 @@ function createClientRequestId(
 
 
 /*
-  Ver.0.8.53
+  Ver.0.9.0
 
   ログインはGoogle Apps Scriptの一時的な
   404 / timeout を考慮して最大3回まで再試行する。
@@ -17268,8 +17889,30 @@ function getHistoryHtml() {
 
   updateHistoryFilterControls();
 
-  const filtered =
+  let filtered =
     getFilteredHistoriesForView();
+
+  const nameSearch =
+    String(
+      document.getElementById(
+        "ui09HistorySearch"
+      )?.value || ""
+    )
+      .trim()
+      .toLowerCase();
+
+  if (nameSearch) {
+    filtered =
+      filtered.filter(history =>
+        String(
+          history.user || ""
+        )
+          .toLowerCase()
+          .includes(
+            nameSearch
+          )
+      );
+  }
 
   const totalCount =
     filtered.length;
@@ -22879,7 +23522,7 @@ async function changeLastDate() {
     /*
       GAS保存成功後にローカルへ反映する。
 
-      Ver.0.8.53
+      Ver.0.9.0
       手動の最終排便日訂正は「新しい排便成立」ではない。
       現在サイクル用の固定ルールがある場合は、
       サイクルキーだけ新しい日付へ移す。
@@ -23659,7 +24302,7 @@ function resolvePendingBowelOperationAfterSync() {
   }
 
   /*
-    Ver.0.8.53
+    Ver.0.9.0
     timeout後もGAS側保存は続く可能性がある。
     同期でまだ見えないだけでは未保存と断定しない。
   */
@@ -23771,7 +24414,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.8.53 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
+// Ver.0.9.0 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
 // Ver.0.8.44 APIセッション認証
 // ============================================================
 
@@ -24569,7 +25212,7 @@ async function requestSyncDataFromServer(
 
 
       /*
-        Ver.0.8.53
+        Ver.0.9.0
 
         getSyncData は読み取り専用なので、
         timeout後でも同じ同期内で安全に再試行できる。
@@ -24624,7 +25267,7 @@ async function requestSyncDataFromServer(
 */
 
 /*
-  Ver.0.8.53 排便登録の保存結果確認。
+  Ver.0.9.0 排便登録の保存結果確認。
   POST確認が一時的に失敗したら、読み取り専用GETへ切り替える。
 */
 async function getBowelOperationStatusRobust({
@@ -24936,7 +25579,7 @@ async function registerBowelWithRecovery({
 
 
   /*
-    Ver.0.8.53
+    Ver.0.9.0
     保存確認APIも通信不能なら、この場で重い初期同期は投げない。
     未保存とも保存済みとも断定せず、operationIdを保留して
     バックグラウンド確認へ移す。
@@ -26705,6 +27348,518 @@ async function confirmCancelHistory(recordId) {
   }
 }
 
+
+let residentDetailUser = "";
+let residentDetailBackPage = "homePage";
+let residentDetailTab = "summary";
+
+
+function openSelectedResidentDetailFromBowel() {
+
+  const user =
+    document.getElementById(
+      "userSelect"
+    )?.value || "";
+
+  if (!user) {
+
+    showToast(
+      "利用者を選択してください",
+      "warning",
+      3000
+    );
+
+    return;
+  }
+
+  openResidentDetail(
+    user,
+    "bowelPage"
+  );
+}
+
+
+function openResidentDetail(
+  user,
+  backPage = "homePage"
+) {
+
+  const name =
+    String(
+      user || ""
+    ).trim();
+
+  if (!name) {
+    return;
+  }
+
+  residentDetailUser =
+    name;
+
+  residentDetailBackPage =
+    backPage || "homePage";
+
+  residentDetailTab =
+    "summary";
+
+  renderResidentDetail();
+
+  openPage(
+    "residentDetailPage"
+  );
+}
+
+
+function closeResidentDetail() {
+
+  openPage(
+    residentDetailBackPage ||
+    "homePage"
+  );
+}
+
+
+function setResidentDetailTab(
+  tab
+) {
+
+  residentDetailTab =
+    ["summary","rules","history","evaluation"]
+      .includes(tab)
+        ? tab
+        : "summary";
+
+  renderResidentDetail();
+}
+
+
+function openRuleListFromOther() {
+
+  const search =
+    document.getElementById(
+      "ruleViewSearch"
+    );
+
+  if (search) {
+    search.value = "";
+  }
+
+  openPage(
+    "rulePage"
+  );
+}
+
+
+function openResidentRuleList(
+  user
+) {
+
+  const search =
+    document.getElementById(
+      "ruleViewSearch"
+    );
+
+  if (search) {
+    search.value =
+      String(
+        user || ""
+      );
+  }
+
+  openPage(
+    "rulePage"
+  );
+}
+
+
+function getResidentCurrentNurseInstruction(
+  user
+) {
+
+  return (
+    getLatestCurrentCycleNurseInstruction(
+      user
+    ) || null
+  );
+}
+
+
+function getResidentRuleCount(
+  user
+) {
+
+  const map =
+    getEffectiveRulesForUser(
+      user
+    ) || {};
+
+  let count = 0;
+
+  for (const day in map) {
+    count +=
+      getRulesForDay(
+        user,
+        day
+      ).length;
+  }
+
+  return count;
+}
+
+
+function getResidentEvaluationItems(
+  user
+) {
+
+  return getActiveRuleEvaluations()
+    .filter(item =>
+      String(
+        item.user || ""
+      ) ===
+      String(user)
+    );
+}
+
+
+function getResidentRecentHistories(
+  user,
+  limit = 8
+) {
+
+  return histories
+    .filter(history =>
+      String(
+        history.user || ""
+      ) ===
+      String(user)
+    )
+    .sort((a,b) =>
+      String(b.date || "")
+        .localeCompare(
+          String(a.date || "")
+        )
+    )
+    .slice(
+      0,
+      limit
+    );
+}
+
+
+function getResidentRuleItemsHtml(
+  user
+) {
+
+  const map =
+    getEffectiveRulesForUser(
+      user
+    ) || {};
+
+  const days =
+    Object.keys(map)
+      .map(Number)
+      .filter(Number.isFinite)
+      .sort((a,b) => a - b);
+
+  const rows = [];
+
+  for (const day of days) {
+
+    for (
+      const rule of
+      getRulesForDay(
+        user,
+        day
+      )
+    ) {
+
+      rows.push(`
+        <div class="ui09-rule-item">
+          <div class="title">
+            未排便${day}日目
+            ・${escapeHtml(getRuleTimingLabel(rule))}
+          </div>
+          <div class="meta">
+            ${getRuleKindIcon(rule)}
+            ${escapeHtml(getRuleKindLabel(rule))}
+            ／ ${escapeHtml(rule.content)}
+          </div>
+        </div>
+      `);
+    }
+  }
+
+  if (rows.length === 0) {
+    return `
+      <div class="ui09-empty">
+        個別ルールは登録されていません
+      </div>
+    `;
+  }
+
+  return rows.join("");
+}
+
+
+function renderResidentDetail() {
+
+  if (!residentDetailUser) {
+    return;
+  }
+
+  const user =
+    residentDetailUser;
+
+  const header =
+    document.getElementById(
+      "residentDetailHeader"
+    );
+
+  const body =
+    document.getElementById(
+      "residentDetailBody"
+    );
+
+  if (!header || !body) {
+    return;
+  }
+
+  const info =
+    getUserStatusInfo(
+      user
+    );
+
+  const unit =
+    getUnitName(
+      userUnits[user] || ""
+    );
+
+  header.innerHTML = `
+    <section class="ui09-panel ui09-detail-header-card">
+      <div class="ui09-kicker">
+        ${escapeHtml(unit || "")}
+      </div>
+      <div class="ui09-resident-name">
+        ${escapeHtml(formatResidentName(user))}
+      </div>
+
+      <div class="ui09-state-grid">
+        <div class="ui09-state-box danger">
+          <span>未排便</span>
+          <strong>${info.days}日目</strong>
+        </div>
+        <div class="ui09-state-box">
+          <span>現在ポイント</span>
+          <strong>${escapeHtml(getBowelPointText(info.point))}</strong>
+        </div>
+        <div class="ui09-state-box wide">
+          <span>最終排便</span>
+          <strong>${escapeHtml(formatStatusDate(info.lastDate))}</strong>
+        </div>
+      </div>
+    </section>
+  `;
+
+  const tabs = {
+    summary:
+      document.getElementById(
+        "residentTabSummary"
+      ),
+    rules:
+      document.getElementById(
+        "residentTabRules"
+      ),
+    history:
+      document.getElementById(
+        "residentTabHistory"
+      ),
+    evaluation:
+      document.getElementById(
+        "residentTabEvaluation"
+      )
+  };
+
+  for (const key in tabs) {
+    tabs[key]?.classList.toggle(
+      "active",
+      key === residentDetailTab
+    );
+  }
+
+
+  if (
+    residentDetailTab ===
+      "rules"
+  ) {
+
+    body.innerHTML = `
+      <div class="ui09-detail-section">
+        ${getResidentRuleItemsHtml(user)}
+      </div>
+
+      <button
+        type="button"
+        class="ui09-secondary-button"
+        onclick="openResidentRuleList(decodeURIComponent('${encodeURIComponent(user)}'))"
+      >
+        個別ルール一覧で見る
+      </button>
+    `;
+
+    return;
+  }
+
+
+  if (
+    residentDetailTab ===
+      "history"
+  ) {
+
+    const rows =
+      getResidentRecentHistories(
+        user,
+        10
+      );
+
+    body.innerHTML =
+      rows.length > 0
+        ? rows
+            .map(item =>
+              getHistoryCardHtml(
+                item,
+                "past"
+              )
+            )
+            .join("")
+        : `
+            <div class="ui09-empty">
+              排便履歴はありません
+            </div>
+          `;
+
+    return;
+  }
+
+
+  if (
+    residentDetailTab ===
+      "evaluation"
+  ) {
+
+    const items =
+      getResidentEvaluationItems(
+        user
+      );
+
+    body.innerHTML =
+      items.length > 0
+        ? items.map(item => `
+            <div class="ui09-rule-item">
+              <div class="title">
+                🧪 ${escapeHtml(getRuleEvaluationRuleLabel(item))}
+              </div>
+              <div class="meta">
+                状態：
+                ${escapeHtml(String(item.status || ""))}
+                ／ 評価日：
+                ${escapeHtml(String(item.evaluationDate || "").slice(0,10))}
+              </div>
+            </div>
+          `).join("")
+        : `
+            <div class="ui09-empty">
+              評価中のルールはありません
+            </div>
+          `;
+
+    return;
+  }
+
+
+  const nurse =
+    getResidentCurrentNurseInstruction(
+      user
+    );
+
+  const todayRules =
+    info.remainingToday || [];
+
+  const evalCount =
+    getResidentEvaluationItems(
+      user
+    ).length;
+
+  body.innerHTML = `
+    <section class="ui09-panel ui09-detail-section">
+      <div class="ui09-kicker">今日の対応</div>
+
+      ${
+        todayRules.length > 0
+          ? todayRules.map(rule => `
+              <div class="ui09-detail-row">
+                <span>
+                  ${getRuleKindIcon(rule)}
+                  ${escapeHtml(rule.content)}
+                </span>
+                <span class="action-badge time">
+                  ${escapeHtml(getRuleTimingLabel(rule))}
+                </span>
+              </div>
+            `).join("")
+          : `
+              <div class="ui09-detail-row">
+                <span>現在の通常対応</span>
+                <strong>なし</strong>
+              </div>
+            `
+      }
+
+      <button
+        type="button"
+        class="ui09-secondary-button"
+        onclick="openPage('medicinePage'); showActionPageMode('current');"
+      >
+        対応画面を開く
+      </button>
+    </section>
+
+    <section class="ui09-panel ui09-detail-section">
+      <div class="ui09-kicker">看護師指示</div>
+      <div class="ui09-detail-row">
+        <span>
+          ${
+            nurse
+              ? escapeHtml(
+                  nurse.content ||
+                  getNurseInstructionKindLabel(
+                    nurse
+                  )
+                )
+              : "なし"
+          }
+        </span>
+        ${
+          nurse
+            ? `<span class="action-badge nurse">看護師</span>`
+            : ""
+        }
+      </div>
+    </section>
+
+    <section class="ui09-panel ui09-detail-section">
+      <div class="ui09-detail-row">
+        <span>個別ルール</span>
+        <strong>${getResidentRuleCount(user)}件</strong>
+      </div>
+      <div class="ui09-detail-row">
+        <span>評価中ルール</span>
+        <strong>${evalCount}件</strong>
+      </div>
+    </section>
+  `;
+}
+
+
 function getTodayText() {
 
   const today = new Date();
@@ -26740,6 +27895,20 @@ function openPage(pageId) {
     targetPage.classList.add("active");
   }
 
+  const headerUnit =
+    document.getElementById(
+      "ui09HeaderUnit"
+    );
+
+  if (headerUnit) {
+    headerUnit.textContent =
+      currentUnit === "all"
+        ? "全ユニット"
+        : getUnitName(
+            currentUnit
+          );
+  }
+
 
   if (pageId === "bowelPage") {
 
@@ -26753,10 +27922,19 @@ function openPage(pageId) {
 
   if (pageId === "medicinePage") {
 
-    updateActionPageMeta();
+    renderActionPage();
+
     showActionPageMode(
       actionPageMode
     );
+  }
+
+  if (pageId === "historyPage") {
+    renderHistoryView();
+  }
+
+  if (pageId === "residentDetailPage") {
+    renderResidentDetail();
   }
 
 
@@ -26911,7 +28089,7 @@ async function loadLightSyncDataFromGoogle() {
 
   // =========================
   // ルール / サイクル固定ルール
-  // Ver.0.8.53
+  // Ver.0.9.0
   // ルール変更を30秒以内に他端末へ反映する。
   // =========================
 
