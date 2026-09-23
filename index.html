@@ -5574,7 +5574,7 @@ h3 {
 
 
 /* ============================================================
-   Ver.0.9.1 UI REFRESH
+   Ver.0.9.4 UI REFRESH
    既存ロジックを維持し、表示階層だけを再設計
 ============================================================ */
 
@@ -6224,7 +6224,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.1 排便入力
+   Ver.0.9.4 排便入力
 ============================================================ */
 
 .ui09-hidden-select {
@@ -6318,6 +6318,89 @@ body {
   }
 }
 
+
+/* ============================================================
+   Ver.0.9.4 ポイント表示 / 通信状態
+============================================================ */
+
+/*
+  表示上の「2点」と内部6ポイント閾値を混同しないよう、
+  /6点 は表示しない。
+  例：内部5 → 「少2+少」
+*/
+#bowelTargetPoint {
+  white-space: nowrap;
+}
+
+/*
+  通信状態はスクロールしても常に確認できるようにする。
+  ヘッダー直下に固定し、同期中・警告・エラー時は
+  視認性を少し上げる。
+*/
+.sync-status-bar {
+  position: sticky;
+  top: 58px;
+  z-index: 78;
+
+  margin:
+    0
+    14px
+    12px;
+
+  border-radius: 0 0 12px 12px;
+
+  box-shadow:
+    0 5px 14px
+    rgba(31, 70, 78, .08);
+
+  backdrop-filter:
+    blur(8px);
+
+  -webkit-backdrop-filter:
+    blur(8px);
+}
+
+.sync-status-bar:not(.sync-ok):not(.sync-warning):not(.sync-error) {
+  border-color: #bdd9ee;
+  background: rgba(241, 248, 253, .97);
+  color: #315f7a;
+}
+
+.sync-status-bar:not(.sync-ok):not(.sync-warning):not(.sync-error)
+.sync-status-dot {
+  background: #3d78c7;
+  animation:
+    ui092SyncPulse
+    1.15s ease-in-out infinite;
+}
+
+.sync-status-bar.sync-warning,
+.sync-status-bar.sync-error {
+  font-weight: 850;
+}
+
+@keyframes ui092SyncPulse {
+  0%, 100% {
+    opacity: .45;
+    transform: scale(.85);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+
+@media (max-width: 480px) {
+  .sync-status-bar {
+    top: 58px;
+    margin-left: 10px;
+    margin-right: 10px;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+
 </style>
 </head>
 
@@ -6357,7 +6440,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.1</div>
+      <div class="ui09-brand-version">Ver.0.9.4</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -6553,7 +6636,7 @@ body {
           <strong id="bowelTargetDays">-</strong>
         </div>
         <div class="ui09-state-box">
-          <span>現在</span>
+          <span>排便累計</span>
           <strong id="bowelTargetPoint">-</strong>
         </div>
         <div class="ui09-state-box wide">
@@ -7420,7 +7503,7 @@ body {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.9.1
+          Ver.0.9.4
         </span>
       </div>
 
@@ -7741,7 +7824,7 @@ let pendingBowelResolveTimer = null;
 
 
 /*
-  Ver.0.9.1
+  Ver.0.9.4
   与薬実施チェックの保存結果が未確定な操作。
 
   安全原則：
@@ -8567,7 +8650,7 @@ function updateBowelTargetUI(
 
     if (pointArea) {
       pointArea.textContent =
-        "- / 6点";
+        "-";
     }
 
     if (lastArea) {
@@ -8626,8 +8709,7 @@ function updateBowelTargetUI(
 
   if (pointArea) {
     pointArea.textContent =
-      getBowelPointText(point) +
-      " / 6点";
+      getBowelPointText(point);
   }
 
   if (lastArea) {
@@ -8680,7 +8762,7 @@ function updateBowelTargetUI(
     if (result) {
       result.textContent =
         user +
-        "　現在ポイント：" +
+        "　排便累計：" +
         getBowelPointText(point);
     }
   }
@@ -8842,7 +8924,7 @@ function selectBowelUser(
     user;
 
   /*
-    Ver.0.9.1
+    Ver.0.9.4
     別利用者へ切り替えたとき、前の人の排便量選択を
     引き継がない。誤登録防止のため必ず未選択へ戻す。
   */
@@ -9015,7 +9097,7 @@ async function register() {
         "result"
       ).textContent =
         user +
-        "　現在ポイント：" +
+        "　排便累計：" +
         getBowelPointText(
           points[user]
         );
@@ -13388,7 +13470,7 @@ async function initialize() {
   }
 
   markSyncLoading(
-    "最新データを同期中…"
+    "最新データを同期中… 登録は同期完了後に行ってください"
   );
 
 
@@ -15283,7 +15365,7 @@ function getStatusHtml() {
             </div>
 
             <div>
-              現在ポイント：
+              排便累計：
               <strong>
                 ${escapeHtml(
                   getBowelPointText(
@@ -15623,7 +15705,7 @@ function openUserStatusDetail(user) {
         </div>
 
         <div class="status-detail-stat">
-          <span>現在ポイント</span>
+          <span>排便累計</span>
           <strong>
             ${escapeHtml(
               getBowelPointText(
@@ -16268,7 +16350,7 @@ function updateUserSelects() {
 
 
   /*
-    Ver.0.9.1
+    Ver.0.9.4
     30秒同期でselectを作り直しても、
     操作中の利用者選択を勝手に先頭へ戻さない。
   */
@@ -17032,7 +17114,7 @@ function createClientRequestId(
 
 
 /*
-  Ver.0.9.1
+  Ver.0.9.4
 
   ログインはGoogle Apps Scriptの一時的な
   404 / timeout を考慮して最大3回まで再試行する。
@@ -17275,7 +17357,7 @@ async function login() {
     );
 
     markSyncLoading(
-      "ログイン済み / 最新データを同期中…"
+      "ログイン済み / 最新データ同期中… 登録は同期完了後に行ってください"
     );
 
     /*
@@ -18346,7 +18428,7 @@ function getHistoryCardHtml(history, group) {
         }
 
         <span class="history-card-badge point">
-          登録後 ${escapeHtml(getBowelPointText(history.point))}
+          累計 ${escapeHtml(getBowelPointText(history.point))}
         </span>
 
         ${
@@ -18411,7 +18493,7 @@ function openHistoryMenu(recordId) {
 
         <br>
 
-        登録後ポイント：${getBowelPointText(history.point)}
+        排便累計：${getBowelPointText(history.point)}
 
       </div>
     `,
@@ -18724,7 +18806,7 @@ async function openRuleEvaluationReview(evaluationId) {
           <div class="rule-evaluation-stat"><span>排便成立</span><strong>${escapeHtml(String(stats.bowelEstablished ?? 0))}回</strong></div>
           <div class="rule-evaluation-stat"><span>排便記録</span><strong>${escapeHtml(String(stats.bowelRecords ?? 0))}件</strong></div>
           <div class="rule-evaluation-stat"><span>現在の最終排便日</span><strong>${escapeHtml(String(stats.currentLastDate || "-"))}</strong></div>
-          <div class="rule-evaluation-stat"><span>現在ポイント</span><strong>${escapeHtml(String(stats.currentPoint ?? 0))}点</strong></div>
+          <div class="rule-evaluation-stat"><span>排便累計</span><strong>${escapeHtml(String(stats.currentPoint ?? 0))}点</strong></div>
         </div>
 
         <div class="rule-evaluation-actions">
@@ -23770,7 +23852,7 @@ async function changeLastDate() {
     /*
       GAS保存成功後にローカルへ反映する。
 
-      Ver.0.9.1
+      Ver.0.9.4
       手動の最終排便日訂正は「新しい排便成立」ではない。
       現在サイクル用の固定ルールがある場合は、
       サイクルキーだけ新しい日付へ移す。
@@ -24550,7 +24632,7 @@ function resolvePendingBowelOperationAfterSync() {
   }
 
   /*
-    Ver.0.9.1
+    Ver.0.9.4
     timeout後もGAS側保存は続く可能性がある。
     同期でまだ見えないだけでは未保存と断定しない。
   */
@@ -24662,7 +24744,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.9.1 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
+// Ver.0.9.4 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
 // Ver.0.8.44 APIセッション認証
 // ============================================================
 
@@ -25460,7 +25542,7 @@ async function requestSyncDataFromServer(
 
 
       /*
-        Ver.0.9.1
+        Ver.0.9.4
 
         getSyncData は読み取り専用なので、
         timeout後でも同じ同期内で安全に再試行できる。
@@ -25515,7 +25597,7 @@ async function requestSyncDataFromServer(
 */
 
 /*
-  Ver.0.9.1 排便登録の保存結果確認。
+  Ver.0.9.4 排便登録の保存結果確認。
   POST確認が一時的に失敗したら、読み取り専用GETへ切り替える。
 */
 async function getBowelOperationStatusRobust({
@@ -25827,7 +25909,7 @@ async function registerBowelWithRecovery({
 
 
   /*
-    Ver.0.9.1
+    Ver.0.9.4
     保存確認APIも通信不能なら、この場で重い初期同期は投げない。
     未保存とも保存済みとも断定せず、operationIdを保留して
     バックグラウンド確認へ移す。
@@ -26378,7 +26460,7 @@ async function saveEditedHistory(recordId) {
       "result"
     ).textContent =
       user +
-      "　現在ポイント：" +
+      "　排便累計：" +
       getBowelPointText(points[user]);
 
 
@@ -26572,7 +26654,7 @@ async function saveEditedHistory(recordId) {
       "result"
     ).textContent =
       user +
-      "　現在ポイント：" +
+      "　排便累計：" +
       getBowelPointText(points[user]);
 
 
@@ -26652,7 +26734,7 @@ async function saveEditedHistory(recordId) {
       "result"
     ).textContent =
       user +
-      "　現在ポイント：" +
+      "　排便累計：" +
       getBowelPointText(points[user]);
 
 
@@ -26980,7 +27062,7 @@ function getBowelPoint(type) {
 
 
 // =========================
-// 内部ポイント → 表示文字列
+// 内部ポイント → 排便量表示文字列
 // =========================
 
 function getBowelPointText(point) {
@@ -26988,38 +27070,39 @@ function getBowelPointText(point) {
   const value =
     Number(point || 0);
 
-  const normalPoint =
+  if (value <= 0) {
+    return "なし";
+  }
+
+  const fullSmallCount =
     Math.floor(value / 2);
 
-  const smallCount =
-    value % 2;
+  const hasExtraSmall =
+    value % 2 === 1;
 
   if (
-    normalPoint === 0 &&
-    smallCount === 0
+    fullSmallCount === 0 &&
+    hasExtraSmall
   ) {
-    return "0点";
+    return "少";
   }
 
   if (
-    normalPoint > 0 &&
-    smallCount === 0
+    fullSmallCount > 0 &&
+    !hasExtraSmall
   ) {
-    return normalPoint + "点";
+    return "少" + fullSmallCount;
   }
 
-  if (
-    normalPoint === 0
-  ) {
-    return "0点＋少" +
-      smallCount +
-      "回";
-  }
+  /*
+    3 → 少1+少
+    5 → 少2+少
 
-  return normalPoint +
-    "点＋少" +
-    smallCount +
-    "回";
+    末尾は回数ではなく、排便量「少」として表示する。
+  */
+  return "少" +
+    fullSmallCount +
+    "+少";
 }
 
 function recalculateBowelStatusAfterCancel(
@@ -27195,7 +27278,7 @@ function testRecalculateBowelStatus(user) {
   alert(
     "再計算テスト\n\n" +
     "利用者：" + user + "\n" +
-    "　現在ポイント：" + getBowelPointText(result.point) + "\n" +
+    "　排便累計：" + getBowelPointText(result.point) + "\n" +
     "最終排便日：" +
     (result.lastDate || "なし")
   );
@@ -27319,7 +27402,7 @@ async function confirmCancelHistory(recordId) {
       "result"
     ).textContent =
       user +
-      "　現在ポイント：" +
+      "　排便累計：" +
       getBowelPointText(
         points[user]
       );
@@ -27448,7 +27531,7 @@ async function confirmCancelHistory(recordId) {
       "result"
     ).textContent =
       user +
-      "　現在ポイント：" +
+      "　排便累計：" +
       getBowelPointText(
         points[user]
       );
@@ -27543,7 +27626,7 @@ async function confirmCancelHistory(recordId) {
       "result"
     ).textContent =
       user +
-      "　現在ポイント：" +
+      "　排便累計：" +
       getBowelPointText(
         points[user]
       );
@@ -27897,7 +27980,7 @@ function renderResidentDetail() {
           <strong>${info.days}日目</strong>
         </div>
         <div class="ui09-state-box">
-          <span>現在ポイント</span>
+          <span>排便累計</span>
           <strong>${escapeHtml(getBowelPointText(info.point))}</strong>
         </div>
         <div class="ui09-state-box wide">
@@ -28337,7 +28420,7 @@ async function loadLightSyncDataFromGoogle() {
 
   // =========================
   // ルール / サイクル固定ルール
-  // Ver.0.9.1
+  // Ver.0.9.4
   // ルール変更を30秒以内に他端末へ反映する。
   // =========================
 
