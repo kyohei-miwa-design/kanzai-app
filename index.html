@@ -5574,7 +5574,7 @@ h3 {
 
 
 /* ============================================================
-   Ver.0.9.7 UI REFRESH
+   Ver.0.9.8 UI REFRESH
    既存ロジックを維持し、表示階層だけを再設計
 ============================================================ */
 
@@ -6224,7 +6224,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.7 排便入力
+   Ver.0.9.8 排便入力
 ============================================================ */
 
 .ui09-hidden-select {
@@ -6320,7 +6320,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.7 ポイント表示 / 通信状態
+   Ver.0.9.8 ポイント表示 / 通信状態
 ============================================================ */
 
 /*
@@ -6403,7 +6403,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.7 排便入力：個人情報とユニット全体操作を分離
+   Ver.0.9.8 排便入力：個人情報とユニット全体操作を分離
 ============================================================ */
 
 .ui095-personal-details {
@@ -6607,7 +6607,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.7 対応画面
+   Ver.0.9.8 対応画面
    現在 = 今やる / 予定 = あとでやる / 完了 = もうやった
 ============================================================ */
 
@@ -6846,7 +6846,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.7 履歴画面
+   Ver.0.9.8 履歴画面
 ============================================================ */
 
 .ui097-history-search-wrap {
@@ -7048,6 +7048,69 @@ body {
   display: none;
 }
 
+
+/* ============================================================
+   Ver.0.9.8 勤務帯確定ロック / 利用者詳細
+============================================================ */
+
+.ui098-shift-locked-note {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0 14px;
+  padding: 11px 12px;
+  border: 1px solid #cfe6db;
+  border-radius: 12px;
+  background: var(--ui09-green-bg);
+  color: #276f50;
+}
+
+.ui098-shift-locked-note.late {
+  border-color: #efd8ac;
+  background: var(--ui09-orange-bg);
+  color: #8a5b12;
+}
+
+.ui098-shift-locked-note strong {
+  font-size: 13px;
+}
+
+.ui098-shift-locked-note span,
+.ui098-shift-locked-note small {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.shift-confirm-button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+  box-shadow: none !important;
+}
+
+.ui098-resident-detail-note {
+  margin: -3px 2px 12px;
+  color: var(--ui09-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+#residentDetailPage .ui09-detail-header-card {
+  margin-bottom: 10px;
+}
+
+#residentDetailPage .ui09-detail-section {
+  border-radius: 16px;
+}
+
+#residentDetailPage .ui09-rule-item {
+  border: 1px solid var(--ui09-line);
+  box-shadow: none;
+}
+
+#residentDetailPage .ui097-history-day-group {
+  margin-top: 10px;
+}
+
 </style>
 </head>
 
@@ -7087,7 +7150,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.7</div>
+      <div class="ui09-brand-version">Ver.0.9.8</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -7740,12 +7803,16 @@ body {
 
     <div id="residentDetailHeader"></div>
 
+    <div class="ui098-resident-detail-note">
+      この利用者の現在状態・個別ルール・履歴・評価をまとめて確認できます
+    </div>
+
     <div class="ui09-segmented ui09-resident-tabs">
       <button
         id="residentTabSummary"
         class="active"
         onclick="setResidentDetailTab('summary')"
-      >サマリー</button>
+      >概要</button>
       <button
         id="residentTabRules"
         onclick="setResidentDetailTab('rules')"
@@ -8251,7 +8318,7 @@ body {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.9.7
+          Ver.0.9.8
         </span>
       </div>
 
@@ -8572,7 +8639,7 @@ let pendingBowelResolveTimer = null;
 
 
 /*
-  Ver.0.9.7
+  Ver.0.9.8
   与薬実施チェックの保存結果が未確定な操作。
 
   安全原則：
@@ -9672,7 +9739,7 @@ function selectBowelUser(
     user;
 
   /*
-    Ver.0.9.7
+    Ver.0.9.8
     別利用者へ切り替えたとき、前の人の排便量選択を
     引き継がない。誤登録防止のため必ず未選択へ戻す。
   */
@@ -17102,7 +17169,7 @@ function updateUserSelects() {
 
 
   /*
-    Ver.0.9.7
+    Ver.0.9.8
     30秒同期でselectを作り直しても、
     操作中の利用者選択を勝手に先頭へ戻さない。
   */
@@ -17866,7 +17933,7 @@ function createClientRequestId(
 
 
 /*
-  Ver.0.9.7
+  Ver.0.9.8
 
   ログインはGoogle Apps Scriptの一時的な
   404 / timeout を考慮して最大3回まで再試行する。
@@ -23658,6 +23725,105 @@ function getConfirmFor(
 }
 
 
+function getCurrentShiftConfirm(
+  type,
+  targetDate,
+  confirms = latestDailyConfirms
+) {
+
+  const safeConfirms =
+    Array.isArray(confirms)
+      ? confirms
+      : [];
+
+  if (currentUnit === "all") {
+
+    const records =
+      ["1", "2", "3", "4"]
+        .map(unit =>
+          getConfirmFor(
+            safeConfirms,
+            unit,
+            type,
+            targetDate
+          )
+        )
+        .filter(Boolean);
+
+    return records.length === 4
+      ? {
+          allUnits: true,
+          records: records,
+          status:
+            records.some(item =>
+              String(
+                item.status || ""
+              ) === "late"
+            )
+              ? "late"
+              : "on_time",
+          name: "全ユニット",
+          time: ""
+        }
+      : null;
+  }
+
+  return getConfirmFor(
+    safeConfirms,
+    currentUnit,
+    type,
+    targetDate
+  );
+}
+
+
+function getShiftConfirmedNote(
+  confirm
+) {
+
+  if (!confirm) {
+    return "";
+  }
+
+  const late =
+    String(
+      confirm.status || ""
+    ) === "late";
+
+  const details =
+    [
+      confirm.time || "",
+      confirm.name
+        ? "確認者：" + confirm.name
+        : ""
+    ]
+      .filter(Boolean)
+      .join(" ／ ");
+
+  return `
+    <div class="ui098-shift-locked-note ${
+      late ? "late" : ""
+    }">
+      <strong>
+        ${
+          late
+            ? "⏰ この勤務帯は遅延確認として確定済みです"
+            : "✅ この勤務帯は確定済みです"
+        }
+      </strong>
+      ${
+        details
+          ? `<span>${escapeHtml(details)}</span>`
+          : ""
+      }
+      <small>
+        次の勤務帯サイクルになるまで再確定できません
+      </small>
+    </div>
+  `;
+}
+
+
 function getPendingShiftConfirmations(
   confirms
 ) {
@@ -23892,6 +24058,12 @@ function checkTodayBowelStatus(
   const dayStart = timing.shiftStart;
   const dayEnd = timing.shiftEnd;
 
+  const existingConfirm =
+    getCurrentShiftConfirm(
+      "day",
+      targetDateText
+    );
+
   let registeredUsers = [];
   let unregisteredUsers = [];
 
@@ -23952,7 +24124,11 @@ function checkTodayBowelStatus(
         ${formatDateTime(dayEnd)}
       </p>
 
-      ${getShiftTimingNote(timing)}
+      ${
+        existingConfirm
+          ? getShiftConfirmedNote(existingConfirm)
+          : getShiftTimingNote(timing)
+      }
 
       <strong>登録済み</strong><br>
   `;
@@ -24013,23 +24189,38 @@ function checkTodayBowelStatus(
   }
 
   html += `
-    <div class="confirm-signature-box">
-      <div class="confirm-signature-title">✍️ 確認者</div>
-      <div class="confirm-signature-note">
-        紙の確認印の代わりに、実際に確認した職員を選択してください。
-      </div>
-      ${getStaffSelectHtml("dayConfirmerSelect")}
-    </div>
+    ${
+      existingConfirm
+        ? ""
+        : `
+          <div class="confirm-signature-box">
+            <div class="confirm-signature-title">✍️ 確認者</div>
+            <div class="confirm-signature-note">
+              紙の確認印の代わりに、実際に確認した職員を選択してください。
+            </div>
+            ${getStaffSelectHtml("dayConfirmerSelect")}
+          </div>
+        `
+    }
 
     <button
       class="shift-confirm-button"
       onclick="confirmNoBowelUsers('${targetDateText}')"
-      ${timing.canConfirm ? "" : "disabled"}
+      ${
+        timing.canConfirm &&
+        !existingConfirm
+          ? ""
+          : "disabled"
+      }
     >
       ${
-        timing.isLate
-          ? "🚨 遅れて日中帯を確認・確定"
-          : "☀️ 日中帯の確認を確定"
+        existingConfirm
+          ? "✅ 日中帯は確定済み"
+          : (
+              timing.isLate
+                ? "🚨 遅れて日中帯を確認・確定"
+                : "☀️ 日中帯の確認を確定"
+            )
       }
     </button>
 
@@ -24076,6 +24267,32 @@ async function confirmNoBowelUsers(
   if (!timing.canConfirm) {
     alert(
       "日中帯の確認は15:00から確定できます。"
+    );
+    return;
+  }
+
+  const refreshedConfirms =
+    await loadDailyConfirmStatus();
+
+  if (refreshedConfirms === null) {
+    alert(
+      "最新の勤務帯確認状況を取得できないため、確定処理を中止しました。通信状態を確認して再度お試しください。"
+    );
+    return;
+  }
+
+  if (
+    getCurrentShiftConfirm(
+      "day",
+      targetDateText,
+      refreshedConfirms
+    )
+  ) {
+    checkTodayBowelStatus(
+      targetDateText
+    );
+    alert(
+      "この日中帯はすでに確定済みです。次のサイクルまで再確定できません。"
     );
     return;
   }
@@ -24454,9 +24671,16 @@ async function loadDailyConfirmStatus() {
         20000
       );
 
+    const safeConfirms =
+      Array.isArray(confirms)
+        ? confirms
+        : [];
+
     applyDailyConfirmStatus(
-      confirms
+      safeConfirms
     );
+
+    return safeConfirms;
 
   } catch (error) {
 
@@ -24474,6 +24698,8 @@ async function loadDailyConfirmStatus() {
       dailyConfirmStatus.innerHTML =
         "集計状況の読み込みに失敗しました";
     }
+
+    return null;
   }
 }
 
@@ -24818,7 +25044,7 @@ async function changeLastDate() {
     /*
       GAS保存成功後にローカルへ反映する。
 
-      Ver.0.9.7
+      Ver.0.9.8
       手動の最終排便日訂正は「新しい排便成立」ではない。
       現在サイクル用の固定ルールがある場合は、
       サイクルキーだけ新しい日付へ移す。
@@ -24926,6 +25152,12 @@ function checkNightBowelStatus(
   const nightStart = timing.shiftStart;
   const nightEnd = timing.shiftEnd;
 
+  const existingConfirm =
+    getCurrentShiftConfirm(
+      "night",
+      targetDateText
+    );
+
   let registeredUsers = [];
   let unregisteredUsers = [];
 
@@ -24986,7 +25218,11 @@ function checkNightBowelStatus(
         ${formatDateTime(nightEnd)}
       </p>
 
-      ${getShiftTimingNote(timing)}
+      ${
+        existingConfirm
+          ? getShiftConfirmedNote(existingConfirm)
+          : getShiftTimingNote(timing)
+      }
 
       <strong>登録済み</strong><br>
   `;
@@ -25047,23 +25283,38 @@ function checkNightBowelStatus(
   }
 
   html += `
-    <div class="confirm-signature-box">
-      <div class="confirm-signature-title">✍️ 確認者</div>
-      <div class="confirm-signature-note">
-        紙の確認印の代わりに、実際に確認した職員を選択してください。
-      </div>
-      ${getStaffSelectHtml("nightConfirmerSelect")}
-    </div>
+    ${
+      existingConfirm
+        ? ""
+        : `
+          <div class="confirm-signature-box">
+            <div class="confirm-signature-title">✍️ 確認者</div>
+            <div class="confirm-signature-note">
+              紙の確認印の代わりに、実際に確認した職員を選択してください。
+            </div>
+            ${getStaffSelectHtml("nightConfirmerSelect")}
+          </div>
+        `
+    }
 
     <button
       class="shift-confirm-button"
       onclick="confirmNightShift('${targetDateText}')"
-      ${timing.canConfirm ? "" : "disabled"}
+      ${
+        timing.canConfirm &&
+        !existingConfirm
+          ? ""
+          : "disabled"
+      }
     >
       ${
-        timing.isLate
-          ? "🚨 遅れて夜勤帯を確認・確定"
-          : "🌙 夜勤帯の確認を確定"
+        existingConfirm
+          ? "✅ 夜勤帯は確定済み"
+          : (
+              timing.isLate
+                ? "🚨 遅れて夜勤帯を確認・確定"
+                : "🌙 夜勤帯の確認を確定"
+            )
       }
     </button>
 
@@ -25131,6 +25382,32 @@ async function confirmNightShift(
   if (!timing.canConfirm) {
     alert(
       "夜勤帯の確認は5:00から確定できます。"
+    );
+    return;
+  }
+
+  const refreshedConfirms =
+    await loadDailyConfirmStatus();
+
+  if (refreshedConfirms === null) {
+    alert(
+      "最新の勤務帯確認状況を取得できないため、確定処理を中止しました。通信状態を確認して再度お試しください。"
+    );
+    return;
+  }
+
+  if (
+    getCurrentShiftConfirm(
+      "night",
+      targetDateText,
+      refreshedConfirms
+    )
+  ) {
+    checkNightBowelStatus(
+      targetDateText
+    );
+    alert(
+      "この夜勤帯はすでに確定済みです。次のサイクルまで再確定できません。"
     );
     return;
   }
@@ -25598,7 +25875,7 @@ function resolvePendingBowelOperationAfterSync() {
   }
 
   /*
-    Ver.0.9.7
+    Ver.0.9.8
     timeout後もGAS側保存は続く可能性がある。
     同期でまだ見えないだけでは未保存と断定しない。
   */
@@ -25710,7 +25987,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.9.7 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
+// Ver.0.9.8 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
 // Ver.0.8.44 APIセッション認証
 // ============================================================
 
@@ -26508,7 +26785,7 @@ async function requestSyncDataFromServer(
 
 
       /*
-        Ver.0.9.7
+        Ver.0.9.8
 
         getSyncData は読み取り専用なので、
         timeout後でも同じ同期内で安全に再試行できる。
@@ -26563,7 +26840,7 @@ async function requestSyncDataFromServer(
 */
 
 /*
-  Ver.0.9.7 排便登録の保存結果確認。
+  Ver.0.9.8 排便登録の保存結果確認。
   POST確認が一時的に失敗したら、読み取り専用GETへ切り替える。
 */
 async function getBowelOperationStatusRobust({
@@ -26875,7 +27152,7 @@ async function registerBowelWithRecovery({
 
 
   /*
-    Ver.0.9.7
+    Ver.0.9.8
     保存確認APIも通信不能なら、この場で重い初期同期は投げない。
     未保存とも保存済みとも断定せず、operationIdを保留して
     バックグラウンド確認へ移す。
@@ -29049,14 +29326,10 @@ function renderResidentDetail() {
 
     body.innerHTML =
       rows.length > 0
-        ? rows
-            .map(item =>
-              getHistoryCardHtml(
-                item,
-                "past"
-              )
-            )
-            .join("")
+        ? getHistoryGroupedHtml(
+            rows,
+            "past"
+          )
         : `
             <div class="ui09-empty">
               排便履歴はありません
@@ -29415,7 +29688,7 @@ async function loadLightSyncDataFromGoogle() {
 
   // =========================
   // ルール / サイクル固定ルール
-  // Ver.0.9.7
+  // Ver.0.9.8
   // ルール変更を30秒以内に他端末へ反映する。
   // =========================
 
