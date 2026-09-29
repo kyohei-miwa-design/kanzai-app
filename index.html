@@ -5574,7 +5574,7 @@ h3 {
 
 
 /* ============================================================
-   Ver.0.9.6 UI REFRESH
+   Ver.0.9.7 UI REFRESH
    既存ロジックを維持し、表示階層だけを再設計
 ============================================================ */
 
@@ -6224,7 +6224,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.6 排便入力
+   Ver.0.9.7 排便入力
 ============================================================ */
 
 .ui09-hidden-select {
@@ -6320,7 +6320,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.6 ポイント表示 / 通信状態
+   Ver.0.9.7 ポイント表示 / 通信状態
 ============================================================ */
 
 /*
@@ -6403,7 +6403,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.6 排便入力：個人情報とユニット全体操作を分離
+   Ver.0.9.7 排便入力：個人情報とユニット全体操作を分離
 ============================================================ */
 
 .ui095-personal-details {
@@ -6607,7 +6607,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.6 対応画面
+   Ver.0.9.7 対応画面
    現在 = 今やる / 予定 = あとでやる / 完了 = もうやった
 ============================================================ */
 
@@ -6844,6 +6844,210 @@ body {
   }
 }
 
+
+/* ============================================================
+   Ver.0.9.7 履歴画面
+============================================================ */
+
+.ui097-history-search-wrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.ui097-history-search-wrap input {
+  width: 100%;
+  min-height: 48px;
+  padding-left: 40px;
+  border: 1px solid var(--ui09-line);
+  border-radius: 14px;
+  background: var(--ui09-card);
+  font-size: 14px;
+}
+
+.ui097-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  z-index: 1;
+  transform: translateY(-50%);
+  color: var(--ui09-muted);
+  font-size: 20px;
+  pointer-events: none;
+}
+
+.ui097-history-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 15px 2px 10px;
+}
+
+.ui097-history-summary > span:first-child {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ui09-text);
+}
+
+.ui097-history-summary-note {
+  color: var(--ui09-muted);
+  font-size: 11px;
+}
+
+.ui097-history-day-group {
+  margin-bottom: 18px;
+}
+
+.ui097-history-day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 3px 7px;
+}
+
+.ui097-history-day-head strong {
+  font-size: 13px;
+  color: var(--ui09-text);
+}
+
+.ui097-history-day-head span {
+  color: var(--ui09-muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.ui097-history-day-list {
+  display: grid;
+  gap: 8px;
+}
+
+.ui097-history-card {
+  overflow: hidden;
+  border: 1px solid var(--ui09-line);
+  border-radius: 15px;
+  background: var(--ui09-card);
+}
+
+.ui097-history-card.cancelled {
+  background: #f8f8f8;
+  opacity: .78;
+}
+
+.ui097-history-card-main {
+  padding: 13px 14px;
+}
+
+.ui097-history-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ui097-history-user {
+  min-width: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--ui09-text) !important;
+  text-align: left;
+  font-size: 16px !important;
+  font-weight: 900 !important;
+}
+
+.ui097-history-time-area {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ui097-history-time {
+  color: var(--ui09-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ui097-history-menu-button {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ui09-muted);
+  box-shadow: none;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.ui097-history-values {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.ui097-history-value {
+  padding: 9px 10px;
+  border-radius: 11px;
+  background: var(--ui09-grey-bg);
+}
+
+.ui097-history-value.primary {
+  background: var(--ui09-soft);
+}
+
+.ui097-history-value span {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--ui09-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.ui097-history-value strong {
+  display: block;
+  color: var(--ui09-text);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.ui097-history-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.ui097-history-meta:empty {
+  display: none;
+}
+
+.ui097-history-unit,
+.ui097-history-cancelled {
+  padding: 4px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.ui097-history-unit {
+  background: #eef4f6;
+  color: #526b73;
+}
+
+.ui097-history-cancelled {
+  background: #f4eaea;
+  color: #9a5b5b;
+}
+
+#historyPage .history-card {
+  display: none;
+}
+
 </style>
 </head>
 
@@ -6883,7 +7087,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.6</div>
+      <div class="ui09-brand-version">Ver.0.9.7</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -7407,11 +7611,15 @@ body {
   >
 
     <div class="ui09-simple-head">
-      <h2>履歴</h2>
+      <div>
+        <div class="ui09-kicker">排便記録</div>
+        <h2>履歴</h2>
+      </div>
       <span id="historyCountPill" class="ui09-count-pill">0件</span>
     </div>
 
-    <div class="ui09-history-search">
+    <div class="ui097-history-search-wrap">
+      <span class="ui097-search-icon" aria-hidden="true">⌕</span>
       <input
         id="ui09HistorySearch"
         type="search"
@@ -7491,8 +7699,9 @@ body {
       </div>
     </details>
 
-    <div class="history-ui-summary">
+    <div class="ui097-history-summary">
       <span id="historyListTitle">今日の記録</span>
+      <span class="ui097-history-summary-note">新しい記録が上です</span>
     </div>
 
     <div id="history">まだ履歴はありません</div>
@@ -8042,7 +8251,7 @@ body {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.9.6
+          Ver.0.9.7
         </span>
       </div>
 
@@ -8363,7 +8572,7 @@ let pendingBowelResolveTimer = null;
 
 
 /*
-  Ver.0.9.6
+  Ver.0.9.7
   与薬実施チェックの保存結果が未確定な操作。
 
   安全原則：
@@ -9463,7 +9672,7 @@ function selectBowelUser(
     user;
 
   /*
-    Ver.0.9.6
+    Ver.0.9.7
     別利用者へ切り替えたとき、前の人の排便量選択を
     引き継がない。誤登録防止のため必ず未選択へ戻す。
   */
@@ -16893,7 +17102,7 @@ function updateUserSelects() {
 
 
   /*
-    Ver.0.9.6
+    Ver.0.9.7
     30秒同期でselectを作り直しても、
     操作中の利用者選択を勝手に先頭へ戻さない。
   */
@@ -17657,7 +17866,7 @@ function createClientRequestId(
 
 
 /*
-  Ver.0.9.6
+  Ver.0.9.7
 
   ログインはGoogle Apps Scriptの一時的な
   404 / timeout を考慮して最大3回まで再試行する。
@@ -18758,6 +18967,146 @@ function renderHistoryView() {
 }
 
 
+
+function getHistoryDateKey(
+  history
+) {
+
+  return String(
+    history?.date || ""
+  ).slice(0, 10);
+}
+
+
+function getHistoryDateHeading(
+  dateKey
+) {
+
+  if (!dateKey) {
+    return "日付不明";
+  }
+
+  const parts =
+    dateKey.split("-")
+      .map(Number);
+
+  if (
+    parts.length !== 3 ||
+    parts.some(
+      value =>
+        !Number.isFinite(value)
+    )
+  ) {
+    return dateKey;
+  }
+
+  const date =
+    new Date(
+      parts[0],
+      parts[1] - 1,
+      parts[2]
+    );
+
+  const weekdays =
+    ["日","月","火","水","木","金","土"];
+
+  const today =
+    getLocalDateText(
+      new Date()
+    );
+
+  const prefix =
+    dateKey === today
+      ? "今日 "
+      : "";
+
+  return (
+    prefix +
+    (date.getMonth() + 1) +
+    "月" +
+    date.getDate() +
+    "日（" +
+    weekdays[
+      date.getDay()
+    ] +
+    "）"
+  );
+}
+
+
+function getHistoryGroupedHtml(
+  historiesForView,
+  group
+) {
+
+  const groups = [];
+
+  for (
+    const history of
+    historiesForView
+  ) {
+
+    const key =
+      getHistoryDateKey(
+        history
+      );
+
+    let target =
+      groups.find(
+        item =>
+          item.key === key
+      );
+
+    if (!target) {
+      target = {
+        key,
+        items: []
+      };
+
+      groups.push(
+        target
+      );
+    }
+
+    target.items.push(
+      history
+    );
+  }
+
+  return groups
+    .map(groupItem => `
+      <section class="ui097-history-day-group">
+        <div class="ui097-history-day-head">
+          <strong>
+            ${escapeHtml(
+              getHistoryDateHeading(
+                groupItem.key
+              )
+            )}
+          </strong>
+          <span>
+            ${groupItem.items.length}件
+          </span>
+        </div>
+
+        <div class="ui097-history-day-list">
+          ${
+            groupItem.items
+              .map(history =>
+                getHistoryCardHtml(
+                  history,
+                  group
+                )
+              )
+              .join("")
+          }
+        </div>
+      </section>
+    `)
+    .join("");
+}
+
+
 function getHistoryHtml() {
 
   updateHistoryFilterControls();
@@ -18870,14 +19219,10 @@ function getHistoryHtml() {
   }
 
 
-  return visible
-    .map(history =>
-      getHistoryCardHtml(
-        history,
-        historyViewMode
-      )
-    )
-    .join("");
+  return getHistoryGroupedHtml(
+    visible,
+    historyViewMode
+  );
 }
 
 
@@ -18888,27 +19233,19 @@ function getHistoryCardHtml(history, group) {
       history.status || ""
     ).trim() === "cancelled";
 
-  let cardClass =
-    group === "today"
-      ? "history-card-today"
-      : "history-card-past";
-
-  if (isCancelled) {
-    cardClass +=
-      " history-card-cancelled";
-  }
-
-
   const dateParts =
     getHistoryDisplayParts(
       history.date
     );
 
+  const user =
+    String(
+      history.user || ""
+    );
+
   const unitId =
     String(
-      userUnits[
-        String(history.user || "")
-      ] || ""
+      userUnits[user] || ""
     );
 
   const showUnitBadge =
@@ -18916,79 +19253,123 @@ function getHistoryCardHtml(history, group) {
 
   const safeRecordId =
     String(history.id || "")
+      .replace(/\\/g, "\\\\")
       .replace(/'/g, "\\'");
+
+  const safeUser =
+    encodeURIComponent(
+      user
+    );
+
+  const amount =
+    getHistoryDisplayType(
+      history.type
+    );
+
+  const total =
+    getBowelPointText(
+      history.point
+    );
 
 
   return `
-    <div class="history-card ${cardClass}">
+    <article class="ui097-history-card ${
+      isCancelled
+        ? "cancelled"
+        : ""
+    }">
 
-      ${
-        history.id && !isCancelled
-          ? `
-            <button
-              class="history-menu-button"
-              type="button"
-              onclick="openHistoryMenu('${safeRecordId}')"
-              aria-label="履歴メニューを開く"
-            >
-              ⋮
-            </button>
-          `
-          : ""
-      }
+      <div class="ui097-history-card-main">
 
-      <div class="history-card-head">
+        <div class="ui097-history-card-top">
 
-        <div class="history-card-user">
-          ${escapeHtml(history.user || "")}
+          <button
+            type="button"
+            class="ui097-history-user"
+            onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'historyPage'); setResidentDetailTab('history');"
+          >
+            ${escapeHtml(formatResidentName(user))}
+          </button>
+
+          <div class="ui097-history-time-area">
+            ${
+              dateParts.time
+                ? `
+                  <time class="ui097-history-time">
+                    ${escapeHtml(dateParts.time)}
+                  </time>
+                `
+                : ""
+            }
+
+            ${
+              history.id &&
+              !isCancelled
+                ? `
+                  <button
+                    class="ui097-history-menu-button"
+                    type="button"
+                    onclick="openHistoryMenu('${safeRecordId}')"
+                    aria-label="履歴メニューを開く"
+                  >
+                    ⋮
+                  </button>
+                `
+                : ""
+            }
+          </div>
+
         </div>
 
-        <div class="history-card-datetime">
-          ${escapeHtml(dateParts.date)}
+        <div class="ui097-history-values">
+
+          <div class="ui097-history-value primary">
+            <span>排便量</span>
+            <strong>
+              ${escapeHtml(amount)}
+            </strong>
+          </div>
+
+          <div class="ui097-history-value">
+            <span>排便累計</span>
+            <strong>
+              ${escapeHtml(total)}
+            </strong>
+          </div>
+
+        </div>
+
+        <div class="ui097-history-meta">
+
           ${
-            dateParts.time
-              ? `<br>${escapeHtml(dateParts.time)}`
+            showUnitBadge &&
+            unitId
+              ? `
+                <span class="ui097-history-unit">
+                  ${escapeHtml(getUnitName(unitId))}
+                </span>
+              `
               : ""
           }
+
+          ${
+            isCancelled
+              ? `
+                <span class="ui097-history-cancelled">
+                  取消済み
+                </span>
+              `
+              : ""
+          }
+
         </div>
 
       </div>
 
-      <div class="history-card-type-row">
-
-        <span class="history-card-type">
-          ${escapeHtml(getHistoryDisplayType(history.type))}
-        </span>
-
-        ${
-          showUnitBadge && unitId
-            ? `
-              <span class="history-card-badge unit">
-                ${escapeHtml(getUnitName(unitId))}
-              </span>
-            `
-            : ""
-        }
-
-        <span class="history-card-badge point">
-          累計 ${escapeHtml(getBowelPointText(history.point))}
-        </span>
-
-        ${
-          isCancelled
-            ? `
-              <span class="history-card-badge cancelled">
-                取消済み
-              </span>
-            `
-            : ""
-        }
-
-      </div>
-
-    </div>
+    </article>
   `;
 }
+
 
 function openHistoryMenu(recordId) {
 
@@ -24437,7 +24818,7 @@ async function changeLastDate() {
     /*
       GAS保存成功後にローカルへ反映する。
 
-      Ver.0.9.6
+      Ver.0.9.7
       手動の最終排便日訂正は「新しい排便成立」ではない。
       現在サイクル用の固定ルールがある場合は、
       サイクルキーだけ新しい日付へ移す。
@@ -25217,7 +25598,7 @@ function resolvePendingBowelOperationAfterSync() {
   }
 
   /*
-    Ver.0.9.6
+    Ver.0.9.7
     timeout後もGAS側保存は続く可能性がある。
     同期でまだ見えないだけでは未保存と断定しない。
   */
@@ -25329,7 +25710,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.9.6 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
+// Ver.0.9.7 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
 // Ver.0.8.44 APIセッション認証
 // ============================================================
 
@@ -26127,7 +26508,7 @@ async function requestSyncDataFromServer(
 
 
       /*
-        Ver.0.9.6
+        Ver.0.9.7
 
         getSyncData は読み取り専用なので、
         timeout後でも同じ同期内で安全に再試行できる。
@@ -26182,7 +26563,7 @@ async function requestSyncDataFromServer(
 */
 
 /*
-  Ver.0.9.6 排便登録の保存結果確認。
+  Ver.0.9.7 排便登録の保存結果確認。
   POST確認が一時的に失敗したら、読み取り専用GETへ切り替える。
 */
 async function getBowelOperationStatusRobust({
@@ -26494,7 +26875,7 @@ async function registerBowelWithRecovery({
 
 
   /*
-    Ver.0.9.6
+    Ver.0.9.7
     保存確認APIも通信不能なら、この場で重い初期同期は投げない。
     未保存とも保存済みとも断定せず、operationIdを保留して
     バックグラウンド確認へ移す。
@@ -29034,7 +29415,7 @@ async function loadLightSyncDataFromGoogle() {
 
   // =========================
   // ルール / サイクル固定ルール
-  // Ver.0.9.6
+  // Ver.0.9.7
   // ルール変更を30秒以内に他端末へ反映する。
   // =========================
 
