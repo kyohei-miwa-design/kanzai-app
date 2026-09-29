@@ -5574,7 +5574,7 @@ h3 {
 
 
 /* ============================================================
-   Ver.0.9.5 UI REFRESH
+   Ver.0.9.6 UI REFRESH
    既存ロジックを維持し、表示階層だけを再設計
 ============================================================ */
 
@@ -6224,7 +6224,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.5 排便入力
+   Ver.0.9.6 排便入力
 ============================================================ */
 
 .ui09-hidden-select {
@@ -6320,7 +6320,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.5 ポイント表示 / 通信状態
+   Ver.0.9.6 ポイント表示 / 通信状態
 ============================================================ */
 
 /*
@@ -6403,7 +6403,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.5 排便入力：個人情報とユニット全体操作を分離
+   Ver.0.9.6 排便入力：個人情報とユニット全体操作を分離
 ============================================================ */
 
 .ui095-personal-details {
@@ -6605,6 +6605,245 @@ body {
   }
 }
 
+
+/* ============================================================
+   Ver.0.9.6 対応画面
+   現在 = 今やる / 予定 = あとでやる / 完了 = もうやった
+============================================================ */
+
+.ui096-action-guide {
+  margin: -3px 2px 14px;
+  color: var(--ui09-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ui096-action-card {
+  margin-bottom: 10px;
+  padding: 15px;
+  border: 1px solid var(--ui09-line);
+  border-radius: 17px;
+  background: var(--ui09-card);
+  box-shadow: 0 3px 12px rgba(31,70,78,.04);
+}
+
+.ui096-action-card.current {
+  border-left: 4px solid var(--ui09-teal);
+}
+
+.ui096-action-card.current.nurse {
+  border-left-color: var(--ui09-purple);
+}
+
+.ui096-action-card.planned {
+  background: #fafbfb;
+  border-color: #e2e8ea;
+  box-shadow: none;
+}
+
+.ui096-action-card.completed {
+  background: #fbfdfc;
+  border-color: #dce9e2;
+  box-shadow: none;
+}
+
+.ui096-action-card.completed.pending-save {
+  background: var(--ui09-orange-bg);
+  border: 2px solid #e6a445;
+}
+
+.ui096-action-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ui096-action-user {
+  min-width: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--ui09-text) !important;
+  text-align: left;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+}
+
+.ui096-state-label {
+  flex: none;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.ui096-state-label.current {
+  background: var(--ui09-soft);
+  color: var(--ui09-teal-dark);
+}
+
+.ui096-state-label.planned {
+  background: var(--ui09-grey-bg);
+  color: #60757b;
+}
+
+.ui096-state-label.nurse {
+  background: var(--ui09-purple-bg);
+  color: var(--ui09-purple);
+}
+
+.ui096-state-label.done {
+  background: var(--ui09-green-bg);
+  color: var(--ui09-green);
+}
+
+.ui096-state-label.saving {
+  background: #fff0d6;
+  color: #9b5b00;
+}
+
+.ui096-action-main {
+  margin-top: 11px;
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 900;
+  color: var(--ui09-text);
+}
+
+.ui096-action-sub {
+  margin-top: 5px;
+  color: var(--ui09-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ui096-action-buttons {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.ui096-execute-button {
+  min-height: 48px;
+  margin: 0;
+  border: 0;
+  border-radius: 13px;
+  background: var(--ui09-teal);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.ui096-execute-button.nurse {
+  background: var(--ui09-purple);
+}
+
+.ui096-detail-link {
+  border: 0;
+  background: transparent;
+  color: var(--ui09-teal-dark);
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 850;
+  text-align: left;
+}
+
+.ui096-detail-link.button {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--ui09-line);
+  border-radius: 11px;
+  background: #fff;
+  text-align: center;
+}
+
+.ui096-completed-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.ui096-cancel-link {
+  min-height: 40px;
+  padding: 7px 9px;
+  border: 0;
+  background: transparent;
+  color: #9a6868;
+  box-shadow: none;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.ui096-cancel-link:disabled {
+  color: #9c8c73;
+  opacity: .75;
+}
+
+.ui096-pending-warning {
+  margin-top: 11px;
+  padding: 10px 11px;
+  border-radius: 11px;
+  background: rgba(255,255,255,.72);
+  color: #84520e;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.5;
+}
+
+.ui096-action-empty {
+  padding: 34px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  border: 1px dashed #cfdadd;
+  border-radius: 17px;
+  background: var(--ui09-card);
+  color: var(--ui09-muted);
+  text-align: center;
+}
+
+.ui096-action-empty strong {
+  color: var(--ui09-text);
+  font-size: 15px;
+}
+
+.ui096-action-empty span {
+  font-size: 12px;
+}
+
+.ui096-empty-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ui09-soft);
+  color: var(--ui09-teal-dark);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+#medicinePage .action-section-title {
+  display: none;
+}
+
+@media (max-width: 390px) {
+  .ui096-action-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .ui096-detail-link.button {
+    width: 100%;
+  }
+}
+
 </style>
 </head>
 
@@ -6644,7 +6883,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.5</div>
+      <div class="ui09-brand-version">Ver.0.9.6</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -7123,9 +7362,14 @@ body {
       </button>
     </div>
 
-    <div class="ui09-action-meta">
-      <span>現在 <strong id="actionPendingCount">0件</strong></span>
-      <span>完了 <strong id="actionCompletedCount">0件</strong></span>
+    <div class="ui096-action-guide" id="actionModeGuide">
+      今、この時間帯に実施する対応だけを表示します
+    </div>
+
+    <!-- 旧JS互換・件数保持用 -->
+    <div class="home-hidden-compat">
+      <strong id="actionPendingCount">0件</strong>
+      <strong id="actionCompletedCount">0件</strong>
     </div>
 
     <div id="actionCurrentPanel" class="action-ui-panel">
@@ -7798,7 +8042,7 @@ body {
           HTML
         </span>
         <span class="other-info-value">
-          Ver.0.9.5
+          Ver.0.9.6
         </span>
       </div>
 
@@ -8119,7 +8363,7 @@ let pendingBowelResolveTimer = null;
 
 
 /*
-  Ver.0.9.5
+  Ver.0.9.6
   与薬実施チェックの保存結果が未確定な操作。
 
   安全原則：
@@ -9219,7 +9463,7 @@ function selectBowelUser(
     user;
 
   /*
-    Ver.0.9.5
+    Ver.0.9.6
     別利用者へ切り替えたとき、前の人の排便量選択を
     引き継がない。誤登録防止のため必ず未選択へ戻す。
   */
@@ -10543,6 +10787,91 @@ function getActionCompletedData() {
 }
 
 
+
+function getActionCurrentNurseItems() {
+
+  const now = new Date();
+
+  const hour =
+    now.getHours() +
+    now.getMinutes() / 60;
+
+  return getPendingNurseInstructionsForCurrentUnit()
+    .map(normalizeNurseInstruction)
+    .filter(item => {
+
+      if (item.status !== "pending") {
+        return false;
+      }
+
+      const state =
+        getInstructionWindowState(
+          item,
+          hour
+        );
+
+      return (
+        state === "active" ||
+        state === "overdue"
+      );
+    });
+}
+
+
+function getActionPlannedNurseItems() {
+
+  const now = new Date();
+
+  const hour =
+    now.getHours() +
+    now.getMinutes() / 60;
+
+  return getPendingNurseInstructionsForCurrentUnit()
+    .map(normalizeNurseInstruction)
+    .filter(item => {
+
+      if (item.status !== "pending") {
+        return false;
+      }
+
+      return (
+        getInstructionWindowState(
+          item,
+          hour
+        ) === "upcoming"
+      );
+    });
+}
+
+
+function updateActionModeGuide() {
+
+  const guide =
+    document.getElementById(
+      "actionModeGuide"
+    );
+
+  if (!guide) {
+    return;
+  }
+
+  if (actionPageMode === "planned") {
+    guide.textContent =
+      "これから予定されている対応です。ここでは実施操作はできません";
+    return;
+  }
+
+  if (actionPageMode === "completed") {
+    guide.textContent =
+      "本日の実施済み記録です。保存確認中の記録はオレンジで表示します";
+    return;
+  }
+
+  guide.textContent =
+    "今、この時間帯に実施する対応だけを表示します";
+}
+
+
 function updateActionPageMeta() {
 
   const dateArea =
@@ -10567,9 +10896,7 @@ function updateActionPageMeta() {
 
   const currentCount =
     pending.regular.length +
-    pending.nurse.filter(item =>
-      item.status === "pending"
-    ).length;
+    getActionCurrentNurseItems().length;
 
   const plannedCount =
     getActionPlannedData().length;
@@ -10684,6 +11011,7 @@ function showActionPageMode(mode) {
 
   renderActionPlannedPanel();
   updateActionPageMeta();
+  updateActionModeGuide();
 }
 
 
@@ -10729,10 +11057,12 @@ function getActionPlannedData() {
         )
       ) {
         result.push({
+          source: "rule",
           user,
           days,
           rule,
-          when: "本日予定"
+          when:
+            getRuleTimingLabel(rule)
         });
       }
     }
@@ -10746,8 +11076,24 @@ function getActionPlannedData() {
     base.tomorrow
   ) {
     result.push({
+      source: "rule",
       ...item,
       when: "明日朝"
+    });
+  }
+
+  for (
+    const item of
+    getActionPlannedNurseItems()
+  ) {
+    result.push({
+      source: "nurse",
+      user: item.user,
+      instruction: item,
+      when:
+        getNurseInstructionTimingLabel(
+          item
+        ) || "予定"
     });
   }
 
@@ -10771,8 +11117,9 @@ function renderActionPlannedPanel() {
 
   if (items.length === 0) {
     area.innerHTML = `
-      <div class="action-empty">
-        現在、予定されている対応はありません
+      <div class="ui096-action-empty">
+        <div class="ui096-empty-icon">○</div>
+        <strong>予定されている対応はありません</strong>
       </div>
     `;
     return;
@@ -10780,6 +11127,71 @@ function renderActionPlannedPanel() {
 
   area.innerHTML =
     items.map(item => {
+
+      const safeUser =
+        encodeURIComponent(
+          item.user
+        );
+
+      if (
+        item.source === "nurse"
+      ) {
+
+        const instruction =
+          item.instruction;
+
+        const safeId =
+          encodeURIComponent(
+            instruction.instructionId
+          );
+
+        return `
+          <div class="ui096-action-card planned nurse">
+            <div class="ui096-action-card-head">
+              <button
+                type="button"
+                class="ui096-action-user"
+                onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
+              >
+                ${escapeHtml(formatResidentName(item.user))}
+              </button>
+
+              <span class="ui096-state-label planned">
+                ${escapeHtml(item.when)}
+              </span>
+            </div>
+
+            <div class="ui096-action-main">
+              ${escapeHtml(
+                instruction.content ||
+                getNurseInstructionKindLabel(
+                  instruction
+                )
+              )}
+            </div>
+
+            <div class="ui096-action-sub">
+              🩺 看護師指示
+              ${
+                instruction.targetDate
+                  ? " ／ " +
+                    escapeHtml(
+                      instruction.targetDate
+                    )
+                  : ""
+              }
+            </div>
+
+            <button
+              type="button"
+              class="ui096-detail-link"
+              onclick="openActionNurseDetail(decodeURIComponent('${safeId}'))"
+            >
+              詳細を見る
+            </button>
+          </div>
+        `;
+      }
 
       const rule =
         item.rule;
@@ -10791,48 +11203,39 @@ function renderActionPlannedPanel() {
           rule
         );
 
-      const safeUser =
-        encodeURIComponent(
-          item.user
-        );
-
       return `
-        <div class="action-item-card future">
-          <div class="action-card-top">
-            <div>
-              <button
-                type="button"
-                class="ui09-resident-link"
-                onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
-              >
-                ${escapeHtml(formatResidentName(item.user))}
-              </button>
-              <div class="action-badges">
-                <span class="action-badge future">
-                  ${escapeHtml(item.when)}
-                </span>
-                <span class="action-badge time">
-                  ${escapeHtml(getRuleTimingLabel(rule))}
-                </span>
-              </div>
-            </div>
+        <div class="ui096-action-card planned">
+          <div class="ui096-action-card-head">
             <button
               type="button"
-              class="action-detail-button"
-              onclick="openActionRuleDetail('${detail}')"
+              class="ui096-action-user"
+              onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
             >
-              詳細
+              ${escapeHtml(formatResidentName(item.user))}
             </button>
+
+            <span class="ui096-state-label planned">
+              ${escapeHtml(item.when)}
+            </span>
           </div>
 
-          <div class="action-content-main">
-            ${getRuleKindIcon(rule)}
+          <div class="ui096-action-main">
             ${escapeHtml(rule.content)}
           </div>
 
-          <div class="action-content-sub">
-            未排便${item.days}日目
+          <div class="ui096-action-sub">
+            ${getRuleKindIcon(rule)}
+            ${escapeHtml(getRuleKindLabel(rule))}
+            ／ 未排便${item.days}日目
           </div>
+
+          <button
+            type="button"
+            class="ui096-detail-link"
+            onclick="openActionRuleDetail('${detail}')"
+          >
+            詳細を見る
+          </button>
         </div>
       `;
     }).join("");
@@ -11112,310 +11515,153 @@ function getTodayTarget() {
   const data =
     getActionPendingData();
 
-  const sections = [];
+  const regular =
+    data.regular;
+
+  const nurse =
+    getActionCurrentNurseItems();
+
+  const cards = [];
 
 
-  if (data.regular.length > 0) {
+  for (const item of regular) {
 
-    const cards =
-      data.regular
-        .map(item => {
+    const rule =
+      item.rule;
 
-          const rule = item.rule;
+    const safeKey =
+      String(item.key)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'");
 
-          const safeKey =
-            String(item.key)
-              .replace(/\\/g, "\\\\")
-              .replace(/'/g, "\\'");
+    const detail =
+      getActionRuleDetailPayload(
+        item.user,
+        item.days,
+        rule
+      );
 
-          const detail =
-            getActionRuleDetailPayload(
-              item.user,
-              item.days,
-              rule
-            );
+    const safeUser =
+      encodeURIComponent(
+        item.user
+      );
 
-          return `
-            <div class="action-item-card">
-              <div class="action-card-top">
-                <div class="action-card-user-wrap">
-                  <div class="action-card-user">
-                    ${escapeHtml(formatResidentName(item.user))}
-                  </div>
-                  <div class="action-badges">
-                    <span class="action-badge ${rule.kind === "procedure" ? "procedure" : "med"}">
-                      ${getRuleKindIcon(rule)}
-                      ${escapeHtml(getRuleKindLabel(rule))}
-                    </span>
-                    <span class="action-badge time">
-                      ${escapeHtml(getRuleTimingLabel(rule))}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  class="action-detail-button"
-                  onclick="openActionRuleDetail('${detail}')"
-                >
-                  詳細
-                </button>
-              </div>
+    cards.push(`
+      <div class="ui096-action-card current">
+        <div class="ui096-action-card-head">
+          <button
+            type="button"
+            class="ui096-action-user"
+            onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
+          >
+            ${escapeHtml(formatResidentName(item.user))}
+          </button>
 
-              <div class="action-content-main">
-                ${escapeHtml(rule.content)}
-              </div>
+          <span class="ui096-state-label current">
+            ${escapeHtml(getRuleTimingLabel(rule))}
+          </span>
+        </div>
 
-              <div class="action-content-sub">
-                個別ルール：未排便${item.days}日目
-              </div>
+        <div class="ui096-action-main">
+          ${escapeHtml(rule.content)}
+        </div>
 
-              <div class="action-target-confirm">
-                ${escapeHtml(formatResidentName(item.user))}への対応です
-              </div>
+        <div class="ui096-action-sub">
+          ${getRuleKindIcon(rule)}
+          ${escapeHtml(getRuleKindLabel(rule))}
+          ／ 未排便${item.days}日目
+        </div>
 
-              <button
-                type="button"
-                class="action-execute-button"
-                onclick="toggleCheck('${safeKey}')"
-              >
-                実施済みにする
-              </button>
-            </div>
-          `;
-        })
-        .join("");
+        <div class="ui096-action-buttons">
+          <button
+            type="button"
+            class="ui096-execute-button"
+            onclick="toggleCheck('${safeKey}')"
+          >
+            実施済みにする
+          </button>
 
-    sections.push(`
-      <div class="action-section-title">
-        <span>通常の対応</span>
-        <span class="action-section-count">
-          ${data.regular.length}件
-        </span>
+          <button
+            type="button"
+            class="ui096-detail-link button"
+            onclick="openActionRuleDetail('${detail}')"
+          >
+            詳細
+          </button>
+        </div>
       </div>
-      ${cards}
     `);
   }
 
 
-  if (data.nurse.length > 0) {
+  for (const item of nurse) {
 
-    const now = new Date();
-    const hour =
-      now.getHours() +
-      now.getMinutes() / 60;
+    const safeId =
+      encodeURIComponent(
+        item.instructionId
+      );
 
-    const cards =
-      data.nurse
-        .map(item => {
+    const safeUser =
+      encodeURIComponent(
+        item.user
+      );
 
-          const safeId =
-            encodeURIComponent(
-              item.instructionId
-            );
+    cards.push(`
+      <div class="ui096-action-card current nurse">
+        <div class="ui096-action-card-head">
+          <button
+            type="button"
+            class="ui096-action-user"
+            onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
+          >
+            ${escapeHtml(formatResidentName(item.user))}
+          </button>
 
-          if (item.status === "observing") {
+          <span class="ui096-state-label nurse">
+            🩺 看護師指示
+          </span>
+        </div>
 
-            return `
-              <div class="action-item-card observing">
-                <div class="action-card-top">
-                  <div class="action-card-user-wrap">
-                    <div class="action-card-user">
-                      ${escapeHtml(formatResidentName(item.user))}
-                    </div>
-                    <div class="action-badges">
-                      <span class="action-badge nurse">
-                        🩺 看護師確認済み
-                      </span>
-                      <span class="action-badge observe">
-                        👀 経過観察
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    class="action-detail-button"
-                    onclick="openActionNurseDetail(decodeURIComponent('${safeId}'))"
-                  >
-                    詳細
-                  </button>
-                </div>
+        <div class="ui096-action-main">
+          ${escapeHtml(
+            item.content ||
+            getNurseInstructionKindLabel(
+              item
+            )
+          )}
+        </div>
 
-                <div class="action-content-main">
-                  経過観察
-                </div>
-
-                <div class="action-content-sub">
-                  対象日：${escapeHtml(item.targetDate)}
-                </div>
-
-                <div class="action-future-note">
-                  看護師確認済み・本日は経過観察です
-                </div>
-              </div>
-            `;
+        <div class="ui096-action-sub">
+          ${
+            item.timing
+              ? escapeHtml(
+                  getNurseInstructionTimingLabel(
+                    item
+                  )
+                ) + " ／ "
+              : ""
           }
+          今回限り
+        </div>
 
-          const state =
-            getInstructionWindowState(
-              item,
-              hour
-            );
+        <div class="ui096-action-buttons">
+          <button
+            type="button"
+            class="ui096-execute-button nurse"
+            onclick="setNurseInstructionExecution(decodeURIComponent('${safeId}'), 'complete')"
+          >
+            指示対応を実施済みにする
+          </button>
 
-          const canExecute =
-            state === "active" ||
-            state === "overdue";
-
-          const kindClass =
-            item.kind === "procedure"
-              ? "procedure"
-              : "med";
-
-          return `
-            <div class="action-item-card nurse">
-              <div class="action-card-top">
-                <div class="action-card-user-wrap">
-                  <div class="action-card-user">
-                    ${escapeHtml(formatResidentName(item.user))}
-                  </div>
-                  <div class="action-badges">
-                    <span class="action-badge nurse">
-                      🩺 看護師指示
-                    </span>
-                    <span class="action-badge ${kindClass}">
-                      ${getNurseInstructionKindIcon(item)}
-                      ${escapeHtml(getNurseInstructionKindLabel(item))}
-                    </span>
-                    ${
-                      item.timing
-                        ? `
-                          <span class="action-badge time">
-                            ${escapeHtml(getNurseInstructionTimingLabel(item))}
-                          </span>
-                        `
-                        : ""
-                    }
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  class="action-detail-button"
-                  onclick="openActionNurseDetail(decodeURIComponent('${safeId}'))"
-                >
-                  詳細
-                </button>
-              </div>
-
-              <div class="action-content-main">
-                ${escapeHtml(item.content || getNurseInstructionKindLabel(item))}
-              </div>
-
-              <div class="action-content-sub">
-                今回限りの看護師指示 ／ 対象日：${escapeHtml(item.targetDate)}
-              </div>
-
-              <div class="action-target-confirm">
-                ${escapeHtml(formatResidentName(item.user))}への看護師指示です
-              </div>
-
-              ${
-                canExecute
-                  ? `
-                    <button
-                      type="button"
-                      class="action-execute-button nurse"
-                      onclick="setNurseInstructionExecution(decodeURIComponent('${safeId}'), 'complete')"
-                    >
-                      指示対応を実施済みにする
-                    </button>
-                  `
-                  : `
-                    <div class="action-future-note">
-                      予定確認用（実施可能時間になったら操作できます）
-                    </div>
-                  `
-              }
-            </div>
-          `;
-        })
-        .join("");
-
-    sections.push(`
-      <div class="action-section-title">
-        <span>看護師指示</span>
-        <span class="action-section-count">
-          ${data.nurse.length}件
-        </span>
+          <button
+            type="button"
+            class="ui096-detail-link button"
+            onclick="openActionNurseDetail(decodeURIComponent('${safeId}'))"
+          >
+            詳細
+          </button>
+        </div>
       </div>
-      ${cards}
-    `);
-  }
-
-
-  if (data.tomorrow.length > 0) {
-
-    const cards =
-      data.tomorrow
-        .map(item => {
-
-          const rule = item.rule;
-
-          const detail =
-            getActionRuleDetailPayload(
-              item.user,
-              item.days,
-              rule
-            );
-
-          return `
-            <div class="action-item-card future">
-              <div class="action-card-top">
-                <div class="action-card-user-wrap">
-                  <div class="action-card-user">
-                    ${escapeHtml(formatResidentName(item.user))}
-                  </div>
-                  <div class="action-badges">
-                    <span class="action-badge future">
-                      🌅 明日朝
-                    </span>
-                    <span class="action-badge ${rule.kind === "procedure" ? "procedure" : "med"}">
-                      ${getRuleKindIcon(rule)}
-                      ${escapeHtml(getRuleKindLabel(rule))}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  class="action-detail-button"
-                  onclick="openActionRuleDetail('${detail}')"
-                >
-                  詳細
-                </button>
-              </div>
-
-              <div class="action-content-main">
-                ${escapeHtml(rule.content)}
-              </div>
-
-              <div class="action-content-sub">
-                明朝時点：未排便${item.days}日目予定
-              </div>
-
-              <div class="action-future-note">
-                明日の予定のため、今日は実施済みにできません
-              </div>
-            </div>
-          `;
-        })
-        .join("");
-
-    sections.push(`
-      <div class="action-section-title">
-        <span>明日朝の予定</span>
-        <span class="action-section-count">
-          ${data.tomorrow.length}件
-        </span>
-      </div>
-      ${cards}
     `);
   }
 
@@ -11426,15 +11672,17 @@ function getTodayTarget() {
   );
 
 
-  if (sections.length === 0) {
+  if (cards.length === 0) {
     return `
-      <div class="action-empty">
-        🎉 現在の対応対象者はいません
+      <div class="ui096-action-empty">
+        <div class="ui096-empty-icon">✓</div>
+        <strong>現在、対応が必要なものはありません</strong>
+        <span>予定されている対応は「予定」タブで確認できます</span>
       </div>
     `;
   }
 
-  return sections.join("");
+  return cards.join("");
 }
 
 function updateHomeDashboardMeta() {
@@ -16645,7 +16893,7 @@ function updateUserSelects() {
 
 
   /*
-    Ver.0.9.5
+    Ver.0.9.6
     30秒同期でselectを作り直しても、
     操作中の利用者選択を勝手に先頭へ戻さない。
   */
@@ -17409,7 +17657,7 @@ function createClientRequestId(
 
 
 /*
-  Ver.0.9.5
+  Ver.0.9.6
 
   ログインはGoogle Apps Scriptの一時的な
   404 / timeout を考慮して最大3回まで再試行する。
@@ -22028,9 +22276,14 @@ function getCompletedListHtml() {
 
   for (const item of data.regular) {
 
-    const key = item.key;
-    const detail = item.data;
-    const rule = detail.rule;
+    const key =
+      item.key;
+
+    const detail =
+      item.data;
+
+    const rule =
+      detail.rule;
 
     const safeKey =
       String(key)
@@ -22044,56 +22297,86 @@ function getCompletedListHtml() {
         rule
       );
 
+    const safeUser =
+      encodeURIComponent(
+        detail.user
+      );
+
+    const isPending =
+      hasPendingCheckOperation(
+        key
+      );
+
     cards.push(`
-      <div class="action-item-card completed">
-        <div class="action-card-top">
-          <div class="action-card-user-wrap">
-            <div class="action-card-user">
-              ${escapeHtml(formatResidentName(detail.user))}
-            </div>
-            <div class="action-badges">
-              <span class="action-badge done">
-                ✅ 実施済み
-              </span>
-              <span class="action-badge ${rule.kind === "procedure" ? "procedure" : "med"}">
-                ${getRuleKindIcon(rule)}
-                ${escapeHtml(getRuleKindLabel(rule))}
-              </span>
-              <span class="action-badge time">
-                ${escapeHtml(getRuleTimingLabel(rule))}
-              </span>
-              ${getPendingCheckBadgeHtml(key)}
-            </div>
-          </div>
+      <div class="ui096-action-card completed ${
+        isPending
+          ? "pending-save"
+          : ""
+      }">
+        <div class="ui096-action-card-head">
           <button
             type="button"
-            class="action-detail-button"
+            class="ui096-action-user"
+            onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
+          >
+            ${escapeHtml(formatResidentName(detail.user))}
+          </button>
+
+          <span class="ui096-state-label ${
+            isPending
+              ? "saving"
+              : "done"
+          }">
+            ${
+              isPending
+                ? "🟠 保存確認中"
+                : "✓ 実施済み"
+            }
+          </span>
+        </div>
+
+        <div class="ui096-action-main">
+          ${escapeHtml(rule.content)}
+        </div>
+
+        <div class="ui096-action-sub">
+          ${getRuleKindIcon(rule)}
+          ${escapeHtml(getRuleKindLabel(rule))}
+          ／ ${escapeHtml(getRuleTimingLabel(rule))}
+        </div>
+
+        ${
+          isPending
+            ? `
+              <div class="ui096-pending-warning">
+                保存結果を確認中です。未実施として再操作しないでください。
+              </div>
+            `
+            : ""
+        }
+
+        <div class="ui096-completed-tools">
+          <button
+            type="button"
+            class="ui096-detail-link button"
             onclick="openActionRuleDetail('${detailPayload}')"
           >
             詳細
           </button>
-        </div>
 
-        <div class="action-content-main">
-          ${escapeHtml(rule.content)}
+          <button
+            type="button"
+            class="ui096-cancel-link"
+            onclick="openCancelCompletedModal('${safeKey}')"
+            ${isPending ? "disabled" : ""}
+          >
+            ${
+              isPending
+                ? "確認中"
+                : "実施済みを取消"
+            }
+          </button>
         </div>
-
-        <div class="action-content-sub">
-          本日の実施記録
-        </div>
-
-        <button
-          type="button"
-          class="action-cancel-button"
-          onclick="openCancelCompletedModal('${safeKey}')"
-          ${hasPendingCheckOperation(key) ? "disabled" : ""}
-        >
-          ${
-            hasPendingCheckOperation(key)
-              ? "保存確認中…"
-              : "実施済みを取消"
-          }
-        </button>
       </div>
     `);
   }
@@ -22106,51 +22389,65 @@ function getCompletedListHtml() {
         item.instructionId
       );
 
+    const safeUser =
+      encodeURIComponent(
+        item.user
+      );
+
     cards.push(`
-      <div class="action-item-card completed nurse">
-        <div class="action-card-top">
-          <div class="action-card-user-wrap">
-            <div class="action-card-user">
-              ${escapeHtml(formatResidentName(item.user))}
-            </div>
-            <div class="action-badges">
-              <span class="action-badge done">
-                ✅ 実施済み
-              </span>
-              <span class="action-badge nurse">
-                🩺 看護師指示
-              </span>
-            </div>
-          </div>
+      <div class="ui096-action-card completed nurse">
+        <div class="ui096-action-card-head">
           <button
             type="button"
-            class="action-detail-button"
+            class="ui096-action-user"
+            onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
+          >
+            ${escapeHtml(formatResidentName(item.user))}
+          </button>
+
+          <span class="ui096-state-label done">
+            ✓ 実施済み
+          </span>
+        </div>
+
+        <div class="ui096-action-main">
+          ${escapeHtml(
+            item.content ||
+            getNurseInstructionKindLabel(
+              item
+            )
+          )}
+        </div>
+
+        <div class="ui096-action-sub">
+          🩺 看護師指示
+          ${
+            item.completedAt
+              ? " ／ " +
+                escapeHtml(
+                  item.completedAt
+                )
+              : ""
+          }
+        </div>
+
+        <div class="ui096-completed-tools">
+          <button
+            type="button"
+            class="ui096-detail-link button"
             onclick="openActionNurseDetail(decodeURIComponent('${safeId}'))"
           >
             詳細
           </button>
-        </div>
 
-        <div class="action-content-main">
-          ${getNurseInstructionKindIcon(item)}
-          ${escapeHtml(item.content || getNurseInstructionKindLabel(item))}
+          <button
+            type="button"
+            class="ui096-cancel-link"
+            onclick="setNurseInstructionExecution(decodeURIComponent('${safeId}'), 'reopen')"
+          >
+            実施済みを取消
+          </button>
         </div>
-
-        <div class="action-content-sub">
-          ${
-            item.completedAt
-              ? "実施：" + escapeHtml(item.completedAt)
-              : "看護師指示・実施済み"
-          }
-        </div>
-
-        <button
-          type="button"
-          class="action-cancel-button"
-          onclick="setNurseInstructionExecution(decodeURIComponent('${safeId}'), 'reopen')"
-        >
-          実施済みを取消
-        </button>
       </div>
     `);
   }
@@ -22164,21 +22461,14 @@ function getCompletedListHtml() {
 
   if (cards.length === 0) {
     return `
-      <div class="action-empty">
-        まだ本日の実施記録はありません
+      <div class="ui096-action-empty">
+        <div class="ui096-empty-icon">○</div>
+        <strong>まだ本日の実施記録はありません</strong>
       </div>
     `;
   }
 
-  return `
-    <div class="action-section-title">
-      <span>本日実施済み</span>
-      <span class="action-section-count">
-        ${cards.length}件
-      </span>
-    </div>
-    ${cards.join("")}
-  `;
+  return cards.join("");
 }
 
 function openCancelCompletedModal(key) {
@@ -24147,7 +24437,7 @@ async function changeLastDate() {
     /*
       GAS保存成功後にローカルへ反映する。
 
-      Ver.0.9.5
+      Ver.0.9.6
       手動の最終排便日訂正は「新しい排便成立」ではない。
       現在サイクル用の固定ルールがある場合は、
       サイクルキーだけ新しい日付へ移す。
@@ -24927,7 +25217,7 @@ function resolvePendingBowelOperationAfterSync() {
   }
 
   /*
-    Ver.0.9.5
+    Ver.0.9.6
     timeout後もGAS側保存は続く可能性がある。
     同期でまだ見えないだけでは未保存と断定しない。
   */
@@ -25039,7 +25329,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.9.5 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
+// Ver.0.9.6 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
 // Ver.0.8.44 APIセッション認証
 // ============================================================
 
@@ -25837,7 +26127,7 @@ async function requestSyncDataFromServer(
 
 
       /*
-        Ver.0.9.5
+        Ver.0.9.6
 
         getSyncData は読み取り専用なので、
         timeout後でも同じ同期内で安全に再試行できる。
@@ -25892,7 +26182,7 @@ async function requestSyncDataFromServer(
 */
 
 /*
-  Ver.0.9.5 排便登録の保存結果確認。
+  Ver.0.9.6 排便登録の保存結果確認。
   POST確認が一時的に失敗したら、読み取り専用GETへ切り替える。
 */
 async function getBowelOperationStatusRobust({
@@ -26204,7 +26494,7 @@ async function registerBowelWithRecovery({
 
 
   /*
-    Ver.0.9.5
+    Ver.0.9.6
     保存確認APIも通信不能なら、この場で重い初期同期は投げない。
     未保存とも保存済みとも断定せず、operationIdを保留して
     バックグラウンド確認へ移す。
@@ -28744,7 +29034,7 @@ async function loadLightSyncDataFromGoogle() {
 
   // =========================
   // ルール / サイクル固定ルール
-  // Ver.0.9.5
+  // Ver.0.9.6
   // ルール変更を30秒以内に他端末へ反映する。
   // =========================
 
