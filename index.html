@@ -5574,7 +5574,7 @@ h3 {
 
 
 /* ============================================================
-   Ver.0.9.8 UI REFRESH
+   Ver.0.9.9 UI REFRESH
    既存ロジックを維持し、表示階層だけを再設計
 ============================================================ */
 
@@ -6224,7 +6224,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.8 排便入力
+   Ver.0.9.9 排便入力
 ============================================================ */
 
 .ui09-hidden-select {
@@ -6320,7 +6320,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.8 ポイント表示 / 通信状態
+   Ver.0.9.9 ポイント表示 / 通信状態
 ============================================================ */
 
 /*
@@ -6403,7 +6403,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.8 排便入力：個人情報とユニット全体操作を分離
+   Ver.0.9.9 排便入力：個人情報とユニット全体操作を分離
 ============================================================ */
 
 .ui095-personal-details {
@@ -6607,7 +6607,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.8 対応画面
+   Ver.0.9.9 対応画面
    現在 = 今やる / 予定 = あとでやる / 完了 = もうやった
 ============================================================ */
 
@@ -6846,7 +6846,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.8 履歴画面
+   Ver.0.9.9 履歴画面
 ============================================================ */
 
 .ui097-history-search-wrap {
@@ -7050,7 +7050,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.8 勤務帯確定ロック / 利用者詳細
+   Ver.0.9.9 勤務帯確定ロック / 利用者詳細
 ============================================================ */
 
 .ui098-shift-locked-note {
@@ -7111,6 +7111,293 @@ body {
   margin-top: 10px;
 }
 
+
+/* ============================================================
+   Ver.0.9.9 その他・管理者メニュー
+============================================================ */
+
+.ui099-other-head {
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.ui099-account-card {
+  margin-bottom: 18px;
+}
+
+.ui099-account-copy {
+  min-width: 0;
+}
+
+.ui099-main-menu .other-menu-row.active,
+.ui099-admin-menu .other-menu-row.active {
+  background: #f5fbf9;
+}
+
+.ui099-sync-icon {
+  background: #e9f4fb;
+  color: #3d78c7;
+  font-size: 23px;
+  font-weight: 900;
+}
+
+.ui099-eval-icon {
+  background: var(--ui09-purple-bg);
+}
+
+.ui099-master-icon {
+  background: #edf5f1;
+  color: #477965;
+}
+
+.ui099-system-icon {
+  background: #eef3f5;
+  color: #48636c;
+}
+
+.ui099-info-panel {
+  display: none;
+  margin-top: -2px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid var(--ui09-line);
+  border-radius: 16px;
+  background: var(--ui09-card);
+}
+
+.ui099-info-panel.open {
+  display: block;
+}
+
+.ui099-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 11px;
+}
+
+.ui099-panel-head h3 {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  font-size: 17px;
+}
+
+.ui099-system-card {
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+.ui099-admin-title {
+  margin-top: 24px;
+}
+
+.ui099-admin-note,
+.ui099-panel-note {
+  margin: -3px 2px 10px;
+  color: var(--ui09-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.ui099-admin-menu {
+  margin-bottom: 10px;
+}
+
+.ui099-menu-right {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ui099-menu-badge {
+  min-width: 24px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: var(--ui09-purple-bg);
+  color: var(--ui09-purple);
+  font-size: 10px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.ui099-menu-badge.warning {
+  background: var(--ui09-orange-bg);
+  color: #9b5b00;
+}
+
+.ui099-menu-badge.hidden {
+  display: none;
+}
+
+#adminArea .other-admin-panel {
+  margin-top: 10px;
+  margin-bottom: 14px;
+  border-color: var(--ui09-line);
+  box-shadow: none;
+}
+
+.ui099-admin-empty {
+  padding: 25px 14px;
+  border: 1px dashed #ccd8dc;
+  border-radius: 13px;
+  background: #fafcfc;
+  color: var(--ui09-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.ui099-admin-subtitle {
+  margin: 17px 1px 8px;
+  color: var(--ui09-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.ui099-master-summary,
+.ui099-system-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ui099-master-summary > div,
+.ui099-system-summary > div {
+  padding: 11px;
+  border-radius: 12px;
+  background: var(--ui09-grey-bg);
+}
+
+.ui099-system-summary > div.ok {
+  background: var(--ui09-green-bg);
+  color: #287253;
+}
+
+.ui099-system-summary > div.warning {
+  background: var(--ui09-orange-bg);
+  color: #8c5c10;
+}
+
+.ui099-system-summary > div.error {
+  background: var(--ui09-red-bg);
+  color: var(--ui09-red);
+}
+
+.ui099-master-summary span,
+.ui099-system-summary span {
+  display: block;
+  color: inherit;
+  opacity: .8;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.ui099-master-summary strong,
+.ui099-system-summary strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 17px;
+}
+
+.ui099-master-list,
+.ui099-staff-list,
+.ui099-system-list {
+  overflow: hidden;
+  border: 1px solid var(--ui09-line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.ui099-master-row,
+.ui099-staff-row,
+.ui099-system-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--ui09-line);
+}
+
+.ui099-master-row:first-child,
+.ui099-staff-row:first-child,
+.ui099-system-list > div:first-child {
+  border-top: 0;
+}
+
+.ui099-master-row > span {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 8px;
+  background: var(--ui09-soft);
+  color: var(--ui09-teal-dark);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.ui099-master-row strong {
+  flex: 1;
+  font-size: 13px;
+}
+
+.ui099-staff-row > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ui099-staff-row > div strong {
+  font-size: 13px;
+}
+
+.ui099-staff-row > div span {
+  color: var(--ui09-muted);
+  font-size: 10px;
+}
+
+.ui099-master-unit {
+  flex: none;
+  color: var(--ui09-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.ui099-system-list > div span {
+  color: var(--ui09-muted);
+  font-size: 11px;
+}
+
+.ui099-system-list > div strong {
+  max-width: 55%;
+  font-size: 11px;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* 0.9.9では旧「利用者状況」セクションをその他画面から撤去 */
+#otherPage .other-status-card,
+#otherStatusPanel {
+  display: none !important;
+}
+
+@media (max-width: 390px) {
+  .ui099-account-card .other-account-row {
+    align-items: flex-start;
+  }
+
+  .ui099-account-card .other-logout-button {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+
 </style>
 </head>
 
@@ -7150,7 +7437,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.8</div>
+      <div class="ui09-brand-version">Ver.0.9.9</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -7924,15 +8211,19 @@ body {
 
 
   <!-- =========================
-       その他 Ver.0.8.44
+       その他 Ver.0.9.9
   ========================== -->
   <section
     id="otherPage"
-    class="app-page"
+    class="app-page ui09-page"
   >
 
-    <div class="other-page-head">
-      <h2>その他</h2>
+    <div class="other-page-head ui099-other-head">
+      <div>
+        <div class="ui09-kicker">設定・確認</div>
+        <h2>その他</h2>
+      </div>
+
       <div
         id="otherRolePill"
         class="other-role-pill"
@@ -7941,10 +8232,15 @@ body {
       </div>
     </div>
 
-    <section class="other-account-card">
+
+    <section class="other-account-card ui099-account-card">
       <div class="other-account-row">
 
-        <div>
+        <div class="ui099-account-copy">
+          <div class="ui09-kicker">
+            ログイン中
+          </div>
+
           <div
             id="otherAccountName"
             class="other-account-name"
@@ -7972,49 +8268,11 @@ body {
 
 
     <div class="other-section-title">
-      利用者状況
-    </div>
-
-    <section class="other-status-card">
-
-      <div
-        id="otherStatusSummary"
-        class="other-summary-grid"
-      >
-        <div class="other-summary-card other">
-          <span class="other-summary-label">
-            読み込み中
-          </span>
-          <strong>-</strong>
-        </div>
-      </div>
-
-      <button
-        id="otherStatusToggleButton"
-        class="other-card-link"
-        onclick="toggleOtherStatusPanel()"
-      >
-        <span>利用者状況の一覧を見る</span>
-        <span>›</span>
-      </button>
-
-    </section>
-
-    <div
-      id="otherStatusPanel"
-      class="other-status-panel"
-    >
-      <div id="status">
-        利用者状況を読み込んでいます...
-      </div>
-    </div>
-
-
-    <div class="other-section-title">
       確認
     </div>
 
-    <section class="other-menu-list">
+    <section class="other-menu-list ui099-main-menu">
+
       <button
         class="other-menu-row"
         onclick="openRuleListFromOther()"
@@ -8022,32 +8280,119 @@ body {
         <div class="other-menu-left">
           <div class="other-menu-icon rule">📋</div>
           <div>
-            <div class="other-menu-title">個別ルール一覧</div>
-            <div class="other-menu-sub">利用者ごとのルールを確認</div>
+            <div class="other-menu-title">
+              個別ルール一覧
+            </div>
+            <div class="other-menu-sub">
+              利用者ごとの現在ルールを確認
+            </div>
           </div>
         </div>
         <div class="other-menu-chevron">›</div>
       </button>
+
+
+      <button
+        id="otherInfoToggleButton"
+        class="other-menu-row"
+        onclick="toggleOtherInfoPanel()"
+      >
+        <div class="other-menu-left">
+          <div class="other-menu-icon ui099-sync-icon">↻</div>
+          <div>
+            <div class="other-menu-title">
+              通信・アプリ情報
+            </div>
+            <div class="other-menu-sub">
+              同期状態・最終同期・バージョン
+            </div>
+          </div>
+        </div>
+        <div class="other-menu-chevron">›</div>
+      </button>
+
     </section>
+
+
+    <section
+      id="otherInfoPanel"
+      class="ui099-info-panel"
+    >
+      <div class="ui099-panel-head">
+        <div>
+          <div class="ui09-kicker">端末状態</div>
+          <h3>通信・アプリ情報</h3>
+        </div>
+      </div>
+
+      <div class="other-system-card ui099-system-card">
+
+        <div class="other-info-row">
+          <span class="other-info-label">
+            通信状態
+          </span>
+          <span
+            id="otherSyncState"
+            class="other-info-value"
+          >
+            -
+          </span>
+        </div>
+
+        <div class="other-info-row">
+          <span class="other-info-label">
+            最終同期
+          </span>
+          <span
+            id="otherLastSync"
+            class="other-info-value"
+          >
+            -
+          </span>
+        </div>
+
+        <div class="other-info-row">
+          <span class="other-info-label">
+            HTML
+          </span>
+          <span class="other-info-value">
+            Ver.0.9.9
+          </span>
+        </div>
+
+        <div class="other-info-row">
+          <span class="other-info-label">
+            GAS
+          </span>
+          <span class="other-info-value">
+            Ver.0.8.41
+          </span>
+        </div>
+
+      </div>
+    </section>
+
 
     <!-- 管理者機能 -->
     <div id="adminArea">
 
-      <div class="other-section-title">
+      <div class="other-section-title ui099-admin-title">
         管理者メニュー
       </div>
 
-      <section class="other-menu-list">
+      <div class="ui099-admin-note">
+        編集機能は管理者アカウントだけに表示されます
+      </div>
+
+      <section class="other-menu-list ui099-admin-menu">
 
         <button
           class="other-menu-row"
+          data-admin-panel="user"
           onclick="toggleOtherAdminPanel('user')"
         >
           <div class="other-menu-left">
-            <div class="other-menu-icon user">
-              👤
-            </div>
-
+            <div class="other-menu-icon user">👤</div>
             <div>
               <div class="other-menu-title">
                 利用者管理
@@ -8057,33 +8402,100 @@ body {
               </div>
             </div>
           </div>
-
-          <div class="other-menu-chevron">
-            ›
-          </div>
+          <div class="other-menu-chevron">›</div>
         </button>
+
 
         <button
           class="other-menu-row"
+          data-admin-panel="rule"
           onclick="toggleOtherAdminPanel('rule')"
         >
           <div class="other-menu-left">
-            <div class="other-menu-icon rule">
-              📋
-            </div>
-
+            <div class="other-menu-icon rule">📋</div>
             <div>
               <div class="other-menu-title">
                 ルール管理
               </div>
               <div class="other-menu-sub">
-                個別ルールの追加・削除
+                個別ルールの追加・変更・削除
+              </div>
+            </div>
+          </div>
+          <div class="other-menu-chevron">›</div>
+        </button>
+
+
+        <button
+          class="other-menu-row"
+          data-admin-panel="evaluation"
+          onclick="toggleOtherAdminPanel('evaluation')"
+        >
+          <div class="other-menu-left">
+            <div class="other-menu-icon ui099-eval-icon">🧪</div>
+            <div>
+              <div class="other-menu-title">
+                評価管理
+              </div>
+              <div class="other-menu-sub">
+                評価中・評価日到来のルールを確認
               </div>
             </div>
           </div>
 
-          <div class="other-menu-chevron">
-            ›
+          <div class="ui099-menu-right">
+            <span
+              id="otherAdminEvaluationBadge"
+              class="ui099-menu-badge hidden"
+            >0</span>
+            <div class="other-menu-chevron">›</div>
+          </div>
+        </button>
+
+
+        <button
+          class="other-menu-row"
+          data-admin-panel="master"
+          onclick="toggleOtherAdminPanel('master')"
+        >
+          <div class="other-menu-left">
+            <div class="other-menu-icon ui099-master-icon">⚙</div>
+            <div>
+              <div class="other-menu-title">
+                マスター情報
+              </div>
+              <div class="other-menu-sub">
+                職員・ユニットの登録内容を確認
+              </div>
+            </div>
+          </div>
+          <div class="other-menu-chevron">›</div>
+        </button>
+
+
+        <button
+          class="other-menu-row"
+          data-admin-panel="system"
+          onclick="toggleOtherAdminPanel('system')"
+        >
+          <div class="other-menu-left">
+            <div class="other-menu-icon ui099-system-icon">◉</div>
+            <div>
+              <div class="other-menu-title">
+                システム情報
+              </div>
+              <div class="other-menu-sub">
+                保存確認中・同期状態・現在の構成
+              </div>
+            </div>
+          </div>
+
+          <div class="ui099-menu-right">
+            <span
+              id="otherAdminPendingBadge"
+              class="ui099-menu-badge warning hidden"
+            >0</span>
+            <div class="other-menu-chevron">›</div>
           </div>
         </button>
 
@@ -8180,8 +8592,6 @@ body {
             <option value="4">4ユニット</option>
           </select>
         </div>
-
-        <div id="ruleEvaluationAdminList"></div>
 
         <div id="ruleList">
           まだルールはありません
@@ -8280,58 +8690,72 @@ body {
 
       </section>
 
+
+      <section
+        id="otherAdminEvaluationPanel"
+        class="other-admin-panel"
+      >
+        <div class="ui099-panel-head">
+          <div>
+            <div class="ui09-kicker">
+              ルール評価
+            </div>
+            <h3>評価管理</h3>
+          </div>
+        </div>
+
+        <div class="ui099-panel-note">
+          評価中または評価予定のルールを確認します。
+          評価判断そのものは職員が行います。
+        </div>
+
+        <div id="ruleEvaluationAdminList"></div>
+      </section>
+
+
+      <section
+        id="otherAdminMasterPanel"
+        class="other-admin-panel"
+      >
+        <div class="ui099-panel-head">
+          <div>
+            <div class="ui09-kicker">
+              登録内容
+            </div>
+            <h3>マスター情報</h3>
+          </div>
+        </div>
+
+        <div class="ui099-panel-note">
+          現在アプリに読み込まれている職員・ユニットマスターです。
+          この画面は確認専用です。
+        </div>
+
+        <div id="otherAdminMasterContent">
+          読み込み中...
+        </div>
+      </section>
+
+
+      <section
+        id="otherAdminSystemPanel"
+        class="other-admin-panel"
+      >
+        <div class="ui099-panel-head">
+          <div>
+            <div class="ui09-kicker">
+              管理者向け
+            </div>
+            <h3>システム情報</h3>
+          </div>
+        </div>
+
+        <div id="otherAdminSystemContent">
+          読み込み中...
+        </div>
+      </section>
+
     </div>
-
-
-    <div class="other-section-title">
-      アプリ情報
-    </div>
-
-    <section class="other-system-card">
-
-      <div class="other-info-row">
-        <span class="other-info-label">
-          通信状態
-        </span>
-        <span
-          id="otherSyncState"
-          class="other-info-value"
-        >
-          -
-        </span>
-      </div>
-
-      <div class="other-info-row">
-        <span class="other-info-label">
-          最終同期
-        </span>
-        <span
-          id="otherLastSync"
-          class="other-info-value"
-        >
-          -
-        </span>
-      </div>
-
-      <div class="other-info-row">
-        <span class="other-info-label">
-          HTML
-        </span>
-        <span class="other-info-value">
-          Ver.0.9.8
-        </span>
-      </div>
-
-      <div class="other-info-row">
-        <span class="other-info-label">
-          GAS
-        </span>
-        <span class="other-info-value">
-          Ver.0.8.40
-        </span>
-      </div>
-
-    </section>
 
   </section>
 
@@ -8639,7 +9063,7 @@ let pendingBowelResolveTimer = null;
 
 
 /*
-  Ver.0.9.8
+  Ver.0.9.9
   与薬実施チェックの保存結果が未確定な操作。
 
   安全原則：
@@ -8860,7 +9284,60 @@ function markSyncSuccess(serverTime = "") {
       lastSuccessfulSyncAt
     );
 
+  const infoPanel =
+    document.getElementById(
+      "otherInfoPanel"
+    );
+
+  const infoButton =
+    document.getElementById(
+      "otherInfoToggleButton"
+    );
+
+  if (infoPanel) {
+    infoPanel.classList.toggle(
+      "open",
+      otherInfoPanelOpen
+    );
+  }
+
+  if (infoButton) {
+
+    const chevron =
+      infoButton.querySelector(
+        ".other-menu-chevron"
+      );
+
+    if (chevron) {
+      chevron.textContent =
+        otherInfoPanelOpen
+          ? "⌃"
+          : "›";
+    }
+
+    infoButton.classList.toggle(
+      "active",
+      otherInfoPanelOpen
+    );
+  }
+
   updateOtherAppInfo();
+
+  if (currentRole === "admin") {
+    updateOtherAdminBadges();
+
+    if (
+      otherAdminPanel === "master"
+    ) {
+      renderAdminMasterPanel();
+    }
+
+    if (
+      otherAdminPanel === "system"
+    ) {
+      renderAdminSystemPanel();
+    }
+  }
 }
 
 
@@ -9739,7 +10216,7 @@ function selectBowelUser(
     user;
 
   /*
-    Ver.0.9.8
+    Ver.0.9.9
     別利用者へ切り替えたとき、前の人の排便量選択を
     引き継がない。誤登録防止のため必ず未選択へ戻す。
   */
@@ -17169,7 +17646,7 @@ function updateUserSelects() {
 
 
   /*
-    Ver.0.9.8
+    Ver.0.9.9
     30秒同期でselectを作り直しても、
     操作中の利用者選択を勝手に先頭へ戻さない。
   */
@@ -17388,6 +17865,7 @@ async function changeUserUnit() {
   起動時に参照される「その他」UI状態は var で宣言する。
 */
 var otherStatusPanelOpen = false;
+var otherInfoPanelOpen = false;
 var otherAdminPanel = "";
 
 
@@ -17514,6 +17992,316 @@ function updateOtherAppInfo() {
           )
         : "同期履歴なし";
   }
+}
+
+
+
+function renderAdminMasterPanel() {
+
+  const area =
+    document.getElementById(
+      "otherAdminMasterContent"
+    );
+
+  if (!area) {
+    return;
+  }
+
+  const units =
+    Object.entries(
+      unitMaster || {}
+    )
+      .sort(
+        (a, b) =>
+          Number(a[0]) -
+          Number(b[0])
+      );
+
+  const activeStaff =
+    (staffMaster || [])
+      .filter(staff =>
+        staff.active
+      )
+      .slice()
+      .sort((a, b) => {
+
+        const unitCompare =
+          String(a.unit || "")
+            .localeCompare(
+              String(b.unit || ""),
+              "ja"
+            );
+
+        if (unitCompare !== 0) {
+          return unitCompare;
+        }
+
+        return String(a.name || "")
+          .localeCompare(
+            String(b.name || ""),
+            "ja"
+          );
+      });
+
+
+  const unitHtml =
+    units.length > 0
+      ? units.map(([unitId, unitName]) => `
+          <div class="ui099-master-row">
+            <span>${escapeHtml(unitId)}</span>
+            <strong>${escapeHtml(unitName)}</strong>
+          </div>
+        `).join("")
+      : `
+          <div class="ui099-admin-empty">
+            ユニットマスターがありません
+          </div>
+        `;
+
+
+  const staffHtml =
+    activeStaff.length > 0
+      ? activeStaff.map(staff => `
+          <div class="ui099-staff-row">
+            <div>
+              <strong>
+                ${escapeHtml(staff.name)}
+              </strong>
+              <span>
+                ${escapeHtml(staff.job || "職種未設定")}
+              </span>
+            </div>
+            <span class="ui099-master-unit">
+              ${
+                staff.unit
+                  ? escapeHtml(
+                      getUnitName(
+                        staff.unit
+                      )
+                    )
+                  : "所属なし"
+              }
+            </span>
+          </div>
+        `).join("")
+      : `
+          <div class="ui099-admin-empty">
+            有効な職員マスターがありません
+          </div>
+        `;
+
+
+  area.innerHTML = `
+    <div class="ui099-master-summary">
+      <div>
+        <span>ユニット</span>
+        <strong>${units.length}</strong>
+      </div>
+      <div>
+        <span>有効職員</span>
+        <strong>${activeStaff.length}</strong>
+      </div>
+    </div>
+
+    <div class="ui099-admin-subtitle">
+      ユニットマスター
+    </div>
+    <div class="ui099-master-list">
+      ${unitHtml}
+    </div>
+
+    <div class="ui099-admin-subtitle">
+      職員マスター
+    </div>
+    <div class="ui099-staff-list">
+      ${staffHtml}
+    </div>
+  `;
+}
+
+
+function renderAdminSystemPanel() {
+
+  const area =
+    document.getElementById(
+      "otherAdminSystemContent"
+    );
+
+  if (!area) {
+    return;
+  }
+
+  const checkPendingCount =
+    Object.keys(
+      pendingCheckOperations || {}
+    ).length;
+
+  const bowelPendingCount =
+    pendingBowelOperation
+      ? 1
+      : 0;
+
+  const totalPending =
+    checkPendingCount +
+    bowelPendingCount;
+
+  const syncBar =
+    document.getElementById(
+      "syncStatusBar"
+    );
+
+  let syncText =
+    "正常";
+
+  let syncClass =
+    "ok";
+
+  if (
+    syncBar &&
+    syncBar.classList.contains(
+      "sync-error"
+    )
+  ) {
+    syncText =
+      "更新失敗";
+    syncClass =
+      "error";
+
+  } else if (
+    syncBar &&
+    syncBar.classList.contains(
+      "sync-warning"
+    )
+  ) {
+    syncText =
+      "通信不安定";
+    syncClass =
+      "warning";
+  }
+
+  area.innerHTML = `
+    <div class="ui099-system-summary">
+      <div class="${syncClass}">
+        <span>通信</span>
+        <strong>${escapeHtml(syncText)}</strong>
+      </div>
+
+      <div class="${
+        totalPending > 0
+          ? "warning"
+          : "ok"
+      }">
+        <span>保存確認中</span>
+        <strong>${totalPending}件</strong>
+      </div>
+    </div>
+
+    <div class="ui099-system-list">
+      <div>
+        <span>排便登録の保存確認中</span>
+        <strong>${bowelPendingCount}件</strong>
+      </div>
+      <div>
+        <span>対応記録の保存確認中</span>
+        <strong>${checkPendingCount}件</strong>
+      </div>
+      <div>
+        <span>最終同期</span>
+        <strong>
+          ${
+            lastSuccessfulSyncAt
+              ? escapeHtml(
+                  getSyncDisplayText(
+                    lastSuccessfulSyncAt
+                  )
+                )
+              : "同期履歴なし"
+          }
+        </strong>
+      </div>
+      <div>
+        <span>HTML</span>
+        <strong>Ver.0.9.9</strong>
+      </div>
+      <div>
+        <span>GAS</span>
+        <strong>Ver.0.8.41</strong>
+      </div>
+      <div>
+        <span>ログイン範囲</span>
+        <strong>
+          ${
+            currentUnit === "all"
+              ? "全ユニット"
+              : escapeHtml(
+                  getUnitName(
+                    currentUnit
+                  )
+                )
+          }
+        </strong>
+      </div>
+    </div>
+  `;
+}
+
+
+function updateOtherAdminBadges() {
+
+  const evaluationBadge =
+    document.getElementById(
+      "otherAdminEvaluationBadge"
+    );
+
+  const pendingBadge =
+    document.getElementById(
+      "otherAdminPendingBadge"
+    );
+
+  if (evaluationBadge) {
+
+    const evaluationCount =
+      getActiveRuleEvaluations()
+        .length;
+
+    evaluationBadge.textContent =
+      String(evaluationCount);
+
+    evaluationBadge.classList.toggle(
+      "hidden",
+      evaluationCount === 0
+    );
+  }
+
+  if (pendingBadge) {
+
+    const pendingCount =
+      Object.keys(
+        pendingCheckOperations || {}
+      ).length +
+      (
+        pendingBowelOperation
+          ? 1
+          : 0
+      );
+
+    pendingBadge.textContent =
+      String(pendingCount);
+
+    pendingBadge.classList.toggle(
+      "hidden",
+      pendingCount === 0
+    );
+  }
+}
+
+
+function toggleOtherInfoPanel() {
+
+  otherInfoPanelOpen =
+    !otherInfoPanelOpen;
+
+  updateOtherPageUI();
 }
 
 
@@ -17678,45 +18466,127 @@ function toggleOtherAdminPanel(
     return;
   }
 
+  const allowedPanels =
+    [
+      "user",
+      "rule",
+      "evaluation",
+      "master",
+      "system"
+    ];
+
+  if (
+    !allowedPanels.includes(
+      panel
+    )
+  ) {
+    return;
+  }
+
   otherAdminPanel =
     otherAdminPanel === panel
       ? ""
       : panel;
 
-  const userPanel =
-    document.getElementById(
-      "otherAdminUserPanel"
-    );
+  const panels = {
+    user:
+      document.getElementById(
+        "otherAdminUserPanel"
+      ),
+    rule:
+      document.getElementById(
+        "otherAdminRulePanel"
+      ),
+    evaluation:
+      document.getElementById(
+        "otherAdminEvaluationPanel"
+      ),
+    master:
+      document.getElementById(
+        "otherAdminMasterPanel"
+      ),
+    system:
+      document.getElementById(
+        "otherAdminSystemPanel"
+      )
+  };
 
-  const rulePanel =
-    document.getElementById(
-      "otherAdminRulePanel"
-    );
+  for (
+    const key of
+    Object.keys(panels)
+  ) {
 
-  if (userPanel) {
-    userPanel.classList.toggle(
+    panels[key]?.classList.toggle(
       "open",
-      otherAdminPanel === "user"
+      otherAdminPanel === key
     );
   }
 
-  if (rulePanel) {
-    rulePanel.classList.toggle(
-      "open",
-      otherAdminPanel === "rule"
-    );
-  }
 
-  if (otherAdminPanel === "rule") {
+  document
+    .querySelectorAll(
+      "[data-admin-panel]"
+    )
+    .forEach(button => {
+
+      const active =
+        button.dataset.adminPanel ===
+        otherAdminPanel;
+
+      button.classList.toggle(
+        "active",
+        active
+      );
+
+      const chevron =
+        button.querySelector(
+          ".other-menu-chevron"
+        );
+
+      if (chevron) {
+        chevron.textContent =
+          active
+            ? "⌃"
+            : "›";
+      }
+    });
+
+
+  if (
+    otherAdminPanel === "rule"
+  ) {
     updateAdminRuleUnitFilterLabels();
     updateUserSelects();
     updateRuleDisplays();
   }
 
-  if (otherAdminPanel === "user") {
+  if (
+    otherAdminPanel === "user"
+  ) {
     updateUserSelects();
     updateUnitMasterDisplays();
   }
+
+  if (
+    otherAdminPanel ===
+      "evaluation"
+  ) {
+    renderRuleEvaluationAdminList();
+  }
+
+  if (
+    otherAdminPanel === "master"
+  ) {
+    renderAdminMasterPanel();
+  }
+
+  if (
+    otherAdminPanel === "system"
+  ) {
+    renderAdminSystemPanel();
+  }
+
+  updateOtherAdminBadges();
 }
 
 
@@ -17933,7 +18803,7 @@ function createClientRequestId(
 
 
 /*
-  Ver.0.9.8
+  Ver.0.9.9
 
   ログインはGoogle Apps Scriptの一時的な
   404 / timeout を考慮して最大3回まで再試行する。
@@ -19624,7 +20494,11 @@ function updateRuleEvaluationAlerts() {
       );
 
   if (items.length === 0) {
-    area.innerHTML = "";
+    area.innerHTML = `
+      <div class="ui099-admin-empty">
+        現在、評価中・評価予定のルールはありません
+      </div>
+    `;
     return;
   }
 
@@ -25044,7 +25918,7 @@ async function changeLastDate() {
     /*
       GAS保存成功後にローカルへ反映する。
 
-      Ver.0.9.8
+      Ver.0.9.9
       手動の最終排便日訂正は「新しい排便成立」ではない。
       現在サイクル用の固定ルールがある場合は、
       サイクルキーだけ新しい日付へ移す。
@@ -25875,7 +26749,7 @@ function resolvePendingBowelOperationAfterSync() {
   }
 
   /*
-    Ver.0.9.8
+    Ver.0.9.9
     timeout後もGAS側保存は続く可能性がある。
     同期でまだ見えないだけでは未保存と断定しない。
   */
@@ -25987,7 +26861,7 @@ function getRetryBackoffMs(
 */
 
 // ============================================================
-// Ver.0.9.8 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
+// Ver.0.9.9 APIセッションはGAS発行の絶対期限（7日）を使用。30秒同期では延長しない。
 // Ver.0.8.44 APIセッション認証
 // ============================================================
 
@@ -26785,7 +27659,7 @@ async function requestSyncDataFromServer(
 
 
       /*
-        Ver.0.9.8
+        Ver.0.9.9
 
         getSyncData は読み取り専用なので、
         timeout後でも同じ同期内で安全に再試行できる。
@@ -26840,7 +27714,7 @@ async function requestSyncDataFromServer(
 */
 
 /*
-  Ver.0.9.8 排便登録の保存結果確認。
+  Ver.0.9.9 排便登録の保存結果確認。
   POST確認が一時的に失敗したら、読み取り専用GETへ切り替える。
 */
 async function getBowelOperationStatusRobust({
@@ -27152,7 +28026,7 @@ async function registerBowelWithRecovery({
 
 
   /*
-    Ver.0.9.8
+    Ver.0.9.9
     保存確認APIも通信不能なら、この場で重い初期同期は投げない。
     未保存とも保存済みとも断定せず、operationIdを保留して
     バックグラウンド確認へ移す。
@@ -29688,7 +30562,7 @@ async function loadLightSyncDataFromGoogle() {
 
   // =========================
   // ルール / サイクル固定ルール
-  // Ver.0.9.8
+  // Ver.0.9.9
   // ルール変更を30秒以内に他端末へ反映する。
   // =========================
 
