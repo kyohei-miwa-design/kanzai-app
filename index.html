@@ -7430,7 +7430,7 @@ body {
 
 <div id="appArea" style="display:none;">
 
-  <!-- Ver.0.9.11 HOTFIX: 旧JSが参照する利用者状況領域。UI刷新後は非表示互換要素として保持 -->
+  <!-- Ver.0.9.12 HOTFIX: 旧JSが参照する利用者状況領域。UI刷新後は非表示互換要素として保持 -->
   <div id="status" class="home-hidden-compat" aria-hidden="true"></div>
 
   <!-- =========================
@@ -7440,7 +7440,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.11</div>
+      <div class="ui09-brand-version">Ver.0.9.12</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8359,7 +8359,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.11
+            Ver.0.9.12
           </span>
         </div>
 
@@ -8942,7 +8942,7 @@ let ruleCycleSnapshots = {};
 let ruleEvaluations = [];
 let adminRuleUnitFilter = "";
 
-// Ver.0.9.11 試験運用版：コード内のダミー利用者・ルールを撤去。
+// Ver.0.9.12 試験運用版：コード内のダミー利用者・ルールを撤去。
 // サーバー同期データを正本として使用する。
 let rules = {};
 let lastDates = {};
@@ -8957,11 +8957,35 @@ let currentUnit = "";
 let currentRole = "";
 
 /*
-  Ver.0.9.11
+  Ver.0.9.12
   最新のサーバーデータを1回以上正常取得するまでは書込み禁止。
   ローカルキャッシュは閲覧用として残すが、古い状態からの更新を防ぐ。
 */
 let serverStateReady = false;
+
+/*
+  Ver.0.9.12 HOTFIX
+  initialize() はこの後すぐ実行され、初期同期内で
+  ensureServerWriteReady() → CLIENT_WRITE_ACTIONS を参照する。
+  const の Temporal Dead Zone を避けるため、起動処理より前に初期化する。
+*/
+const CLIENT_WRITE_ACTIONS = new Set([
+  "addHistory",
+  "cancelHistoryFast",
+  "editHistoryFast",
+  "registerBowel",
+  "resolveRuleEvaluation",
+  "saveDailyConfirm",
+  "saveNurseInstruction",
+  "saveRulesV2",
+  "saveRulesV3",
+  "saveRulesV4",
+  "saveUsers",
+  "setCheck",
+  "setNurseInstructionStatus",
+  "updateUserLastDate"
+]);
+
 
 /*
   Ver.0.8.44
@@ -18226,7 +18250,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.11</strong>
+        <strong>Ver.0.9.12</strong>
       </div>
       <div>
         <span>GAS</span>
@@ -19917,7 +19941,7 @@ function renderHistoryView() {
 
 
 /*
-  Ver.0.9.11
+  Ver.0.9.12
   getHistoryDateKey は前方の共通実装へ統合済み。
 */
 
@@ -26968,24 +26992,6 @@ function actionNeedsApiSession(
     normalized !== "ping"
   );
 }
-
-
-const CLIENT_WRITE_ACTIONS = new Set([
-  "addHistory",
-  "cancelHistoryFast",
-  "editHistoryFast",
-  "registerBowel",
-  "resolveRuleEvaluation",
-  "saveDailyConfirm",
-  "saveNurseInstruction",
-  "saveRulesV2",
-  "saveRulesV3",
-  "saveRulesV4",
-  "saveUsers",
-  "setCheck",
-  "setNurseInstructionStatus",
-  "updateUserLastDate"
-]);
 
 
 function ensureServerWriteReady(
