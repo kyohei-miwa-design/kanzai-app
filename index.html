@@ -7401,6 +7401,107 @@ body {
 
 
 /* =========================
+   Ver.0.9.15 利用者状況一覧 復活
+========================= */
+#otherStatusPanel.ui0915-status-panel {
+  display: none !important;
+  margin: 14px 0 18px;
+  padding: 14px;
+  border: 1px solid var(--ui09-line);
+  border-radius: 18px;
+  background: #f8fafb;
+}
+
+#otherStatusPanel.ui0915-status-panel.open {
+  display: block !important;
+}
+
+.ui0915-status-panel-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ui0915-status-panel-head h3 {
+  margin: 2px 0 0;
+  font-size: 20px;
+}
+
+#otherStatusSummary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+#otherStatusSummary .other-summary-card {
+  padding: 9px 6px;
+  border: 1px solid var(--ui09-line);
+  border-radius: 12px;
+  background: #fff;
+  text-align: center;
+}
+
+#otherStatusSummary .other-summary-card strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 20px;
+}
+
+#otherStatusSummary .other-summary-card.nurse {
+  background: #fff5f5;
+  border-color: #ffcdd2;
+  color: #c62828;
+}
+
+#otherStatusSummary .other-summary-card.action {
+  background: #fffaf0;
+  border-color: #ffe082;
+  color: #ef6c00;
+}
+
+#otherStatusSummary .other-summary-card.other {
+  background: #f4fbf6;
+  border-color: #c8e6c9;
+  color: #2e7d32;
+}
+
+#otherStatusSummary .other-summary-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+#otherStatusContent .status-toolbar {
+  margin-bottom: 10px;
+}
+
+#otherStatusContent .status-list {
+  gap: 10px;
+}
+
+#otherStatusContent .status-user-card {
+  box-shadow: none;
+}
+
+@media (max-width: 390px) {
+  #otherStatusPanel.ui0915-status-panel {
+    padding: 11px;
+  }
+
+  #otherStatusSummary {
+    gap: 5px;
+  }
+
+  #otherStatusSummary .other-summary-card {
+    padding-left: 3px;
+    padding-right: 3px;
+  }
+}
+
+/* =========================
    Ver.0.9.13 過去勤務帯復旧
 ========================= */
 .ui0913-recovery-warning{padding:12px 14px;margin-bottom:14px;border:1px solid #f0b7a9;border-radius:14px;background:#fff7f4;line-height:1.65;font-size:14px}
@@ -7454,7 +7555,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.14</div>
+      <div class="ui09-brand-version">Ver.0.9.15</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8291,6 +8392,26 @@ body {
     <section class="other-menu-list ui099-main-menu">
 
       <button
+        id="otherStatusToggleButton"
+        class="other-menu-row"
+        onclick="toggleOtherStatusPanel()"
+      >
+        <div class="other-menu-left">
+          <div class="other-menu-icon ui099-status-icon">▤</div>
+          <div>
+            <div class="other-menu-title">
+              利用者状況一覧
+            </div>
+            <div class="other-menu-sub">
+              未排便日数・排便進捗・次の対応を一覧表示
+            </div>
+          </div>
+        </div>
+        <div class="other-menu-chevron">›</div>
+      </button>
+
+
+      <button
         class="other-menu-row"
         onclick="openRuleListFromOther()"
       >
@@ -8328,6 +8449,25 @@ body {
         <div class="other-menu-chevron">›</div>
       </button>
 
+    </section>
+
+
+    <section
+      id="otherStatusPanel"
+      class="ui0915-status-panel"
+    >
+      <div class="ui0915-status-panel-head">
+        <div>
+          <div class="ui09-kicker">排便状況</div>
+          <h3>利用者状況一覧</h3>
+        </div>
+      </div>
+
+      <div id="otherStatusSummary"></div>
+
+      <div id="otherStatusContent">
+        利用者状況を読み込んでいます...
+      </div>
     </section>
 
 
@@ -8373,7 +8513,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.14
+            Ver.0.9.15
           </span>
         </div>
 
@@ -10429,10 +10569,7 @@ async function register() {
     // ③ 画面を即時更新
     // =========================
 
-    document.getElementById(
-      "status"
-    ).innerHTML =
-      getStatusHtml();
+    renderStatusAreas();
 
     document.getElementById(
       "todayTarget"
@@ -10526,10 +10663,7 @@ async function register() {
     ).innerHTML =
       getHistoryHtml();
 
-    document.getElementById(
-      "status"
-    ).innerHTML =
-      getStatusHtml();
+    renderStatusAreas();
 
     document.getElementById(
       "todayTarget"
@@ -10676,10 +10810,7 @@ async function register() {
     }
 
 
-    document.getElementById(
-      "status"
-    ).innerHTML =
-      getStatusHtml();
+    renderStatusAreas();
 
     document.getElementById(
       "todayTarget"
@@ -13861,7 +13992,7 @@ function loadData() {
   updateUnitMasterDisplays();
 
   document.getElementById("history").innerHTML = getHistoryHtml();
-  document.getElementById("status").innerHTML = getStatusHtml();
+  renderStatusAreas();
   document.getElementById("todayTarget").innerHTML = getTodayTarget();
   updateRuleDisplays();
   document.getElementById("completedList").innerHTML = getCompletedListHtml();
@@ -13891,7 +14022,7 @@ async function loadUsersFromGoogle() {
   }
 
   updateUserSelects();
-  document.getElementById("status").innerHTML = getStatusHtml();
+  renderStatusAreas();
   document.getElementById("todayTarget").innerHTML = getTodayTarget();
 }
 
@@ -15220,8 +15351,7 @@ async function addUser() {
 
   document.getElementById("newUserName").value = "";
 
-  document.getElementById("status").innerHTML =
-    getStatusHtml();
+  renderStatusAreas();
 
   document.getElementById("todayTarget").innerHTML =
     getTodayTarget();
@@ -15249,12 +15379,27 @@ function setStatusSortMode(value) {
     statusSortMode
   );
 
+  const html =
+    getStatusHtml();
+
   const statusArea =
     document.getElementById("status");
 
   if (statusArea) {
-    statusArea.innerHTML =
-      getStatusHtml();
+    statusArea.innerHTML = html;
+  }
+
+  const otherStatusContent =
+    document.getElementById(
+      "otherStatusContent"
+    );
+
+  if (
+    otherStatusContent &&
+    otherStatusPanelOpen
+  ) {
+    otherStatusContent.innerHTML =
+      html;
   }
 }
 
@@ -16888,6 +17033,33 @@ function getStatusHtml() {
 }
 
 
+function renderStatusAreas() {
+
+  const html =
+    getStatusHtml();
+
+  const hiddenStatus =
+    document.getElementById(
+      "status"
+    );
+
+  if (hiddenStatus) {
+    hiddenStatus.innerHTML = html;
+  }
+
+  if (otherStatusPanelOpen) {
+    const visibleStatus =
+      document.getElementById(
+        "otherStatusContent"
+      );
+
+    if (visibleStatus) {
+      visibleStatus.innerHTML = html;
+    }
+  }
+}
+
+
 function getUserRulesDetailHtml(user) {
 
   const effectiveRules =
@@ -17324,7 +17496,7 @@ async function deleteUser() {
     }
   }
 
-  document.getElementById("status").innerHTML = getStatusHtml();
+  renderStatusAreas();
   document.getElementById("todayTarget").innerHTML = getTodayTarget();
 
   saveData();
@@ -18030,7 +18202,7 @@ async function changeUserUnit() {
 
   await saveUsersToGoogle();
 
-  document.getElementById("status").innerHTML = getStatusHtml();
+  renderStatusAreas();
   document.getElementById("todayTarget").innerHTML = getTodayTarget();
   updateRuleDisplays();
 
@@ -18404,7 +18576,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.14</strong>
+        <strong>Ver.0.9.15</strong>
       </div>
       <div>
         <span>GAS</span>
@@ -18601,16 +18773,22 @@ function updateOtherPageUI() {
 
   if (statusButton) {
 
-    statusButton.innerHTML =
+    statusButton.classList.toggle(
+      "active",
       otherStatusPanelOpen
-        ? `
-            <span>利用者状況を閉じる</span>
-            <span>⌃</span>
-          `
-        : `
-            <span>利用者状況の一覧を見る</span>
-            <span>›</span>
-          `;
+    );
+
+    const chevron =
+      statusButton.querySelector(
+        ".other-menu-chevron"
+      );
+
+    if (chevron) {
+      chevron.textContent =
+        otherStatusPanelOpen
+          ? "⌃"
+          : "›";
+    }
   }
 
 
@@ -18618,7 +18796,7 @@ function updateOtherPageUI() {
 
     const statusArea =
       document.getElementById(
-        "status"
+        "otherStatusContent"
       );
 
     if (statusArea) {
@@ -19210,8 +19388,7 @@ async function login() {
     updateRoleUI();
     updateUserSelects();
 
-    document.getElementById("status").innerHTML =
-      getStatusHtml();
+    renderStatusAreas();
 
     document.getElementById("todayTarget").innerHTML =
       getTodayTarget();
@@ -19363,8 +19540,7 @@ function restoreLogin() {
 
   updateUserSelects();
 
-  document.getElementById("status").innerHTML =
-    getStatusHtml();
+  renderStatusAreas();
 
   document.getElementById("todayTarget").innerHTML =
     getTodayTarget();
@@ -19524,10 +19700,7 @@ async function loadInitialDataFromGoogle() {
 
     updateUserSelects();
 
-    document.getElementById(
-      "status"
-    ).innerHTML =
-      getStatusHtml();
+    renderStatusAreas();
 
     document.getElementById(
       "todayTarget"
@@ -26279,10 +26452,7 @@ async function changeLastDate() {
     }
 
 
-    document.getElementById(
-      "status"
-    ).innerHTML =
-      getStatusHtml();
+    renderStatusAreas();
 
     document.getElementById(
       "todayTarget"
@@ -27843,7 +28013,7 @@ async function postJsonApiOnce(
 
 
 /*
-  Ver.0.9.14 初期同期安定化。
+  Ver.0.9.15 初期同期安定化。
 
   getInitialData は読み取り専用のため GET を使用する。
   Apps Script Web App へのPOSTで、まれに本文側のsessionTokenが
@@ -27948,7 +28118,7 @@ async function requestInitialDataFromServer(
 
 
 /*
-  Ver.0.9.14
+  Ver.0.9.15
   30秒同期も読み取り専用GETへ統一。
   初期同期と同じ認証経路を使用し、POST本文認証の揺らぎを避ける。
 */
@@ -28917,10 +29087,7 @@ async function saveEditedHistory(recordId) {
     // ⑤ 基本画面を即時更新
     // =========================
 
-    document.getElementById(
-      "status"
-    ).innerHTML =
-      getStatusHtml();
+    renderStatusAreas();
 
     document.getElementById(
       "todayTarget"
@@ -29111,10 +29278,7 @@ async function saveEditedHistory(recordId) {
     // ⑨ 最終画面更新
     // =========================
 
-    document.getElementById(
-      "status"
-    ).innerHTML =
-      getStatusHtml();
+    renderStatusAreas();
 
     document.getElementById(
       "todayTarget"
@@ -29191,10 +29355,7 @@ async function saveEditedHistory(recordId) {
       backupHistories;
 
 
-    document.getElementById(
-      "status"
-    ).innerHTML =
-      getStatusHtml();
+    renderStatusAreas();
 
     document.getElementById(
       "todayTarget"
@@ -29859,10 +30020,7 @@ async function confirmCancelHistory(recordId) {
     // ③ 画面を即時更新
     // =========================
 
-    document.getElementById(
-      "status"
-    ).innerHTML =
-      getStatusHtml();
+    renderStatusAreas();
 
     document.getElementById(
       "todayTarget"
@@ -29988,10 +30146,7 @@ async function confirmCancelHistory(recordId) {
     // ⑥ 最終画面更新
     // =========================
 
-    document.getElementById(
-      "status"
-    ).innerHTML =
-      getStatusHtml();
+    renderStatusAreas();
 
     document.getElementById(
       "todayTarget"
@@ -30083,10 +30238,7 @@ async function confirmCancelHistory(recordId) {
       backupHistories;
 
 
-    document.getElementById(
-      "status"
-    ).innerHTML =
-      getStatusHtml();
+    renderStatusAreas();
 
     document.getElementById(
       "todayTarget"
@@ -30995,10 +31147,7 @@ async function loadLightSyncDataFromGoogle() {
   updateUserSelects();
 
 
-  document.getElementById(
-    "status"
-  ).innerHTML =
-    getStatusHtml();
+  renderStatusAreas();
 
 
   document.getElementById(
@@ -31178,10 +31327,7 @@ async function loadSyncDataFromGoogle() {
   // 画面更新
   // =========================
 
-  document.getElementById(
-    "status"
-  ).innerHTML =
-    getStatusHtml();
+  renderStatusAreas();
 
 
   document.getElementById(
