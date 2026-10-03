@@ -7437,7 +7437,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.9</div>
+      <div class="ui09-brand-version">Ver.0.9.10</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8356,7 +8356,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.9
+            Ver.0.9.10
           </span>
         </div>
 
@@ -8365,7 +8365,7 @@ body {
             GAS
           </span>
           <span class="other-info-value">
-            Ver.0.8.41
+            Ver.0.8.42
           </span>
         </div>
 
@@ -8939,42 +8939,10 @@ let ruleCycleSnapshots = {};
 let ruleEvaluations = [];
 let adminRuleUnitFilter = "";
 
-let rules = {
-  "A様": {
-    2: [{ kind: "laxative", content: "ピコ15滴", timing: "morning" }],
-    3: [
-      { kind: "laxative", content: "ピコ30滴", timing: "morning" },
-      { kind: "laxative", content: "ピコ15滴", timing: "evening" },
-      { kind: "laxative", content: "センノシド", timing: "evening" }
-    ],
-    4: [
-      { kind: "procedure", content: "テレミン", timing: "daytime" },
-      { kind: "laxative", content: "センノシド", timing: "evening" }
-    ]
-  },
-  "B様": {
-    2: [{ kind: "laxative", content: "センノシド", timing: "evening" }],
-    3: [
-      { kind: "laxative", content: "ピコ15滴", timing: "morning" },
-      { kind: "laxative", content: "センノシド", timing: "evening" }
-    ],
-    4: [{ kind: "procedure", content: "テレミン", timing: "daytime" }]
-  },
-  "C様": {
-    2: [{ kind: "laxative", content: "ピコ15滴", timing: "morning" }],
-    3: [{ kind: "laxative", content: "ピコ30滴", timing: "morning" }],
-    4: [
-      { kind: "procedure", content: "テレミン", timing: "daytime" },
-      { kind: "laxative", content: "センノシド", timing: "evening" }
-    ]
-  }
-};
-
-let lastDates = {
-  "A様": "2026-06-18",
-  "B様": "2026-06-19",
-  "C様": "2026-06-20"
-};
+// Ver.0.9.10 試験運用版：コード内のダミー利用者・ルールを撤去。
+// サーバー同期データを正本として使用する。
+let rules = {};
+let lastDates = {};
 
 let userUnits = {};
 
@@ -8986,6 +8954,13 @@ let currentUnit = "";
 let currentRole = "";
 
 /*
+  Ver.0.9.10
+  最新のサーバーデータを1回以上正常取得するまでは書込み禁止。
+  ローカルキャッシュは閲覧用として残すが、古い状態からの更新を防ぐ。
+*/
+let serverStateReady = false;
+
+/*
   Ver.0.8.44
   ログイン復元時に initialize() から参照されるため、
   APIセッショントークンのメモリ変数は
@@ -8993,11 +8968,7 @@ let currentRole = "";
 */
 let apiSessionTokenMemory = "";
 
-let points = {
-  "A様": 0,
-  "B様": 0,
-  "C様": 0
-};
+let points = {};
 
 let histories = [];
 
@@ -9251,6 +9222,8 @@ function markSyncLoading(
 
 
 function markSyncSuccess(serverTime = "") {
+
+  serverStateReady = true;
 
   lastSuccessfulSyncAt =
     serverTime ||
@@ -10231,6 +10204,10 @@ function selectBowelUser(
 
 
 async function register() {
+
+  if (!canStartServerWrite()) {
+    return;
+  }
 
   const user =
     document.getElementById("userSelect").value;
@@ -14577,6 +14554,31 @@ async function loadHistoriesFromGoogle() {
   }
 }
 
+function createNoBowelOperationId(
+  user,
+  confirmType,
+  targetDate
+) {
+
+  const unit =
+    String(
+      userUnits[user] ||
+      currentUnit ||
+      ""
+    ).trim();
+
+  return [
+    "noBowel",
+    String(targetDate || "").trim(),
+    unit,
+    String(confirmType || "").trim(),
+    encodeURIComponent(
+      String(user || "").trim()
+    )
+  ].join("|");
+}
+
+
 async function addHistoryToGoogle(history) {
 
   try {
@@ -18221,11 +18223,11 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.9</strong>
+        <strong>Ver.0.9.10</strong>
       </div>
       <div>
         <span>GAS</span>
-        <strong>Ver.0.8.41</strong>
+        <strong>Ver.0.8.42</strong>
       </div>
       <div>
         <span>ログイン範囲</span>
@@ -18952,6 +18954,8 @@ async function login() {
       ここで「認証」は完了。
       最新データ同期を待たず、ユニット/権限を即時反映する。
     */
+    serverStateReady = false;
+
     currentRole =
       String(result.role).trim();
 
@@ -19437,14 +19441,18 @@ function addHistory(user, type) {
   document.getElementById("history").innerHTML = getHistoryHtml();
 }
 
-function getHistoryDateKey(dateText) {
+function getHistoryDateKey(value) {
+
+  const dateText =
+    value && typeof value === "object"
+      ? value.date
+      : value;
 
   return String(dateText || "")
     .trim()
     .slice(0, 10)
     .replace(/\//g, "-");
 }
-
 
 function getHistorySortKey(history) {
 
@@ -19905,14 +19913,10 @@ function renderHistoryView() {
 
 
 
-function getHistoryDateKey(
-  history
-) {
-
-  return String(
-    history?.date || ""
-  ).slice(0, 10);
-}
+/*
+  Ver.0.9.10
+  getHistoryDateKey は前方の共通実装へ統合済み。
+*/
 
 
 function getHistoryDateHeading(
@@ -23331,6 +23335,10 @@ async function deleteRuleByIndex(
 
 async function toggleCheck(key) {
 
+  if (!canStartServerWrite()) {
+    return;
+  }
+
   if (
     hasPendingCheckOperation(
       key
@@ -23496,18 +23504,12 @@ async function toggleCheck(key) {
 }
 
 function clearHistory() {
-  const ok = confirm("履歴をすべて削除しますか？");
-
-  if (!ok) {
-    return;
-  }
-
-  histories = [];
-  document.getElementById("history").innerHTML = getHistoryHtml();
-
-  saveData();
+  showToast(
+    "⚠ 試験運用中は履歴の全削除を停止しています",
+    "warning",
+    5000
+  );
 }
-
 function parseCheckKey(key) {
 
   const firstSeparator =
@@ -24089,6 +24091,7 @@ async function logout() {
 
   currentRole = "";
   currentUnit = "";
+  serverStateReady = false;
 
   stopAutoRefresh();
 
@@ -25127,6 +25130,10 @@ async function confirmNoBowelUsers(
   targetDateText = getTodayText()
 ) {
 
+  if (!canStartServerWrite()) {
+    return;
+  }
+
   const timing =
     getShiftTiming(
       "day",
@@ -25242,7 +25249,13 @@ async function confirmNoBowelUsers(
         type: "なし",
         point: points[user],
         confirmType: "day",
-        targetDate: targetDateText
+        targetDate: targetDateText,
+        operationId:
+          createNoBowelOperationId(
+            user,
+            "day",
+            targetDateText
+          )
       });
     }
 
@@ -26242,6 +26255,10 @@ async function confirmNightShift(
     getDefaultNightTargetDateText()
 ) {
 
+  if (!canStartServerWrite()) {
+    return;
+  }
+
   const timing =
     getShiftTiming(
       "night",
@@ -26950,6 +26967,72 @@ function actionNeedsApiSession(
 }
 
 
+const CLIENT_WRITE_ACTIONS = new Set([
+  "addHistory",
+  "cancelHistoryFast",
+  "editHistoryFast",
+  "registerBowel",
+  "resolveRuleEvaluation",
+  "saveDailyConfirm",
+  "saveNurseInstruction",
+  "saveRulesV2",
+  "saveRulesV3",
+  "saveRulesV4",
+  "saveUsers",
+  "setCheck",
+  "setNurseInstructionStatus",
+  "updateUserLastDate"
+]);
+
+
+function ensureServerWriteReady(
+  action = "保存"
+) {
+
+  const normalized =
+    String(action || "保存").trim();
+
+  if (
+    !CLIENT_WRITE_ACTIONS.has(normalized) ||
+    serverStateReady
+  ) {
+    return true;
+  }
+
+  const error = new Error(
+    "最新データの同期が完了していないため保存できません。通信回復後に再度お試しください"
+  );
+
+  error.code =
+    "SERVER_STATE_NOT_READY";
+  error.transient = true;
+
+  showToast(
+    "⚠ 最新データを確認できていないため、現在は閲覧のみ可能です",
+    "warning",
+    6000
+  );
+
+  throw error;
+}
+
+
+function canStartServerWrite() {
+
+  if (serverStateReady) {
+    return true;
+  }
+
+  showToast(
+    "⚠ 最新データを確認できていないため、現在は閲覧のみ可能です",
+    "warning",
+    6000
+  );
+
+  return false;
+}
+
+
 function withApiSessionToken(
   payload,
   explicitToken = ""
@@ -26990,6 +27073,12 @@ function jsonBodyWithSession(
   payload,
   explicitToken = ""
 ) {
+
+  ensureServerWriteReady(
+    payload && payload.action
+      ? payload.action
+      : ""
+  );
 
   return JSON.stringify(
     withApiSessionToken(
@@ -27050,6 +27139,7 @@ function forceApiRelogin(message) {
 
   currentRole = "";
   currentUnit = "";
+  serverStateReady = false;
 
   stopAutoRefresh();
 
