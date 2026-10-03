@@ -7398,6 +7398,20 @@ body {
   }
 }
 
+
+
+/* =========================
+   Ver.0.9.13 過去勤務帯復旧
+========================= */
+.ui0913-recovery-warning{padding:12px 14px;margin-bottom:14px;border:1px solid #f0b7a9;border-radius:14px;background:#fff7f4;line-height:1.65;font-size:14px}
+.ui0913-recovery-row{padding:14px 0;border-bottom:1px solid var(--ui09-line,#e4eaec);display:grid;gap:10px}
+.ui0913-recovery-row.recorded{grid-template-columns:minmax(120px,1fr) 2fr;align-items:center}
+.ui0913-recovery-options{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:14px}
+.ui0913-recovery-options label{display:flex;align-items:center;gap:5px}
+.ui0913-recovery-detail{grid-template-columns:1fr 1fr;gap:8px}
+.ui0913-recovery-detail select,.ui0913-recovery-detail input{width:100%;padding:10px;border:1px solid var(--ui09-line,#e4eaec);border-radius:10px;background:#fff}
+.ui0913-uncertain-note{padding:8px 10px;border-radius:10px;background:#fff4e5;border:1px solid #f0c98d;font-size:13px;font-weight:700}
+
 </style>
 </head>
 
@@ -7430,7 +7444,7 @@ body {
 
 <div id="appArea" style="display:none;">
 
-  <!-- Ver.0.9.12 HOTFIX: 旧JSが参照する利用者状況領域。UI刷新後は非表示互換要素として保持 -->
+  <!-- Ver.0.9.13 HOTFIX: 旧JSが参照する利用者状況領域。UI刷新後は非表示互換要素として保持 -->
   <div id="status" class="home-hidden-compat" aria-hidden="true"></div>
 
   <!-- =========================
@@ -7440,7 +7454,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.12</div>
+      <div class="ui09-brand-version">Ver.0.9.13</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8359,7 +8373,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.12
+            Ver.0.9.13
           </span>
         </div>
 
@@ -8368,7 +8382,7 @@ body {
             GAS
           </span>
           <span class="other-info-value">
-            Ver.0.8.42
+            Ver.0.8.43
           </span>
         </div>
 
@@ -8942,7 +8956,7 @@ let ruleCycleSnapshots = {};
 let ruleEvaluations = [];
 let adminRuleUnitFilter = "";
 
-// Ver.0.9.12 試験運用版：コード内のダミー利用者・ルールを撤去。
+// Ver.0.9.13 試験運用版：コード内のダミー利用者・ルールを撤去。
 // サーバー同期データを正本として使用する。
 let rules = {};
 let lastDates = {};
@@ -8957,14 +8971,14 @@ let currentUnit = "";
 let currentRole = "";
 
 /*
-  Ver.0.9.12
+  Ver.0.9.13
   最新のサーバーデータを1回以上正常取得するまでは書込み禁止。
   ローカルキャッシュは閲覧用として残すが、古い状態からの更新を防ぐ。
 */
 let serverStateReady = false;
 
 /*
-  Ver.0.9.12 HOTFIX
+  Ver.0.9.13 HOTFIX
   initialize() はこの後すぐ実行され、初期同期内で
   ensureServerWriteReady() → CLIENT_WRITE_ACTIONS を参照する。
   const の Temporal Dead Zone を避けるため、起動処理より前に初期化する。
@@ -8974,6 +8988,9 @@ const CLIENT_WRITE_ACTIONS = new Set([
   "cancelHistoryFast",
   "editHistoryFast",
   "registerBowel",
+  "registerRetroBowel",
+  "setBowelUncertain",
+  "resolveBowelRecoveryState",
   "resolveRuleEvaluation",
   "saveDailyConfirm",
   "saveNurseInstruction",
@@ -9012,6 +9029,14 @@ let nurseInstructions = [];
 
 // Ver.0.8.32 ホーム表示用キャッシュ
 let latestDailyConfirms = [];
+
+/*
+  Ver.0.9.13 過去勤務帯復旧。
+  status: uncertain = 排便カウント不確定 / review = 遡及修正後の過去与薬要確認
+*/
+let bowelRecoveryStates = [];
+const SHIFT_BACKLOG_DAYS = 7;
+const SHIFT_BACKLOG_START_DATE = "2026-10-03";
 let latestHomeActionMetrics = {
   totalCount: 0,
   completedCount: 0,
@@ -11362,6 +11387,28 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+function getBowelRecoveryState(user) {
+  return (Array.isArray(bowelRecoveryStates) ? bowelRecoveryStates : [])
+    .find(item =>
+      String(item.user || "") === String(user || "") &&
+      ["uncertain", "review"].includes(String(item.status || ""))
+    ) || null;
+}
+
+function isBowelCountUncertain(user) {
+  const item = getBowelRecoveryState(user);
+  return Boolean(item && String(item.status) === "uncertain");
+}
+
+function getBowelRecoveryAttentionItems() {
+  return (Array.isArray(bowelRecoveryStates) ? bowelRecoveryStates : [])
+    .filter(item => ["uncertain", "review"].includes(String(item.status || "")))
+    .filter(item =>
+      currentUnit === "all" ||
+      String(userUnits[item.user] || "") === String(currentUnit)
+    );
+}
+
 function getNoBowelDays(user) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -11390,6 +11437,10 @@ function getActionPendingData() {
   const tomorrow = [];
 
   for (const user in lastDates) {
+
+    if (isBowelCountUncertain(user)) {
+      continue;
+    }
 
     if (
       currentUnit !== "all" &&
@@ -11783,6 +11834,10 @@ function getActionPlannedData() {
   const result = [];
 
   for (const user in lastDates) {
+
+    if (isBowelCountUncertain(user)) {
+      continue;
+    }
 
     if (
       currentUnit !== "all" &&
@@ -12497,6 +12552,9 @@ function getHomeUrgentData() {
         !info.instruction
       );
 
+  const recoveryAttention =
+    getBowelRecoveryAttentionItems();
+
   const evaluationDue =
     getActiveRuleEvaluations()
       .filter(item =>
@@ -12521,6 +12579,7 @@ function getHomeUrgentData() {
   return {
     pendingShifts,
     nurseWaiting,
+    recoveryAttention,
     evaluationDue,
     pendingSaveCount
   };
@@ -12546,7 +12605,8 @@ function updateHomeUrgentSummary() {
     data.pendingShifts.length;
 
   const nurseCount =
-    data.nurseWaiting.length;
+    data.nurseWaiting.length +
+    data.recoveryAttention.length;
 
   const evaluationCount =
     data.evaluationDue.length;
@@ -12725,6 +12785,28 @@ function getHomeUrgentDetailHtml() {
   }
 
 
+
+  for (const item of data.recoveryAttention) {
+    const status = String(item.status || "");
+    rows.push(`
+      <div class="home-urgent-detail-row">
+        <strong>
+          ${status === "uncertain" ? "⚠️ 排便カウント不確定" : "🩺 過去与薬の確認"}
+        </strong>
+        <span>
+          ${escapeHtml(formatResidentName(item.user))}
+          ／ ${escapeHtml(item.sinceDate || item.sourceShiftDate || "")}
+          ${item.reason ? "／ " + escapeHtml(item.reason) : ""}
+        </span>
+        ${
+          (currentRole === "nurse" || currentRole === "admin")
+            ? `<button type="button" onclick="closeHomeUrgentDetail(); openResolveRecoveryAttention(decodeURIComponent('${encodeURIComponent(String(item.user || ""))}'))">確認・解決</button>`
+            : `<button type="button" onclick="closeHomeUrgentDetail(); openPage('medicinePage');">看護師確認待ち</button>`
+        }
+      </div>
+    `);
+  }
+
   if (rows.length === 0) {
 
     return `
@@ -12820,6 +12902,63 @@ function goToHomeUrgentShift(
   );
 }
 
+
+function openResolveRecoveryAttention(user) {
+  const item = getBowelRecoveryState(user);
+  if (!item) {
+    alert("確認対象が見つかりません");
+    return;
+  }
+  if (currentRole !== "nurse" && currentRole !== "admin") {
+    alert("この確認は看護師または管理者が行ってください");
+    return;
+  }
+  openCommonModal({
+    title: "排便復旧内容を確認",
+    bodyHtml: `
+      <div class="ui0913-recovery-warning">
+        <strong>${escapeHtml(formatResidentName(user))}</strong><br>
+        状態：${item.status === "uncertain" ? "排便カウント不確定" : "過去与薬の判定差異あり"}<br>
+        起点：${escapeHtml(item.sinceDate || "")}<br>
+        ${item.reason ? "理由：" + escapeHtml(item.reason) : ""}
+      </div>
+      <div class="confirm-signature-box">
+        <div class="confirm-signature-title">✍️ 確認者</div>
+        ${getStaffSelectHtml("recoveryResolveStaff")}
+      </div>
+      <p style="font-size:13px;line-height:1.6">
+        記録・実施状況を確認し、現在の排便カウントを通常運用へ戻してよい場合のみ解決してください。
+      </p>
+    `,
+    buttonsHtml: `
+      <button type="button" onclick="closeCommonModal()">キャンセル</button>
+      <button type="button" class="primary-button" onclick="resolveRecoveryAttention('${encodeURIComponent(user)}')">確認済みにする</button>
+    `
+  });
+}
+
+async function resolveRecoveryAttention(encodedUser) {
+  if (!canStartServerWrite()) return;
+  const user = decodeURIComponent(encodedUser);
+  const staff = getSelectedStaff("recoveryResolveStaff");
+  if (!staff) {
+    alert("確認者を選択してください");
+    return;
+  }
+  try {
+    const result = await postJsonApiOnce({
+      action: "resolveBowelRecoveryState",
+      user,
+      staffId: staff.staffId
+    }, 20000);
+    if (!result || result.ok !== true) throw new Error(result?.message || "確認状態の更新に失敗しました");
+    closeCommonModal();
+    await loadInitialDataFromGoogle();
+    showToast("✓ 排便復旧の確認を完了しました", "success", 3500);
+  } catch (error) {
+    alert("確認状態の更新に失敗しました。\n\n" + error.message);
+  }
+}
 
 function getHomeShiftStatusInfo(
   type,
@@ -13358,6 +13497,7 @@ function clearResidentScopedCache() {
     "userUnits",
     "histories",
     "nurseInstructions",
+    "bowelRecoveryStates",
     "rules",
     "ruleCycleSnapshots",
     "ruleEvaluations",
@@ -13558,6 +13698,11 @@ function saveData() {
   );
 
   localStorage.setItem(
+    "bowelRecoveryStates",
+    JSON.stringify(bowelRecoveryStates)
+  );
+
+  localStorage.setItem(
     "rules",
     JSON.stringify(rules)
   );
@@ -13602,6 +13747,7 @@ function loadData() {
   const savedUnitMaster = localStorage.getItem("unitMaster");
   const savedHistories = localStorage.getItem("histories");
   const savedNurseInstructions = localStorage.getItem("nurseInstructions");
+  const savedBowelRecoveryStates = localStorage.getItem("bowelRecoveryStates");
   const savedRules = localStorage.getItem("rules");
   const savedRuleCycleSnapshots =
     localStorage.getItem(
@@ -13668,6 +13814,14 @@ function loadData() {
 
   if (savedNurseInstructions !== null) {
     nurseInstructions = JSON.parse(savedNurseInstructions);
+  }
+
+  if (savedBowelRecoveryStates !== null) {
+    try {
+      bowelRecoveryStates = JSON.parse(savedBowelRecoveryStates) || [];
+    } catch (_) {
+      bowelRecoveryStates = [];
+    }
   }
 
   /*
@@ -18250,11 +18404,11 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.12</strong>
+        <strong>Ver.0.9.13</strong>
       </div>
       <div>
         <span>GAS</span>
-        <strong>Ver.0.8.42</strong>
+        <strong>Ver.0.8.43</strong>
       </div>
       <div>
         <span>ログイン範囲</span>
@@ -18778,6 +18932,7 @@ function clearCachedAppData() {
     "unitMaster",
     "histories",
     "nurseInstructions",
+    "bowelRecoveryStates",
     "rules",
     "checks",
     "checkDate",
@@ -19343,6 +19498,11 @@ async function loadInitialDataFromGoogle() {
     nurseInstructions =
       Array.isArray(data.nurseInstructions)
         ? data.nurseInstructions
+        : [];
+
+    bowelRecoveryStates =
+      Array.isArray(data.bowelRecoveryStates)
+        ? data.bowelRecoveryStates
         : [];
 
     /*
@@ -19941,7 +20101,7 @@ function renderHistoryView() {
 
 
 /*
-  Ver.0.9.12
+  Ver.0.9.13
   getHistoryDateKey は前方の共通実装へ統合済み。
 */
 
@@ -24728,159 +24888,80 @@ function getShiftConfirmedNote(
 }
 
 
-function getPendingShiftConfirmations(
-  confirms
-) {
+function getPendingShiftConfirmations(confirms) {
 
+  const safeConfirms = Array.isArray(confirms) ? confirms : [];
   const now = new Date();
   const today = getLocalDateText(now);
-  const yesterday =
-    addDaysToDateText(today, -1);
-
   const units =
     currentUnit === "all"
       ? ["1", "2", "3", "4"]
       : [String(currentUnit)];
 
+  /*
+    Ver.0.9.13の試験運用開始日より前は未確定扱いにしない。
+    それ以降は「全ユニット・全勤務帯が丸ごと未入力」でも検出できるよう、
+    dailyConfirmに記録が存在するかどうかに依存せず探索する。
+  */
+  const lookbackStart = addDaysToDateText(today, -(SHIFT_BACKLOG_DAYS - 1));
+  const startDate = SHIFT_BACKLOG_START_DATE > lookbackStart
+    ? SHIFT_BACKLOG_START_DATE
+    : lookbackStart;
   const pending = [];
 
-  const hasAnyYesterdayRecord =
-    confirms.some(
-      item =>
-        String(item.date).slice(0, 10) ===
-          yesterday
-    );
-
-  for (const unit of units) {
-
-    const todayDayTiming =
-      getShiftTiming("day", today);
-
-    if (
-      todayDayTiming.isLate &&
-      !getConfirmFor(
-        confirms,
-        unit,
-        "day",
-        today
-      )
-    ) {
-      pending.push({
-        unit: unit,
-        type: "day",
-        targetDate: today,
-        label: "☀️ 日中帯"
-      });
-    }
-
-    const todayNightTiming =
-      getShiftTiming("night", today);
-
-    if (
-      todayNightTiming.isLate &&
-      !getConfirmFor(
-        confirms,
-        unit,
-        "night",
-        today
-      )
-    ) {
-      pending.push({
-        unit: unit,
-        type: "night",
-        targetDate: today,
-        label: "🌙 夜勤帯"
-      });
-    }
-
-    /*
-      前日分は、dailyConfirmに前日の記録が1件でもある場合だけ
-      未確認候補として残す。
-      導入前の日付を大量に未確認扱いしないための安全策。
-    */
-    if (hasAnyYesterdayRecord) {
-
+  for (let cursor = startDate; cursor <= today; cursor = addDaysToDateText(cursor, 1)) {
+    for (const unit of units) {
       for (const type of ["day", "night"]) {
-
-        if (
-          !getConfirmFor(
-            confirms,
-            unit,
-            type,
-            yesterday
-          )
-        ) {
-          pending.push({
-            unit: unit,
-            type: type,
-            targetDate: yesterday,
-            label:
-              type === "day"
-                ? "☀️ 日中帯"
-                : "🌙 夜勤帯"
-          });
+        const timing = getShiftTiming(type, cursor);
+        if (!timing || now < timing.shiftEnd) {
+          continue;
         }
+        if (getConfirmFor(safeConfirms, unit, type, cursor)) {
+          continue;
+        }
+        pending.push({
+          unit,
+          type,
+          targetDate: cursor,
+          label: type === "day" ? "☀️ 日中帯" : "🌙 夜勤帯",
+          ageDays: Math.max(0, Math.floor((parseLocalDateText(today) - parseLocalDateText(cursor)) / 86400000)),
+          historical: cursor < today
+        });
       }
     }
   }
 
-  return pending;
+  return pending.sort((a, b) =>
+    String(a.targetDate).localeCompare(String(b.targetDate)) ||
+    String(a.unit).localeCompare(String(b.unit)) ||
+    String(a.type).localeCompare(String(b.type))
+  );
 }
 
+function openShiftConfirmationFromAlert(type, targetDate) {
 
-function openShiftConfirmationFromAlert(
-  type,
-  targetDate
-) {
-
-  openPage(
-    "bowelPage"
-  );
-
-
-  if (type === "day") {
-
-    checkTodayBowelStatus(
-      targetDate
-    );
-
-  } else {
-
-    checkNightBowelStatus(
-      targetDate
-    );
+  const today = getTodayText();
+  if (String(targetDate) < today && currentUnit !== "all") {
+    openHistoricalShiftRecovery(type, targetDate);
+    return;
   }
 
+  openPage("bowelPage");
+  if (type === "day") {
+    checkTodayBowelStatus(targetDate);
+  } else {
+    checkNightBowelStatus(targetDate);
+  }
 
-  /*
-    確認内容のDOM描画後に、
-    展開された確認欄まで移動する。
-  */
-  requestAnimationFrame(() => {
-
-    requestAnimationFrame(() => {
-
-      const target =
-        document.getElementById(
-          type === "day"
-            ? "bowelCheckResult"
-            : "nightBowelCheckResult"
-        );
-
-
-      if (!target) {
-        return;
-      }
-
-
-      target.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-    });
-  });
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const target = document.getElementById(
+      type === "day" ? "bowelCheckResult" : "nightBowelCheckResult"
+    );
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }));
 }
-
 
 function updateShiftOverdueAlert(
   confirms
@@ -25415,6 +25496,193 @@ function copyMedicineReport() {
     });
 }
 
+function getHistoriesForShift(type, targetDate, user = "") {
+  const timing = getShiftTiming(type, targetDate);
+  if (!timing) return [];
+  return (Array.isArray(histories) ? histories : []).filter(history => {
+    if (String(history.status || "") === "cancelled") return false;
+    if (user && String(history.user || "") !== String(user)) return false;
+    const d = new Date(String(history.date || "").replace(" ", "T"));
+    return !Number.isNaN(d.getTime()) && d >= timing.shiftStart && d < timing.shiftEnd;
+  });
+}
+
+function getRecoveryUsersForCurrentUnit() {
+  return Object.keys(userUnits || {})
+    .filter(user => String(userUnits[user]) === String(currentUnit))
+    .sort((a, b) => String(a).localeCompare(String(b), "ja"));
+}
+
+function getRetroDefaultTime(type) {
+  return type === "day" ? "15:59" : "07:59";
+}
+
+function updateHistoricalRecoveryRow(userKey) {
+  const mode = document.querySelector(`input[name="recovery_${userKey}"]:checked`)?.value || "";
+  const detail = document.getElementById(`recovery_detail_${userKey}`);
+  if (detail) detail.style.display = mode === "bowel" ? "grid" : "none";
+}
+
+function openHistoricalShiftRecovery(type, targetDate) {
+  if (currentUnit === "all") {
+    alert("過去勤務帯の復旧は対象ユニットへログインして行ってください");
+    return;
+  }
+
+  const users = getRecoveryUsersForCurrentUnit();
+  const timing = getShiftTiming(type, targetDate);
+  if (!timing) return;
+
+  const rows = users.map((user, index) => {
+    const existing = getHistoriesForShift(type, targetDate, user);
+    const key = `u${index}`;
+    if (existing.length > 0) {
+      const labels = existing.map(h => h.type === "なし" ? "排便なし" : h.type).join("、");
+      return `<div class="ui0913-recovery-row recorded">
+        <strong>${escapeHtml(formatResidentName(user))}</strong>
+        <span>✅ 記録済み：${escapeHtml(labels)}</span>
+      </div>`;
+    }
+
+    return `<div class="ui0913-recovery-row" data-user="${escapeHtml(user)}" data-key="${key}">
+      <strong>${escapeHtml(formatResidentName(user))}</strong>
+      <div class="ui0913-recovery-options">
+        <label><input type="radio" name="recovery_${key}" value="none" onchange="updateHistoricalRecoveryRow('${key}')"> 排便なし</label>
+        <label><input type="radio" name="recovery_${key}" value="bowel" onchange="updateHistoricalRecoveryRow('${key}')"> 排便あり・未入力</label>
+        <label><input type="radio" name="recovery_${key}" value="unknown" onchange="updateHistoricalRecoveryRow('${key}')"> 確認不能</label>
+      </div>
+      <div id="recovery_detail_${key}" class="ui0913-recovery-detail" style="display:none">
+        <select class="recovery-bowel-type">
+          <option value="少">少</option>
+          <option value="少1">少1</option>
+          <option value="少2">少2</option>
+          <option value="普通">普通</option>
+        </select>
+        <input
+          class="recovery-bowel-date"
+          type="date"
+          value="${type === "night" ? getLocalDateText(timing.shiftStart) : targetDate}"
+          min="${getLocalDateText(timing.shiftStart)}"
+          max="${targetDate}"
+          ${type === "day" ? "readonly" : ""}
+        >
+        <input class="recovery-bowel-time" type="time" value="${getRetroDefaultTime(type)}">
+      </div>
+    </div>`;
+  }).join("");
+
+  openCommonModal({
+    title: `過去勤務帯を照合：${targetDate} ${type === "day" ? "日中帯" : "夜勤帯"}`,
+    bodyHtml: `
+      <div class="ui0913-recovery-warning">
+        ⚠ 当時の記録を確認して入力してください。記憶だけで「排便なし」にしないでください。<br>
+        確認できない利用者は「確認不能」にすると、自動の緩下剤判定を一時停止します。
+      </div>
+      <div class="confirm-signature-box">
+        <div class="confirm-signature-title">✍️ 照合者</div>
+        ${getStaffSelectHtml("historicalRecoveryStaff")}
+      </div>
+      <div id="historicalRecoveryRows">${rows}</div>
+    `,
+    buttonsHtml: `
+      <button type="button" onclick="closeCommonModal()">キャンセル</button>
+      <button type="button" class="primary-button" onclick="submitHistoricalShiftRecovery('${type}','${targetDate}')">照合して確定</button>
+    `
+  });
+}
+
+async function submitHistoricalShiftRecovery(type, targetDate) {
+  if (!canStartServerWrite()) return;
+  const staff = getSelectedStaff("historicalRecoveryStaff");
+  if (!staff) {
+    alert("照合者を選択してください");
+    return;
+  }
+
+  const rows = Array.from(document.querySelectorAll("#historicalRecoveryRows .ui0913-recovery-row[data-user]"));
+  const unresolved = [];
+  const actions = [];
+
+  for (const row of rows) {
+    const user = row.dataset.user;
+    const key = row.dataset.key;
+    const mode = row.querySelector(`input[name="recovery_${key}"]:checked`)?.value || "";
+    if (!mode) {
+      unresolved.push(user);
+      continue;
+    }
+    actions.push({ row, user, key, mode });
+  }
+
+  if (unresolved.length > 0) {
+    alert("未確認の利用者がいます。\n\n" + unresolved.join("、"));
+    return;
+  }
+
+  if (!confirm(`${targetDate}の${type === "day" ? "日中帯" : "夜勤帯"}を遅延照合して確定しますか？`)) return;
+
+  beginWriteActivity();
+  const differenceMessages = [];
+  try {
+    for (const action of actions) {
+      if (action.mode === "none") {
+        await addHistoryToGoogle({
+          user: action.user,
+          type: "なし",
+          point: points[action.user],
+          confirmType: type,
+          targetDate,
+          operationId: createNoBowelOperationId(action.user, type, targetDate)
+        });
+      } else if (action.mode === "bowel") {
+        const bowelType = action.row.querySelector(".recovery-bowel-type").value;
+        const occurredDate = action.row.querySelector(".recovery-bowel-date")?.value || targetDate;
+        const time = action.row.querySelector(".recovery-bowel-time").value || getRetroDefaultTime(type);
+        const result = await postJsonApiOnce({
+          action: "registerRetroBowel",
+          user: action.user,
+          type: bowelType,
+          targetDate,
+          shiftType: type,
+          occurredDate,
+          occurredTime: time,
+          staffId: staff.staffId,
+          note: "未確定勤務帯の遅延照合"
+        }, 30000);
+        if (!result || result.ok !== true) throw new Error(result?.message || "遡及排便登録に失敗しました");
+        if (Array.isArray(result.medicationDifferences) && result.medicationDifferences.length > 0) {
+          differenceMessages.push(`${action.user}：過去の実施記録 ${result.medicationDifferences.length}件を看護師確認へ`);
+        }
+      } else if (action.mode === "unknown") {
+        const result = await postJsonApiOnce({
+          action: "setBowelUncertain",
+          user: action.user,
+          sinceDate: targetDate,
+          shiftType: type,
+          staffId: staff.staffId,
+          reason: "過去勤務帯の排便状況を確認できない"
+        }, 20000);
+        if (!result || result.ok !== true) throw new Error(result?.message || "不確定状態の保存に失敗しました");
+      }
+    }
+
+    const confirmSaved = await saveDailyConfirmToGoogle(type, staff, targetDate);
+    if (!confirmSaved) throw new Error("勤務帯確定の保存に失敗しました");
+
+    closeCommonModal();
+    await loadInitialDataFromGoogle();
+    alert(
+      "過去勤務帯の照合を保存しました" +
+      (differenceMessages.length ? "\n\n⚠ " + differenceMessages.join("\n") : "")
+    );
+  } catch (error) {
+    console.error("過去勤務帯復旧エラー", error);
+    alert("復旧処理に失敗しました。\n\n" + error.message);
+  } finally {
+    endWriteActivity();
+  }
+}
+
 function applyDailyConfirmStatus(
   confirms
 ) {
@@ -25580,7 +25848,7 @@ async function loadDailyConfirmStatus() {
           action:
             "getDailyConfirms",
           days:
-            3
+            SHIFT_BACKLOG_DAYS
         },
         20000
       );
@@ -30717,6 +30985,11 @@ async function loadLightSyncDataFromGoogle() {
       : [];
 
 
+  bowelRecoveryStates =
+    Array.isArray(data.bowelRecoveryStates)
+      ? data.bowelRecoveryStates
+      : bowelRecoveryStates;
+
   applyDailyConfirmStatus(
     data.dailyConfirms
   );
@@ -30896,6 +31169,11 @@ async function loadSyncDataFromGoogle() {
     Array.isArray(data.nurseInstructions)
       ? data.nurseInstructions
       : [];
+
+  bowelRecoveryStates =
+    Array.isArray(data.bowelRecoveryStates)
+      ? data.bowelRecoveryStates
+      : bowelRecoveryStates;
 
   applyDailyConfirmStatus(
     data.dailyConfirms
