@@ -7454,7 +7454,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.13</div>
+      <div class="ui09-brand-version">Ver.0.9.14</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8373,7 +8373,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.13
+            Ver.0.9.14
           </span>
         </div>
 
@@ -18404,7 +18404,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.13</strong>
+        <strong>Ver.0.9.14</strong>
       </div>
       <div>
         <span>GAS</span>
@@ -27843,12 +27843,17 @@ async function postJsonApiOnce(
 
 
 /*
-  getInitialData専用。
-  GASのロック競合(BUSY)や一時的な通信失敗は
-  その場で最大3回まで自動再試行する。
+  Ver.0.9.14 初期同期安定化。
+
+  getInitialData は読み取り専用のため GET を使用する。
+  Apps Script Web App へのPOSTで、まれに本文側のsessionTokenが
+  AUTH_REQUIRED扱いになる経路を避け、既存のdoGet認証へ統一する。
+
+  GAS実処理が数秒で完了しているのにブラウザ側が長時間待つケースを
+  抑えるため、1回の待機上限も20秒へ短縮する。
 */
 async function requestInitialDataFromServer(
-  retries = 4
+  retries = 3
 ) {
 
   let lastError = null;
@@ -27861,14 +27866,16 @@ async function requestInitialDataFromServer(
 
     try {
 
-      const data =
-        await postJsonApiOnce(
-          {
-            action:
-              "getInitialData"
-          },
-          60000
+      const response =
+        await fetchApi(
+          API_URL +
+            "?action=getInitialData",
+          1,
+          20000
         );
+
+      const data =
+        await response.json();
 
       if (data && data.error) {
 
@@ -27906,21 +27913,8 @@ async function requestInitialDataFromServer(
       );
 
       /*
-        AbortしてもGAS本体は止まらないため、
-        60秒タイムアウトだけは同一処理内で即再送しない。
-      */
-      if (
-        error &&
-        String(error.message || "").includes(
-          "タイムアウト"
-        )
-      ) {
-        throw error;
-      }
-
-      /*
-        認証エラーや入力エラー等は、
-        再試行しても改善しないため即終了。
+        SESSION_EXPIRED等、再試行しても改善しない認証エラーは
+        そのまま上位へ返す。
       */
       if (
         !isTransientApiError(error)
@@ -27954,8 +27948,9 @@ async function requestInitialDataFromServer(
 
 
 /*
-  Ver.0.8.44
-  30秒同期専用の軽量API。
+  Ver.0.9.14
+  30秒同期も読み取り専用GETへ統一。
+  初期同期と同じ認証経路を使用し、POST本文認証の揺らぎを避ける。
 */
 async function requestSyncDataFromServer(
   retries = 3
@@ -27972,14 +27967,16 @@ async function requestSyncDataFromServer(
 
     try {
 
-      const data =
-        await postJsonApiOnce(
-          {
-            action:
-              "getSyncData"
-          },
-          30000
+      const response =
+        await fetchApi(
+          API_URL +
+            "?action=getSyncData",
+          1,
+          15000
         );
+
+      const data =
+        await response.json();
 
 
       if (
@@ -28026,13 +28023,8 @@ async function requestSyncDataFromServer(
 
 
       /*
-        Ver.0.9.9
-
-        getSyncData は読み取り専用なので、
-        timeout後でも同じ同期内で安全に再試行できる。
-
-        書き込み処理と違い二重登録の危険はないため、
-        404 / timeout / 429 / 5xx は最大3回まで再試行する。
+        読み取り専用なので一時的な404 / timeout / 429 / 5xx / BUSYは
+        同じ同期内で安全に再試行できる。
       */
       if (
         !isTransientApiError(
