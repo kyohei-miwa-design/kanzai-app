@@ -7513,6 +7513,34 @@ body {
 .ui0913-recovery-detail select,.ui0913-recovery-detail input{width:100%;padding:10px;border:1px solid var(--ui09-line,#e4eaec);border-radius:10px;background:#fff}
 .ui0913-uncertain-note{padding:8px 10px;border-radius:10px;background:#fff4e5;border:1px solid #f0c98d;font-size:13px;font-weight:700}
 
+/* =========================
+   Ver.0.9.18 入院 / 帰所
+========================= */
+.ui0918-care-panel{display:grid;gap:10px}
+.ui0918-care-panel.hospitalized{border-left:5px solid #546e7a;background:#f5f7f8}
+.ui0918-care-panel.uncertain{border-left:5px solid #ef6c00;background:#fff8ed}
+.ui0918-care-panel.medication{border-left:5px solid #c62828;background:#fff5f5}
+.ui0918-care-panel.neutral{border-left:5px solid #78909c;background:#fbfcfd}
+.ui0918-care-title{font-size:17px;font-weight:900;color:#263238}
+.ui0918-care-meta,.ui0918-care-note{font-size:13px;line-height:1.7;color:#546e7a}
+.ui0918-care-actions{display:grid;gap:8px}
+.ui0918-care-warning{padding:12px 14px;margin-bottom:14px;border:1px solid #ffcc80;border-radius:12px;background:#fff8e1;color:#6d4c00;font-size:13px;line-height:1.7}
+.ui0918-form-label{display:block;margin:14px 0 6px;color:#455a64;font-size:14px;font-weight:850}
+.ui0918-textarea{width:100%;min-height:84px;padding:10px 12px;border:1px solid #cfd8dc;border-radius:10px;background:#fff;color:#263238;font:inherit;resize:vertical}
+.ui0918-radio-list{display:grid;gap:8px;padding:10px 0}
+.ui0918-radio-list label{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border:1px solid #dfe5e8;border-radius:10px;background:#fff;font-size:14px;line-height:1.5}
+.ui0918-radio-list input{width:auto!important;margin-top:3px!important;flex:none}
+.ui0918-known-bowel{margin:8px 0 12px;padding:12px;border:1px solid #b7dfc4;border-radius:12px;background:#f3fbf5}
+.ui0918-hospitalize-button{background:#607d8b!important}
+.ui0918-hospitalized-header{border-left:5px solid #546e7a!important}
+.ui0918-hospitalized-summary{display:flex;flex-direction:column;gap:4px;margin-top:12px;padding:14px;border-radius:12px;background:#eef2f4;color:#455a64}
+.ui0918-hospitalized-summary strong{font-size:19px;color:#37474f}
+.ui0918-hospitalized-summary span{font-size:13px;font-weight:700}
+.ui0918-header-alert{margin-top:10px;padding:9px 11px;border:1px solid #ef9a9a;border-radius:10px;background:#fff3f3;color:#b71c1c;font-size:13px;font-weight:850}
+.status-user-card.state-hospitalized{opacity:.82;border-style:dashed}
+.status-user-card.state-med-review,.status-user-card.state-return-review,.status-user-card.state-uncertain{border-color:#ef9a9a;background:#fffafa}
+.ui0918-med-review-panel{border-color:#ef9a9a!important;background:#fff8f8!important}
+
 </style>
 </head>
 
@@ -7555,7 +7583,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.17</div>
+      <div class="ui09-brand-version">Ver.0.9.18</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8513,7 +8541,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.17
+            Ver.0.9.18
           </span>
         </div>
 
@@ -9131,6 +9159,10 @@ const CLIENT_WRITE_ACTIONS = new Set([
   "registerRetroBowel",
   "setBowelUncertain",
   "resolveBowelRecoveryState",
+  "setResidentHospitalized",
+  "returnResidentFromHospital",
+  "applyResidentOutsideBowelBaseline",
+  "resolveResidentMedicationReview",
   "resolveRuleEvaluation",
   "saveDailyConfirm",
   "saveNurseInstruction",
@@ -9175,11 +9207,19 @@ let latestDailyConfirms = [];
   status: uncertain = 排便カウント不確定 / review = 遡及修正後の過去与薬要確認
 */
 let bowelRecoveryStates = [];
+
+/*
+  Ver.0.9.18 入院 / 帰所 / 退院後薬剤確認。
+  presenceStatus: present / hospitalized
+  medicationStatus: clear / pending
+*/
+let residentCareStates = [];
+
 const SHIFT_BACKLOG_DAYS = 7;
 const SHIFT_BACKLOG_START_DATE = "2026-10-03";
 
 /*
-  Ver.0.9.17 HOTFIX
+  Ver.0.9.18 HOTFIX
   initialize() 内のホーム描画から看護師用勤務帯スコープ判定が
   呼ばれるため、TDZを避けて起動処理より前に初期化する。
 */
@@ -10430,6 +10470,16 @@ async function register() {
     return;
   }
 
+  if (isResidentHospitalized(user)) {
+    showToast(
+      "🏥 入院中の利用者には排便登録できません",
+      "warning",
+      4000
+    );
+    updateUserSelects();
+    return;
+  }
+
 
   if (
     !["少", "少1", "少2", "普通"]
@@ -11541,10 +11591,107 @@ function isBowelCountUncertain(user) {
 function getBowelRecoveryAttentionItems() {
   return (Array.isArray(bowelRecoveryStates) ? bowelRecoveryStates : [])
     .filter(item => ["uncertain", "review"].includes(String(item.status || "")))
+    .filter(item => !isResidentHospitalized(item.user))
     .filter(item =>
       currentUnit === "all" ||
       String(userUnits[item.user] || "") === String(currentUnit)
     );
+}
+
+// ============================================================
+// Ver.0.9.18 入院 / 帰所 / 退院後状態
+// ============================================================
+function getResidentCareState(user) {
+  const target = String(user || "").trim();
+  const found = (Array.isArray(residentCareStates) ? residentCareStates : [])
+    .find(item => String(item.user || "").trim() === target);
+
+  return found || {
+    user: target,
+    presenceStatus: "present",
+    medicationStatus: "clear",
+    medicationReason: ""
+  };
+}
+
+function isResidentHospitalized(user) {
+  return String(
+    getResidentCareState(user).presenceStatus || "present"
+  ) === "hospitalized";
+}
+
+function isResidentMedicationReviewPending(user) {
+  return String(
+    getResidentCareState(user).medicationStatus || "clear"
+  ) === "pending";
+}
+
+function isResidentAutoJudgmentPaused(user) {
+  return (
+    isResidentHospitalized(user) ||
+    isBowelCountUncertain(user) ||
+    isResidentMedicationReviewPending(user)
+  );
+}
+
+function getResidentMedicationReviewItems() {
+  return (Array.isArray(residentCareStates) ? residentCareStates : [])
+    .filter(item =>
+      String(item.presenceStatus || "present") !== "hospitalized" &&
+      String(item.medicationStatus || "clear") === "pending"
+    )
+    .filter(item =>
+      currentUnit === "all" ||
+      String(userUnits[item.user] || "") === String(currentUnit)
+    );
+}
+
+function getHospitalizedResidentsForCurrentScope() {
+  return Object.keys(points || {})
+    .filter(user =>
+      isResidentHospitalized(user) &&
+      (
+        currentUnit === "all" ||
+        String(userUnits[user] || "") === String(currentUnit)
+      )
+    );
+}
+
+function formatResidentCareDateTime(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  const parts = text.replace("T", " ").split(" ");
+  const date = parts[0] || "";
+  const time = (parts[1] || "").slice(0, 5);
+  const d = date.split("-");
+  if (d.length !== 3) return text;
+  return `${Number(d[1])}/${Number(d[2])}${time ? " " + time : ""}`;
+}
+
+function refreshResidentCareRelatedUI() {
+  updateUserSelects();
+  renderStatusAreas();
+  renderActionPage();
+  updateHomeMedicineStatus();
+  updateNurseAlerts();
+  updateHomeUrgentSummary();
+  updateOtherPageUI();
+
+  if (residentDetailUser) {
+    renderResidentDetail();
+  }
+
+  const dayResult = document.getElementById("bowelCheckResult");
+  if (dayResult && dayResult.innerHTML.trim() !== "") {
+    checkTodayBowelStatus();
+  }
+
+  const nightResult = document.getElementById("nightBowelCheckResult");
+  if (nightResult && nightResult.innerHTML.trim() !== "") {
+    checkNightBowelStatus();
+  }
+
+  saveData();
 }
 
 function getNoBowelDays(user) {
@@ -11576,7 +11723,7 @@ function getActionPendingData() {
 
   for (const user in lastDates) {
 
-    if (isBowelCountUncertain(user)) {
+    if (isResidentAutoJudgmentPaused(user)) {
       continue;
     }
 
@@ -12693,6 +12840,9 @@ function getHomeUrgentData() {
   const recoveryAttention =
     getBowelRecoveryAttentionItems();
 
+  const medicationReview =
+    getResidentMedicationReviewItems();
+
   const evaluationDue =
     getActiveRuleEvaluations()
       .filter(item =>
@@ -12718,6 +12868,7 @@ function getHomeUrgentData() {
     pendingShifts,
     nurseWaiting,
     recoveryAttention,
+    medicationReview,
     evaluationDue,
     pendingSaveCount
   };
@@ -12744,7 +12895,8 @@ function updateHomeUrgentSummary() {
 
   const nurseCount =
     data.nurseWaiting.length +
-    data.recoveryAttention.length;
+    data.recoveryAttention.length +
+    data.medicationReview.length;
 
   const evaluationCount =
     data.evaluationDue.length;
@@ -12944,10 +13096,33 @@ function getHomeUrgentDetailHtml() {
           ${item.reason ? "／ " + escapeHtml(item.reason) : ""}
         </span>
         ${
-          (currentRole === "nurse" || currentRole === "admin")
-            ? `<button type="button" onclick="closeHomeUrgentDetail(); openResolveRecoveryAttention(decodeURIComponent('${encodeURIComponent(String(item.user || ""))}'))">確認・解決</button>`
-            : `<button type="button" onclick="closeHomeUrgentDetail(); openPage('medicinePage');">看護師確認待ち</button>`
+          status === "uncertain" && String(item.sourceShiftType || "") === "hospital_return"
+            ? `<button type="button" onclick="closeHomeUrgentDetail(); openResidentDetail(decodeURIComponent('${encodeURIComponent(String(item.user || ""))}'),'homePage');">利用者を確認する</button>`
+            : (
+                (currentRole === "nurse" || currentRole === "admin")
+                  ? `<button type="button" onclick="closeHomeUrgentDetail(); openResolveRecoveryAttention(decodeURIComponent('${encodeURIComponent(String(item.user || ""))}'))">確認・解決</button>`
+                  : `<button type="button" onclick="closeHomeUrgentDetail(); openPage('medicinePage');">看護師確認待ち</button>`
+              )
         }
+      </div>
+    `);
+  }
+
+  for (const item of data.medicationReview) {
+    const reason = String(item.medicationReason || "");
+    rows.push(`
+      <div class="home-urgent-detail-row">
+        <strong>💊 退院後の緩下剤指示確認</strong>
+        <span>
+          ${escapeHtml(formatResidentName(item.user))}
+          ／ ${reason === "changed" ? "変更あり" : "変更有無不明"}
+        </span>
+        <button
+          type="button"
+          onclick="closeHomeUrgentDetail(); openResidentDetail(decodeURIComponent('${encodeURIComponent(String(item.user || ""))}'),'homePage');"
+        >
+          利用者を確認する
+        </button>
       </div>
     `);
   }
@@ -13058,6 +13233,32 @@ function openResolveRecoveryAttention(user) {
     alert("この確認は看護師または管理者が行ってください");
     return;
   }
+
+  if (
+    String(item.status || "") === "uncertain" &&
+    String(item.sourceShiftType || "") === "hospital_return"
+  ) {
+    openCommonModal({
+      title: "帰所後の排便カウント不確定",
+      bodyHtml: `
+        <div class="ui0913-recovery-warning">
+          <strong>${escapeHtml(formatResidentName(user))}</strong><br>
+          ${item.reason ? "理由：" + escapeHtml(item.reason) + "<br>" : ""}
+          <br>
+          この不確定状態は、記憶だけで解除しません。<br>
+          ・ユニット側で病院の排便成立日を確認して院外情報を追加する<br>
+          ・施設で次の確実な排便成立が確認される<br>
+          のどちらかで自動的に通常カウントへ戻ります。
+        </div>
+      `,
+      buttonsHtml: `
+        <button type="button" onclick="closeCommonModal(); openResidentDetail(decodeURIComponent('${encodeURIComponent(user)}'),'medicinePage')">利用者詳細を開く</button>
+        <button type="button" class="modal-action-close" onclick="closeCommonModal()">閉じる</button>
+      `
+    });
+    return;
+  }
+
   openCommonModal({
     title: "排便復旧内容を確認",
     bodyHtml: `
@@ -13625,6 +13826,8 @@ function clearResidentScopedMemory() {
   userUnits = {};
   histories = [];
   nurseInstructions = [];
+  bowelRecoveryStates = [];
+  residentCareStates = [];
   rules = {};
   checks = {};
   checkDate =
@@ -13643,6 +13846,7 @@ function clearResidentScopedCache() {
     "histories",
     "nurseInstructions",
     "bowelRecoveryStates",
+    "residentCareStates",
     "rules",
     "ruleCycleSnapshots",
     "ruleEvaluations",
@@ -13848,6 +14052,11 @@ function saveData() {
   );
 
   localStorage.setItem(
+    "residentCareStates",
+    JSON.stringify(residentCareStates)
+  );
+
+  localStorage.setItem(
     "rules",
     JSON.stringify(rules)
   );
@@ -13893,6 +14102,7 @@ function loadData() {
   const savedHistories = localStorage.getItem("histories");
   const savedNurseInstructions = localStorage.getItem("nurseInstructions");
   const savedBowelRecoveryStates = localStorage.getItem("bowelRecoveryStates");
+  const savedResidentCareStates = localStorage.getItem("residentCareStates");
   const savedRules = localStorage.getItem("rules");
   const savedRuleCycleSnapshots =
     localStorage.getItem(
@@ -13966,6 +14176,14 @@ function loadData() {
       bowelRecoveryStates = JSON.parse(savedBowelRecoveryStates) || [];
     } catch (_) {
       bowelRecoveryStates = [];
+    }
+  }
+
+  if (savedResidentCareStates !== null) {
+    try {
+      residentCareStates = JSON.parse(savedResidentCareStates) || [];
+    } catch (_) {
+      residentCareStates = [];
     }
   }
 
@@ -15687,6 +15905,7 @@ function getPendingNurseInstructionsForCurrentUnit() {
     .filter(item =>
       item.status === "pending" &&
       isNurseInstructionCurrentCycle(item) &&
+      !isResidentHospitalized(item.user) &&
       (
         currentUnit === "all" ||
         userUnits[item.user] === currentUnit
@@ -15710,8 +15929,18 @@ function openNurseInstructionModal(user) {
     return;
   }
 
+  if (isResidentHospitalized(user)) {
+    showToast(
+      "入院中の利用者には個別対応指示を登録できません",
+      "warning",
+      4000
+    );
+    return;
+  }
+
   const maxRuleDay = getMaxRuleDay(user);
   const days = Math.max(0, getNoBowelDays(user));
+  const countUncertain = isBowelCountUncertain(user);
   const safeUser = encodeURIComponent(user);
 
   openCommonModal({
@@ -15721,7 +15950,7 @@ function openNurseInstructionModal(user) {
 
         <div class="nurse-form-summary">
           <span class="nurse-form-user">${escapeHtml(formatResidentName(user))}</span>
-          未排便 ${days}日<br>
+          ${countUncertain ? "排便カウント：不確定" : `未排便 ${days}日`}<br>
           設定最終日：${maxRuleDay === null ? "なし" : `未排便${maxRuleDay}日`}
         </div>
 
@@ -16160,6 +16389,10 @@ function getOverdueNurseUsers() {
       continue;
     }
 
+    if (isResidentAutoJudgmentPaused(user)) {
+      continue;
+    }
+
 
     const maxRuleDay =
       getMaxRuleDay(user);
@@ -16215,7 +16448,13 @@ function getNurseAlertHtml(
   const overdue =
     getOverdueNurseUsers();
 
-  if (overdue.length === 0) {
+  const medicationReview =
+    getResidentMedicationReviewItems();
+
+  if (
+    overdue.length === 0 &&
+    medicationReview.length === 0
+  ) {
     return "";
   }
 
@@ -16228,6 +16467,43 @@ function getNurseAlertHtml(
       : overdue.filter(info => Boolean(info.instruction));
 
   let html = "";
+
+  if (medicationReview.length > 0) {
+    const items = medicationReview.map(item => {
+      const safeUser = encodeURIComponent(String(item.user || ""));
+      const reason = String(item.medicationReason || "");
+      return `
+        <div class="nurse-overdue-item">
+          <div class="nurse-overdue-user">
+            <strong>${escapeHtml(formatResidentName(item.user))}</strong>
+            <span>${reason === "changed" ? "入院中に緩下剤変更あり" : "緩下剤変更の有無が不明"}</span>
+          </div>
+          <div class="nurse-instruction-actions" style="grid-column:1/-1;">
+            <button
+              type="button"
+              class="nurse-add-action-button"
+              onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
+            >
+              帰所後の確認を開く
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    html += `
+      <div class="nurse-overdue-panel ui0918-med-review-panel">
+        <div class="nurse-overdue-header">
+          <strong>💊 退院後の緩下剤指示確認</strong>
+          <span class="nurse-overdue-count">${medicationReview.length}名</span>
+        </div>
+        <div class="nurse-overdue-list">${items}</div>
+        <div class="nurse-overdue-note">
+          確認が終わるまで通常の緩下剤自動判定は停止しています。
+        </div>
+      </div>
+    `;
+  }
 
   if (waiting.length > 0) {
 
@@ -16604,6 +16880,78 @@ function getUserStatusInfo(user) {
       getNoBowelDays(user)
     );
 
+  const careState =
+    getResidentCareState(user);
+
+  const countUncertain =
+    isBowelCountUncertain(user);
+
+  const medicationPending =
+    isResidentMedicationReviewPending(user);
+
+  if (
+    String(careState.presenceStatus || "present") ===
+      "hospitalized"
+  ) {
+    return {
+      user: user,
+      days: days,
+      point: Number(points[user] || 0),
+      lastDate: lastDates[user] || "",
+      todayRules: [],
+      remainingToday: [],
+      maxRuleDay: getMaxRuleDay(user),
+      state: "hospitalized",
+      stateLabel: "🏥 入院中",
+      priority: 9,
+      actionText:
+        "入院中のため排便確認・緩下剤自動判定を停止しています"
+    };
+  }
+
+  if (countUncertain || medicationPending) {
+    const state =
+      countUncertain && medicationPending
+        ? "return-review"
+        : (
+            countUncertain
+              ? "uncertain"
+              : "med-review"
+          );
+
+    const stateLabel =
+      state === "return-review"
+        ? "帰所後確認待ち"
+        : (
+            state === "uncertain"
+              ? "排便カウント不確定"
+              : "緩下剤指示確認待ち"
+          );
+
+    const actionText =
+      state === "return-review"
+        ? "⚠ 排便カウントと退院後の緩下剤指示を確認してください"
+        : (
+            state === "uncertain"
+              ? "⚠ 排便カウント不確定のため自動判定を停止しています"
+              : "🩺 退院後の緩下剤指示確認待ちのため自動判定を停止しています"
+          );
+
+    return {
+      user: user,
+      days: days,
+      point: Number(points[user] || 0),
+      lastDate: lastDates[user] || "",
+      todayRules: [],
+      remainingToday: [],
+      maxRuleDay: getMaxRuleDay(user),
+      state: state,
+      stateLabel: stateLabel,
+      priority: 0,
+      actionText: actionText
+    };
+  }
+
   const todayRules =
     getRulesForDay(
       user,
@@ -16838,7 +17186,12 @@ function getStatusHtml() {
   const nurseCount =
     infos.filter(
       info =>
-        info.state === "nurse"
+        [
+          "nurse",
+          "uncertain",
+          "med-review",
+          "return-review"
+        ].includes(info.state)
     ).length;
 
   const actionCount =
@@ -16947,17 +17300,25 @@ function getStatusHtml() {
         info.user
       );
 
+    const hospitalized =
+      info.state === "hospitalized";
+
+    const uncertain =
+      ["uncertain", "return-review"].includes(info.state);
+
     const pointRate =
-      Math.max(
-        0,
-        Math.min(
-          100,
-          (
-            Number(info.point) /
-            BOWEL_RESET_POINT
-          ) * 100
-        )
-      );
+      hospitalized || uncertain
+        ? 0
+        : Math.max(
+            0,
+            Math.min(
+              100,
+              (
+                Number(info.point) /
+                BOWEL_RESET_POINT
+              ) * 100
+            )
+          );
 
     html += `
       <div
@@ -16988,9 +17349,9 @@ function getStatusHtml() {
         <div class="status-card-body">
 
           <div class="status-days-box">
-            <span>未排便</span>
-            <strong>${info.days}</strong>
-            <span>日</span>
+            <span>${hospitalized ? "状態" : "未排便"}</span>
+            <strong>${hospitalized ? "入院" : (uncertain ? "不確定" : info.days)}</strong>
+            <span>${hospitalized || uncertain ? "" : "日"}</span>
           </div>
 
           <div class="status-card-meta">
@@ -17005,24 +17366,39 @@ function getStatusHtml() {
             <div>
               排便累計：
               <strong>
-                ${escapeHtml(
-                  getBowelPointText(
-                    info.point
-                  )
-                )}
+                ${
+                  hospitalized || uncertain
+                    ? "—"
+                    : escapeHtml(
+                        getBowelPointText(
+                          info.point
+                        )
+                      )
+                }
               </strong>
             </div>
 
-            <div class="status-point-row">
-              <span>排便進捗</span>
+            ${
+              hospitalized || uncertain
+                ? `
+                  <div class="status-point-row">
+                    <span>排便進捗</span>
+                    <strong>${hospitalized ? "停止中" : "算出停止中"}</strong>
+                  </div>
+                `
+                : `
+                  <div class="status-point-row">
+                    <span>排便進捗</span>
 
-              <div class="status-point-bar">
-                <div
-                  class="status-point-fill"
-                  style="width:${pointRate}%"
-                ></div>
-              </div>
-            </div>
+                    <div class="status-point-bar">
+                      <div
+                        class="status-point-fill"
+                        style="width:${pointRate}%"
+                      ></div>
+                    </div>
+                  </div>
+                `
+            }
 
           </div>
 
@@ -17341,6 +17717,12 @@ function openUserStatusDetail(user) {
   const info =
     getUserStatusInfo(user);
 
+  const hospitalized =
+    isResidentHospitalized(user);
+
+  const uncertain =
+    isBowelCountUncertain(user);
+
 
   const alertHtml =
     info.state === "nurse"
@@ -17366,16 +17748,18 @@ function openUserStatusDetail(user) {
 
         <div class="status-detail-stat">
           <span>未排便日数</span>
-          <strong>${info.days}日</strong>
+          <strong>${hospitalized ? "停止中" : (uncertain ? "不確定" : info.days + "日")}</strong>
         </div>
 
         <div class="status-detail-stat">
           <span>排便累計</span>
           <strong>
             ${escapeHtml(
-              getBowelPointText(
-                info.point
-              )
+              hospitalized || uncertain
+                ? "—"
+                : getBowelPointText(
+                    info.point
+                  )
             )}
           </strong>
         </div>
@@ -17436,6 +17820,12 @@ function openUserStatusDetail(user) {
     `,
 
     buttonsHtml: `
+      <button
+        type="button"
+        onclick="closeCommonModal(); openResidentDetail(decodeURIComponent('${encodeURIComponent(user)}'),'otherPage')"
+      >
+        利用者詳細を開く
+      </button>
       <button
         class="modal-action-close"
         onclick="closeCommonModal()"
@@ -17622,7 +18012,7 @@ function getUnitName(unitId) {
 
 
 /* ============================================================
-   Ver.0.9.17 看護師の勤務帯確認表示を試験ユニットへ限定
+   Ver.0.9.18 看護師の勤務帯確認表示を試験ユニットへ限定
 
    試験運用中は看護師共通アカウントに、
    「きんもくせい」以外の日勤帯・夜勤帯の未確定を表示しない。
@@ -18155,7 +18545,10 @@ function updateUserSelects() {
     }
 
 
-    if (userSelect) {
+    if (
+      userSelect &&
+      !isResidentHospitalized(user)
+    ) {
 
       const option1 =
         document.createElement(
@@ -18309,7 +18702,12 @@ function getOtherStatusCounts() {
   const nurseCount =
     infos.filter(
       info =>
-        info.state === "nurse"
+        [
+          "nurse",
+          "uncertain",
+          "med-review",
+          "return-review"
+        ].includes(info.state)
     ).length;
 
   const actionCount =
@@ -18640,11 +19038,11 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.17</strong>
+        <strong>Ver.0.9.18</strong>
       </div>
       <div>
         <span>GAS</span>
-        <strong>Ver.0.8.43</strong>
+        <strong>Ver.0.8.44</strong>
       </div>
       <div>
         <span>ログイン範囲</span>
@@ -19745,9 +20143,14 @@ async function loadInitialDataFromGoogle() {
         ? data.bowelRecoveryStates
         : [];
 
+    residentCareStates =
+      Array.isArray(data.residentCareStates)
+        ? data.residentCareStates
+        : [];
+
     // =========================
     // staffMaster / unitMaster
-    // Ver.0.9.17: 勤務帯表示の対象ユニット判定より先に反映する
+    // Ver.0.9.18: 勤務帯表示の対象ユニット判定より先に反映する
     // =========================
     setMasterDataFromServer(data);
 
@@ -24560,6 +24963,10 @@ function createMedicineReport() {
       continue;
     }
 
+    if (isResidentHospitalized(user)) {
+      continue;
+    }
+
 
     const todayHistories =
       histories.filter(history => {
@@ -24624,6 +25031,10 @@ function createMedicineReport() {
       currentUnit !== "all" &&
       userUnits[user] !== currentUnit
     ) {
+      continue;
+    }
+
+    if (isResidentAutoJudgmentPaused(user)) {
       continue;
     }
 
@@ -24747,6 +25158,7 @@ function createMedicineReport() {
       .map(normalizeNurseInstruction)
       .filter(item =>
         item.status !== "cancelled" &&
+        !isResidentHospitalized(item.user) &&
         (
           currentUnit === "all" ||
           userUnits[item.user] === currentUnit
@@ -25307,6 +25719,10 @@ function checkTodayBowelStatus(
       currentUnit !== "all" &&
       userUnits[user] !== currentUnit
     ) {
+      continue;
+    }
+
+    if (isResidentHospitalized(user)) {
       continue;
     }
 
@@ -26653,6 +27069,10 @@ function checkNightBowelStatus(
       currentUnit !== "all" &&
       userUnits[user] !== currentUnit
     ) {
+      continue;
+    }
+
+    if (isResidentHospitalized(user)) {
       continue;
     }
 
@@ -30723,6 +31143,570 @@ function getResidentRuleItemsHtml(
 }
 
 
+function getResidentCarePanelHtml(user) {
+  const care = getResidentCareState(user);
+  const hospitalized = isResidentHospitalized(user);
+  const uncertain = isBowelCountUncertain(user);
+  const medicationPending = isResidentMedicationReviewPending(user);
+  const safeUser = encodeURIComponent(String(user || ""));
+
+  const blocks = [];
+
+  if (hospitalized) {
+    blocks.push(`
+      <section class="ui09-panel ui0918-care-panel hospitalized">
+        <div class="ui0918-care-title">🏥 入院中</div>
+        <div class="ui0918-care-meta">
+          入院登録：${escapeHtml(formatResidentCareDateTime(care.hospitalizedAt) || "日時不明")}
+          ${care.hospitalizedByName ? `<br>登録者：${escapeHtml(care.hospitalizedByName)}` : ""}
+          ${care.hospitalNote ? `<br>メモ：${escapeHtml(care.hospitalNote)}` : ""}
+        </div>
+        <div class="ui0918-care-note">
+          排便確認・排便入力・通常の緩下剤自動判定・与薬対象から除外中です。
+        </div>
+        ${
+          currentRole !== "nurse"
+            ? `
+              <button
+                type="button"
+                class="ui09-primary-button"
+                onclick="openReturnResidentModal(decodeURIComponent('${safeUser}'))"
+              >
+                🏠 帰所処理をする
+              </button>
+            `
+            : `
+              <div class="ui0918-care-note">
+                帰所登録はユニット側アカウントから行います。
+              </div>
+            `
+        }
+      </section>
+    `);
+    return blocks.join("");
+  }
+
+  if (uncertain) {
+    blocks.push(`
+      <section class="ui09-panel ui0918-care-panel uncertain">
+        <div class="ui0918-care-title">⚠ 排便カウント不確定</div>
+        <div class="ui0918-care-note">
+          入院中の排便成立日を確定できないため、通常の緩下剤自動判定を停止しています。<br>
+          後から院外情報を確認するか、施設で次の確実な排便成立があれば自動解除されます。
+        </div>
+        ${
+          currentRole !== "nurse"
+            ? `
+              <button
+                type="button"
+                class="ui09-secondary-button"
+                onclick="openOutsideBowelBaselineModal(decodeURIComponent('${safeUser}'))"
+              >
+                院外排便情報を後から追加
+              </button>
+            `
+            : ""
+        }
+      </section>
+    `);
+  }
+
+  if (medicationPending) {
+    const reason = String(care.medicationReason || "");
+    blocks.push(`
+      <section class="ui09-panel ui0918-care-panel medication">
+        <div class="ui0918-care-title">💊 退院後の緩下剤指示確認待ち</div>
+        <div class="ui0918-care-note">
+          帰所時申告：${reason === "changed" ? "入院中に変更あり" : "変更の有無が不明"}<br>
+          確認が終わるまで通常の緩下剤自動判定は停止しています。
+        </div>
+        ${
+          currentRole === "nurse"
+            ? `
+              <div class="ui0918-care-actions">
+                <button
+                  type="button"
+                  onclick="openNurseInstructionModal(decodeURIComponent('${safeUser}'))"
+                >
+                  ＋ 今回限りの対応を追加
+                </button>
+                <button
+                  type="button"
+                  class="ui09-secondary-button"
+                  onclick="openResidentMedicationResolutionModal(decodeURIComponent('${safeUser}'),'no_change')"
+                >
+                  変更なしを確認して再開
+                </button>
+                <button
+                  type="button"
+                  class="ui09-secondary-button"
+                  onclick="openResidentMedicationResolutionModal(decodeURIComponent('${safeUser}'),'rules_updated')"
+                >
+                  ルール更新済みとして再開
+                </button>
+              </div>
+            `
+            : (
+                currentRole === "admin"
+                  ? `
+                    <div class="ui0918-care-actions">
+                      <button
+                        type="button"
+                        class="ui09-secondary-button"
+                        onclick="openResidentMedicationResolutionModal(decodeURIComponent('${safeUser}'),'no_change')"
+                      >
+                        変更なしを確認して再開
+                      </button>
+                      <button
+                        type="button"
+                        class="ui09-secondary-button"
+                        onclick="openResidentMedicationResolutionModal(decodeURIComponent('${safeUser}'),'rules_updated')"
+                      >
+                        ルール更新済みとして再開
+                      </button>
+                    </div>
+                  `
+                  : `<div class="ui0918-care-note">看護師確認待ちです。</div>`
+              )
+        }
+      </section>
+    `);
+  } else if (currentRole === "nurse") {
+    blocks.push(`
+      <section class="ui09-panel ui0918-care-panel neutral">
+        <div class="ui0918-care-title">🩺 看護師個別対応</div>
+        <div class="ui0918-care-note">
+          設定最終日超過の対象者でなくても、今回限りの指示を登録できます。
+        </div>
+        <button
+          type="button"
+          onclick="openNurseInstructionModal(decodeURIComponent('${safeUser}'))"
+        >
+          ＋ 今回限りの対応を追加
+        </button>
+      </section>
+    `);
+  }
+
+  if (currentRole !== "nurse") {
+    blocks.push(`
+      <section class="ui09-panel ui0918-care-panel neutral">
+        <button
+          type="button"
+          class="ui0918-hospitalize-button"
+          onclick="openHospitalizeResidentModal(decodeURIComponent('${safeUser}'))"
+        >
+          🏥 入院にする
+        </button>
+      </section>
+    `);
+  }
+
+  return blocks.join("");
+}
+
+function openHospitalizeResidentModal(user) {
+  if (currentRole === "nurse") {
+    showToast("入院登録はユニット側から行ってください", "warning", 3500);
+    return;
+  }
+  if (!canStartServerWrite()) return;
+  if (isResidentHospitalized(user)) {
+    showToast("この利用者はすでに入院中です", "warning", 3000);
+    return;
+  }
+
+  openCommonModal({
+    title: "入院登録：" + formatResidentName(user),
+    bodyHtml: `
+      <div class="ui0918-care-warning">
+        入院中は排便入力、勤務帯の排便確認、通常の緩下剤自動判定、与薬対象から除外します。<br>
+        未完了の看護師個別指示がある場合は入院時に自動取消します。
+      </div>
+      <div class="confirm-signature-box">
+        <div class="confirm-signature-title">✍️ 操作した職員</div>
+        ${getStaffSelectHtml("hospitalizeStaffSelect")}
+      </div>
+      <label class="ui0918-form-label">備考（任意）</label>
+      <textarea id="hospitalizeNote" class="ui0918-textarea" placeholder="例：救急搬送、○○病院へ入院"></textarea>
+    `,
+    buttonsHtml: `
+      <button type="button" class="modal-action-close" onclick="closeCommonModal()">キャンセル</button>
+      <button type="button" class="modal-action-cancel" onclick="submitHospitalizeResident('${encodeURIComponent(user)}')">🏥 入院にする</button>
+    `
+  });
+}
+
+async function submitHospitalizeResident(encodedUser) {
+  const user = decodeURIComponent(encodedUser || "");
+  const staff = getSelectedStaff("hospitalizeStaffSelect");
+  if (!staff) {
+    showToast("操作した職員を選択してください", "error", 3000);
+    return;
+  }
+
+  const note = String(document.getElementById("hospitalizeNote")?.value || "").trim();
+  if (!confirm(`${formatResidentName(user)}を入院中にしますか？\n\n入院中は通常の排便・緩下剤判定から除外されます。`)) {
+    return;
+  }
+
+  beginWriteActivity();
+  try {
+    const result = await postJsonApiOnce({
+      action: "setResidentHospitalized",
+      user: user,
+      staffId: staff.staffId,
+      note: note
+    }, 30000);
+
+    if (!result || result.ok !== true) {
+      throw new Error(result?.message || "入院状態を保存できませんでした");
+    }
+
+    residentCareStates = Array.isArray(result.residentCareStates)
+      ? result.residentCareStates
+      : residentCareStates;
+
+    nurseInstructions = nurseInstructions.map(item => {
+      if (
+        String(item.user || "") === user &&
+        ["pending", "observing"].includes(String(item.status || ""))
+      ) {
+        return {...item, status:"cancelled", cancelReason:"入院により自動取消"};
+      }
+      return item;
+    });
+
+    closeCommonModal();
+    refreshResidentCareRelatedUI();
+    showToast("🏥 入院状態に変更しました", "success", 3500);
+  } catch (error) {
+    showToast("入院登録に失敗しました：" + error.message, "error", 5000);
+  } finally {
+    endWriteActivity();
+  }
+}
+
+function updateReturnResidentBowelFields() {
+  const mode = document.querySelector('input[name="returnBowelMode"]:checked')?.value || "";
+  const area = document.getElementById("returnKnownBowelArea");
+  if (area) area.style.display = mode === "known_reset" ? "block" : "none";
+}
+
+function openReturnResidentModal(user) {
+  if (currentRole === "nurse") {
+    showToast("帰所登録はユニット側から行ってください", "warning", 3500);
+    return;
+  }
+  if (!canStartServerWrite()) return;
+  if (!isResidentHospitalized(user)) {
+    showToast("この利用者は入院中ではありません", "warning", 3000);
+    return;
+  }
+
+  const care = getResidentCareState(user);
+  const hospitalDate = String(care.hospitalizedAt || "").slice(0,10);
+  const today = getTodayText();
+
+  openCommonModal({
+    title: "帰所処理：" + formatResidentName(user),
+    bodyHtml: `
+      <div class="ui0918-care-warning">
+        入院中の排便状況と緩下剤指示の変更有無を確認してから帰所処理を行ってください。
+      </div>
+
+      <div class="ui0918-form-label">① 入院中の排便状況</div>
+      <div class="ui0918-radio-list">
+        <label><input type="radio" name="returnBowelMode" value="known_reset" onchange="updateReturnResidentBowelFields()"> 排便成立の最終日が確認できた</label>
+        <label><input type="radio" name="returnBowelMode" value="had_bowel_unknown" onchange="updateReturnResidentBowelFields()"> 排便はあったが、排便成立日を確定できない</label>
+        <label><input type="radio" name="returnBowelMode" value="unknown" onchange="updateReturnResidentBowelFields()"> 排便状況が分からない</label>
+      </div>
+
+      <div id="returnKnownBowelArea" class="ui0918-known-bowel" style="display:none">
+        <label class="ui0918-form-label">病院で確認できた排便成立日</label>
+        <input id="returnOutsideBowelDate" type="date" min="${escapeHtml(hospitalDate)}" max="${escapeHtml(today)}">
+        <div class="ui0918-care-note">この日を新しい排便カウントの基準日にします。施設内の排便履歴とは別の院外情報として保持します。</div>
+      </div>
+
+      <label class="ui0918-form-label">院外情報メモ（任意）</label>
+      <textarea id="returnOutsideBowelNote" class="ui0918-textarea" placeholder="例：退院時申し送りで10/8普通便を確認"></textarea>
+
+      <div class="ui0918-form-label">② 入院中の緩下剤指示変更</div>
+      <div class="ui0918-radio-list">
+        <label><input type="radio" name="returnMedicationChange" value="none"> 変更なし</label>
+        <label><input type="radio" name="returnMedicationChange" value="changed"> 変更あり</label>
+        <label><input type="radio" name="returnMedicationChange" value="unknown"> 変更の有無が不明</label>
+      </div>
+
+      <div class="confirm-signature-box">
+        <div class="confirm-signature-title">✍️ 帰所処理をした職員</div>
+        ${getStaffSelectHtml("returnResidentStaffSelect")}
+      </div>
+    `,
+    buttonsHtml: `
+      <button type="button" class="modal-action-close" onclick="closeCommonModal()">キャンセル</button>
+      <button type="button" onclick="submitReturnResident('${encodeURIComponent(user)}')">🏠 帰所を確定</button>
+    `
+  });
+}
+
+async function submitReturnResident(encodedUser) {
+  const user = decodeURIComponent(encodedUser || "");
+  const staff = getSelectedStaff("returnResidentStaffSelect");
+  const bowelMode = document.querySelector('input[name="returnBowelMode"]:checked')?.value || "";
+  const medicationChange = document.querySelector('input[name="returnMedicationChange"]:checked')?.value || "";
+  const outsideBowelDate = String(document.getElementById("returnOutsideBowelDate")?.value || "");
+  const outsideBowelNote = String(document.getElementById("returnOutsideBowelNote")?.value || "").trim();
+
+  if (!staff) {
+    showToast("帰所処理をした職員を選択してください", "error", 3000);
+    return;
+  }
+  if (!bowelMode) {
+    showToast("入院中の排便状況を選択してください", "error", 3000);
+    return;
+  }
+  if (bowelMode === "known_reset" && !outsideBowelDate) {
+    showToast("病院で確認できた排便成立日を入力してください", "error", 3500);
+    return;
+  }
+  if (!medicationChange) {
+    showToast("緩下剤指示の変更有無を選択してください", "error", 3000);
+    return;
+  }
+
+  const warnings = [];
+  if (bowelMode !== "known_reset") warnings.push("排便カウントは不確定となり、自動判定を停止します");
+  if (medicationChange !== "none") warnings.push("緩下剤指示は看護師確認待ちとなり、自動判定を停止します");
+
+  const message = [
+    `${formatResidentName(user)}を帰所状態に戻します。`,
+    warnings.length ? "" : null,
+    ...warnings.map(v => "・" + v),
+    "",
+    "よろしいですか？"
+  ].filter(v => v !== null).join("\n");
+
+  if (!confirm(message)) return;
+
+  beginWriteActivity();
+  try {
+    const result = await postJsonApiOnce({
+      action: "returnResidentFromHospital",
+      user: user,
+      staffId: staff.staffId,
+      bowelMode: bowelMode,
+      outsideBowelDate: outsideBowelDate,
+      outsideBowelNote: outsideBowelNote,
+      medicationChange: medicationChange
+    }, 30000);
+
+    if (!result || result.ok !== true) {
+      throw new Error(result?.message || "帰所状態を保存できませんでした");
+    }
+
+    residentCareStates = Array.isArray(result.residentCareStates)
+      ? result.residentCareStates
+      : residentCareStates;
+
+    bowelRecoveryStates = Array.isArray(result.bowelRecoveryStates)
+      ? result.bowelRecoveryStates
+      : bowelRecoveryStates;
+
+    if (result.userState) {
+      points[user] = Number(result.userState.point || 0);
+      lastDates[user] = String(result.userState.lastDate || "").slice(0,10);
+    }
+
+    closeCommonModal();
+    refreshResidentCareRelatedUI();
+
+    if (bowelMode !== "known_reset" && medicationChange !== "none") {
+      showToast("🏠 帰所登録完了：排便カウント不確定・緩下剤指示確認待ち", "warning", 6500);
+    } else if (bowelMode !== "known_reset") {
+      showToast("🏠 帰所登録完了：排便カウント不確定", "warning", 5500);
+    } else if (medicationChange !== "none") {
+      showToast("🏠 帰所登録完了：緩下剤指示の看護師確認待ち", "warning", 5500);
+    } else {
+      showToast("🏠 帰所登録が完了し、通常運用を再開しました", "success", 4000);
+    }
+  } catch (error) {
+    showToast("帰所登録に失敗しました：" + error.message, "error", 5500);
+  } finally {
+    endWriteActivity();
+  }
+}
+
+function openOutsideBowelBaselineModal(user) {
+  if (currentRole === "nurse") {
+    showToast("院外排便情報の追加はユニット側から行ってください", "warning", 3500);
+    return;
+  }
+  if (!canStartServerWrite()) return;
+  if (!isBowelCountUncertain(user)) {
+    showToast("この利用者の排便カウントは不確定状態ではありません", "warning", 3500);
+    return;
+  }
+
+  const care = getResidentCareState(user);
+  const hospitalDate = String(care.hospitalizedAt || "").slice(0,10);
+
+  openCommonModal({
+    title: "院外排便情報を追加",
+    bodyHtml: `
+      <div class="ui0918-care-warning">
+        <strong>${escapeHtml(formatResidentName(user))}</strong><br>
+        病院での排便成立日が後から確認できた場合に登録します。<br>
+        登録した日を新しい排便カウントの基準日として通常判定を再開します。
+      </div>
+      <label class="ui0918-form-label">確認できた排便成立日</label>
+      <input
+        id="outsideBaselineDate"
+        type="date"
+        min="${escapeHtml(hospitalDate)}"
+        max="${escapeHtml(getTodayText())}"
+      >
+      <label class="ui0918-form-label">情報源・メモ（任意）</label>
+      <textarea id="outsideBaselineNote" class="ui0918-textarea" placeholder="例：退院時サマリーを再確認"></textarea>
+      <div class="confirm-signature-box">
+        <div class="confirm-signature-title">✍️ 登録した職員</div>
+        ${getStaffSelectHtml("outsideBaselineStaffSelect")}
+      </div>
+    `,
+    buttonsHtml: `
+      <button type="button" class="modal-action-close" onclick="closeCommonModal()">キャンセル</button>
+      <button type="button" onclick="submitOutsideBowelBaseline('${encodeURIComponent(user)}')">院外情報を登録して再計算</button>
+    `
+  });
+}
+
+async function submitOutsideBowelBaseline(encodedUser) {
+  const user = decodeURIComponent(encodedUser || "");
+  const staff = getSelectedStaff("outsideBaselineStaffSelect");
+  const date = String(document.getElementById("outsideBaselineDate")?.value || "");
+  const note = String(document.getElementById("outsideBaselineNote")?.value || "").trim();
+
+  if (!date) {
+    showToast("排便成立日を入力してください", "error", 3000);
+    return;
+  }
+  if (!staff) {
+    showToast("登録した職員を選択してください", "error", 3000);
+    return;
+  }
+
+  if (!confirm(`${formatResidentName(user)}の院外排便成立日を${date}として登録し、排便カウントを再開しますか？`)) {
+    return;
+  }
+
+  beginWriteActivity();
+  try {
+    const result = await postJsonApiOnce({
+      action: "applyResidentOutsideBowelBaseline",
+      user: user,
+      staffId: staff.staffId,
+      outsideBowelDate: date,
+      note: note
+    }, 30000);
+
+    if (!result || result.ok !== true) {
+      throw new Error(result?.message || "院外排便情報を保存できませんでした");
+    }
+
+    residentCareStates = Array.isArray(result.residentCareStates)
+      ? result.residentCareStates
+      : residentCareStates;
+    bowelRecoveryStates = Array.isArray(result.bowelRecoveryStates)
+      ? result.bowelRecoveryStates
+      : bowelRecoveryStates;
+    if (result.userState) {
+      points[user] = Number(result.userState.point || 0);
+      lastDates[user] = String(result.userState.lastDate || "").slice(0,10);
+    }
+
+    closeCommonModal();
+    refreshResidentCareRelatedUI();
+    showToast("✓ 院外排便情報を反映し、排便カウントを再開しました", "success", 5000);
+  } catch (error) {
+    showToast("院外排便情報の保存に失敗しました：" + error.message, "error", 5500);
+  } finally {
+    endWriteActivity();
+  }
+}
+
+function openResidentMedicationResolutionModal(user, resolution) {
+  if (currentRole !== "nurse" && currentRole !== "admin") {
+    showToast("看護師または管理者アカウントから確認してください", "error", 3500);
+    return;
+  }
+  if (!canStartServerWrite()) return;
+
+  const care = getResidentCareState(user);
+  if (!isResidentMedicationReviewPending(user)) {
+    showToast("この利用者の緩下剤指示は確認待ちではありません", "warning", 3500);
+    return;
+  }
+
+  const label = resolution === "rules_updated"
+    ? "変更後の通常ルールが更新済み"
+    : "確認の結果、変更なし";
+
+  openCommonModal({
+    title: "退院後の緩下剤指示確認",
+    bodyHtml: `
+      <div class="ui0918-care-warning">
+        <strong>${escapeHtml(formatResidentName(user))}</strong><br>
+        帰所時申告：${String(care.medicationReason || "") === "changed" ? "変更あり" : "変更有無不明"}<br><br>
+        確認結果：<strong>${escapeHtml(label)}</strong><br>
+        この操作で緩下剤の自動判定を再開します。
+      </div>
+      <div class="confirm-signature-box">
+        <div class="confirm-signature-title">✍️ 確認した職員</div>
+        ${getStaffSelectHtml("medicationReviewStaffSelect")}
+      </div>
+    `,
+    buttonsHtml: `
+      <button type="button" class="modal-action-close" onclick="closeCommonModal()">キャンセル</button>
+      <button type="button" onclick="submitResidentMedicationResolution('${encodeURIComponent(user)}','${escapeHtml(resolution)}')">確認済みにして再開</button>
+    `
+  });
+}
+
+async function submitResidentMedicationResolution(encodedUser, resolution) {
+  const user = decodeURIComponent(encodedUser || "");
+  const staff = getSelectedStaff("medicationReviewStaffSelect");
+  if (!staff) {
+    showToast("確認した職員を選択してください", "error", 3000);
+    return;
+  }
+
+  beginWriteActivity();
+  try {
+    const result = await postJsonApiOnce({
+      action: "resolveResidentMedicationReview",
+      user: user,
+      staffId: staff.staffId,
+      resolution: resolution
+    }, 30000);
+
+    if (!result || result.ok !== true) {
+      throw new Error(result?.message || "確認状態を更新できませんでした");
+    }
+
+    residentCareStates = Array.isArray(result.residentCareStates)
+      ? result.residentCareStates
+      : residentCareStates;
+
+    closeCommonModal();
+    refreshResidentCareRelatedUI();
+    showToast("💊 退院後の緩下剤指示を確認済みにしました", "success", 4000);
+  } catch (error) {
+    showToast("指示確認の保存に失敗しました：" + error.message, "error", 5000);
+  } finally {
+    endWriteActivity();
+  }
+}
+
 function renderResidentDetail() {
 
   if (!residentDetailUser) {
@@ -30756,8 +31740,20 @@ function renderResidentDetail() {
       userUnits[user] || ""
     );
 
+  const careState =
+    getResidentCareState(user);
+
+  const hospitalized =
+    isResidentHospitalized(user);
+
+  const uncertain =
+    isBowelCountUncertain(user);
+
+  const medicationPending =
+    isResidentMedicationReviewPending(user);
+
   header.innerHTML = `
-    <section class="ui09-panel ui09-detail-header-card">
+    <section class="ui09-panel ui09-detail-header-card ${hospitalized ? "ui0918-hospitalized-header" : ""}">
       <div class="ui09-kicker">
         ${escapeHtml(unit || "")}
       </div>
@@ -30765,20 +31761,39 @@ function renderResidentDetail() {
         ${escapeHtml(formatResidentName(user))}
       </div>
 
-      <div class="ui09-state-grid">
-        <div class="ui09-state-box danger">
-          <span>未排便</span>
-          <strong>${info.days}日目</strong>
-        </div>
-        <div class="ui09-state-box">
-          <span>排便累計</span>
-          <strong>${escapeHtml(getBowelPointText(info.point))}</strong>
-        </div>
-        <div class="ui09-state-box wide">
-          <span>最終排便</span>
-          <strong>${escapeHtml(formatStatusDate(info.lastDate))}</strong>
-        </div>
-      </div>
+      ${
+        hospitalized
+          ? `
+            <div class="ui0918-hospitalized-summary">
+              <strong>🏥 入院中</strong>
+              <span>
+                ${escapeHtml(formatResidentCareDateTime(careState.hospitalizedAt) || "")}
+                から自動判定停止
+              </span>
+            </div>
+          `
+          : `
+            <div class="ui09-state-grid">
+              <div class="ui09-state-box danger">
+                <span>未排便</span>
+                <strong>${uncertain ? "不確定" : info.days + "日目"}</strong>
+              </div>
+              <div class="ui09-state-box">
+                <span>排便累計</span>
+                <strong>${uncertain ? "確認待ち" : escapeHtml(getBowelPointText(info.point))}</strong>
+              </div>
+              <div class="ui09-state-box wide">
+                <span>最終排便</span>
+                <strong>${escapeHtml(formatStatusDate(info.lastDate))}</strong>
+              </div>
+            </div>
+            ${
+              medicationPending
+                ? `<div class="ui0918-header-alert">💊 退院後の緩下剤指示確認待ち</div>`
+                : ""
+            }
+          `
+      }
     </section>
   `;
 
@@ -30908,6 +31923,12 @@ function renderResidentDetail() {
     ).length;
 
   body.innerHTML = `
+    ${getResidentCarePanelHtml(user)}
+
+    ${
+      hospitalized
+        ? ""
+        : `
     <section class="ui09-panel ui09-detail-section">
       <div class="ui09-kicker">今日の対応</div>
 
@@ -30940,6 +31961,8 @@ function renderResidentDetail() {
         対応画面を開く
       </button>
     </section>
+        `
+    }
 
     <section class="ui09-panel ui09-detail-section">
       <div class="ui09-kicker">看護師指示</div>
@@ -31268,6 +32291,11 @@ async function loadLightSyncDataFromGoogle() {
       ? data.bowelRecoveryStates
       : bowelRecoveryStates;
 
+  residentCareStates =
+    Array.isArray(data.residentCareStates)
+      ? data.residentCareStates
+      : residentCareStates;
+
   applyDailyConfirmStatus(
     data.dailyConfirms
   );
@@ -31450,7 +32478,12 @@ async function loadSyncDataFromGoogle() {
       ? data.bowelRecoveryStates
       : bowelRecoveryStates;
 
-  // Ver.0.9.17: 看護師の勤務帯表示対象を判定する前にマスターを更新
+  residentCareStates =
+    Array.isArray(data.residentCareStates)
+      ? data.residentCareStates
+      : residentCareStates;
+
+  // Ver.0.9.18: 看護師の勤務帯表示対象を判定する前にマスターを更新
   setMasterDataFromServer(data);
 
   applyDailyConfirmStatus(
