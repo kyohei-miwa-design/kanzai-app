@@ -7541,6 +7541,208 @@ body {
 .status-user-card.state-med-review,.status-user-card.state-return-review,.status-user-card.state-uncertain{border-color:#ef9a9a;background:#fffafa}
 .ui0918-med-review-panel{border-color:#ef9a9a!important;background:#fff8f8!important}
 
+
+
+/* ============================================================
+   Ver.0.9.19
+   ・ルール一覧レスポンシブ刷新
+   ・看護師は排便入力UIを非表示（勤務帯確認は継続）
+============================================================ */
+
+/* 看護師：排便入力そのものは隠し、勤務帯確認だけ残す */
+#bowelPage.nurse-shift-only .bowel-input-only {
+  display: none !important;
+}
+
+.ui09-bottom-nav.nurse-four-nav.bottom-nav {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* ルール一覧：PCでも横に広がり過ぎない */
+#ruleList {
+  width: 100%;
+}
+
+#ruleList .rule-admin-user-card {
+  width: 100%;
+  max-width: 720px;
+  margin: 12px auto;
+  padding: 0 12px 12px;
+  border-width: 1px;
+}
+
+#ruleList .rule-admin-user-head {
+  margin: 0 -12px 10px;
+  padding: 11px 12px;
+}
+
+.rule-day-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e7ecef;
+}
+
+.rule-day-section:first-of-type {
+  margin-top: 4px;
+  padding-top: 2px;
+  border-top: 0;
+}
+
+.rule-day-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0 2px 7px;
+  color: #455a64;
+}
+
+.rule-day-heading span {
+  font-size: 12px;
+  font-weight: 850;
+  color: #78909c;
+}
+
+.rule-day-heading strong {
+  font-size: 18px;
+  font-weight: 950;
+  color: #263238;
+}
+
+.rule-day-list {
+  display: grid;
+  gap: 7px;
+}
+
+.rule-list-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  margin: 0;
+  padding: 10px 11px;
+  border: 1px solid #e0e6ea;
+  border-radius: 11px;
+  background: #fafcfd;
+}
+
+.rule-list-main {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.rule-list-main .rule-kind-badge {
+  flex: none;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.rule-list-content {
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.rule-list-time {
+  flex: none;
+  min-width: 38px;
+  margin: 0 !important;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.rule-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-self: end;
+}
+
+.rule-list-actions:empty {
+  display: none;
+}
+
+.rule-list-actions .rule-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid #dce4e8 !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  font-size: 16px !important;
+  line-height: 1 !important;
+}
+
+@media (max-width: 600px) {
+  #ruleList .rule-admin-user-card {
+    max-width: none;
+    margin: 9px 0;
+    padding: 0 9px 10px;
+    border-radius: 12px;
+  }
+
+  #ruleList .rule-admin-user-head {
+    margin: 0 -9px 9px;
+    padding: 10px;
+  }
+
+  #ruleList .rule-admin-user-name {
+    font-size: 17px;
+  }
+
+  .rule-day-section {
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .rule-day-heading {
+    margin-bottom: 6px;
+  }
+
+  .rule-day-heading strong {
+    font-size: 17px;
+  }
+
+  .rule-list-line {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 10px;
+    padding: 10px;
+  }
+
+  .rule-list-main {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+  }
+
+  .rule-list-content {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .rule-list-time {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .rule-list-actions {
+    grid-column: 2;
+    justify-self: end;
+  }
+}
+
 </style>
 </head>
 
@@ -7583,7 +7785,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.18</div>
+      <div class="ui09-brand-version">Ver.0.9.19</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -7729,7 +7931,7 @@ body {
     class="app-page ui09-page"
   >
 
-    <div class="ui09-simple-head">
+    <div class="ui09-simple-head bowel-input-only">
       <h2>排便入力</h2>
       <button
         type="button"
@@ -7742,12 +7944,12 @@ body {
 
     <select
       id="userSelect"
-      class="bowel-user-select-source"
+      class="bowel-user-select-source bowel-input-only"
       aria-hidden="true"
       tabindex="-1"
     ></select>
 
-    <section id="bowelTargetBar" class="ui09-resident-card">
+    <section id="bowelTargetBar" class="ui09-resident-card bowel-input-only">
       <div class="ui09-resident-card-head">
         <div>
           <div class="ui09-kicker">現在の対象者</div>
@@ -7789,7 +7991,7 @@ body {
       </div>
     </section>
 
-    <section class="ui09-panel ui09-entry-panel">
+    <section class="ui09-panel ui09-entry-panel bowel-input-only">
       <div class="ui09-panel-head">
         <div>
           <div class="ui09-kicker">排便量を選択</div>
@@ -7875,7 +8077,7 @@ body {
     </section>
 
     <!-- 選択中の利用者だけに関係する情報 -->
-    <details class="ui09-details ui095-personal-details">
+    <details class="ui09-details ui095-personal-details bowel-input-only">
       <summary class="ui095-details-summary">
         <div class="ui095-details-copy">
           <div class="ui095-details-title">
@@ -8541,7 +8743,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.18
+            Ver.0.9.19
           </span>
         </div>
 
@@ -19038,7 +19240,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.18</strong>
+        <strong>Ver.0.9.19</strong>
       </div>
       <div>
         <span>GAS</span>
@@ -19434,14 +19636,51 @@ function updateRoleUI() {
   }
 
 
-  // 排便登録
-  if (currentRole === "nurse") {
-    registerButton.disabled = true;
-    registerButton.textContent =
-      "看護師は登録できません";
-  } else {
-    registerButton.disabled = false;
-    registerButton.textContent = "登録";
+  // 排便登録 / 看護師UI
+  const bowelPage =
+    document.getElementById("bowelPage");
+  const bowelNavButton =
+    document.querySelector(
+      '.nav-button[data-page="bowelPage"]'
+    );
+  const bottomNav =
+    document.querySelector(
+      ".ui09-bottom-nav"
+    );
+
+  const nurseShiftOnly =
+    currentRole === "nurse";
+
+  if (registerButton) {
+    if (nurseShiftOnly) {
+      registerButton.disabled = true;
+      registerButton.textContent =
+        "看護師は登録できません";
+    } else {
+      registerButton.disabled = false;
+      registerButton.textContent = "登録";
+    }
+  }
+
+  if (bowelPage) {
+    bowelPage.classList.toggle(
+      "nurse-shift-only",
+      nurseShiftOnly
+    );
+  }
+
+  if (bowelNavButton) {
+    bowelNavButton.style.display =
+      nurseShiftOnly
+        ? "none"
+        : "";
+  }
+
+  if (bottomNav) {
+    bottomNav.classList.toggle(
+      "nurse-four-nav",
+      nurseShiftOnly
+    );
   }
 
 
@@ -23873,9 +24112,14 @@ function getRuleListHtml(editable = true) {
       }
 
       result +=
-        "<br><strong>未排便" +
+        "<section class='rule-day-section'>" +
+        "<div class='rule-day-heading'>" +
+        "<span>未排便</span>" +
+        "<strong>" +
         escapeHtml(day) +
-        "日</strong><br>";
+        "日</strong>" +
+        "</div>" +
+        "<div class='rule-day-list'>";
 
 
       dayRules.forEach(
@@ -23883,6 +24127,7 @@ function getRuleListHtml(editable = true) {
 
           result +=
             "<div class='rule-list-line'>" +
+            "<div class='rule-list-main'>" +
             "<span class='rule-kind-badge " +
             rule.kind +
             "'>" +
@@ -23893,15 +24138,17 @@ function getRuleListHtml(editable = true) {
             "<span class='rule-list-content'>" +
             escapeHtml(rule.content) +
             "</span>" +
-            "<span class='medicine-time " +
+            "</div>" +
+            "<span class='medicine-time rule-list-time " +
             getRuleTimingClass(rule) +
             "'>" +
             getRuleTimingLabel(rule) +
             "</span>" +
+            "<div class='rule-list-actions'>" +
             (
               editable
                 ?
-                  "<button class='rule-delete-btn' " +
+                  "<button class='rule-delete-btn' aria-label='編集' title='編集' " +
                   "onclick=\"openRuleEditModal(" +
                   JSON.stringify(user).replace(/"/g, "&quot;") +
                   "," +
@@ -23909,7 +24156,7 @@ function getRuleListHtml(editable = true) {
                   "," +
                   index +
                   ")\">✏️</button>" +
-                  "<button class='rule-delete-btn' " +
+                  "<button class='rule-delete-btn' aria-label='削除' title='削除' " +
                   "onclick=\"deleteRuleByIndex(" +
                   JSON.stringify(user).replace(/"/g, "&quot;") +
                   "," +
@@ -23920,9 +24167,14 @@ function getRuleListHtml(editable = true) {
                 :
                   ""
             ) +
+            "</div>" +
             "</div>";
         }
       );
+
+      result +=
+        "</div>" +
+        "</section>";
     }
 
 
