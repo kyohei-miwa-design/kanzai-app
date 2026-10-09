@@ -7555,7 +7555,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.15</div>
+      <div class="ui09-brand-version">Ver.0.9.16</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8513,7 +8513,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.15
+            Ver.0.9.16
           </span>
         </div>
 
@@ -12878,12 +12878,19 @@ function getHomeUrgentDetailHtml() {
           ／ 未確認
         </span>
 
-        <button
-          type="button"
-          onclick="goToHomeUrgentShift('${safeType}', '${safeDate}')"
-        >
-          今から確認する
-        </button>
+        ${
+          currentRole === "nurse" &&
+          currentUnit === "all"
+            ? ""
+            : `
+              <button
+                type="button"
+                onclick="goToHomeUrgentShift('${safeType}', '${safeDate}')"
+              >
+                今から確認する
+              </button>
+            `
+        }
       </div>
     `);
   }
@@ -17607,6 +17614,58 @@ function getUnitName(unitId) {
 }
 
 
+/* ============================================================
+   Ver.0.9.16 看護師の勤務帯確認表示を試験ユニットへ限定
+
+   試験運用中は看護師共通アカウントに、
+   「きんもくせい」以外の日勤帯・夜勤帯の未確定を表示しない。
+   管理者は従来どおり全ユニット、ユニットアカウントは自ユニット。
+============================================================ */
+const NURSE_SHIFT_CONFIRM_UNIT_KEYWORD = "きんもくせい";
+
+function normalizeUnitNameForShiftScope(value) {
+  return String(value || "")
+    .replace(/[\s　]+/g, "")
+    .trim();
+}
+
+function getNurseShiftConfirmUnitIds() {
+  const keyword =
+    normalizeUnitNameForShiftScope(
+      NURSE_SHIFT_CONFIRM_UNIT_KEYWORD
+    );
+
+  return Object.entries(unitMaster || {})
+    .filter(([unitId, unitName]) => {
+      if (!String(unitId || "").trim()) {
+        return false;
+      }
+
+      return normalizeUnitNameForShiftScope(
+        unitName
+      ).includes(keyword);
+    })
+    .map(([unitId]) =>
+      String(unitId).trim()
+    );
+}
+
+function getShiftConfirmationDisplayUnits() {
+  if (
+    currentRole === "nurse" &&
+    currentUnit === "all"
+  ) {
+    return getNurseShiftConfirmUnitIds();
+  }
+
+  if (currentUnit === "all") {
+    return ["1", "2", "3", "4"];
+  }
+
+  return [String(currentUnit)];
+}
+
+
 function updateUnitMasterDisplays() {
 
   const unitSelectIds = [
@@ -18576,7 +18635,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.15</strong>
+        <strong>Ver.0.9.16</strong>
       </div>
       <div>
         <span>GAS</span>
@@ -19681,6 +19740,12 @@ async function loadInitialDataFromGoogle() {
         ? data.bowelRecoveryStates
         : [];
 
+    // =========================
+    // staffMaster / unitMaster
+    // Ver.0.9.16: 勤務帯表示の対象ユニット判定より先に反映する
+    // =========================
+    setMasterDataFromServer(data);
+
     /*
       Ver.0.8.44
       勤務帯確認も初期データ一括取得から反映。
@@ -19688,11 +19753,6 @@ async function loadInitialDataFromGoogle() {
     applyDailyConfirmStatus(
       data.dailyConfirms
     );
-
-    // =========================
-    // staffMaster / unitMaster
-    // =========================
-    setMasterDataFromServer(data);
 
     // =========================
     // 画面をまとめて更新
@@ -25067,9 +25127,20 @@ function getPendingShiftConfirmations(confirms) {
   const now = new Date();
   const today = getLocalDateText(now);
   const units =
-    currentUnit === "all"
-      ? ["1", "2", "3", "4"]
-      : [String(currentUnit)];
+    getShiftConfirmationDisplayUnits();
+
+  if (
+    currentRole === "nurse" &&
+    currentUnit === "all" &&
+    units.length === 0
+  ) {
+    console.warn(
+      "看護師の勤務帯確認対象『" +
+      NURSE_SHIFT_CONFIRM_UNIT_KEYWORD +
+      "』がユニットマスターに見つかりません"
+    );
+    return [];
+  }
 
   /*
     Ver.0.9.13の試験運用開始日より前は未確定扱いにしない。
@@ -25880,13 +25951,11 @@ function applyDailyConfirmStatus(
   let html = "";
 
   const units =
-    currentUnit === "all"
-      ? [1, 2, 3, 4]
-      : [Number(currentUnit)];
+    getShiftConfirmationDisplayUnits();
 
   for (const unit of units) {
 
-    if (!Number.isFinite(unit)) {
+    if (!String(unit || "").trim()) {
       continue;
     }
 
@@ -26117,6 +26186,66 @@ function updateHomeConfirmStatus(
       "state-late",
       "state-ready"
     );
+
+
+    if (
+      currentRole === "nurse" &&
+      currentUnit === "all"
+    ) {
+
+      const nurseUnits =
+        getNurseShiftConfirmUnitIds();
+
+      const nurseUnit =
+        nurseUnits.length > 0
+          ? nurseUnits[0]
+          : "";
+
+      if (!nurseUnit) {
+        card.innerHTML = `
+          <div class="home-shift-name">${title}</div>
+          <div class="home-shift-time">${timeLabel}</div>
+          <div class="home-shift-state wait">対象ユニット未設定</div>
+          <div class="home-shift-signer">${escapeHtml(NURSE_SHIFT_CONFIRM_UNIT_KEYWORD)}</div>
+        `;
+        return;
+      }
+
+      const confirm =
+        getConfirmFor(
+          latestDailyConfirms,
+          nurseUnit,
+          type,
+          targetDate
+        );
+
+      const state =
+        getHomeShiftStatusInfo(
+          type,
+          confirm,
+          targetDate
+        );
+
+      if (state.cardClass) {
+        card.classList.add(
+          state.cardClass
+        );
+      }
+
+      card.innerHTML = `
+        <div class="home-shift-name">${title}</div>
+        <div class="home-shift-time">${timeLabel}</div>
+        <div class="home-shift-state ${state.stateClass}">
+          ${escapeHtml(state.statusText)}
+        </div>
+        <div class="home-shift-signer">
+          ${escapeHtml(getUnitName(nurseUnit))}
+          ${state.signer ? " ／ " + escapeHtml(state.signer) : ""}
+        </div>
+      `;
+
+      return;
+    }
 
 
     if (
@@ -31316,11 +31445,12 @@ async function loadSyncDataFromGoogle() {
       ? data.bowelRecoveryStates
       : bowelRecoveryStates;
 
+  // Ver.0.9.16: 看護師の勤務帯表示対象を判定する前にマスターを更新
+  setMasterDataFromServer(data);
+
   applyDailyConfirmStatus(
     data.dailyConfirms
   );
-
-  setMasterDataFromServer(data);
 
 
   // =========================
