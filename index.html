@@ -7555,7 +7555,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.16</div>
+      <div class="ui09-brand-version">Ver.0.9.17</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8513,7 +8513,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.16
+            Ver.0.9.17
           </span>
         </div>
 
@@ -9177,6 +9177,13 @@ let latestDailyConfirms = [];
 let bowelRecoveryStates = [];
 const SHIFT_BACKLOG_DAYS = 7;
 const SHIFT_BACKLOG_START_DATE = "2026-10-03";
+
+/*
+  Ver.0.9.17 HOTFIX
+  initialize() 内のホーム描画から看護師用勤務帯スコープ判定が
+  呼ばれるため、TDZを避けて起動処理より前に初期化する。
+*/
+const NURSE_SHIFT_CONFIRM_UNIT_KEYWORD = "きんもくせい";
 let latestHomeActionMetrics = {
   totalCount: 0,
   completedCount: 0,
@@ -17615,14 +17622,12 @@ function getUnitName(unitId) {
 
 
 /* ============================================================
-   Ver.0.9.16 看護師の勤務帯確認表示を試験ユニットへ限定
+   Ver.0.9.17 看護師の勤務帯確認表示を試験ユニットへ限定
 
    試験運用中は看護師共通アカウントに、
    「きんもくせい」以外の日勤帯・夜勤帯の未確定を表示しない。
    管理者は従来どおり全ユニット、ユニットアカウントは自ユニット。
 ============================================================ */
-const NURSE_SHIFT_CONFIRM_UNIT_KEYWORD = "きんもくせい";
-
 function normalizeUnitNameForShiftScope(value) {
   return String(value || "")
     .replace(/[\s　]+/g, "")
@@ -18635,7 +18640,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.16</strong>
+        <strong>Ver.0.9.17</strong>
       </div>
       <div>
         <span>GAS</span>
@@ -19742,7 +19747,7 @@ async function loadInitialDataFromGoogle() {
 
     // =========================
     // staffMaster / unitMaster
-    // Ver.0.9.16: 勤務帯表示の対象ユニット判定より先に反映する
+    // Ver.0.9.17: 勤務帯表示の対象ユニット判定より先に反映する
     // =========================
     setMasterDataFromServer(data);
 
@@ -31445,7 +31450,7 @@ async function loadSyncDataFromGoogle() {
       ? data.bowelRecoveryStates
       : bowelRecoveryStates;
 
-  // Ver.0.9.16: 看護師の勤務帯表示対象を判定する前にマスターを更新
+  // Ver.0.9.17: 看護師の勤務帯表示対象を判定する前にマスターを更新
   setMasterDataFromServer(data);
 
   applyDailyConfirmStatus(
