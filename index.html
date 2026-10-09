@@ -7544,7 +7544,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.19
+   Ver.0.9.21
    ・ルール一覧レスポンシブ刷新
    ・看護師は排便入力UIを非表示（勤務帯確認は継続）
 ============================================================ */
@@ -7785,7 +7785,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.19</div>
+      <div class="ui09-brand-version">Ver.0.9.21</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8743,7 +8743,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.19
+            Ver.0.9.21
           </span>
         </div>
 
@@ -8984,6 +8984,8 @@ body {
           まだルールはありません
         </div>
 
+        <h3>新しいルールを追加</h3>
+
         <p>対象利用者</p>
 
         <select id="ruleUserSelect"></select>
@@ -9046,15 +9048,20 @@ body {
           「今回から」は現在のサイクルへ即時反映します。
         </div>
 
-        <p>変更方式</p>
+        <p>登録方法</p>
 
         <select
           id="ruleChangeMode"
           onchange="updateRuleEvaluationFields()"
         >
-          <option value="formal" selected>変更</option>
-          <option value="evaluate">評価後に変更</option>
+          <option value="formal" selected>そのまま追加</option>
+          <option value="evaluate">評価期間を設けて追加</option>
         </select>
+
+        <div class="rule-form-note">
+          「そのまま追加」は、選択した適用時期から正式ルールとして追加します。<br>
+          「評価期間を設けて追加」は、ルールを追加したうえで評価日に継続・見直しを確認します。
+        </div>
 
         <div
           id="ruleEvaluationDateField"
@@ -9072,7 +9079,7 @@ body {
         </div>
 
         <button onclick="saveRule()">
-          ルール保存
+          新しいルールを追加
         </button>
 
       </section>
@@ -14512,6 +14519,69 @@ async function loadChecksFromGoogle() {
   updateHomeMedicineStatus();
 }
 
+function logRuleSaveTimings(
+  result,
+  label = "ルール保存"
+) {
+
+  if (
+    !result ||
+    !result.timings ||
+    typeof result.timings !== "object"
+  ) {
+    return;
+  }
+
+  const t =
+    result.timings;
+
+  console.log(
+    `${label} GAS処理時間`,
+    {
+      totalMs:
+        Number(t.totalMs || 0),
+      lockWaitMs:
+        Number(t.lockWaitMs || 0),
+      rulesWriteMs:
+        Number(t.rulesWriteMs || 0),
+      snapshotMs:
+        Number(t.snapshotMs || 0),
+      evaluationWriteMs:
+        Number(t.evaluationWriteMs || 0),
+      flushMs:
+        Number(t.flushMs || 0),
+      readbackMs:
+        Number(t.readbackMs || 0),
+      ruleRowCount:
+        Number(t.ruleRowCount || 0)
+    }
+  );
+}
+
+
+async function getRuleSaveOperationStatusRobust(
+  operationId
+) {
+
+  const url =
+    API_URL +
+    "?action=getRuleSaveOperationStatus" +
+    "&operationId=" +
+    encodeURIComponent(
+      String(operationId || "")
+    );
+
+  const response =
+    await fetchApi(
+      url,
+      2,
+      10000
+    );
+
+  return await response.json();
+}
+
+
 async function saveRulesToGoogle(
   change = {}
 ) {
@@ -14525,28 +14595,331 @@ async function saveRulesToGoogle(
         )
       : null;
 
-  const result =
-    await postJsonApiOnce(
-      {
-        action:
-          "saveRulesV4",
-        rules: rules,
-        change: change,
-        evaluation: evaluation
-      },
-      30000
+  const operationId =
+    createClientRequestId(
+      "rule"
     );
+
+  const payload = {
+    action:
+      "saveRulesV4",
+    operationId:
+      operationId,
+    rules: rules,
+    change: change,
+    evaluation: evaluation
+  };
+
+  let result = null;
+  let lastError = null;
+  let sawProcessing = false;
+  let sawExplicitNotFound = false;
+
+
+  /*
+    Ver.0.9.21
+    まず保存POSTは1回だけ実行する。
+    タイムアウトしてもGAS側処理は継続する可能性があるため、
+    すぐ同じ保存POSTを重ねずoperationIdで結果確認へ移る。
+  */
+  try {
+
+    result =
+      await postJsonApiOnce(
+        payload,
+        20000
+      );
+
+  } catch (error) {
+
+    lastError =
+      error;
+
+    console.warn(
+      "ルール保存通信に失敗。保存結果を確認します",
+      {
+        operationId:
+          operationId,
+        error:
+          error
+      }
+    );
+
+    if (
+      !isTransientApiError(error) &&
+      !String(
+        error && error.message || ""
+      ).includes(
+        "タイムアウト"
+      )
+    ) {
+      throw error;
+    }
+  }
+
+
+  if (
+    result &&
+    result.ok === true
+  ) {
+    logRuleSaveTimings(
+      result
+    );
+  } else if (
+    result &&
+    (
+      result.retryable === true ||
+      String(result.code || "") === "BUSY"
+    )
+  ) {
+
+    const retryableError =
+      new Error(
+        result.message ||
+        "他の保存処理と重なっています"
+      );
+
+    retryableError.code =
+      String(result.code || "BUSY");
+    retryableError.transient = true;
+
+    lastError =
+      retryableError;
+
+    console.warn(
+      "ルール保存が一時的にBUSYです。保存状態確認後に再試行します",
+      {
+        operationId:
+          operationId,
+        timings:
+          result.timings || null
+      }
+    );
+
+    result = null;
+  }
+
+
+  /*
+    POST応答を受け取れなかった場合は、
+    0.8秒 → 2秒 → 4秒で保存状態を確認する。
+  */
+  if (!result) {
+
+    const delays = [
+      800,
+      2000,
+      4000
+    ];
+
+    for (
+      let i = 0;
+      i < delays.length;
+      i++
+    ) {
+
+      await wait(
+        delays[i]
+      );
+
+      try {
+
+        const status =
+          await getRuleSaveOperationStatusRobust(
+            operationId
+          );
+
+        if (
+          status &&
+          status.ok === true &&
+          status.found === true &&
+          status.status === "saved"
+        ) {
+
+          console.log(
+            "ルール保存済みをoperationIdで確認して復旧しました",
+            operationId
+          );
+
+          logRuleSaveTimings(
+            status,
+            "ルール保存復旧"
+          );
+
+          result = {
+            ok: true,
+            recovered: true,
+            reloadRequired: true,
+            operationId:
+              operationId,
+            timings:
+              status.timings || null
+          };
+
+          break;
+        }
+
+        if (
+          status &&
+          status.status === "processing"
+        ) {
+
+          sawProcessing = true;
+
+          console.log(
+            `ルール保存処理中 ${i + 1}/${delays.length}`,
+            operationId
+          );
+
+          continue;
+        }
+
+        if (
+          status &&
+          status.ok === true &&
+          status.status === "not_found"
+        ) {
+          sawExplicitNotFound = true;
+        }
+
+      } catch (statusError) {
+
+        lastError =
+          statusError;
+
+        console.warn(
+          `ルール保存状態確認 ${i + 1}/${delays.length} に失敗`,
+          statusError
+        );
+
+        if (
+          !isTransientApiError(
+            statusError
+          )
+        ) {
+          break;
+        }
+      }
+    }
+  }
+
+
+  /*
+    サーバーが明示的に未保存と返した場合だけ、
+    同じoperationIdで保存要求を1回再送する。
+
+    GAS側もoperationIdで冪等化しているため、
+    先行リクエストが遅れて完了しても二重保存しない。
+  */
+  if (
+    !result &&
+    sawExplicitNotFound &&
+    !sawProcessing
+  ) {
+
+    try {
+
+      console.log(
+        "ルール保存が未到達と確認できたため同じoperationIdで1回再送します",
+        operationId
+      );
+
+      result =
+        await postJsonApiOnce(
+          payload,
+          20000
+        );
+
+      if (
+        result &&
+        result.ok === true
+      ) {
+        logRuleSaveTimings(
+          result,
+          "ルール保存再送"
+        );
+      }
+
+    } catch (retryError) {
+
+      lastError =
+        retryError;
+
+      console.warn(
+        "ルール保存再送にも失敗。最終状態を確認します",
+        retryError
+      );
+
+      try {
+
+        await wait(1500);
+
+        const status =
+          await getRuleSaveOperationStatusRobust(
+            operationId
+          );
+
+        if (
+          status &&
+          status.ok === true &&
+          status.found === true &&
+          status.status === "saved"
+        ) {
+
+          result = {
+            ok: true,
+            recovered: true,
+            reloadRequired: true,
+            operationId:
+              operationId,
+            timings:
+              status.timings || null
+          };
+
+          logRuleSaveTimings(
+            status,
+            "ルール保存最終復旧"
+          );
+        }
+
+      } catch (finalStatusError) {
+        lastError =
+          finalStatusError;
+      }
+    }
+  }
+
 
   if (
     !result ||
     result.ok !== true
   ) {
-    throw new Error(
-      result && result.message
-        ? result.message
-        : "ルール保存に失敗しました"
-    );
+
+    const error =
+      new Error(
+        result && result.message
+          ? result.message
+          : (
+              sawProcessing
+                ? "ルール保存処理が継続中です。少し待ってから再同期してください"
+                : "ルール保存に失敗しました"
+            )
+      );
+
+    error.code =
+      sawProcessing
+        ? "RULE_SAVE_RESULT_UNKNOWN"
+        : "RULE_SAVE_FAILED";
+
+    error.operationId =
+      operationId;
+
+    error.cause =
+      lastError;
+
+    throw error;
   }
+
 
   rules =
     normalizeRulesObject(
@@ -14569,11 +14942,45 @@ async function saveRulesToGoogle(
       result.ruleEvaluations;
   }
 
+
+  /*
+    保存結果確認で復旧したケースでは、
+    ブラウザのrules自体は保存要求時の状態と一致している。
+    評価情報などは次回同期で権威値に揃える。
+    通信が戻っていれば2秒後に軽量同期を1回だけ試す。
+  */
+  if (
+    result.recovered === true ||
+    result.reloadRequired === true
+  ) {
+
+    setTimeout(
+      () => {
+        if (
+          activeWriteCount > 0
+        ) {
+          return;
+        }
+
+        loadLightSyncDataFromGoogle()
+          .catch(error => {
+            console.warn(
+              "ルール保存復旧後の再同期は次回自動同期へ委ねます",
+              error
+            );
+          });
+      },
+      2000
+    );
+  }
+
+
   updateRuleEvaluationAlerts();
   renderRuleEvaluationAdminList();
 
   return result;
 }
+
 
 async function saveUsersToGoogle(showAlert = true) {
 
@@ -19240,11 +19647,11 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.19</strong>
+        <strong>Ver.0.9.21</strong>
       </div>
       <div>
         <span>GAS</span>
-        <strong>Ver.0.8.44</strong>
+        <strong>Ver.0.8.45</strong>
       </div>
       <div>
         <span>ログイン範囲</span>
@@ -22312,7 +22719,9 @@ async function saveRule() {
     saveData();
 
     showToast(
-      "✓ ルールを保存しました（" +
+      (changeMode === "evaluate"
+        ? "✓ 評価期間付きでルールを追加しました（"
+        : "✓ 新しいルールを追加しました（") +
       getRuleApplyModeLabel(
         applyMode
       ) +
