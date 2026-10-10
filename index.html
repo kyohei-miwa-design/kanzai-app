@@ -6846,6 +6846,106 @@ body {
 
 
 /* ============================================================
+   Ver.0.9.27 対応一覧：時間帯グループ + 色分け
+============================================================ */
+
+.ui096-time-group {
+  --ui096-time-accent: #78909c;
+  --ui096-time-soft: #f1f4f5;
+  margin: 0 0 18px;
+}
+
+.ui096-time-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 9px;
+  padding: 10px 12px;
+  border-left: 5px solid var(--ui096-time-accent);
+  border-radius: 12px;
+  background: var(--ui096-time-soft);
+  color: #33474d;
+}
+
+.ui096-time-group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.ui096-time-group-icon {
+  flex: none;
+  font-size: 18px;
+}
+
+.ui096-time-group-count {
+  flex: none;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.72);
+  color: var(--ui096-time-accent);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.ui096-time-group-list {
+  display: grid;
+  gap: 9px;
+}
+
+.ui096-time-group-list .ui096-action-card {
+  margin-bottom: 0;
+  border-left: 4px solid var(--ui096-time-accent) !important;
+}
+
+.ui096-time-group.timing-morning,
+.ui096-time-group.timing-tomorrow-morning {
+  --ui096-time-accent: #2f8fbd;
+  --ui096-time-soft: #e8f7ff;
+}
+
+.ui096-time-group.timing-lunch {
+  --ui096-time-accent: #b58a12;
+  --ui096-time-soft: #fff7d6;
+}
+
+.ui096-time-group.timing-daytime {
+  --ui096-time-accent: #7956b3;
+  --ui096-time-soft: #f2ebff;
+}
+
+.ui096-time-group.timing-evening {
+  --ui096-time-accent: #df7b20;
+  --ui096-time-soft: #fff0df;
+}
+
+.ui096-time-group.timing-other {
+  --ui096-time-accent: #71858d;
+  --ui096-time-soft: #eef2f3;
+}
+
+.ui096-time-group.timing-tomorrow-morning .ui096-time-group-head {
+  border-style: dashed;
+  border-top: 1px dashed #9ecde3;
+  border-right: 1px dashed #9ecde3;
+  border-bottom: 1px dashed #9ecde3;
+}
+
+@media (min-width: 700px) {
+  #todayTarget,
+  #plannedTarget,
+  #completedList {
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* ============================================================
    Ver.0.9.9 履歴画面
 ============================================================ */
 
@@ -7887,7 +7987,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.26</div>
+      <div class="ui09-brand-version">Ver.0.9.27</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8845,7 +8945,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.26
+            Ver.0.9.27
           </span>
         </div>
 
@@ -12726,7 +12826,7 @@ function renderActionPlannedPanel() {
     return;
   }
 
-  area.innerHTML =
+  const entries =
     items.map(item => {
 
       const safeUser =
@@ -12746,8 +12846,73 @@ function renderActionPlannedPanel() {
             instruction.instructionId
           );
 
-        return `
-          <div class="ui096-action-card planned nurse">
+        return {
+          timing: instruction.timing,
+          when: item.when,
+          html: `
+            <div class="ui096-action-card planned nurse">
+              <div class="ui096-action-card-head">
+                <button
+                  type="button"
+                  class="ui096-action-user"
+                  onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
+                >
+                  ${escapeHtml(formatResidentName(item.user))}
+                </button>
+
+                <span class="ui096-state-label planned">
+                  ${escapeHtml(item.when)}
+                </span>
+              </div>
+
+              <div class="ui096-action-main">
+                ${escapeHtml(
+                  instruction.content ||
+                  getNurseInstructionKindLabel(
+                    instruction
+                  )
+                )}
+              </div>
+
+              <div class="ui096-action-sub">
+                🩺 看護師指示
+                ${
+                  instruction.targetDate
+                    ? " ／ " +
+                      escapeHtml(
+                        instruction.targetDate
+                      )
+                    : ""
+                }
+              </div>
+
+              <button
+                type="button"
+                class="ui096-detail-link"
+                onclick="openActionNurseDetail(decodeURIComponent('${safeId}'))"
+              >
+                詳細を見る
+              </button>
+            </div>
+          `
+        };
+      }
+
+      const rule =
+        item.rule;
+
+      const detail =
+        getActionRuleDetailPayload(
+          item.user,
+          item.days,
+          rule
+        );
+
+      return {
+        timing: rule.timing,
+        when: item.when,
+        html: `
+          <div class="ui096-action-card planned">
             <div class="ui096-action-card-head">
               <button
                 type="button"
@@ -12763,85 +12928,32 @@ function renderActionPlannedPanel() {
             </div>
 
             <div class="ui096-action-main">
-              ${escapeHtml(
-                instruction.content ||
-                getNurseInstructionKindLabel(
-                  instruction
-                )
-              )}
+              ${escapeHtml(rule.content)}
             </div>
 
             <div class="ui096-action-sub">
-              🩺 看護師指示
-              ${
-                instruction.targetDate
-                  ? " ／ " +
-                    escapeHtml(
-                      instruction.targetDate
-                    )
-                  : ""
-              }
+              ${getRuleKindIcon(rule)}
+              ${escapeHtml(getRuleKindLabel(rule))}
+              ／ 未排便${item.days}日目
             </div>
 
             <button
               type="button"
               class="ui096-detail-link"
-              onclick="openActionNurseDetail(decodeURIComponent('${safeId}'))"
+              onclick="openActionRuleDetail('${detail}')"
             >
               詳細を見る
             </button>
           </div>
-        `;
-      }
+        `
+      };
+    });
 
-      const rule =
-        item.rule;
-
-      const detail =
-        getActionRuleDetailPayload(
-          item.user,
-          item.days,
-          rule
-        );
-
-      return `
-        <div class="ui096-action-card planned">
-          <div class="ui096-action-card-head">
-            <button
-              type="button"
-              class="ui096-action-user"
-              onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
-            >
-              ${escapeHtml(formatResidentName(item.user))}
-            </button>
-
-            <span class="ui096-state-label planned">
-              ${escapeHtml(item.when)}
-            </span>
-          </div>
-
-          <div class="ui096-action-main">
-            ${escapeHtml(rule.content)}
-          </div>
-
-          <div class="ui096-action-sub">
-            ${getRuleKindIcon(rule)}
-            ${escapeHtml(getRuleKindLabel(rule))}
-            ／ 未排便${item.days}日目
-          </div>
-
-          <button
-            type="button"
-            class="ui096-detail-link"
-            onclick="openActionRuleDetail('${detail}')"
-          >
-            詳細を見る
-          </button>
-        </div>
-      `;
-    }).join("");
+  area.innerHTML =
+    renderActionTimingGroups(
+      entries
+    );
 }
-
 
 function getActionRuleDetailPayload(
   user,
@@ -13111,6 +13223,147 @@ function renderActionPage() {
 }
 
 
+/* ============================================================
+   Ver.0.9.27 対応一覧：時間帯グループ
+============================================================ */
+function normalizeActionTimingKey(value) {
+
+  const timing =
+    String(value || "")
+      .trim()
+      .toLowerCase();
+
+  const map = {
+    morning: "morning",
+    "朝": "morning",
+    lunch: "lunch",
+    "昼": "lunch",
+    daytime: "daytime",
+    "日中": "daytime",
+    evening: "evening",
+    "夕": "evening"
+  };
+
+  return map[timing] || "other";
+}
+
+
+function getActionTimingGroupMeta(
+  timing,
+  when
+) {
+
+  const whenText =
+    String(when || "").trim();
+
+  if (whenText.includes("明日朝")) {
+    return {
+      key: "tomorrowMorning",
+      className: "timing-tomorrow-morning",
+      label: "明日朝",
+      icon: "🌅",
+      order: 60
+    };
+  }
+
+  const key =
+    normalizeActionTimingKey(timing);
+
+  const meta = {
+    morning: {
+      key: "morning",
+      className: "timing-morning",
+      label: "朝",
+      icon: "☀️",
+      order: 10
+    },
+    lunch: {
+      key: "lunch",
+      className: "timing-lunch",
+      label: "昼",
+      icon: "🍽️",
+      order: 20
+    },
+    daytime: {
+      key: "daytime",
+      className: "timing-daytime",
+      label: "日中",
+      icon: "🕒",
+      order: 30
+    },
+    evening: {
+      key: "evening",
+      className: "timing-evening",
+      label: "夕",
+      icon: "🌆",
+      order: 40
+    },
+    other: {
+      key: "other",
+      className: "timing-other",
+      label: "その他・時間指定なし",
+      icon: "📌",
+      order: 50
+    }
+  };
+
+  return meta[key] || meta.other;
+}
+
+
+function renderActionTimingGroups(entries) {
+
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return "";
+  }
+
+  const groups = new Map();
+
+  for (const entry of entries) {
+
+    const meta =
+      getActionTimingGroupMeta(
+        entry.timing,
+        entry.when
+      );
+
+    if (!groups.has(meta.key)) {
+      groups.set(meta.key, {
+        meta,
+        cards: []
+      });
+    }
+
+    groups
+      .get(meta.key)
+      .cards
+      .push(entry.html);
+  }
+
+  return Array.from(groups.values())
+    .sort((a, b) =>
+      a.meta.order - b.meta.order
+    )
+    .map(group => `
+      <section class="ui096-time-group ${group.meta.className}">
+        <div class="ui096-time-group-head">
+          <div class="ui096-time-group-title">
+            <span class="ui096-time-group-icon">${group.meta.icon}</span>
+            <span>${escapeHtml(group.meta.label)}</span>
+          </div>
+          <span class="ui096-time-group-count">
+            ${group.cards.length}件
+          </span>
+        </div>
+        <div class="ui096-time-group-list">
+          ${group.cards.join("")}
+        </div>
+      </section>
+    `)
+    .join("");
+}
+
+
 function getTodayTarget() {
 
   const data =
@@ -13122,7 +13375,7 @@ function getTodayTarget() {
   const nurse =
     getActionCurrentNurseItems();
 
-  const cards = [];
+  const entries = [];
 
 
   for (const item of regular) {
@@ -13147,51 +13400,55 @@ function getTodayTarget() {
         item.user
       );
 
-    cards.push(`
-      <div class="ui096-action-card current">
-        <div class="ui096-action-card-head">
-          <button
-            type="button"
-            class="ui096-action-user"
-            onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
-          >
-            ${escapeHtml(formatResidentName(item.user))}
-          </button>
+    entries.push({
+      timing: rule.timing,
+      when: getRuleTimingLabel(rule),
+      html: `
+        <div class="ui096-action-card current">
+          <div class="ui096-action-card-head">
+            <button
+              type="button"
+              class="ui096-action-user"
+              onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
+            >
+              ${escapeHtml(formatResidentName(item.user))}
+            </button>
 
-          <span class="ui096-state-label current">
-            ${escapeHtml(getRuleTimingLabel(rule))}
-          </span>
+            <span class="ui096-state-label current">
+              ${escapeHtml(getRuleTimingLabel(rule))}
+            </span>
+          </div>
+
+          <div class="ui096-action-main">
+            ${escapeHtml(rule.content)}
+          </div>
+
+          <div class="ui096-action-sub">
+            ${getRuleKindIcon(rule)}
+            ${escapeHtml(getRuleKindLabel(rule))}
+            ／ 未排便${item.days}日目
+          </div>
+
+          <div class="ui096-action-buttons">
+            <button
+              type="button"
+              class="ui096-execute-button"
+              onclick="toggleCheck('${safeKey}')"
+            >
+              実施済みにする
+            </button>
+
+            <button
+              type="button"
+              class="ui096-detail-link button"
+              onclick="openActionRuleDetail('${detail}')"
+            >
+              詳細
+            </button>
+          </div>
         </div>
-
-        <div class="ui096-action-main">
-          ${escapeHtml(rule.content)}
-        </div>
-
-        <div class="ui096-action-sub">
-          ${getRuleKindIcon(rule)}
-          ${escapeHtml(getRuleKindLabel(rule))}
-          ／ 未排便${item.days}日目
-        </div>
-
-        <div class="ui096-action-buttons">
-          <button
-            type="button"
-            class="ui096-execute-button"
-            onclick="toggleCheck('${safeKey}')"
-          >
-            実施済みにする
-          </button>
-
-          <button
-            type="button"
-            class="ui096-detail-link button"
-            onclick="openActionRuleDetail('${detail}')"
-          >
-            詳細
-          </button>
-        </div>
-      </div>
-    `);
+      `
+    });
   }
 
 
@@ -13207,63 +13464,63 @@ function getTodayTarget() {
         item.user
       );
 
-    cards.push(`
-      <div class="ui096-action-card current nurse">
-        <div class="ui096-action-card-head">
-          <button
-            type="button"
-            class="ui096-action-user"
-            onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
-          >
-            ${escapeHtml(formatResidentName(item.user))}
-          </button>
+    const timingLabel =
+      getNurseInstructionTimingLabel(
+        item
+      ) || "指定なし";
 
-          <span class="ui096-state-label nurse">
-            🩺 看護師指示
-          </span>
+    entries.push({
+      timing: item.timing,
+      when: timingLabel,
+      html: `
+        <div class="ui096-action-card current nurse">
+          <div class="ui096-action-card-head">
+            <button
+              type="button"
+              class="ui096-action-user"
+              onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
+            >
+              ${escapeHtml(formatResidentName(item.user))}
+            </button>
+
+            <span class="ui096-state-label nurse">
+              🩺 看護師指示
+            </span>
+          </div>
+
+          <div class="ui096-action-main">
+            ${escapeHtml(
+              item.content ||
+              getNurseInstructionKindLabel(
+                item
+              )
+            )}
+          </div>
+
+          <div class="ui096-action-sub">
+            ${escapeHtml(timingLabel)} ／ 今回限り
+          </div>
+
+          <div class="ui096-action-buttons">
+            <button
+              type="button"
+              class="ui096-execute-button nurse"
+              onclick="setNurseInstructionExecution(decodeURIComponent('${safeId}'), 'complete')"
+            >
+              指示対応を実施済みにする
+            </button>
+
+            <button
+              type="button"
+              class="ui096-detail-link button"
+              onclick="openActionNurseDetail(decodeURIComponent('${safeId}'))"
+            >
+              詳細
+            </button>
+          </div>
         </div>
-
-        <div class="ui096-action-main">
-          ${escapeHtml(
-            item.content ||
-            getNurseInstructionKindLabel(
-              item
-            )
-          )}
-        </div>
-
-        <div class="ui096-action-sub">
-          ${
-            item.timing
-              ? escapeHtml(
-                  getNurseInstructionTimingLabel(
-                    item
-                  )
-                ) + " ／ "
-              : ""
-          }
-          今回限り
-        </div>
-
-        <div class="ui096-action-buttons">
-          <button
-            type="button"
-            class="ui096-execute-button nurse"
-            onclick="setNurseInstructionExecution(decodeURIComponent('${safeId}'), 'complete')"
-          >
-            指示対応を実施済みにする
-          </button>
-
-          <button
-            type="button"
-            class="ui096-detail-link button"
-            onclick="openActionNurseDetail(decodeURIComponent('${safeId}'))"
-          >
-            詳細
-          </button>
-        </div>
-      </div>
-    `);
+      `
+    });
   }
 
 
@@ -13273,7 +13530,7 @@ function getTodayTarget() {
   );
 
 
-  if (cards.length === 0) {
+  if (entries.length === 0) {
     return `
       <div class="ui096-action-empty">
         <div class="ui096-empty-icon">✓</div>
@@ -13283,7 +13540,7 @@ function getTodayTarget() {
     `;
   }
 
-  return cards.join("");
+  return renderActionTimingGroups(entries);
 }
 
 function updateHomeDashboardMeta() {
@@ -20029,7 +20286,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.26</strong>
+        <strong>Ver.0.9.27</strong>
       </div>
       <div>
         <span>GAS</span>
@@ -25481,7 +25738,7 @@ function getCompletedListHtml() {
   const data =
     getActionCompletedData();
 
-  const cards = [];
+  const entries = [];
 
 
   for (const item of data.regular) {
@@ -25517,78 +25774,82 @@ function getCompletedListHtml() {
         key
       );
 
-    cards.push(`
-      <div class="ui096-action-card completed ${
-        isPending
-          ? "pending-save"
-          : ""
-      }">
-        <div class="ui096-action-card-head">
-          <button
-            type="button"
-            class="ui096-action-user"
-            onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
-          >
-            ${escapeHtml(formatResidentName(detail.user))}
-          </button>
-
-          <span class="ui096-state-label ${
-            isPending
-              ? "saving"
-              : "done"
-          }">
-            ${
-              isPending
-                ? "🟠 保存確認中"
-                : "✓ 実施済み"
-            }
-          </span>
-        </div>
-
-        <div class="ui096-action-main">
-          ${escapeHtml(rule.content)}
-        </div>
-
-        <div class="ui096-action-sub">
-          ${getRuleKindIcon(rule)}
-          ${escapeHtml(getRuleKindLabel(rule))}
-          ／ ${escapeHtml(getRuleTimingLabel(rule))}
-        </div>
-
-        ${
+    entries.push({
+      timing: rule.timing,
+      when: getRuleTimingLabel(rule),
+      html: `
+        <div class="ui096-action-card completed ${
           isPending
-            ? `
-              <div class="ui096-pending-warning">
-                保存結果を確認中です。未実施として再操作しないでください。
-              </div>
-            `
+            ? "pending-save"
             : ""
-        }
+        }">
+          <div class="ui096-action-card-head">
+            <button
+              type="button"
+              class="ui096-action-user"
+              onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
+            >
+              ${escapeHtml(formatResidentName(detail.user))}
+            </button>
 
-        <div class="ui096-completed-tools">
-          <button
-            type="button"
-            class="ui096-detail-link button"
-            onclick="openActionRuleDetail('${detailPayload}')"
-          >
-            詳細
-          </button>
-
-          <button
-            type="button"
-            class="ui096-cancel-link"
-            onclick="openCancelCompletedModal('${safeKey}')"
-            ${isPending ? "disabled" : ""}
-          >
-            ${
+            <span class="ui096-state-label ${
               isPending
-                ? "確認中"
-                : "実施済みを取消"
-            }
-          </button>
+                ? "saving"
+                : "done"
+            }">
+              ${
+                isPending
+                  ? "🟠 保存確認中"
+                  : "✓ 実施済み"
+              }
+            </span>
+          </div>
+
+          <div class="ui096-action-main">
+            ${escapeHtml(rule.content)}
+          </div>
+
+          <div class="ui096-action-sub">
+            ${getRuleKindIcon(rule)}
+            ${escapeHtml(getRuleKindLabel(rule))}
+            ／ ${escapeHtml(getRuleTimingLabel(rule))}
+          </div>
+
+          ${
+            isPending
+              ? `
+                <div class="ui096-pending-warning">
+                  保存結果を確認中です。未実施として再操作しないでください。
+                </div>
+              `
+              : ""
+          }
+
+          <div class="ui096-completed-tools">
+            <button
+              type="button"
+              class="ui096-detail-link button"
+              onclick="openActionRuleDetail('${detailPayload}')"
+            >
+              詳細
+            </button>
+
+            <button
+              type="button"
+              class="ui096-cancel-link"
+              onclick="openCancelCompletedModal('${safeKey}')"
+              ${isPending ? "disabled" : ""}
+            >
+              ${
+                isPending
+                  ? "確認中"
+                  : "実施済みを取消"
+              }
+            </button>
+          </div>
         </div>
-      </div>
-    `);
+      `
+    });
   }
 
 
@@ -25604,62 +25865,69 @@ function getCompletedListHtml() {
         item.user
       );
 
-    cards.push(`
-      <div class="ui096-action-card completed nurse">
-        <div class="ui096-action-card-head">
-          <button
-            type="button"
-            class="ui096-action-user"
-            onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
-          >
-            ${escapeHtml(formatResidentName(item.user))}
-          </button>
+    entries.push({
+      timing: item.timing,
+      when:
+        getNurseInstructionTimingLabel(
+          item
+        ) || "指定なし",
+      html: `
+        <div class="ui096-action-card completed nurse">
+          <div class="ui096-action-card-head">
+            <button
+              type="button"
+              class="ui096-action-user"
+              onclick="openResidentDetail(decodeURIComponent('${safeUser}'),'medicinePage')"
+            >
+              ${escapeHtml(formatResidentName(item.user))}
+            </button>
 
-          <span class="ui096-state-label done">
-            ✓ 実施済み
-          </span>
+            <span class="ui096-state-label done">
+              ✓ 実施済み
+            </span>
+          </div>
+
+          <div class="ui096-action-main">
+            ${escapeHtml(
+              item.content ||
+              getNurseInstructionKindLabel(
+                item
+              )
+            )}
+          </div>
+
+          <div class="ui096-action-sub">
+            🩺 看護師指示
+            ${
+              item.completedAt
+                ? " ／ " +
+                  escapeHtml(
+                    item.completedAt
+                  )
+                : ""
+            }
+          </div>
+
+          <div class="ui096-completed-tools">
+            <button
+              type="button"
+              class="ui096-detail-link button"
+              onclick="openActionNurseDetail(decodeURIComponent('${safeId}'))"
+            >
+              詳細
+            </button>
+
+            <button
+              type="button"
+              class="ui096-cancel-link"
+              onclick="setNurseInstructionExecution(decodeURIComponent('${safeId}'), 'reopen')"
+            >
+              実施済みを取消
+            </button>
+          </div>
         </div>
-
-        <div class="ui096-action-main">
-          ${escapeHtml(
-            item.content ||
-            getNurseInstructionKindLabel(
-              item
-            )
-          )}
-        </div>
-
-        <div class="ui096-action-sub">
-          🩺 看護師指示
-          ${
-            item.completedAt
-              ? " ／ " +
-                escapeHtml(
-                  item.completedAt
-                )
-              : ""
-          }
-        </div>
-
-        <div class="ui096-completed-tools">
-          <button
-            type="button"
-            class="ui096-detail-link button"
-            onclick="openActionNurseDetail(decodeURIComponent('${safeId}'))"
-          >
-            詳細
-          </button>
-
-          <button
-            type="button"
-            class="ui096-cancel-link"
-            onclick="setNurseInstructionExecution(decodeURIComponent('${safeId}'), 'reopen')"
-          >
-            実施済みを取消
-          </button>
-        </div>
-      </div>
-    `);
+      `
+    });
   }
 
 
@@ -25669,7 +25937,7 @@ function getCompletedListHtml() {
   );
 
 
-  if (cards.length === 0) {
+  if (entries.length === 0) {
     return `
       <div class="ui096-action-empty">
         <div class="ui096-empty-icon">○</div>
@@ -25678,7 +25946,7 @@ function getCompletedListHtml() {
     `;
   }
 
-  return cards.join("");
+  return renderActionTimingGroups(entries);
 }
 
 function openCancelCompletedModal(key) {
