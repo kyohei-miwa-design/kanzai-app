@@ -7514,6 +7514,108 @@ body {
 .ui0913-uncertain-note{padding:8px 10px;border-radius:10px;background:#fff4e5;border:1px solid #f0c98d;font-size:13px;font-weight:700}
 
 /* =========================
+   Ver.0.9.23 過去勤務帯照合 スマホUI整理
+========================= */
+.ui0913-recovery-row:not(.recorded){
+  margin:10px 0;
+  padding:13px;
+  border:1px solid var(--ui09-line,#e4eaec);
+  border-radius:14px;
+  background:#fff;
+}
+.ui0913-recovery-row:not(.recorded) > strong{
+  display:block;
+  font-size:16px;
+  line-height:1.45;
+}
+.ui0913-recovery-options{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  width:100%;
+}
+.ui0913-recovery-options label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+  min-height:44px;
+  margin:0;
+  padding:9px 10px;
+  border:1px solid #d7e1e5;
+  border-radius:10px;
+  background:#f8fafb;
+  color:#37474f;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.35;
+  word-break:keep-all;
+  overflow-wrap:normal;
+  cursor:pointer;
+}
+.ui0913-recovery-options label:has(input:checked){
+  border-color:#26a69a;
+  background:#edf8f6;
+  color:#00695c;
+}
+.ui0913-recovery-options input[type="radio"]{
+  width:20px!important;
+  height:20px!important;
+  min-width:20px!important;
+  margin:0!important;
+  padding:0!important;
+  flex:0 0 20px;
+  accent-color:#00897b;
+}
+.ui0913-recovery-detail{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);
+  gap:8px;
+  width:100%;
+}
+.ui0913-recovery-row.recorded{
+  padding:12px 13px;
+  margin:8px 0;
+  border:1px solid #dce8e3;
+  border-radius:12px;
+  background:#f6fbf8;
+}
+
+@media (max-width: 640px){
+  .ui0913-recovery-options{
+    grid-template-columns:1fr;
+    gap:7px;
+  }
+
+  .ui0913-recovery-options label{
+    width:100%;
+    min-height:48px;
+    padding:11px 12px;
+    font-size:14px;
+  }
+
+  .ui0913-recovery-detail{
+    grid-template-columns:1fr;
+  }
+
+  .ui0913-recovery-row.recorded{
+    grid-template-columns:1fr;
+    gap:4px;
+  }
+
+  .confirm-signature-box{
+    padding:12px;
+  }
+
+  .confirm-signature-box .confirm-staff-select,
+  .confirm-signature-box select{
+    width:100%!important;
+    max-width:100%;
+    min-width:0;
+  }
+}
+
+/* =========================
    Ver.0.9.18 入院 / 帰所
 ========================= */
 .ui0918-care-panel{display:grid;gap:10px}
@@ -7544,7 +7646,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.21
+   Ver.0.9.23
    ・ルール一覧レスポンシブ刷新
    ・看護師は排便入力UIを非表示（勤務帯確認は継続）
 ============================================================ */
@@ -7785,7 +7887,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.21</div>
+      <div class="ui09-brand-version">Ver.0.9.24</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -7949,7 +8051,7 @@ body {
       tabindex="-1"
     ></select>
 
-    <section id="bowelTargetBar" class="ui09-resident-card bowel-input-only">
+    <section id="bowelTargetBar" class="ui09-resident-card bowel-target-bar bowel-input-only">
       <div class="ui09-resident-card-head">
         <div>
           <div class="ui09-kicker">現在の対象者</div>
@@ -8743,7 +8845,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.21
+            Ver.0.9.24
           </span>
         </div>
 
@@ -10758,6 +10860,33 @@ async function register() {
       points[user] || 0
     );
 
+  /*
+    Ver.0.9.24
+    今回の排便入力で「排便成立」になる場合だけ、
+    成立前に未実施だった緩下剤を控える。
+    保存成功後のセット外し警告に使う。
+  */
+  const noBowelDaysBeforeReset =
+    Math.max(
+      0,
+      Number(
+        getNoBowelDays(user)
+      ) || 0
+    );
+
+  const willEstablishBowel =
+    previousPoint +
+      getBowelPoint(type) >=
+        BOWEL_RESET_POINT;
+
+  const pendingLaxativesBeforeReset =
+    willEstablishBowel
+      ? getPendingLaxativeRemovalItems(
+          user,
+          noBowelDaysBeforeReset
+        )
+      : [];
+
 
   // =========================
   // ★ Ver.0.8.1
@@ -10985,6 +11114,16 @@ async function register() {
       "success",
       2000
     );
+
+    if (
+      willEstablishBowel &&
+      pendingLaxativesBeforeReset.length > 0
+    ) {
+      showBowelResetMedicationRemovalAlert(
+        user,
+        pendingLaxativesBeforeReset
+      );
+    }
 
 
   } catch (error) {
@@ -11757,6 +11896,159 @@ function isRuleChecked(user, day, rule) {
     );
 
   return Boolean(checks[key]);
+}
+
+
+/* ============================================================
+   Ver.0.9.24 排便成立時の未実施緩下剤警告
+
+   排便成立で自動判定から外れる直前に、現在サイクルで
+   「まだ実施済みになっていない緩下剤」を控えておく。
+   実際の保存成功後だけ「セット済みなら外す」注意を表示する。
+============================================================ */
+function getPendingLaxativeRemovalItems(
+  user,
+  noBowelDays
+) {
+
+  const items = [];
+
+  const regularRules =
+    getRulesForDay(
+      user,
+      noBowelDays
+    );
+
+  for (const rule of regularRules) {
+
+    const normalized =
+      normalizeRuleItem(rule);
+
+    if (
+      normalized.kind !== "laxative" ||
+      isRuleChecked(
+        user,
+        noBowelDays,
+        normalized
+      )
+    ) {
+      continue;
+    }
+
+    items.push({
+      source: "regular",
+      content: normalized.content,
+      timing:
+        getRuleTimingLabel(
+          normalized
+        )
+    });
+  }
+
+  const todayText =
+    getTodayText();
+
+  const nurseItems =
+    (Array.isArray(nurseInstructions)
+      ? nurseInstructions
+      : []
+    )
+      .map(normalizeNurseInstruction)
+      .filter(item =>
+        item.user === user &&
+        item.status === "pending" &&
+        isNurseInstructionCurrentCycle(item) &&
+        (
+          !item.targetDate ||
+          item.targetDate <= todayText
+        ) &&
+        item.kind !== "procedure" &&
+        item.kind !== "observe"
+      );
+
+  for (const item of nurseItems) {
+    items.push({
+      source: "nurse",
+      content:
+        item.content ||
+        "看護師個別指示",
+      timing:
+        getNurseInstructionTimingLabel(
+          item
+        )
+    });
+  }
+
+  const seen = new Set();
+
+  return items.filter(item => {
+    const key = [
+      item.source,
+      item.timing,
+      item.content
+    ].join("|");
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+
+function showBowelResetMedicationRemovalAlert(
+  user,
+  items
+) {
+
+  const safeItems =
+    Array.isArray(items)
+      ? items
+      : [];
+
+  if (safeItems.length === 0) {
+    return;
+  }
+
+  const listHtml =
+    safeItems
+      .map(item => `
+        <div class="ui09-panel" style="margin:8px 0;padding:12px;box-shadow:none;">
+          <strong>
+            ${item.source === "nurse" ? "🩺 看護師指示" : "💊 緩下剤"}
+          </strong><br>
+          ${item.timing ? escapeHtml(item.timing) + " ／ " : ""}
+          ${escapeHtml(item.content)}
+        </div>
+      `)
+      .join("");
+
+  openCommonModal({
+    title: "⚠ 緩下剤セットを確認してください",
+    bodyHtml: `
+      <div class="ui0913-recovery-warning">
+        <strong>${escapeHtml(formatResidentName(user))}</strong>は排便成立となり、
+        緩下剤の自動対象から外れました。<br><br>
+        下記は排便登録直前に<strong>未実施</strong>だった緩下剤です。<br>
+        <strong>すでに薬をセットしている場合は、取り外してください。</strong>
+      </div>
+      ${listHtml}
+      <div class="ui0918-care-note" style="margin-top:12px;">
+        実際にはすでに与薬済みだった場合は、実施済み記録も確認してください。
+      </div>
+    `,
+    buttonsHtml: `
+      <button
+        type="button"
+        class="primary-button"
+        onclick="closeCommonModal()"
+      >
+        確認しました
+      </button>
+    `
+  });
 }
 
 
@@ -13500,6 +13792,9 @@ async function resolveRecoveryAttention(encodedUser) {
     alert("確認者を選択してください");
     return;
   }
+  beginWriteActivity();
+  showToast("確認状態を保存中…", "saving", 0);
+
   try {
     const result = await postJsonApiOnce({
       action: "resolveBowelRecoveryState",
@@ -13511,7 +13806,10 @@ async function resolveRecoveryAttention(encodedUser) {
     await loadInitialDataFromGoogle();
     showToast("✓ 排便復旧の確認を完了しました", "success", 3500);
   } catch (error) {
+    showToast("⚠ 確認状態の更新に失敗しました", "error", 5000);
     alert("確認状態の更新に失敗しました。\n\n" + error.message);
+  } finally {
+    endWriteActivity();
   }
 }
 
@@ -14617,7 +14915,7 @@ async function saveRulesToGoogle(
 
 
   /*
-    Ver.0.9.21
+    Ver.0.9.23
     まず保存POSTは1回だけ実行する。
     タイムアウトしてもGAS側処理は継続する可能性があるため、
     すぐ同じ保存POSTを重ねずoperationIdで結果確認へ移る。
@@ -14984,6 +15282,12 @@ async function saveRulesToGoogle(
 
 async function saveUsersToGoogle(showAlert = true) {
 
+  showToast(
+    "利用者情報を保存中…",
+    "saving",
+    0
+  );
+
   const users = [];
 
   for (let name in points) {
@@ -14996,55 +15300,69 @@ async function saveUsersToGoogle(showAlert = true) {
     });
   }
 
-  const response = await fetch(
-    API_URL,
-    {
-      method: "POST",
+  try {
 
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
-      },
+    const response = await fetch(
+      API_URL,
+      {
+        method: "POST",
 
-      body: jsonBodyWithSession({
-        action: "saveUsers",
-        users: users
-      }),
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
 
-      cache: "no-store"
+        body: jsonBodyWithSession({
+          action: "saveUsers",
+          users: users
+        }),
+
+        cache: "no-store"
+      }
+    );
+
+    const result = await response.text();
+
+    if (!response.ok) {
+      throw new Error(
+        "users保存失敗：HTTP " +
+        response.status
+      );
     }
-  );
 
-  const result = await response.text();
+    if (result !== "OK") {
+      throw new Error(
+        "users保存失敗：" +
+        result
+      );
+    }
 
-  if (!response.ok) {
-    throw new Error(
-      "users保存失敗：HTTP " +
-      response.status
+    showToast(
+      "✓ 利用者情報を保存しました",
+      "success",
+      2500
     );
-  }
 
-  if (result !== "OK") {
-    throw new Error(
-      "users保存失敗：" +
-      result
+    if (showAlert) {
+      alert(result);
+    }
+
+  } catch (error) {
+
+    showToast(
+      "⚠ 利用者情報の保存に失敗しました",
+      "error",
+      5000
     );
-  }
 
-  if (showAlert) {
-    alert(result);
+    throw error;
   }
 
   /*
-    ★ここ重要
-
-    保存した内容はすでに
-    points / lastDates に入っているので、
-    Googleから再取得する必要はない。
-
-    await loadUsersFromGoogle();
-    は削除。
+    保存した内容はすでに points / lastDates に入っているため、
+    ここではGoogleから再取得しない。
   */
 }
+
 
 
 function savePendingCheckOperations() {
@@ -19647,7 +19965,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.21</strong>
+        <strong>Ver.0.9.24</strong>
       </div>
       <div>
         <span>GAS</span>
@@ -22461,6 +22779,8 @@ async function saveRuleEdit(user, encodedOldDay, index) {
 
     const activeRulesAfter = cloneRuleDayMap(getEffectiveRulesForUser(user));
 
+    showToast("ルール変更を保存中…", "saving", 0);
+
     await saveRulesToGoogle({
       user:user,
       applyMode:applyMode,
@@ -23831,6 +24151,8 @@ async function savePlannedRuleEdit(
         user
       );
 
+    showToast("次回ルールの変更を保存中…", "saving", 0);
+
     await saveRulesToGoogle({
       user: user,
       applyMode: "next",
@@ -24082,6 +24404,8 @@ async function removePlannedRule(
         user
       );
 
+    showToast("次回ルールの削除を保存中…", "saving", 0);
+
     await saveRulesToGoogle({
       user: user,
       applyMode: "next",
@@ -24224,6 +24548,8 @@ async function restorePlannedRemovedRule(
         user
       );
 
+    showToast("削除予定の取消を保存中…", "saving", 0);
+
     await saveRulesToGoogle({
       user: user,
       applyMode: "next",
@@ -24341,6 +24667,8 @@ async function discardAllPlannedRuleChanges(
     } else {
       delete rules[user];
     }
+
+    showToast("変更予定の破棄を保存中…", "saving", 0);
 
     await saveRulesToGoogle({
       user: user,
@@ -26674,6 +27002,13 @@ async function confirmNoBowelUsers(
     return;
   }
 
+  showToast(
+    "日中帯の排便確認を保存中…",
+    "saving",
+    0
+  );
+  beginWriteActivity();
+
   try {
 
     for (let user of checkedUsers) {
@@ -26695,11 +27030,18 @@ async function confirmNoBowelUsers(
 
   } catch (error) {
 
+    showToast(
+      "⚠ 日中帯の排便確認を保存できませんでした",
+      "error",
+      5000
+    );
+
     alert(
       "排便なし記録の保存に失敗したため、日中帯の確定を中止しました。\n\n" +
       error.message
     );
 
+    endWriteActivity();
     return;
   }
 
@@ -26721,16 +27063,30 @@ async function confirmNoBowelUsers(
   );
 
   if (confirmSaved) {
+    showToast(
+      timing.isLate
+        ? "✓ 日中帯を遅延確認として確定しました"
+        : "✓ 日中帯の排便確認を確定しました",
+      "success",
+      3500
+    );
     alert(
       timing.isLate
         ? "日中帯を遅延確認として確定しました"
         : "日中帯の排便なしを確定しました"
     );
   } else {
+    showToast(
+      "⚠ 集計完了の記録を保存できませんでした",
+      "error",
+      5000
+    );
     alert(
       "排便登録は完了しましたが、集計完了の記録に失敗しました"
     );
   }
+
+  endWriteActivity();
 }
 
 async function saveDailyConfirmToGoogle(
@@ -26947,6 +27303,7 @@ async function submitHistoricalShiftRecovery(type, targetDate) {
 
   if (!confirm(`${targetDate}の${type === "day" ? "日中帯" : "夜勤帯"}を遅延照合して確定しますか？`)) return;
 
+  showToast("過去勤務帯の照合内容を保存中…", "saving", 0);
   beginWriteActivity();
   const differenceMessages = [];
   try {
@@ -26997,12 +27354,14 @@ async function submitHistoricalShiftRecovery(type, targetDate) {
 
     closeCommonModal();
     await loadInitialDataFromGoogle();
+    showToast("✓ 過去勤務帯の照合を保存しました", "success", 4000);
     alert(
       "過去勤務帯の照合を保存しました" +
       (differenceMessages.length ? "\n\n⚠ " + differenceMessages.join("\n") : "")
     );
   } catch (error) {
     console.error("過去勤務帯復旧エラー", error);
+    showToast("⚠ 過去勤務帯の照合保存に失敗しました", "error", 5500);
     alert("復旧処理に失敗しました。\n\n" + error.message);
   } finally {
     endWriteActivity();
@@ -27581,6 +27940,13 @@ async function changeLastDate() {
     return;
   }
 
+  showToast(
+    "最終排便日を保存中…",
+    "saving",
+    0
+  );
+  beginWriteActivity();
+
 
   try {
 
@@ -27676,6 +28042,12 @@ async function changeLastDate() {
       updateResult: false
     });
 
+    showToast(
+      "✓ 最終排便日を変更しました",
+      "success",
+      3000
+    );
+
     alert(
       user +
       "の最終排便日を変更しました"
@@ -27689,10 +28061,18 @@ async function changeLastDate() {
       error
     );
 
+    showToast(
+      "⚠ 最終排便日の保存に失敗しました",
+      "error",
+      5000
+    );
+
     alert(
       "最終排便日の変更に失敗しました。\n\n" +
       error.message
     );
+  } finally {
+    endWriteActivity();
   }
 }
 
@@ -28032,6 +28412,13 @@ async function confirmNightShift(
     return;
   }
 
+  showToast(
+    "夜勤帯の排便確認を保存中…",
+    "saving",
+    0
+  );
+  beginWriteActivity();
+
   const saved =
     await saveNightConfirmToGoogle(
       confirmer,
@@ -28039,11 +28426,25 @@ async function confirmNightShift(
     );
 
   if (!saved) {
+    showToast(
+      "⚠ 夜勤帯の確定記録を保存できませんでした",
+      "error",
+      5000
+    );
     alert(
       "夜勤帯の確定記録を保存できませんでした"
     );
+    endWriteActivity();
     return;
   }
+
+  showToast(
+    timing.isLate
+      ? "✓ 夜勤帯を遅延確認として確定しました"
+      : "✓ 夜勤帯の排便確認を確定しました",
+    "success",
+    3500
+  );
 
   alert(
     timing.isLate
@@ -28066,6 +28467,8 @@ async function confirmNightShift(
       targetDateText
     );
   }
+
+  endWriteActivity();
 }
 
 function showNightAlert(message) {
@@ -32011,6 +32414,7 @@ async function submitHospitalizeResident(encodedUser) {
     return;
   }
 
+  showToast("入院状態を保存中…", "saving", 0);
   beginWriteActivity();
   try {
     const result = await postJsonApiOnce({
@@ -32150,6 +32554,7 @@ async function submitReturnResident(encodedUser) {
 
   if (!confirm(message)) return;
 
+  showToast("帰所情報を保存中…", "saving", 0);
   beginWriteActivity();
   try {
     const result = await postJsonApiOnce({
@@ -32260,6 +32665,7 @@ async function submitOutsideBowelBaseline(encodedUser) {
     return;
   }
 
+  showToast("院外排便情報を保存中…", "saving", 0);
   beginWriteActivity();
   try {
     const result = await postJsonApiOnce({
@@ -32341,6 +32747,7 @@ async function submitResidentMedicationResolution(encodedUser, resolution) {
     return;
   }
 
+  showToast("退院後の緩下剤確認を保存中…", "saving", 0);
   beginWriteActivity();
   try {
     const result = await postJsonApiOnce({
