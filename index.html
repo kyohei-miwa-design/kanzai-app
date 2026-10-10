@@ -3790,7 +3790,7 @@ h3 {
 
 
 /* =========================
-   看護師個別指示 Ver.0.8.18
+   個別対応 Ver.0.8.18
 ========================= */
 
 .nurse-instruction-panel {
@@ -7725,7 +7725,7 @@ body {
 }
 
 /* =========================
-   Ver.0.9.31 その他：押した項目の直下に展開 / ユニット別状況
+   Ver.0.9.33 その他：押した項目の直下に展開 / ユニット別状況
 ========================= */
 .other-menu-list > #otherStatusPanel.ui0915-status-panel,
 .other-menu-list > #otherInfoPanel.ui099-info-panel,
@@ -7974,6 +7974,11 @@ body {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
+/* Ver.0.9.33 看護師は排便入力・勤務確認を非表示 */
+.ui09-bottom-nav.nurse-four-nav.bottom-nav {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 /* ルール一覧：PCでも横に広がり過ぎない */
 #ruleList {
   width: 100%;
@@ -8162,6 +8167,41 @@ body {
 
 
 /* ============================================================
+   Ver.0.9.33 ルール外の個別対応作成
+============================================================ */
+.ui0933-adhoc-create {
+  display: none;
+  margin: 0 0 10px;
+}
+
+.ui0933-adhoc-create button {
+  width: 100%;
+  min-height: 46px;
+  margin: 0 !important;
+  border: 1px solid #80cbc4 !important;
+  border-radius: 12px !important;
+  background: #eef9f7 !important;
+  color: #00796b !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+}
+
+.ui0933-picker-note {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f5f8fa;
+  color: #546e7a;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ui0933-picker-select {
+  width: 100% !important;
+  min-height: 48px !important;
+}
+
+/* ============================================================
    Ver.0.9.29 排便入力の追従カードをコンパクト化
    + 勤務帯確定リストのスマホ折返し防止
 ============================================================ */
@@ -8274,7 +8314,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.31 勤務確認を排便入力から分離
+   Ver.0.9.33 勤務確認を排便入力から分離
 ============================================================ */
 #shiftConfirmPage .ui09-page-head {
   margin-bottom: 12px;
@@ -8296,6 +8336,8 @@ body {
   }
 }
 
+
+/* Ver.0.9.33: 看護師・管理者のルール外個別対応作成 */
 </style>
 </head>
 
@@ -8338,7 +8380,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.31</div>
+      <div class="ui09-brand-version">Ver.0.9.33</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8434,7 +8476,7 @@ body {
       <div id="homeMedicineStatus"></div>
     </section>
 
-    <section class="ui09-section">
+    <section id="homeShiftConfirmSection" class="ui09-section">
       <div class="ui09-section-head">
         <div>
           <div class="ui09-kicker">勤務帯確認</div>
@@ -8705,7 +8747,7 @@ body {
 
 
   <!-- =========================
-       勤務確認 Ver.0.9.31
+       勤務確認 Ver.0.9.33
   ========================== -->
   <section
     id="shiftConfirmPage"
@@ -8812,6 +8854,15 @@ body {
     </div>
 
     <div id="medicineNurseAlert"></div>
+
+    <div id="adHocInstructionCreateArea" class="ui0933-adhoc-create">
+      <button
+        type="button"
+        onclick="openAdHocInstructionUserPicker()"
+      >
+        ＋ ルール外の個別対応を作成
+      </button>
+    </div>
 
     <div class="ui09-segmented action-ui-tabs">
       <button
@@ -9317,7 +9368,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.31
+            Ver.0.9.33
           </span>
         </div>
 
@@ -9326,7 +9377,7 @@ body {
             GAS
           </span>
           <span class="other-info-value">
-            Ver.0.8.48
+            Ver.0.8.49
           </span>
         </div>
 
@@ -12455,7 +12506,7 @@ function getPendingLaxativeRemovalItems(
       source: "nurse",
       content:
         item.content ||
-        "看護師個別指示",
+        "個別対応",
       timing:
         getNurseInstructionTimingLabel(
           item
@@ -12501,7 +12552,7 @@ function showBowelResetMedicationRemovalAlert(
       .map(item => `
         <div class="ui09-panel" style="margin:8px 0;padding:12px;box-shadow:none;">
           <strong>
-            ${item.source === "nurse" ? "🩺 看護師指示" : "💊 緩下剤"}
+            ${item.source === "nurse" ? "📌 個別対応" : "💊 緩下剤"}
           </strong><br>
           ${item.timing ? escapeHtml(item.timing) + " ／ " : ""}
           ${escapeHtml(item.content)}
@@ -13256,7 +13307,7 @@ function renderActionPlannedPanel() {
               </div>
 
               <div class="ui096-action-sub">
-                🩺 看護師指示
+                📌 個別対応
                 ${
                   instruction.targetDate
                     ? " ／ " +
@@ -13440,7 +13491,7 @@ function openActionNurseDetail(
 
   if (!item) {
     showToast(
-      "看護師指示を読み取れませんでした",
+      "個別対応を読み取れませんでした",
       "error",
       3000
     );
@@ -13467,7 +13518,7 @@ function openActionNurseDetail(
     </button>
   `;
 
-  if (currentRole === "nurse") {
+  if (canManageIndividualInstruction()) {
 
     buttons = `
       <button
@@ -13506,7 +13557,7 @@ function openActionNurseDetail(
     bodyHtml: `
       <div class="action-detail-grid">
         <div class="action-detail-row">
-          <div class="action-detail-label">看護師指示</div>
+          <div class="action-detail-label">個別対応</div>
           <div class="action-detail-value">
             ${getNurseInstructionKindIcon(item)}
             ${escapeHtml(getNurseInstructionKindLabel(item))}
@@ -13524,13 +13575,13 @@ function openActionNurseDetail(
           </div>
         </div>
         <div class="action-detail-row">
-          <div class="action-detail-label">指示者</div>
+          <div class="action-detail-label">作成者</div>
           <div class="action-detail-value">
             ${escapeHtml(item.nurseName)}
           </div>
         </div>
         <div class="action-detail-row">
-          <div class="action-detail-label">指示日時</div>
+          <div class="action-detail-label">作成日時</div>
           <div class="action-detail-value">
             ${escapeHtml(item.createdAt)}
           </div>
@@ -13865,7 +13916,7 @@ function getTodayTarget() {
             </button>
 
             <span class="ui096-state-label nurse">
-              🩺 看護師指示
+              📌 個別対応
             </span>
           </div>
 
@@ -13888,7 +13939,7 @@ function getTodayTarget() {
               class="ui096-execute-button nurse"
               onclick="setNurseInstructionExecution(decodeURIComponent('${safeId}'), 'complete')"
             >
-              指示対応を実施済みにする
+              個別対応を実施済みにする
             </button>
 
             <button
@@ -13965,13 +14016,17 @@ function updateHomeDashboardMeta() {
 function getHomeUrgentData() {
 
   const pendingShifts =
-    Array.isArray(
-      latestDailyConfirms
-    )
-      ? getPendingShiftConfirmations(
-          latestDailyConfirms
-        )
-      : [];
+    currentRole === "nurse"
+      ? []
+      : (
+          Array.isArray(
+            latestDailyConfirms
+          )
+            ? getPendingShiftConfirmations(
+                latestDailyConfirms
+              )
+            : []
+        );
 
   const nurseWaiting =
     getOverdueNurseUsers()
@@ -14862,7 +14917,7 @@ function updateHomeMedicineStatus() {
                 <div class="ui09-home-action-icon">🩺</div>
                 <div class="ui09-home-action-copy">
                   <strong>${escapeHtml(formatResidentName(entry.user))}</strong>
-                  <span>${escapeHtml(item.content || "看護師指示あり")}</span>
+                  <span>${escapeHtml(item.content || "個別対応あり")}</span>
                 </div>
                 <span class="action-badge nurse">看護師</span>
               </button>
@@ -17381,6 +17436,10 @@ function getNurseInstructionKindLabel(item) {
     return "経過観察";
   }
 
+  if (item.kind === "other") {
+    return "その他対応";
+  }
+
   return "緩下剤";
 }
 
@@ -17393,6 +17452,10 @@ function getNurseInstructionKindIcon(item) {
 
   if (item.kind === "observe") {
     return "👀";
+  }
+
+  if (item.kind === "other") {
+    return "📌";
   }
 
   return "💊";
@@ -17459,6 +17522,172 @@ function getLatestCurrentCycleNurseInstruction(user) {
   }
 
   return null;
+}
+
+
+function canManageIndividualInstruction() {
+  return (
+    currentRole === "nurse" ||
+    currentRole === "admin"
+  );
+}
+
+
+function getInstructionIssuerStaffSelectHtml(selectId) {
+
+  const staff =
+    staffMaster
+      .filter(item =>
+        item.active &&
+        (
+          currentRole === "admin" ||
+          item.job === "看護師"
+        )
+      )
+      .sort((a, b) =>
+        String(a.name || "").localeCompare(
+          String(b.name || ""),
+          "ja"
+        )
+      );
+
+  let html = `
+    <select id="${escapeHtml(selectId)}">
+      <option value="">作成者を選択してください</option>
+  `;
+
+  for (const item of staff) {
+    html += `
+      <option value="${escapeHtml(item.staffId)}">
+        ${escapeHtml(item.name)}${item.job ? `（${escapeHtml(item.job)}）` : ""}
+      </option>
+    `;
+  }
+
+  html += "</select>";
+  return html;
+}
+
+
+function getIndividualInstructionResidentOptionsHtml() {
+
+  const users =
+    Object.keys(lastDates || {})
+      .filter(user =>
+        user &&
+        !isResidentHospitalized(user)
+      )
+      .sort((a, b) => {
+        const unitA = getUnitName(userUnits[a] || "");
+        const unitB = getUnitName(userUnits[b] || "");
+        return (
+          unitA.localeCompare(unitB, "ja") ||
+          formatResidentName(a).localeCompare(
+            formatResidentName(b),
+            "ja"
+          )
+        );
+      });
+
+  if (users.length === 0) {
+    return `<option value="">対象利用者がいません</option>`;
+  }
+
+  const groups = new Map();
+
+  for (const user of users) {
+    const unitId = String(userUnits[user] || "").trim();
+    const unitName = getUnitName(unitId);
+    if (!groups.has(unitName)) {
+      groups.set(unitName, []);
+    }
+    groups.get(unitName).push(user);
+  }
+
+  let html = `<option value="">利用者を選択してください</option>`;
+
+  for (const [unitName, members] of groups.entries()) {
+    html += `<optgroup label="${escapeHtml(unitName)}">`;
+    for (const user of members) {
+      html += `
+        <option value="${escapeHtml(user)}">
+          ${escapeHtml(formatResidentName(user))}
+        </option>
+      `;
+    }
+    html += `</optgroup>`;
+  }
+
+  return html;
+}
+
+
+function openAdHocInstructionUserPicker() {
+
+  if (!canManageIndividualInstruction()) {
+    showToast(
+      "個別対応の作成は看護師・管理者のみ行えます",
+      "error",
+      3500
+    );
+    return;
+  }
+
+  openCommonModal({
+    title: "ルール外の個別対応を作成",
+    bodyHtml: `
+      <div class="ui0933-picker-note">
+        通常ルールを変更せず、その日・その回だけ必要な対応を登録します。<br>
+        入院中の利用者は選択できません。
+      </div>
+      <div class="nurse-form-label">対象利用者</div>
+      <select
+        id="adHocInstructionUserSelect"
+        class="ui0933-picker-select"
+      >
+        ${getIndividualInstructionResidentOptionsHtml()}
+      </select>
+    `,
+    buttonsHtml: `
+      <button
+        type="button"
+        class="modal-action-edit"
+        onclick="startAdHocInstructionFromPicker()"
+      >
+        次へ
+      </button>
+      <button
+        type="button"
+        class="modal-action-close"
+        onclick="closeCommonModal()"
+      >
+        閉じる
+      </button>
+    `
+  });
+}
+
+
+function startAdHocInstructionFromPicker() {
+  const user =
+    document.getElementById(
+      "adHocInstructionUserSelect"
+    )?.value || "";
+
+  if (!user) {
+    showToast(
+      "対象利用者を選択してください",
+      "error",
+      3000
+    );
+    return;
+  }
+
+  closeCommonModal();
+  setTimeout(
+    () => openNurseInstructionModal(user),
+    0
+  );
 }
 
 
@@ -17549,9 +17778,9 @@ function getPendingNurseInstructionsForCurrentUnit() {
 
 function openNurseInstructionModal(user) {
 
-  if (currentRole !== "nurse") {
+  if (!canManageIndividualInstruction()) {
     showToast(
-      "看護師共通アカウントから登録してください",
+      "個別対応の作成は看護師・管理者のみ行えます",
       "error",
       3500
     );
@@ -17560,7 +17789,7 @@ function openNurseInstructionModal(user) {
 
   if (isResidentHospitalized(user)) {
     showToast(
-      "入院中の利用者には個別対応指示を登録できません",
+      "入院中の利用者には個別対応を登録できません",
       "warning",
       4000
     );
@@ -17573,7 +17802,7 @@ function openNurseInstructionModal(user) {
   const safeUser = encodeURIComponent(user);
 
   openCommonModal({
-    title: "看護師 個別対応指示",
+    title: "個別対応を作成",
     bodyHtml: `
       <div class="nurse-form">
 
@@ -17592,6 +17821,7 @@ function openNurseInstructionModal(user) {
             <option value="laxative">💊 緩下剤与薬</option>
             <option value="procedure">🩺 排便処置</option>
             <option value="observe">👀 経過観察</option>
+            <option value="other">📌 その他対応</option>
           </select>
         </div>
 
@@ -17620,8 +17850,11 @@ function openNurseInstructionModal(user) {
         </div>
 
         <div>
-          <div class="nurse-form-label">指示した看護師</div>
-          ${getNurseOnlyStaffSelectHtml("nurseInstructionStaff")}
+          <div class="nurse-form-label">作成者</div>
+          ${getInstructionIssuerStaffSelectHtml("nurseInstructionStaff")}
+          <div class="nurse-form-note">
+            看護師アカウントでは看護職員のみ、管理者アカウントでは有効な職員を選択できます。
+          </div>
         </div>
 
         <div>
@@ -17689,6 +17922,17 @@ function updateNurseInstructionFormFields() {
     return;
   }
 
+  if (kind === "other") {
+    timingSelect.innerHTML = `
+      <option value="">時間指定なし</option>
+      <option value="morning">朝</option>
+      <option value="lunch">昼</option>
+      <option value="daytime">日中</option>
+      <option value="evening">夕</option>
+    `;
+    return;
+  }
+
   timingSelect.innerHTML = `
     <option value="morning">朝</option>
     <option value="lunch">昼</option>
@@ -17718,7 +17962,7 @@ async function saveNurseInstructionFromModal(user) {
     document.getElementById("nurseInstructionNote")?.value.trim() || "";
 
   if (!nurseStaffId) {
-    showToast("指示した看護師を選択してください", "error", 3000);
+    showToast("作成者を選択してください", "error", 3000);
     return;
   }
 
@@ -17727,7 +17971,7 @@ async function saveNurseInstructionFromModal(user) {
     return;
   }
 
-  showToast("看護師指示を保存中…", "saving", 0);
+  showToast("個別対応を保存中…", "saving", 0);
 
   try {
 
@@ -17756,16 +18000,16 @@ async function saveNurseInstructionFromModal(user) {
     const result = await parseApiJsonResponse(response, "API");
 
     if (!response.ok || !result.ok) {
-      throw new Error(result.message || "看護師指示を保存できませんでした");
+      throw new Error(result.message || "個別対応を保存できませんでした");
     }
 
     closeCommonModal();
     await refreshFromGoogle();
 
-    showToast("✓ 看護師指示を登録しました", "success", 3000);
+    showToast("✓ 個別対応を登録しました", "success", 3000);
 
   } catch (error) {
-    console.error("看護師指示登録エラー", error);
+    console.error("個別対応登録エラー", error);
     showToast("⚠ " + error.message, "error", 4000);
   }
 }
@@ -17773,8 +18017,8 @@ async function saveNurseInstructionFromModal(user) {
 
 function openCancelNurseInstructionModal(instructionId) {
 
-  if (currentRole !== "nurse") {
-    showToast("看護師共通アカウントから操作してください", "error", 3000);
+  if (!canManageIndividualInstruction()) {
+    showToast("個別対応の取消は看護師・管理者のみ行えます", "error", 3000);
     return;
   }
 
@@ -17784,14 +18028,14 @@ function openCancelNurseInstructionModal(instructionId) {
       .find(x => x.instructionId === instructionId);
 
   if (!item) {
-    showToast("看護師指示が見つかりません", "error", 3000);
+    showToast("個別対応が見つかりません", "error", 3000);
     return;
   }
 
   const safeId = encodeURIComponent(instructionId);
 
   openCommonModal({
-    title: "看護師指示を取消",
+    title: "個別対応を取消",
     bodyHtml: `
       <div class="nurse-form">
         <div class="nurse-form-summary">
@@ -17800,8 +18044,8 @@ function openCancelNurseInstructionModal(instructionId) {
           ${escapeHtml(item.content || getNurseInstructionKindLabel(item))}
         </div>
         <div>
-          <div class="nurse-form-label">取消を行う看護師</div>
-          ${getNurseOnlyStaffSelectHtml("nurseCancelStaff")}
+          <div class="nurse-form-label">取消を行う職員</div>
+          ${getInstructionIssuerStaffSelectHtml("nurseCancelStaff")}
         </div>
         <div>
           <div class="nurse-form-label">取消理由（任意）</div>
@@ -17814,7 +18058,7 @@ function openCancelNurseInstructionModal(instructionId) {
         class="modal-action-cancel"
         onclick="cancelNurseInstructionFromModal(decodeURIComponent('${safeId}'))"
       >
-        指示を取り消す
+        個別対応を取り消す
       </button>
       <button class="modal-action-close" onclick="closeCommonModal()">
         閉じる
@@ -17833,12 +18077,12 @@ async function cancelNurseInstructionFromModal(instructionId) {
     document.getElementById("nurseCancelReason")?.value.trim() || "";
 
   if (!nurseStaffId) {
-    showToast("取消を行う看護師を選択してください", "error", 3000);
+    showToast("取消を行う職員を選択してください", "error", 3000);
     return;
   }
 
   try {
-    showToast("看護師指示を取消中…", "saving", 0);
+    showToast("個別対応を取消中…", "saving", 0);
 
     const response = await fetch(
       API_URL,
@@ -17859,12 +18103,12 @@ async function cancelNurseInstructionFromModal(instructionId) {
 
     const result = await parseApiJsonResponse(response, "API");
     if (!response.ok || !result.ok) {
-      throw new Error(result.message || "指示を取り消せませんでした");
+      throw new Error(result.message || "個別対応を取り消せませんでした");
     }
 
     closeCommonModal();
     await refreshFromGoogle();
-    showToast("✓ 看護師指示を取り消しました", "success", 3000);
+    showToast("✓ 個別対応を取り消しました", "success", 3000);
 
   } catch (error) {
     console.error(error);
@@ -17906,7 +18150,7 @@ async function setNurseInstructionExecution(instructionId, statusAction) {
 
     showToast(
       statusAction === "complete"
-        ? "✓ 看護師指示の対応を実施済みにしました"
+        ? "✓ 個別対応を実施済みにしました"
         : "✓ 実施済みを取り消しました",
       "success",
       2800
@@ -17958,7 +18202,7 @@ function getNurseInstructionTargetHtml(hour) {
 
     html += `
       <div class="target-card nurse-target-card">
-        <div class="nurse-target-label">🩺 看護師指示</div>
+        <div class="nurse-target-label">📌 個別対応</div>
         <div class="nurse-target-user">${escapeHtml(formatResidentName(item.user))}</div>
         未排便日数：${Math.max(0, getNoBowelDays(item.user))}日
 
@@ -17970,8 +18214,8 @@ function getNurseInstructionTargetHtml(hour) {
         </div>
 
         <div class="nurse-instruction-meta">
-          指示者：${escapeHtml(item.nurseName)}<br>
-          指示日時：${escapeHtml(item.createdAt)}
+          作成者：${escapeHtml(item.nurseName)}<br>
+          作成日時：${escapeHtml(item.createdAt)}
           ${item.note ? `<br>メモ：${escapeHtml(item.note)}` : ""}
         </div>
 
@@ -17987,7 +18231,7 @@ function getNurseInstructionTargetHtml(hour) {
                   type="checkbox"
                   onchange="setNurseInstructionExecution(decodeURIComponent('${safeId}'), 'complete')"
                 >
-                <span class="medicine-name">この看護師指示を実施済みにする</span>
+                <span class="medicine-name">この個別対応を実施済みにする</span>
               </label>
             `
             : `
@@ -18153,7 +18397,7 @@ function getNurseAlertHtml(
             <strong>${info.days}日</strong>
           </div>
           ${
-            context === "medicine" && currentRole === "nurse"
+            context === "medicine" && canManageIndividualInstruction()
               ? `
                 <div class="nurse-instruction-actions" style="grid-column:1/-1;">
                   <button
@@ -18209,10 +18453,10 @@ function getNurseAlertHtml(
 
     const title =
       item.status === "completed"
-        ? "✅ 看護師指示の対応実施済み"
+        ? "✅ 個別対応の実施済み"
         : item.status === "observing"
           ? "👀 看護師確認済み・経過観察"
-          : "🩺 看護師確認済み・対応指示あり";
+          : "🩺 個別対応あり";
 
     const safeId = encodeURIComponent(item.instructionId);
     const safeUser = encodeURIComponent(info.user);
@@ -18234,12 +18478,12 @@ function getNurseAlertHtml(
             ${item.timing ? `（${escapeHtml(getNurseInstructionTimingLabel(item))}）` : ""}
           </div>
           <div class="nurse-instruction-meta">
-            指示者：${escapeHtml(item.nurseName)} ／ ${escapeHtml(item.createdAt)}<br>
+            作成者：${escapeHtml(item.nurseName)} ／ ${escapeHtml(item.createdAt)}<br>
             対象日：${escapeHtml(item.targetDate)}
           </div>
           ${item.note ? `<div class="nurse-instruction-note">${escapeHtml(item.note)}</div>` : ""}
           ${
-            context === "medicine" && currentRole === "nurse"
+            context === "medicine" && canManageIndividualInstruction()
               ? `
                 <div class="nurse-instruction-actions">
                   <button
@@ -18373,15 +18617,15 @@ function getStatusActionText(
     }
 
     if (item.status === "observing") {
-      return "👀 看護師指示：経過観察（" + escapeHtml(item.nurseName) + "）";
+      return "👀 個別対応：経過観察（" + escapeHtml(item.nurseName) + "）";
     }
 
     if (item.status === "completed") {
-      return "✅ 看護師指示の対応実施済み：" + escapeHtml(item.content);
+      return "✅ 個別対応の実施済み：" + escapeHtml(item.content);
     }
 
     return (
-      "🩺 看護師指示：" +
+      "📌 個別対応：" +
       escapeHtml(item.content) +
       (item.timing ? "（" + escapeHtml(getNurseInstructionTimingLabel(item)) + "）" : "")
     );
@@ -18619,7 +18863,7 @@ function getUserStatusInfo(user) {
 
     if (nurseInstruction?.status === "pending") {
       state = "nurse-instruction";
-      stateLabel = "看護師指示あり";
+      stateLabel = "個別対応あり";
       priority = 1;
     } else if (nurseInstruction?.status === "observing") {
       state = "nurse-observing";
@@ -20917,11 +21161,11 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.31</strong>
+        <strong>Ver.0.9.33</strong>
       </div>
       <div>
         <span>GAS</span>
-        <strong>Ver.0.8.48</strong>
+        <strong>Ver.0.8.49</strong>
       </div>
       <div>
         <span>ログイン範囲</span>
@@ -21434,6 +21678,14 @@ function updateRoleUI() {
     document.querySelector(
       '.nav-button[data-page="bowelPage"]'
     );
+  const shiftConfirmNavButton =
+    document.querySelector(
+      '.nav-button[data-page="shiftConfirmPage"]'
+    );
+  const homeShiftConfirmSection =
+    document.getElementById(
+      "homeShiftConfirmSection"
+    );
   const bottomNav =
     document.querySelector(
       ".ui09-bottom-nav"
@@ -21467,11 +21719,42 @@ function updateRoleUI() {
         : "";
   }
 
+  if (shiftConfirmNavButton) {
+    shiftConfirmNavButton.style.display =
+      nurseShiftOnly
+        ? "none"
+        : "";
+  }
+
+  if (homeShiftConfirmSection) {
+    homeShiftConfirmSection.style.display =
+      nurseShiftOnly
+        ? "none"
+        : "";
+  }
+
   if (bottomNav) {
     bottomNav.classList.toggle(
       "nurse-five-nav",
+      false
+    );
+    bottomNav.classList.toggle(
+      "nurse-four-nav",
       nurseShiftOnly
     );
+  }
+
+
+  const adHocInstructionCreateArea =
+    document.getElementById(
+      "adHocInstructionCreateArea"
+    );
+
+  if (adHocInstructionCreateArea) {
+    adHocInstructionCreateArea.style.display =
+      canManageIndividualInstruction()
+        ? "block"
+        : "none";
   }
 
 
@@ -26642,7 +26925,7 @@ function getCompletedListHtml() {
           </div>
 
           <div class="ui096-action-sub">
-            🩺 看護師指示
+            📌 個別対応
             ${
               item.completedAt
                 ? " ／ " +
@@ -27272,7 +27555,7 @@ function createMedicineReport() {
         nurseInstructionReportHtml
           ? `
             <hr>
-            <h3>🩺 看護師個別指示</h3>
+            <h3>🩺 個別対応</h3>
             ${nurseInstructionReportHtml}
           `
           : ""
@@ -27672,6 +27955,16 @@ function getPendingShiftConfirmations(confirms) {
 
 function openShiftConfirmationFromAlert(type, targetDate) {
 
+  if (currentRole === "nurse") {
+    showToast(
+      "勤務帯確認は介護職ユニットアカウントから行ってください",
+      "info",
+      3500
+    );
+    openPage("homePage");
+    return;
+  }
+
   const today = getTodayText();
   if (String(targetDate) < today && currentUnit !== "all") {
     openHistoricalShiftRecovery(type, targetDate);
@@ -27698,6 +27991,11 @@ function openShiftConfirmationFromAlert(type, targetDate) {
 function updateShiftOverdueAlert(
   confirms
 ) {
+
+  if (currentRole === "nurse") {
+    hideNightAlert();
+    return;
+  }
 
   const pending =
     getPendingShiftConfirmations(
@@ -33480,6 +33778,12 @@ function getResidentCarePanelHtml(user) {
                     <div class="ui0918-care-actions">
                       <button
                         type="button"
+                        onclick="openNurseInstructionModal(decodeURIComponent('${safeUser}'))"
+                      >
+                        ＋ 今回限りの対応を追加
+                      </button>
+                      <button
+                        type="button"
                         class="ui09-secondary-button"
                         onclick="openResidentMedicationResolutionModal(decodeURIComponent('${safeUser}'),'no_change')"
                       >
@@ -33499,12 +33803,12 @@ function getResidentCarePanelHtml(user) {
         }
       </section>
     `);
-  } else if (currentRole === "nurse") {
+  } else if (canManageIndividualInstruction()) {
     blocks.push(`
       <section class="ui09-panel ui0918-care-panel neutral">
-        <div class="ui0918-care-title">🩺 看護師個別対応</div>
+        <div class="ui0918-care-title">📌 ルール外の個別対応</div>
         <div class="ui0918-care-note">
-          設定最終日超過の対象者でなくても、今回限りの指示を登録できます。
+          通常ルールにない、その日・その回だけの対応を登録できます。
         </div>
         <button
           type="button"
@@ -33549,7 +33853,7 @@ function openHospitalizeResidentModal(user) {
     bodyHtml: `
       <div class="ui0918-care-warning">
         入院中は排便入力、勤務帯の排便確認、通常の緩下剤自動判定、与薬対象から除外します。<br>
-        未完了の看護師個別指示がある場合は入院時に自動取消します。
+        未完了の個別対応がある場合は入院時に自動取消します。
       </div>
       <label class="ui0918-form-label">入院開始日時</label>
       <input
@@ -34332,7 +34636,7 @@ function renderResidentDetail() {
     }
 
     <section class="ui09-panel ui09-detail-section">
-      <div class="ui09-kicker">看護師指示</div>
+      <div class="ui09-kicker">個別対応</div>
       <div class="ui09-detail-row">
         <span>
           ${
@@ -34387,12 +34691,15 @@ function getTodayText() {
 
 function openPage(pageId) {
 
-  // Ver.0.9.31 看護師は排便入力ではなく勤務確認へ
+  // Ver.0.9.33 看護師は排便入力・勤務確認を使用しない
   if (
-    pageId === "bowelPage" &&
-    currentRole === "nurse"
+    currentRole === "nurse" &&
+    (
+      pageId === "bowelPage" ||
+      pageId === "shiftConfirmPage"
+    )
   ) {
-    pageId = "shiftConfirmPage";
+    pageId = "homePage";
   }
 
   // 全ページを非表示
