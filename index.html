@@ -8083,6 +8083,118 @@ body {
   }
 }
 
+
+
+/* ============================================================
+   Ver.0.9.29 排便入力の追従カードをコンパクト化
+   + 勤務帯確定リストのスマホ折返し防止
+============================================================ */
+.bowel-target-bar {
+  padding: 8px 10px 9px !important;
+  margin-bottom: 8px !important;
+  border-radius: 12px !important;
+}
+
+.bowel-target-bar .ui09-resident-card-head {
+  align-items: center;
+  gap: 8px;
+}
+
+.bowel-target-bar .ui09-resident-card-head > div:first-child {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.bowel-target-bar .ui09-kicker {
+  margin-bottom: 1px;
+  font-size: 10px;
+}
+
+.bowel-target-bar .ui09-resident-name {
+  font-size: 19px;
+  line-height: 1.2;
+  white-space: nowrap;
+  word-break: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bowel-target-bar .ui09-inline-actions {
+  flex: 0 0 auto;
+  gap: 5px;
+}
+
+.bowel-target-bar .ui09-mini-button {
+  min-width: 42px;
+  min-height: 34px !important;
+  padding: 5px 8px !important;
+  font-size: 11px !important;
+}
+
+.bowel-target-bar .ui09-state-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.bowel-target-bar .ui09-state-box,
+.bowel-target-bar .ui09-state-box.wide {
+  grid-column: auto;
+  min-width: 0;
+  padding: 7px 8px;
+  border-radius: 10px;
+}
+
+.bowel-target-bar .ui09-state-box span {
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.bowel-target-bar .ui09-state-box strong {
+  margin-top: 1px;
+  font-size: 14px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+  .day-no-bowel-item,
+  .night-no-bowel-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100%;
+    padding: 10px 12px !important;
+  }
+
+  .day-no-bowel-item input[type="checkbox"],
+  .night-no-bowel-item input[type="checkbox"] {
+    flex: 0 0 24px;
+    width: 24px !important;
+    height: 24px !important;
+    margin: 0 !important;
+  }
+
+  .day-no-bowel-item span:nth-of-type(1),
+  .night-no-bowel-item span:nth-of-type(1) {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    word-break: keep-all;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .day-no-bowel-item span:nth-of-type(2),
+  .night-no-bowel-item span:nth-of-type(2) {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    word-break: keep-all;
+    font-size: 13px;
+  }
+}
 </style>
 </head>
 
@@ -8125,7 +8237,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.28</div>
+      <div class="ui09-brand-version">Ver.0.9.29</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -9083,7 +9195,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.28
+            Ver.0.9.29
           </span>
         </div>
 
@@ -20424,11 +20536,11 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.28</strong>
+        <strong>Ver.0.9.29</strong>
       </div>
       <div>
         <span>GAS</span>
-        <strong>Ver.0.8.47</strong>
+        <strong>Ver.0.8.48</strong>
       </div>
       <div>
         <span>ログイン範囲</span>
@@ -32783,6 +32895,13 @@ function getResidentCarePanelHtml(user) {
             ? `
               <button
                 type="button"
+                class="ui09-secondary-button"
+                onclick="openCorrectHospitalizedAtModal(decodeURIComponent('${safeUser}'))"
+              >
+                🕒 入院開始日時を修正
+              </button>
+              <button
+                type="button"
                 class="ui09-primary-button"
                 onclick="openReturnResidentModal(decodeURIComponent('${safeUser}'))"
               >
@@ -32937,6 +33056,15 @@ function openHospitalizeResidentModal(user) {
         入院中は排便入力、勤務帯の排便確認、通常の緩下剤自動判定、与薬対象から除外します。<br>
         未完了の看護師個別指示がある場合は入院時に自動取消します。
       </div>
+      <label class="ui0918-form-label">入院開始日時</label>
+      <input
+        id="hospitalizeStartedAt"
+        type="datetime-local"
+        value="${escapeHtml(getLocalDateTimeText().slice(0,16).replace(" ", "T"))}"
+      >
+      <div class="ui0918-care-note">
+        実際に入院した日時を入力してください。後から登録する場合は、実際の入院日時まで戻して登録できます。
+      </div>
       <div class="confirm-signature-box">
         <div class="confirm-signature-title">✍️ 操作した職員</div>
         ${getStaffSelectHtml("hospitalizeStaffSelect")}
@@ -32960,7 +33088,12 @@ async function submitHospitalizeResident(encodedUser) {
   }
 
   const note = String(document.getElementById("hospitalizeNote")?.value || "").trim();
-  if (!confirm(`${formatResidentName(user)}を入院中にしますか？\n\n入院中は通常の排便・緩下剤判定から除外されます。`)) {
+  const hospitalizedAt = String(document.getElementById("hospitalizeStartedAt")?.value || "").trim();
+  if (!hospitalizedAt) {
+    showToast("実際の入院開始日時を入力してください", "error", 3500);
+    return;
+  }
+  if (!confirm(`${formatResidentName(user)}を入院中にしますか？\n\n入院開始：${hospitalizedAt.replace("T", " ")}\n\n入院中は通常の排便・緩下剤判定から除外されます。`)) {
     return;
   }
 
@@ -32971,6 +33104,7 @@ async function submitHospitalizeResident(encodedUser) {
       action: "setResidentHospitalized",
       user: user,
       staffId: staff.staffId,
+      hospitalizedAt: hospitalizedAt,
       note: note
     }, 30000);
 
@@ -33006,6 +33140,96 @@ async function submitHospitalizeResident(encodedUser) {
   }
 }
 
+function openCorrectHospitalizedAtModal(user) {
+  if (currentRole === "nurse") {
+    showToast("入院開始日時の修正はユニット側から行ってください", "warning", 3500);
+    return;
+  }
+  if (!canStartServerWrite()) return;
+  if (!isResidentHospitalized(user)) {
+    showToast("この利用者は入院中ではありません", "warning", 3000);
+    return;
+  }
+
+  const care = getResidentCareState(user);
+  const currentValue = String(care.hospitalizedAt || "")
+    .slice(0, 16)
+    .replace(" ", "T");
+
+  openCommonModal({
+    title: "入院開始日時を修正：" + formatResidentName(user),
+    bodyHtml: `
+      <div class="ui0918-care-warning">
+        入院登録を後から行った場合など、実際の入院開始日時に修正します。<br>
+        過去勤務帯の照合対象判定にもこの日時が反映されます。
+      </div>
+      <label class="ui0918-form-label">実際の入院開始日時</label>
+      <input
+        id="correctHospitalizedAt"
+        type="datetime-local"
+        value="${escapeHtml(currentValue)}"
+      >
+      <div class="confirm-signature-box">
+        <div class="confirm-signature-title">✍️ 修正した職員</div>
+        ${getStaffSelectHtml("correctHospitalizedAtStaffSelect")}
+      </div>
+    `,
+    buttonsHtml: `
+      <button type="button" class="modal-action-close" onclick="closeCommonModal()">キャンセル</button>
+      <button type="button" onclick="submitCorrectHospitalizedAt('${encodeURIComponent(user)}')">入院開始日時を修正</button>
+    `
+  });
+}
+
+async function submitCorrectHospitalizedAt(encodedUser) {
+  const user = decodeURIComponent(encodedUser || "");
+  const staff = getSelectedStaff("correctHospitalizedAtStaffSelect");
+  const hospitalizedAt = String(document.getElementById("correctHospitalizedAt")?.value || "").trim();
+
+  if (!staff) {
+    showToast("修正した職員を選択してください", "error", 3000);
+    return;
+  }
+  if (!hospitalizedAt) {
+    showToast("実際の入院開始日時を入力してください", "error", 3500);
+    return;
+  }
+  if (!confirm(`${formatResidentName(user)}の入院開始日時を\n${hospitalizedAt.replace("T", " ")}\nへ修正しますか？`)) {
+    return;
+  }
+
+  showToast("入院開始日時を修正中…", "saving", 0);
+  beginWriteActivity();
+  try {
+    const result = await postJsonApiOnce({
+      action: "correctResidentHospitalizedAt",
+      user: user,
+      staffId: staff.staffId,
+      hospitalizedAt: hospitalizedAt
+    }, 30000);
+
+    if (!result || result.ok !== true) {
+      throw new Error(result?.message || "入院開始日時を修正できませんでした");
+    }
+
+    residentCareStates = Array.isArray(result.residentCareStates)
+      ? result.residentCareStates
+      : residentCareStates;
+    residentHospitalizationPeriods = Array.isArray(result.residentHospitalizationPeriods)
+      ? result.residentHospitalizationPeriods
+      : residentHospitalizationPeriods;
+
+    closeCommonModal();
+    refreshResidentCareRelatedUI();
+    showToast("🕒 入院開始日時を修正しました", "success", 3500);
+  } catch (error) {
+    showToast("入院開始日時の修正に失敗しました：" + error.message, "error", 5000);
+  } finally {
+    endWriteActivity();
+  }
+}
+
+
 function updateReturnResidentBowelFields() {
   const mode = document.querySelector('input[name="returnBowelMode"]:checked')?.value || "";
   const area = document.getElementById("returnKnownBowelArea");
@@ -33033,6 +33257,14 @@ function openReturnResidentModal(user) {
       <div class="ui0918-care-warning">
         入院中の排便状況と緩下剤指示の変更有無を確認してから帰所処理を行ってください。
       </div>
+
+      <label class="ui0918-form-label">帰所日時</label>
+      <input
+        id="returnResidentAt"
+        type="datetime-local"
+        value="${escapeHtml(getLocalDateTimeText().slice(0,16).replace(" ", "T"))}"
+      >
+      <div class="ui0918-care-note">実際に施設へ戻った日時を入力してください。</div>
 
       <div class="ui0918-form-label">① 入院中の排便状況</div>
       <div class="ui0918-radio-list">
@@ -33076,9 +33308,14 @@ async function submitReturnResident(encodedUser) {
   const medicationChange = document.querySelector('input[name="returnMedicationChange"]:checked')?.value || "";
   const outsideBowelDate = String(document.getElementById("returnOutsideBowelDate")?.value || "");
   const outsideBowelNote = String(document.getElementById("returnOutsideBowelNote")?.value || "").trim();
+  const returnedAt = String(document.getElementById("returnResidentAt")?.value || "").trim();
 
   if (!staff) {
     showToast("帰所処理をした職員を選択してください", "error", 3000);
+    return;
+  }
+  if (!returnedAt) {
+    showToast("実際の帰所日時を入力してください", "error", 3500);
     return;
   }
   if (!bowelMode) {
@@ -33115,6 +33352,7 @@ async function submitReturnResident(encodedUser) {
       action: "returnResidentFromHospital",
       user: user,
       staffId: staff.staffId,
+      returnedAt: returnedAt,
       bowelMode: bowelMode,
       outsideBowelDate: outsideBowelDate,
       outsideBowelNote: outsideBowelNote,
