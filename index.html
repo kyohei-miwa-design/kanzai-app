@@ -7887,7 +7887,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.25</div>
+      <div class="ui09-brand-version">Ver.0.9.26</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8845,7 +8845,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.25
+            Ver.0.9.26
           </span>
         </div>
 
@@ -16106,6 +16106,51 @@ async function addHistoryToGoogle(history) {
   }
 }
 
+/*
+  Ver.0.9.26
+  勤務帯確定時の「排便なし」を利用者ごとに1件ずつ保存せず、
+  1回のAPI通信でまとめて保存する。
+*/
+async function addNoBowelHistoriesBatchToGoogle(
+  users,
+  confirmType,
+  targetDate
+) {
+
+  const safeUsers =
+    Array.isArray(users)
+      ? users
+          .map(user => String(user || "").trim())
+          .filter(Boolean)
+      : [];
+
+  if (safeUsers.length === 0) {
+    return { ok: true, savedCount: 0, duplicateCount: 0 };
+  }
+
+  const entries = safeUsers.map(user => ({
+    user,
+    operationId: createNoBowelOperationId(user, confirmType, targetDate)
+  }));
+
+  const result = await postJsonApiOnce({
+    action: "addNoBowelHistoriesBatch",
+    confirmType,
+    targetDate,
+    entries
+  }, 30000);
+
+  if (!result || result.ok !== true) {
+    throw new Error(
+      result?.message || "排便なし記録の一括保存に失敗しました"
+    );
+  }
+
+  console.log("勤務帯 排便なし一括保存:", result);
+  return result;
+}
+
+
 async function clearHistoriesFromGoogle() {
   try {
     await fetchApi(
@@ -19984,11 +20029,11 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.25</strong>
+        <strong>Ver.0.9.26</strong>
       </div>
       <div>
         <span>GAS</span>
-        <strong>Ver.0.8.46</strong>
+        <strong>Ver.0.8.47</strong>
       </div>
       <div>
         <span>ログイン範囲</span>
@@ -27041,22 +27086,11 @@ async function confirmNoBowelUsers(
 
   try {
 
-    for (let user of checkedUsers) {
-
-      await addHistoryToGoogle({
-        user: user,
-        type: "なし",
-        point: points[user],
-        confirmType: "day",
-        targetDate: targetDateText,
-        operationId:
-          createNoBowelOperationId(
-            user,
-            "day",
-            targetDateText
-          )
-      });
-    }
+    await addNoBowelHistoriesBatchToGoogle(
+      checkedUsers,
+      "day",
+      targetDateText
+    );
 
   } catch (error) {
 
@@ -27408,16 +27442,19 @@ async function submitHistoricalShiftRecovery(type, targetDate) {
   beginWriteActivity();
   const differenceMessages = [];
   try {
+    const noBowelUsers = actions
+      .filter(action => action.mode === "none")
+      .map(action => action.user);
+
+    await addNoBowelHistoriesBatchToGoogle(
+      noBowelUsers,
+      type,
+      targetDate
+    );
+
     for (const action of actions) {
       if (action.mode === "none") {
-        await addHistoryToGoogle({
-          user: action.user,
-          type: "なし",
-          point: points[action.user],
-          confirmType: type,
-          targetDate,
-          operationId: createNoBowelOperationId(action.user, type, targetDate)
-        });
+        continue;
       } else if (action.mode === "bowel") {
         const bowelType = action.row.querySelector(".recovery-bowel-type").value;
         const occurredDate = action.row.querySelector(".recovery-bowel-date")?.value || targetDate;
@@ -27891,7 +27928,7 @@ function updateHomeConfirmStatus(
 
 
       /*
-        Ver.0.8.46
+        Ver.0.8.47
         管理者・看護師（全ユニット表示）で
         wait状態のとき、空文字をclassList.add()へ
         渡さないようにする。
