@@ -6846,7 +6846,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.27 対応一覧：時間帯グループ + 色分け
+   Ver.0.9.28 対応一覧：時間帯グループ + 色分け
 ============================================================ */
 
 .ui096-time-group {
@@ -6942,6 +6942,144 @@ body {
     max-width: 760px;
     margin-left: auto;
     margin-right: auto;
+  }
+}
+
+/* ============================================================
+   Ver.0.9.28 対応一覧：コンパクト表示
+   1画面により多くの対応を表示しつつ、タップ領域は44px以上を維持
+============================================================ */
+
+.ui096-time-group {
+  margin-bottom: 11px;
+}
+
+.ui096-time-group-head {
+  min-height: 38px;
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  border-left-width: 4px;
+  border-radius: 10px;
+}
+
+.ui096-time-group-title {
+  gap: 6px;
+  font-size: 14px;
+}
+
+.ui096-time-group-icon {
+  font-size: 16px;
+}
+
+.ui096-time-group-count {
+  padding: 2px 7px;
+  font-size: 10px;
+}
+
+.ui096-time-group-list {
+  gap: 6px;
+}
+
+.ui096-action-card {
+  margin-bottom: 6px;
+  padding: 10px 12px;
+  border-radius: 13px;
+  box-shadow: 0 2px 7px rgba(31,70,78,.035);
+}
+
+.ui096-time-group-list .ui096-action-card {
+  margin-bottom: 0;
+}
+
+.ui096-action-card-head {
+  gap: 8px;
+}
+
+.ui096-action-user {
+  font-size: 16px !important;
+  line-height: 1.25;
+}
+
+.ui096-state-label {
+  padding: 3px 7px;
+  font-size: 10px;
+}
+
+.ui096-action-main {
+  margin-top: 6px;
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.ui096-action-sub {
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.ui096-action-buttons {
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.ui096-execute-button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.ui096-detail-link.button {
+  min-height: 44px;
+  padding: 0 9px;
+  border-radius: 9px;
+  font-size: 11px;
+}
+
+.ui096-completed-tools {
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.ui096-cancel-link {
+  min-height: 44px;
+  padding: 6px 8px;
+}
+
+.ui096-pending-warning {
+  margin-top: 7px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  font-size: 11px;
+}
+
+.ui096-action-guide {
+  margin-bottom: 9px;
+}
+
+@media (min-width: 700px) {
+  #todayTarget,
+  #plannedTarget,
+  #completedList {
+    max-width: 700px;
+  }
+
+  .ui096-action-card {
+    padding: 9px 11px;
+  }
+}
+
+@media (max-width: 390px) {
+  .ui096-time-group-head {
+    padding: 6px 9px;
+  }
+
+  .ui096-action-card {
+    padding: 9px 10px;
+  }
+
+  .ui096-action-buttons {
+    margin-top: 7px;
   }
 }
 
@@ -7987,7 +8125,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.27</div>
+      <div class="ui09-brand-version">Ver.0.9.28</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8945,7 +9083,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.27
+            Ver.0.9.28
           </span>
         </div>
 
@@ -13224,7 +13362,7 @@ function renderActionPage() {
 
 
 /* ============================================================
-   Ver.0.9.27 対応一覧：時間帯グループ
+   Ver.0.9.28 対応一覧：時間帯グループ
 ============================================================ */
 function normalizeActionTimingKey(value) {
 
@@ -20286,7 +20424,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.27</strong>
+        <strong>Ver.0.9.28</strong>
       </div>
       <div>
         <span>GAS</span>
