@@ -7887,7 +7887,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.24</div>
+      <div class="ui09-brand-version">Ver.0.9.25</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8845,7 +8845,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.24
+            Ver.0.9.25
           </span>
         </div>
 
@@ -9525,6 +9525,9 @@ let bowelRecoveryStates = [];
   medicationStatus: clear / pending
 */
 let residentCareStates = [];
+
+/* Ver.0.9.25 入院期間履歴。過去勤務帯を対象日時点で判定する。 */
+let residentHospitalizationPeriods = [];
 
 const SHIFT_BACKLOG_DAYS = 7;
 const SHIFT_BACKLOG_START_DATE = "2026-10-03";
@@ -10861,7 +10864,7 @@ async function register() {
     );
 
   /*
-    Ver.0.9.24
+    Ver.0.9.25
     今回の排便入力で「排便成立」になる場合だけ、
     成立前に未実施だった緩下剤を控える。
     保存成功後のセット外し警告に使う。
@@ -11900,7 +11903,7 @@ function isRuleChecked(user, day, rule) {
 
 
 /* ============================================================
-   Ver.0.9.24 排便成立時の未実施緩下剤警告
+   Ver.0.9.25 排便成立時の未実施緩下剤警告
 
    排便成立で自動判定から外れる直前に、現在サイクルで
    「まだ実施済みになっていない緩下剤」を控えておく。
@@ -14335,6 +14338,7 @@ function clearResidentScopedMemory() {
   nurseInstructions = [];
   bowelRecoveryStates = [];
   residentCareStates = [];
+  residentHospitalizationPeriods = [];
   rules = {};
   checks = {};
   checkDate =
@@ -14354,6 +14358,7 @@ function clearResidentScopedCache() {
     "nurseInstructions",
     "bowelRecoveryStates",
     "residentCareStates",
+    "residentHospitalizationPeriods",
     "rules",
     "ruleCycleSnapshots",
     "ruleEvaluations",
@@ -14564,6 +14569,11 @@ function saveData() {
   );
 
   localStorage.setItem(
+    "residentHospitalizationPeriods",
+    JSON.stringify(residentHospitalizationPeriods)
+  );
+
+  localStorage.setItem(
     "rules",
     JSON.stringify(rules)
   );
@@ -14610,6 +14620,7 @@ function loadData() {
   const savedNurseInstructions = localStorage.getItem("nurseInstructions");
   const savedBowelRecoveryStates = localStorage.getItem("bowelRecoveryStates");
   const savedResidentCareStates = localStorage.getItem("residentCareStates");
+  const savedResidentHospitalizationPeriods = localStorage.getItem("residentHospitalizationPeriods");
   const savedRules = localStorage.getItem("rules");
   const savedRuleCycleSnapshots =
     localStorage.getItem(
@@ -14691,6 +14702,14 @@ function loadData() {
       residentCareStates = JSON.parse(savedResidentCareStates) || [];
     } catch (_) {
       residentCareStates = [];
+    }
+  }
+
+  if (savedResidentHospitalizationPeriods !== null) {
+    try {
+      residentHospitalizationPeriods = JSON.parse(savedResidentHospitalizationPeriods) || [];
+    } catch (_) {
+      residentHospitalizationPeriods = [];
     }
   }
 
@@ -19965,11 +19984,11 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.24</strong>
+        <strong>Ver.0.9.25</strong>
       </div>
       <div>
         <span>GAS</span>
-        <strong>Ver.0.8.45</strong>
+        <strong>Ver.0.8.46</strong>
       </div>
       <div>
         <span>ログイン範囲</span>
@@ -21110,6 +21129,11 @@ async function loadInitialDataFromGoogle() {
     residentCareStates =
       Array.isArray(data.residentCareStates)
         ? data.residentCareStates
+        : [];
+
+    residentHospitalizationPeriods =
+      Array.isArray(data.residentHospitalizationPeriods)
+        ? data.residentHospitalizationPeriods
         : [];
 
     // =========================
@@ -26711,7 +26735,13 @@ function checkTodayBowelStatus(
       continue;
     }
 
-    if (isResidentHospitalized(user)) {
+    if (
+      isResidentHospitalizedDuringShift(
+        user,
+        "day",
+        targetDateText
+      )
+    ) {
       continue;
     }
 
@@ -27189,9 +27219,66 @@ function getHistoriesForShift(type, targetDate, user = "") {
   });
 }
 
-function getRecoveryUsersForCurrentUnit() {
+function parseResidentCareDateTimeForShift(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  const parsed = new Date(text.replace(" ", "T"));
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+/*
+  Ver.0.9.25
+  「今入院中か」ではなく、対象勤務帯が入院期間と重なるかで判定する。
+  これにより、現在入院中でも入院前の過去勤務帯は照合できる。
+*/
+function isResidentHospitalizedDuringShift(user, type, targetDate) {
+  const timing = getShiftTiming(type, targetDate);
+  if (!timing) {
+    return isResidentHospitalized(user);
+  }
+
+  const periods = (
+    Array.isArray(residentHospitalizationPeriods)
+      ? residentHospitalizationPeriods
+      : []
+  ).filter(item => String(item.user || "") === String(user || ""));
+
+  /*
+    residentCareAudit由来の入院期間履歴があれば、必ず履歴を正本にする。
+    複数回の入退院があっても、対象勤務帯との時間重複で判定できる。
+  */
+  if (periods.length > 0) {
+    return periods.some(period => {
+      const hospitalizedAt =
+        parseResidentCareDateTimeForShift(period.hospitalizedAt);
+      if (!hospitalizedAt) return false;
+      const returnedAt =
+        parseResidentCareDateTimeForShift(period.returnedAt);
+      return (
+        hospitalizedAt < timing.shiftEnd &&
+        (!returnedAt || returnedAt > timing.shiftStart)
+      );
+    });
+  }
+
+  /* 旧データ等で履歴が無い場合は、直近の状態をフォールバックに使う。 */
+  const care = getResidentCareState(user);
+  const hospitalizedAt =
+    parseResidentCareDateTimeForShift(care.hospitalizedAt);
+  if (!hospitalizedAt) return false;
+  const returnedAt =
+    parseResidentCareDateTimeForShift(care.returnedAt);
+
+  return (
+    hospitalizedAt < timing.shiftEnd &&
+    (!returnedAt || returnedAt > timing.shiftStart)
+  );
+}
+
+function getRecoveryUsersForCurrentUnit(type, targetDate) {
   return Object.keys(userUnits || {})
     .filter(user => String(userUnits[user]) === String(currentUnit))
+    .filter(user => !isResidentHospitalizedDuringShift(user, type, targetDate))
     .sort((a, b) => String(a).localeCompare(String(b), "ja"));
 }
 
@@ -27211,9 +27298,15 @@ function openHistoricalShiftRecovery(type, targetDate) {
     return;
   }
 
-  const users = getRecoveryUsersForCurrentUnit();
   const timing = getShiftTiming(type, targetDate);
   if (!timing) return;
+
+  const unitUsers = Object.keys(userUnits || {})
+    .filter(user => String(userUnits[user]) === String(currentUnit));
+  const users = getRecoveryUsersForCurrentUnit(type, targetDate);
+  const hospitalizedUsers = unitUsers
+    .filter(user => isResidentHospitalizedDuringShift(user, type, targetDate))
+    .sort((a, b) => String(a).localeCompare(String(b), "ja"));
 
   const rows = users.map((user, index) => {
     const existing = getHistoriesForShift(type, targetDate, user);
@@ -27260,6 +27353,14 @@ function openHistoricalShiftRecovery(type, targetDate) {
         ⚠ 当時の記録を確認して入力してください。記憶だけで「排便なし」にしないでください。<br>
         確認できない利用者は「確認不能」にすると、自動の緩下剤判定を一時停止します。
       </div>
+      ${
+        hospitalizedUsers.length
+          ? `<div class="ui0913-recovery-warning" style="border-color:#b0bec5;background:#f5f7f8;color:#455a64;">
+              🏥 この勤務帯は入院期間と重なるため照合対象外：
+              ${hospitalizedUsers.map(user => escapeHtml(formatResidentName(user))).join("、")}
+            </div>`
+          : ""
+      }
       <div class="confirm-signature-box">
         <div class="confirm-signature-title">✍️ 照合者</div>
         ${getStaffSelectHtml("historicalRecoveryStaff")}
@@ -27790,7 +27891,7 @@ function updateHomeConfirmStatus(
 
 
       /*
-        Ver.0.8.45
+        Ver.0.8.46
         管理者・看護師（全ユニット表示）で
         wait状態のとき、空文字をclassList.add()へ
         渡さないようにする。
@@ -28113,7 +28214,13 @@ function checkNightBowelStatus(
       continue;
     }
 
-    if (isResidentHospitalized(user)) {
+    if (
+      isResidentHospitalizedDuringShift(
+        user,
+        "night",
+        targetDateText
+      )
+    ) {
       continue;
     }
 
@@ -32432,6 +32539,10 @@ async function submitHospitalizeResident(encodedUser) {
       ? result.residentCareStates
       : residentCareStates;
 
+    residentHospitalizationPeriods = Array.isArray(result.residentHospitalizationPeriods)
+      ? result.residentHospitalizationPeriods
+      : residentHospitalizationPeriods;
+
     nurseInstructions = nurseInstructions.map(item => {
       if (
         String(item.user || "") === user &&
@@ -32575,6 +32686,10 @@ async function submitReturnResident(encodedUser) {
       ? result.residentCareStates
       : residentCareStates;
 
+    residentHospitalizationPeriods = Array.isArray(result.residentHospitalizationPeriods)
+      ? result.residentHospitalizationPeriods
+      : residentHospitalizationPeriods;
+
     bowelRecoveryStates = Array.isArray(result.bowelRecoveryStates)
       ? result.bowelRecoveryStates
       : bowelRecoveryStates;
@@ -32683,6 +32798,10 @@ async function submitOutsideBowelBaseline(encodedUser) {
     residentCareStates = Array.isArray(result.residentCareStates)
       ? result.residentCareStates
       : residentCareStates;
+
+    residentHospitalizationPeriods = Array.isArray(result.residentHospitalizationPeriods)
+      ? result.residentHospitalizationPeriods
+      : residentHospitalizationPeriods;
     bowelRecoveryStates = Array.isArray(result.bowelRecoveryStates)
       ? result.bowelRecoveryStates
       : bowelRecoveryStates;
@@ -32764,6 +32883,10 @@ async function submitResidentMedicationResolution(encodedUser, resolution) {
     residentCareStates = Array.isArray(result.residentCareStates)
       ? result.residentCareStates
       : residentCareStates;
+
+    residentHospitalizationPeriods = Array.isArray(result.residentHospitalizationPeriods)
+      ? result.residentHospitalizationPeriods
+      : residentHospitalizationPeriods;
 
     closeCommonModal();
     refreshResidentCareRelatedUI();
@@ -33364,6 +33487,11 @@ async function loadLightSyncDataFromGoogle() {
       ? data.residentCareStates
       : residentCareStates;
 
+  residentHospitalizationPeriods =
+    Array.isArray(data.residentHospitalizationPeriods)
+      ? data.residentHospitalizationPeriods
+      : residentHospitalizationPeriods;
+
   applyDailyConfirmStatus(
     data.dailyConfirms
   );
@@ -33550,6 +33678,11 @@ async function loadSyncDataFromGoogle() {
     Array.isArray(data.residentCareStates)
       ? data.residentCareStates
       : residentCareStates;
+
+  residentHospitalizationPeriods =
+    Array.isArray(data.residentHospitalizationPeriods)
+      ? data.residentHospitalizationPeriods
+      : residentHospitalizationPeriods;
 
   // Ver.0.9.18: 看護師の勤務帯表示対象を判定する前にマスターを更新
   setMasterDataFromServer(data);
