@@ -6095,7 +6095,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   padding: 7px 9px calc(7px + env(safe-area-inset-bottom));
   background: rgba(255,255,255,.97);
   border-top: 1px solid var(--ui09-line);
@@ -7724,6 +7724,82 @@ body {
   box-shadow: none;
 }
 
+/* =========================
+   Ver.0.9.31 その他：押した項目の直下に展開 / ユニット別状況
+========================= */
+.other-menu-list > #otherStatusPanel.ui0915-status-panel,
+.other-menu-list > #otherInfoPanel.ui099-info-panel,
+.ui099-admin-menu > .other-admin-panel {
+  margin: 0 !important;
+  border-left: 0;
+  border-right: 0;
+  border-radius: 0;
+  box-shadow: inset 0 1px 0 var(--ui09-line, #e4eaec);
+}
+
+.other-menu-list > #otherStatusPanel.ui0915-status-panel {
+  padding: 12px 14px 14px;
+  background: #f8fafb;
+}
+
+.other-menu-list > #otherInfoPanel.ui099-info-panel {
+  padding: 12px 14px 14px;
+  background: #f8fafb;
+}
+
+.ui099-admin-menu > .other-admin-panel {
+  padding: 14px;
+  background: #fbfcfc;
+}
+
+.status-unit-group {
+  margin-top: 14px;
+}
+
+.status-unit-group:first-child {
+  margin-top: 0;
+}
+
+.status-unit-group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 2px 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #edf5f3;
+  color: var(--ui09-teal-dark, #176b63);
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.status-unit-group-title span {
+  flex: none;
+  color: var(--ui09-muted, #78909c);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.status-unit-select {
+  width: auto !important;
+  min-width: 150px !important;
+}
+
+@media (max-width: 430px) {
+  #otherStatusContent .status-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  #otherStatusContent .status-sort-select,
+  #otherStatusContent .status-unit-select {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
 @media (max-width: 390px) {
   #otherStatusPanel.ui0915-status-panel {
     padding: 11px;
@@ -7894,8 +7970,8 @@ body {
   display: none !important;
 }
 
-.ui09-bottom-nav.nurse-four-nav.bottom-nav {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+.ui09-bottom-nav.nurse-five-nav.bottom-nav {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 /* ルール一覧：PCでも横に広がり過ぎない */
@@ -8195,6 +8271,31 @@ body {
     font-size: 13px;
   }
 }
+
+
+/* ============================================================
+   Ver.0.9.31 勤務確認を排便入力から分離
+============================================================ */
+#shiftConfirmPage .ui09-page-head {
+  margin-bottom: 12px;
+}
+#shiftConfirmPage .ui095-shift-section {
+  margin-top: 0;
+}
+#shiftConfirmPage .ui095-shift-actions {
+  margin-top: 10px;
+}
+@media (max-width: 430px) {
+  .ui09-bottom-nav .nav-button small {
+    font-size: 9px;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+  .ui09-bottom-nav .nav-button span {
+    font-size: 18px;
+  }
+}
+
 </style>
 </head>
 
@@ -8237,7 +8338,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.29</div>
+      <div class="ui09-brand-version">Ver.0.9.31</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8346,7 +8447,7 @@ body {
           id="homeDayConfirmCard"
           type="button"
           class="home-shift-card ui09-shift-card"
-          onclick="openPage('bowelPage'); checkTodayBowelStatus();"
+          onclick="openPage('shiftConfirmPage'); checkTodayBowelStatus();"
         >
           <div>
             <div class="home-shift-name">☀️ 日中帯</div>
@@ -8359,7 +8460,7 @@ body {
           id="homeNightConfirmCard"
           type="button"
           class="home-shift-card ui09-shift-card"
-          onclick="openPage('bowelPage'); checkNightBowelStatus();"
+          onclick="openPage('shiftConfirmPage'); checkNightBowelStatus();"
         >
           <div>
             <div class="home-shift-name">🌙 夜勤帯</div>
@@ -8597,6 +8698,27 @@ body {
         </section>
       </div>
     </details>
+
+
+
+  </section>
+
+
+  <!-- =========================
+       勤務確認 Ver.0.9.31
+  ========================== -->
+  <section
+    id="shiftConfirmPage"
+    class="app-page ui09-page"
+  >
+
+    <div class="ui09-page-head">
+      <div>
+        <div class="ui09-kicker">ユニット全体</div>
+        <div class="ui09-unit">勤務帯ごとの排便確認</div>
+      </div>
+      <div class="ui09-page-title">勤務確認</div>
+    </div>
 
     <!-- ユニット全体に関係する操作。個人詳細とは分離する -->
     <section class="ui09-panel ui095-shift-section">
@@ -9195,7 +9317,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.29
+            Ver.0.9.31
           </span>
         </div>
 
@@ -9204,7 +9326,7 @@ body {
             GAS
           </span>
           <span class="other-info-value">
-            Ver.0.8.43
+            Ver.0.8.48
           </span>
         </div>
 
@@ -9627,6 +9749,15 @@ body {
     >
       <span>◇</span>
       <small>排便入力</small>
+    </button>
+
+    <button
+      class="nav-button"
+      data-page="shiftConfirmPage"
+      onclick="openPage('shiftConfirmPage')"
+    >
+      <span>✓</span>
+      <small>勤務確認</small>
     </button>
 
     <button
@@ -17129,7 +17260,7 @@ function setStatusSortMode(value) {
     otherStatusPanelOpen
   ) {
     otherStatusContent.innerHTML =
-      html;
+      getOtherStatusHtml();
   }
 }
 
@@ -18637,16 +18768,59 @@ function formatStatusDate(value) {
 }
 
 
-function getStatusHtml() {
+function getStatusHtml(options = {}) {
+
+  const safeOptions =
+    options && typeof options === "object"
+      ? options
+      : {};
+
+  const requestedUnit =
+    String(
+      safeOptions.unitFilter || ""
+    ).trim();
+
+  const effectiveUnit =
+    currentUnit === "all"
+      ? (
+          requestedUnit &&
+          requestedUnit !== "all"
+            ? requestedUnit
+            : "all"
+        )
+      : String(currentUnit);
+
+  const hideSummary =
+    Boolean(safeOptions.hideSummary);
+
+  const showUnitSelector =
+    Boolean(safeOptions.showUnitSelector) &&
+    currentUnit === "all";
+
+  const groupByUnit =
+    Boolean(safeOptions.groupByUnit) &&
+    effectiveUnit === "all";
 
   const infos = [];
 
 
   for (const user in points) {
 
+    const userUnit =
+      String(
+        userUnits[user] || ""
+      ).trim();
+
     if (
       currentUnit !== "all" &&
-      userUnits[user] !== currentUnit
+      userUnit !== String(currentUnit)
+    ) {
+      continue;
+    }
+
+    if (
+      effectiveUnit !== "all" &&
+      userUnit !== effectiveUnit
     ) {
       continue;
     }
@@ -18657,27 +18831,62 @@ function getStatusHtml() {
   }
 
 
-  if (statusSortMode === "name") {
+  const compareInfo = (a, b) => {
 
-    infos.sort(
-      (a, b) =>
-        a.user.localeCompare(
-          b.user,
-          "ja"
-        )
+    if (statusSortMode === "name") {
+      return a.user.localeCompare(
+        b.user,
+        "ja"
+      );
+    }
+
+    return (
+      a.priority - b.priority ||
+      b.days - a.days ||
+      a.user.localeCompare(
+        b.user,
+        "ja"
+      )
     );
+  };
+
+
+  if (groupByUnit) {
+
+    infos.sort((a, b) => {
+
+      const unitA =
+        String(
+          userUnits[a.user] || ""
+        );
+
+      const unitB =
+        String(
+          userUnits[b.user] || ""
+        );
+
+      const numA = Number(unitA);
+      const numB = Number(unitB);
+
+      const unitCompare =
+        Number.isFinite(numA) &&
+        Number.isFinite(numB)
+          ? numA - numB
+          : getUnitName(unitA)
+              .localeCompare(
+                getUnitName(unitB),
+                "ja"
+              );
+
+      return (
+        unitCompare ||
+        compareInfo(a, b)
+      );
+    });
 
   } else {
 
-    infos.sort(
-      (a, b) =>
-        a.priority - b.priority ||
-        b.days - a.days ||
-        a.user.localeCompare(
-          b.user,
-          "ja"
-        )
-    );
+    infos.sort(compareInfo);
   }
 
 
@@ -18709,14 +18918,69 @@ function getStatusHtml() {
     actionCount;
 
 
+  const unitOptions =
+    Object.entries(
+      unitMaster || {}
+    )
+      .filter(([unitId]) =>
+        String(unitId || "").trim()
+      )
+      .sort((a, b) => {
+        const an = Number(a[0]);
+        const bn = Number(b[0]);
+        if (
+          Number.isFinite(an) &&
+          Number.isFinite(bn)
+        ) {
+          return an - bn;
+        }
+        return String(a[1] || "")
+          .localeCompare(
+            String(b[1] || ""),
+            "ja"
+          );
+      });
+
+
+  const unitControl =
+    showUnitSelector
+      ? `
+        <select
+          class="status-sort-select status-unit-select"
+          aria-label="表示ユニット"
+          onchange="setOtherStatusUnitFilter(this.value)"
+        >
+          <option
+            value="all"
+            ${effectiveUnit === "all" ? "selected" : ""}
+          >
+            全ユニット
+          </option>
+          ${
+            unitOptions.map(([unitId, unitName]) => `
+              <option
+                value="${escapeHtml(String(unitId))}"
+                ${effectiveUnit === String(unitId) ? "selected" : ""}
+              >
+                ${escapeHtml(String(unitName))}
+              </option>
+            `).join("")
+          }
+        </select>
+      `
+      : `
+        <span class="status-toolbar-label">
+          ${escapeHtml(
+            getUnitName(effectiveUnit)
+          )}
+        </span>
+      `;
+
+
   let html = `
     <div class="status-toolbar">
 
-      <span class="status-toolbar-label">
-        ${escapeHtml(
-          getUnitName(currentUnit)
-        )}
-      </span>
+      ${unitControl}
 
       <select
         class="status-sort-select"
@@ -18747,32 +19011,38 @@ function getStatusHtml() {
       </select>
 
     </div>
-
-    <div class="status-summary-grid">
-
-      <div class="status-summary-card nurse">
-        <span class="status-summary-label">
-          🚨 看護師確認
-        </span>
-        <strong>${nurseCount}名</strong>
-      </div>
-
-      <div class="status-summary-card action">
-        <span class="status-summary-label">
-          ⚠ 本日対応
-        </span>
-        <strong>${actionCount}名</strong>
-      </div>
-
-      <div class="status-summary-card observe">
-        <span class="status-summary-label">
-          ○ その他
-        </span>
-        <strong>${observeCount}名</strong>
-      </div>
-
-    </div>
   `;
+
+
+  if (!hideSummary) {
+
+    html += `
+      <div class="status-summary-grid">
+
+        <div class="status-summary-card nurse">
+          <span class="status-summary-label">
+            🚨 看護師確認
+          </span>
+          <strong>${nurseCount}名</strong>
+        </div>
+
+        <div class="status-summary-card action">
+          <span class="status-summary-label">
+            ⚠ 本日対応
+          </span>
+          <strong>${actionCount}名</strong>
+        </div>
+
+        <div class="status-summary-card observe">
+          <span class="status-summary-label">
+            ○ その他
+          </span>
+          <strong>${observeCount}名</strong>
+        </div>
+
+      </div>
+    `;
+  }
 
 
   if (infos.length === 0) {
@@ -18790,8 +19060,42 @@ function getStatusHtml() {
   html +=
     "<div class='status-list'>";
 
+  let lastGroupUnit = null;
+
 
   for (const info of infos) {
+
+    const infoUnit =
+      String(
+        userUnits[info.user] || ""
+      ).trim();
+
+    if (
+      groupByUnit &&
+      infoUnit !== lastGroupUnit
+    ) {
+
+      if (lastGroupUnit !== null) {
+        html += "</div>";
+      }
+
+      const groupCount =
+        infos.filter(item =>
+          String(
+            userUnits[item.user] || ""
+          ).trim() === infoUnit
+        ).length;
+
+      html += `
+        <div class="status-unit-group">
+          <div class="status-unit-group-title">
+            ${escapeHtml(getUnitName(infoUnit))}
+            <span>${groupCount}名</span>
+          </div>
+      `;
+
+      lastGroupUnit = infoUnit;
+    }
 
     const safeUser =
       encodeURIComponent(
@@ -18915,9 +19219,34 @@ function getStatusHtml() {
   }
 
 
+  if (
+    groupByUnit &&
+    lastGroupUnit !== null
+  ) {
+    html += "</div>";
+  }
+
   html += "</div>";
 
   return html;
+}
+
+
+function getOtherStatusHtml() {
+
+  const filter =
+    currentUnit === "all"
+      ? otherStatusUnitFilter
+      : String(currentUnit);
+
+  return getStatusHtml({
+    unitFilter: filter,
+    showUnitSelector:
+      currentUnit === "all",
+    groupByUnit:
+      filter === "all",
+    hideSummary: true
+  });
 }
 
 
@@ -18942,7 +19271,8 @@ function renderStatusAreas() {
       );
 
     if (visibleStatus) {
-      visibleStatus.innerHTML = html;
+      visibleStatus.innerHTML =
+        getOtherStatusHtml();
     }
   }
 }
@@ -20177,17 +20507,39 @@ async function changeUserUnit() {
 var otherStatusPanelOpen = false;
 var otherInfoPanelOpen = false;
 var otherAdminPanel = "";
+var otherStatusUnitFilter = "all";
 
 
-function getOtherStatusCounts() {
+function getOtherStatusCounts(unitFilter = "") {
 
   const infos = [];
 
+  const effectiveFilter =
+    currentUnit === "all"
+      ? (
+          String(unitFilter || "all") === "all"
+            ? "all"
+            : String(unitFilter || "")
+        )
+      : String(currentUnit);
+
   for (const user in points) {
+
+    const userUnit =
+      String(
+        userUnits[user] || ""
+      );
 
     if (
       currentUnit !== "all" &&
-      userUnits[user] !== currentUnit
+      userUnit !== String(currentUnit)
+    ) {
+      continue;
+    }
+
+    if (
+      effectiveFilter !== "all" &&
+      userUnit !== effectiveFilter
     ) {
       continue;
     }
@@ -20232,6 +20584,35 @@ function getOtherStatusCounts() {
     totalCount:
       infos.length
   };
+}
+
+
+function setOtherStatusUnitFilter(value) {
+
+  if (currentUnit !== "all") {
+    otherStatusUnitFilter =
+      String(currentUnit);
+    updateOtherPageUI();
+    return;
+  }
+
+  const requested =
+    String(value || "all").trim();
+
+  const allowed =
+    new Set([
+      "all",
+      ...Object.keys(
+        unitMaster || {}
+      ).map(String)
+    ]);
+
+  otherStatusUnitFilter =
+    allowed.has(requested)
+      ? requested
+      : "all";
+
+  updateOtherPageUI();
 }
 
 
@@ -20536,7 +20917,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.29</strong>
+        <strong>Ver.0.9.31</strong>
       </div>
       <div>
         <span>GAS</span>
@@ -20611,10 +20992,46 @@ function updateOtherAdminBadges() {
 }
 
 
+function placeOtherPanelAfterTrigger(
+  panelId,
+  trigger
+) {
+
+  const panel =
+    document.getElementById(
+      panelId
+    );
+
+  const button =
+    typeof trigger === "string"
+      ? document.getElementById(trigger)
+      : trigger;
+
+  if (!panel || !button) {
+    return;
+  }
+
+  if (button.nextElementSibling !== panel) {
+    button.insertAdjacentElement(
+      "afterend",
+      panel
+    );
+  }
+}
+
+
 function toggleOtherInfoPanel() {
 
   otherInfoPanelOpen =
     !otherInfoPanelOpen;
+
+  if (otherInfoPanelOpen) {
+    otherStatusPanelOpen = false;
+    placeOtherPanelAfterTrigger(
+      "otherInfoPanel",
+      "otherInfoToggleButton"
+    );
+  }
 
   updateOtherPageUI();
 }
@@ -20677,10 +21094,28 @@ function updateOtherPageUI() {
   }
 
 
+  if (
+    currentUnit !== "all"
+  ) {
+    otherStatusUnitFilter =
+      String(currentUnit);
+  } else if (
+    otherStatusUnitFilter !== "all" &&
+    !Object.prototype.hasOwnProperty.call(
+      unitMaster || {},
+      otherStatusUnitFilter
+    )
+  ) {
+    otherStatusUnitFilter = "all";
+  }
+
+
   if (summary) {
 
     const counts =
-      getOtherStatusCounts();
+      getOtherStatusCounts(
+        otherStatusUnitFilter
+      );
 
     summary.innerHTML = `
       <div class="other-summary-card nurse">
@@ -20761,10 +21196,47 @@ function updateOtherPageUI() {
 
     if (statusArea) {
       statusArea.innerHTML =
-        getStatusHtml();
+        getOtherStatusHtml();
     }
   }
 
+
+  const infoPanel =
+    document.getElementById(
+      "otherInfoPanel"
+    );
+
+  const infoButton =
+    document.getElementById(
+      "otherInfoToggleButton"
+    );
+
+  if (infoPanel) {
+    infoPanel.classList.toggle(
+      "open",
+      otherInfoPanelOpen
+    );
+  }
+
+  if (infoButton) {
+
+    infoButton.classList.toggle(
+      "active",
+      otherInfoPanelOpen
+    );
+
+    const chevron =
+      infoButton.querySelector(
+        ".other-menu-chevron"
+      );
+
+    if (chevron) {
+      chevron.textContent =
+        otherInfoPanelOpen
+          ? "⌃"
+          : "›";
+    }
+  }
 
   updateOtherAppInfo();
 }
@@ -20774,6 +21246,14 @@ function toggleOtherStatusPanel() {
 
   otherStatusPanelOpen =
     !otherStatusPanelOpen;
+
+  if (otherStatusPanelOpen) {
+    otherInfoPanelOpen = false;
+    placeOtherPanelAfterTrigger(
+      "otherStatusPanel",
+      "otherStatusToggleButton"
+    );
+  }
 
   updateOtherPageUI();
 }
@@ -20808,6 +21288,21 @@ function toggleOtherAdminPanel(
     otherAdminPanel === panel
       ? ""
       : panel;
+
+  if (otherAdminPanel) {
+    const trigger =
+      document.querySelector(
+        `[data-admin-panel="${otherAdminPanel}"]`
+      );
+
+    placeOtherPanelAfterTrigger(
+      `otherAdmin${
+        otherAdminPanel.charAt(0).toUpperCase() +
+        otherAdminPanel.slice(1)
+      }Panel`,
+      trigger
+    );
+  }
 
   const panels = {
     user:
@@ -20974,7 +21469,7 @@ function updateRoleUI() {
 
   if (bottomNav) {
     bottomNav.classList.toggle(
-      "nurse-four-nav",
+      "nurse-five-nav",
       nurseShiftOnly
     );
   }
@@ -27183,7 +27678,7 @@ function openShiftConfirmationFromAlert(type, targetDate) {
     return;
   }
 
-  openPage("bowelPage");
+  openPage("shiftConfirmPage");
   if (type === "day") {
     checkTodayBowelStatus(targetDate);
   } else {
@@ -33892,6 +34387,14 @@ function getTodayText() {
 
 function openPage(pageId) {
 
+  // Ver.0.9.31 看護師は排便入力ではなく勤務確認へ
+  if (
+    pageId === "bowelPage" &&
+    currentRole === "nurse"
+  ) {
+    pageId = "shiftConfirmPage";
+  }
+
   // 全ページを非表示
   document
     .querySelectorAll(".app-page")
@@ -33930,6 +34433,11 @@ function openPage(pageId) {
     updateBowelTargetUI({
       updateResult: false
     });
+  }
+
+
+  if (pageId === "shiftConfirmPage") {
+    loadDailyConfirmStatus();
   }
 
 
