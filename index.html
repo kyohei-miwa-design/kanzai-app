@@ -8826,7 +8826,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.40</div>
+      <div class="ui09-brand-version">Ver.0.9.41</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -9924,7 +9924,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.40
+            Ver.0.9.41
           </span>
         </div>
 
@@ -9933,7 +9933,7 @@ body {
             GAS
           </span>
           <span class="other-info-value">
-            Ver.0.8.53
+            Ver.0.8.55
           </span>
         </div>
 
@@ -10590,7 +10590,7 @@ let histories = [];
 let checkHistory = [];
 let bowelDateTimeManual = false;
 
-// Ver.0.9.40
+// Ver.0.9.41
 // 起動/自動同期は直近の運用データだけ。
 // 履歴画面は「必要な利用者・必要な期間」だけを都度取得し、セッション中だけキャッシュする。
 let fullHistoryArchiveLoaded = false;      // 旧0.9.38互換（0.9.39では通常使わない）
@@ -10684,6 +10684,10 @@ const FULL_SYNC_INTERVAL_MS =
 
 let syncConsecutiveFailureCount = 0;
 let lastFullSyncCompletedAt = 0;
+
+// Ver.0.9.41: 起動に不要な補助データは初期画面の後で遅延取得する。
+let initialAuxLoadingPromise = null;
+let initialAuxLoadTimer = null;
 
 // Ver.0.8.22
 // 書き込み処理中に30秒自動同期が割り込むのを防ぐ
@@ -12412,7 +12416,7 @@ async function register() {
     // ⑦ 画面を最終更新
     // =========================
 
-    // Ver.0.9.40: 期間指定履歴キャッシュは新規記録で無効化。
+    // Ver.0.9.41: 期間指定履歴キャッシュは新規記録で無効化。
     invalidateHistoryRangeCaches();
     refreshHistoryDisplays();
 
@@ -18297,6 +18301,15 @@ async function initialize() {
 
     await loadInitialDataFromGoogle();
 
+    /*
+      Ver.0.9.41
+      業務開始に不要な職員マスター・評価履歴・入院期間履歴は、
+      初期コア同期完了後にバックグラウンド取得する。
+    */
+    scheduleInitialAuxDataLoad(
+      350
+    );
+
   } catch (error) {
 
     console.error(
@@ -18319,7 +18332,7 @@ async function initialize() {
   startAutoRefresh();
 
   /*
-    Ver.0.9.40
+    Ver.0.9.41
     初期同期に失敗した場合、従来は次の30秒同期まで閲覧専用状態が続いた。
     5秒後に軽量同期を一度試し、Google側の一時的な失敗から早く復帰する。
   */
@@ -18424,6 +18437,14 @@ async function refreshFromGoogle(
     // 自動同期で全履歴を再取得しない。
     // マスターを含む軽量運用同期だけを実行する。
     await loadLightSyncDataFromGoogle();
+
+    /*
+      職員マスター・評価履歴・入院期間履歴は5分単位で
+      バックグラウンド更新し、30秒同期を待たせない。
+    */
+    if (shouldRunFullSync()) {
+      scheduleInitialAuxDataLoad(250);
+    }
 
 
     const afterData =
@@ -22352,11 +22373,11 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.40</strong>
+        <strong>Ver.0.9.41</strong>
       </div>
       <div>
         <span>GAS</span>
-        <strong>Ver.0.8.53</strong>
+        <strong>Ver.0.8.55</strong>
       </div>
       <div>
         <span>ログイン範囲</span>
@@ -23532,12 +23553,18 @@ async function loadInitialDataFromGoogle() {
     if (
       data &&
       Number.isFinite(
-        Number(data.initialDataDurationMs)
+        Number(
+          data.initialCoreDurationMs ??
+          data.initialDataDurationMs
+        )
       )
     ) {
       console.log(
-        "GAS初期データ処理時間:",
-        Number(data.initialDataDurationMs),
+        "GAS初期コア処理時間:",
+        Number(
+          data.initialCoreDurationMs ??
+          data.initialDataDurationMs
+        ),
         "ms"
       );
       console.log(
@@ -23548,12 +23575,15 @@ async function loadInitialDataFromGoogle() {
       );
 
       if (
-        data.initialTimings &&
-        typeof data.initialTimings === "object"
+        (data.initialCoreTimings || data.initialTimings) &&
+        typeof (
+          data.initialCoreTimings ||
+          data.initialTimings
+        ) === "object"
       ) {
         console.log(
-          "GAS初期同期 内訳:",
-          data.initialTimings
+          "GAS初期コア同期 内訳:",
+          data.initialCoreTimings || data.initialTimings
         );
       }
     }
@@ -23633,12 +23663,14 @@ async function loadInitialDataFromGoogle() {
         {}
       );
 
-    ruleEvaluations =
+    if (
       Array.isArray(
         data.ruleEvaluations
       )
-        ? data.ruleEvaluations
-        : [];
+    ) {
+      ruleEvaluations =
+        data.ruleEvaluations;
+    }
 
     // =========================
     // checks
@@ -23675,10 +23707,14 @@ async function loadInitialDataFromGoogle() {
         ? data.residentCareStates
         : [];
 
-    residentHospitalizationPeriods =
-      Array.isArray(data.residentHospitalizationPeriods)
-        ? data.residentHospitalizationPeriods
-        : [];
+    if (
+      Array.isArray(
+        data.residentHospitalizationPeriods
+      )
+    ) {
+      residentHospitalizationPeriods =
+        data.residentHospitalizationPeriods;
+    }
 
     // =========================
     // staffMaster / unitMaster
@@ -23736,9 +23772,6 @@ markSyncSuccess(
   data.serverTime || ""
 );
 
-lastFullSyncCompletedAt =
-  Date.now();
-
     if (
       data.pointMigration &&
       data.pointMigration.migrated
@@ -23792,6 +23825,142 @@ lastFullSyncCompletedAt =
 
     throw error;
   }
+}
+
+
+function scheduleInitialAuxDataLoad(
+  delayMs = 500
+) {
+
+  if (initialAuxLoadTimer) {
+    clearTimeout(initialAuxLoadTimer);
+  }
+
+  const safeDelay =
+    Math.max(
+      100,
+      Number(delayMs || 500)
+    );
+
+  initialAuxLoadTimer =
+    setTimeout(() => {
+      initialAuxLoadTimer = null;
+
+      if (currentRole === "") {
+        return;
+      }
+
+      if (isWriteActivityActive()) {
+        scheduleInitialAuxDataLoad(2000);
+        return;
+      }
+
+      loadInitialAuxDataFromGoogle()
+        .catch(error => {
+          // 補助データ失敗では業務画面をエラー扱いにしない。
+          console.warn(
+            "初期補助データのバックグラウンド取得に失敗",
+            error
+          );
+        });
+    }, safeDelay);
+}
+
+
+async function loadInitialAuxDataFromGoogle() {
+
+  if (initialAuxLoadingPromise) {
+    return initialAuxLoadingPromise;
+  }
+
+  initialAuxLoadingPromise =
+    (async () => {
+      console.time("★ 初期補助データ遅延取得");
+
+      try {
+        const data =
+          await requestInitialAuxDataFromServer();
+
+        if (data && data.error) {
+          throw new Error(
+            data.message ||
+            "初期補助データの取得に失敗しました"
+          );
+        }
+
+        verifyServerDataScope(data);
+
+        if (
+          data &&
+          Number.isFinite(
+            Number(data.initialAuxDurationMs)
+          )
+        ) {
+          console.log(
+            "GAS初期補助処理時間:",
+            Number(data.initialAuxDurationMs),
+            "ms"
+          );
+
+          if (
+            data.auxTimings &&
+            typeof data.auxTimings === "object"
+          ) {
+            console.log(
+              "GAS初期補助 内訳:",
+              data.auxTimings
+            );
+          }
+        }
+
+        setMasterDataFromServer(data);
+
+        if (Array.isArray(data.ruleEvaluations)) {
+          ruleEvaluations = data.ruleEvaluations;
+        }
+
+        if (
+          Array.isArray(
+            data.residentHospitalizationPeriods
+          )
+        ) {
+          residentHospitalizationPeriods =
+            data.residentHospitalizationPeriods;
+        }
+
+        updateUserSelects();
+        updateRuleEvaluationAlerts();
+        renderRuleEvaluationAdminList();
+
+        if (
+          document.getElementById("otherPage")
+            ?.classList.contains("active")
+        ) {
+          updateOtherPageUI();
+        }
+
+        if (
+          document.getElementById("historyPage")
+            ?.classList.contains("active")
+        ) {
+          renderHistoryHub();
+        }
+
+        lastFullSyncCompletedAt =
+          Date.now();
+
+        saveData();
+        return true;
+
+      } finally {
+        console.timeEnd(
+          "★ 初期補助データ遅延取得"
+        );
+        initialAuxLoadingPromise = null;
+      }
+    })();
+
+  return initialAuxLoadingPromise;
 }
 
 function addHistory(user, type) {
@@ -31920,7 +32089,7 @@ async function openHistoricalShiftRecovery(type, targetDate) {
   if (!timing) return;
 
   /*
-    Ver.0.9.40
+    Ver.0.9.41
     起動時履歴を3日へ縮小したため、過去勤務帯を開く時だけ
     対象勤務帯の履歴を期間指定APIから取得する。
     これで7日前の復旧精度を落とさず、初期同期を軽くする。
@@ -34173,9 +34342,14 @@ async function fetchWithTimeout(
   } catch (error) {
 
     if (error && error.name === "AbortError") {
-      throw new Error(
-        "通信がタイムアウトしました"
-      );
+      const timeoutError =
+        new Error(
+          "通信がタイムアウトしました"
+        );
+
+      timeoutError.code = "TIMEOUT";
+      timeoutError.transient = true;
+      throw timeoutError;
     }
 
     throw error;
@@ -34504,148 +34678,97 @@ async function ensureFullHistoryArchiveLoaded(force = false) {
   抑えるため、1回の待機上限も20秒へ短縮する。
 */
 
-async function requestInitialDataFromServer(
-  retries = 3
-) {
+async function requestInitialDataFromServer() {
 
   /*
-    Ver.0.9.40
-    0.9.39では1回20秒待ってから再試行していたため、
-    「普段30秒前後・たまに6秒」という典型的な長尾待ちが発生していた。
+    Ver.0.9.41
+    初期同期はコアデータ1回だけを待つ。
 
-    初回は10秒で見切り、2回目12秒、最後だけ18秒まで待つ。
-    Apps Script側では読取同期をScriptLockから外したため、
-    前のタイムアウト処理がサーバー側で残っていても次の読取を阻害しない。
+    0.9.40のように短いタイムアウトで同一GAS処理を連続起動すると、
+    ブラウザ側がAbortしてもApps Script側の実行が残り、
+    2回目・3回目と自分自身で競合する可能性がある。
+
+    コア同期は20秒まで1回待ち、タイムアウトした場合は即時再送しない。
+    initialize側の5秒後軽量同期で復旧する。
   */
-  const timeoutSchedule = [
-    10000,
-    12000,
-    18000
-  ];
+  const started = performance.now();
 
-  const maxAttempts =
-    Math.min(
-      Math.max(
+  try {
+    const response =
+      await fetchApi(
+        API_URL +
+          "?action=getInitialCoreData",
         1,
-        Number(retries || 1)
-      ),
-      timeoutSchedule.length
+        20000
+      );
+
+    const data =
+      await response.json();
+
+    if (data && data.error) {
+      const error =
+        new Error(
+          data.message ||
+          "初期コアデータの取得に失敗しました"
+        );
+      error.code = String(data.code || "");
+      error.retryable = Boolean(data.retryable);
+      error.transient = error.retryable;
+      throw error;
+    }
+
+    console.log(
+      "初期コア同期 通信:",
+      Math.round(
+        performance.now() - started
+      ) + "ms"
     );
 
-  let lastError = null;
+    return data;
 
-  for (
-    let attempt = 1;
-    attempt <= maxAttempts;
-    attempt++
-  ) {
+  } catch (error) {
+    console.warn(
+      "初期コア同期失敗 (" +
+      Math.round(
+        performance.now() - started
+      ) +
+      "ms)",
+      error
+    );
+    throw error;
+  }
+}
 
-    const attemptStarted =
-      performance.now();
 
-    try {
+async function requestInitialAuxDataFromServer() {
+  const started = performance.now();
 
-      const timeoutMs =
-        timeoutSchedule[
-          attempt - 1
-        ];
+  const response =
+    await fetchApi(
+      API_URL +
+        "?action=getInitialAuxData",
+      1,
+      30000
+    );
 
-      const response =
-        await fetchApi(
-          API_URL +
-            "?action=getInitialData",
-          1,
-          timeoutMs
-        );
+  const data =
+    await response.json();
 
-      const data =
-        await response.json();
-
-      if (data && data.error) {
-
-        const error =
-          new Error(
-            data.message ||
-            "初期データの取得に失敗しました"
-          );
-
-        error.code =
-          String(
-            data.code || ""
-          );
-
-        error.retryable =
-          Boolean(
-            data.retryable
-          );
-
-        error.transient =
-          error.retryable;
-
-        throw error;
-      }
-
-      console.log(
-        `初期同期 通信 ${attempt}回目:`,
-        Math.round(
-          performance.now() -
-          attemptStarted
-        ) + "ms"
-      );
-
-      return data;
-
-    } catch (error) {
-
-      lastError = error;
-
-      const elapsed =
-        Math.round(
-          performance.now() -
-          attemptStarted
-        );
-
-      console.warn(
-        `初期同期失敗 ${attempt}/${maxAttempts} (${elapsed}ms)`,
-        error
-      );
-
-      /*
-        SESSION_EXPIRED等、再試行しても改善しない認証エラーは
-        そのまま上位へ返す。
-      */
-      if (
-        !isTransientApiError(error)
-      ) {
-        throw error;
-      }
-
-      if (attempt < maxAttempts) {
-
-        /*
-          初期画面では長いバックオフを入れず、
-          Google側の一時的な遅延から素早く別リクエストへ切り替える。
-        */
-        const delay =
-          attempt === 1
-            ? 500
-            : 900;
-
-        console.log(
-          `初期同期を${delay}ms後に再試行します`
-        );
-
-        await wait(delay);
-      }
-    }
+  if (data && data.error) {
+    throw new Error(
+      data.message ||
+      "初期補助データの取得に失敗しました"
+    );
   }
 
-  throw (
-    lastError ||
-    new Error(
-      "初期データを取得できませんでした"
-    )
+  console.log(
+    "初期補助同期 通信:",
+    Math.round(
+      performance.now() - started
+    ) + "ms"
   );
+
+  return data;
 }
 
 
@@ -34655,139 +34778,60 @@ async function requestInitialDataFromServer(
   初期同期と同じ認証経路を使用し、POST本文認証の揺らぎを避ける。
 */
 
-async function requestSyncDataFromServer(
-  retries = 3
-) {
+async function requestSyncDataFromServer() {
 
   /*
-    Ver.0.9.40
-    軽量同期も初期同期と同じく長い1回待ちを避ける。
-    通常は数秒で返る想定なので、8秒→10秒→15秒で段階的に再試行する。
+    Ver.0.9.41
+    30秒同期も動的コアデータだけを1回取得する。
+    通信タイムアウト時はその場で連続再送せず、
+    既存データを保持して次の自動同期へ委ねる。
   */
-  const timeoutSchedule = [
-    8000,
-    10000,
-    15000
-  ];
+  const started = performance.now();
 
-  const maxAttempts =
-    Math.min(
-      Math.max(
+  try {
+    const response =
+      await fetchApi(
+        API_URL +
+          "?action=getSyncCoreData",
         1,
-        Number(retries || 1)
-      ),
-      timeoutSchedule.length
+        15000
+      );
+
+    const data =
+      await response.json();
+
+    if (data && data.error) {
+      const error =
+        new Error(
+          data.message ||
+          "軽量同期データの取得に失敗しました"
+        );
+      error.code = String(data.code || "");
+      error.retryable = Boolean(data.retryable);
+      error.transient = error.retryable;
+      throw error;
+    }
+
+    console.log(
+      "軽量コア同期 通信:",
+      Math.round(
+        performance.now() - started
+      ) + "ms"
     );
 
-  let lastError = null;
+    return data;
 
-  for (
-    let attempt = 1;
-    attempt <= maxAttempts;
-    attempt++
-  ) {
-
-    const attemptStarted =
-      performance.now();
-
-    try {
-
-      const response =
-        await fetchApi(
-          API_URL +
-            "?action=getSyncData",
-          1,
-          timeoutSchedule[
-            attempt - 1
-          ]
-        );
-
-      const data =
-        await response.json();
-
-      if (
-        data &&
-        data.error
-      ) {
-
-        const error =
-          new Error(
-            data.message ||
-            "軽量同期データの取得に失敗しました"
-          );
-
-        error.code =
-          String(
-            data.code || ""
-          );
-
-        error.retryable =
-          Boolean(
-            data.retryable
-          );
-
-        error.transient =
-          error.retryable;
-
-        throw error;
-      }
-
-      console.log(
-        `軽量同期 通信 ${attempt}回目:`,
-        Math.round(
-          performance.now() -
-          attemptStarted
-        ) + "ms"
-      );
-
-      return data;
-
-    } catch (error) {
-
-      lastError =
-        error;
-
-      const elapsed =
-        Math.round(
-          performance.now() -
-          attemptStarted
-        );
-
-      console.warn(
-        `軽量同期失敗 ${attempt}/${maxAttempts} (${elapsed}ms)`,
-        error
-      );
-
-      if (
-        !isTransientApiError(
-          error
-        )
-      ) {
-        throw error;
-      }
-
-      if (
-        attempt < maxAttempts
-      ) {
-
-        const delay =
-          attempt === 1
-            ? 400
-            : 800;
-
-        await wait(
-          delay
-        );
-      }
-    }
+  } catch (error) {
+    console.warn(
+      "軽量コア同期失敗 (" +
+      Math.round(
+        performance.now() - started
+      ) +
+      "ms)",
+      error
+    );
+    throw error;
   }
-
-  throw (
-    lastError ||
-    new Error(
-      "軽量同期データを取得できませんでした"
-    )
-  );
 }
 
 
@@ -37808,7 +37852,7 @@ function openPage(pageId) {
   }
 
   if (pageId === "historyPage") {
-    // Ver.0.9.40: 全履歴は取得しない。各導線が必要な期間だけ取得する。
+    // Ver.0.9.41: 全履歴は取得しない。各導線が必要な期間だけ取得する。
     renderHistoryHub();
   }
 
@@ -38323,9 +38367,6 @@ async function loadSyncDataFromGoogle() {
   markSyncSuccess(
     data.serverTime || ""
   );
-
-  lastFullSyncCompletedAt =
-    Date.now();
 
   saveData();
 }
