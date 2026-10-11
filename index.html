@@ -8826,7 +8826,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.41</div>
+      <div class="ui09-brand-version">Ver.0.9.42</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -9924,7 +9924,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.41
+            Ver.0.9.42
           </span>
         </div>
 
@@ -10590,7 +10590,7 @@ let histories = [];
 let checkHistory = [];
 let bowelDateTimeManual = false;
 
-// Ver.0.9.41
+// Ver.0.9.42
 // 起動/自動同期は直近の運用データだけ。
 // 履歴画面は「必要な利用者・必要な期間」だけを都度取得し、セッション中だけキャッシュする。
 let fullHistoryArchiveLoaded = false;      // 旧0.9.38互換（0.9.39では通常使わない）
@@ -10677,17 +10677,22 @@ const AUTO_SYNC_WARNING_THRESHOLD = 2;
 /*
   Ver.0.8.44
   通常は軽量同期。
-  rules / staffMaster / unitMaster は5分ごとの全同期。
+  rules / staffMaster / unitMaster は60秒ごとの補助同期。
+  30秒同期を軽く保ちながら、ルール変更も長時間遅延させない。
 */
 const FULL_SYNC_INTERVAL_MS =
-  5 * 60 * 1000;
+  60 * 1000;
 
 let syncConsecutiveFailureCount = 0;
 let lastFullSyncCompletedAt = 0;
 
-// Ver.0.9.41: 起動に不要な補助データは初期画面の後で遅延取得する。
+// Ver.0.9.42: 起動に不要な補助データは初期画面の後で遅延取得する。
 let initialAuxLoadingPromise = null;
 let initialAuxLoadTimer = null;
+
+// Ver.0.9.42: 初期コア後に運用履歴/与薬/勤務確認を別通信で取得する。
+let initialOperationalLoadingPromise = null;
+let initialOperationalLoadTimer = null;
 
 // Ver.0.8.22
 // 書き込み処理中に30秒自動同期が割り込むのを防ぐ
@@ -12416,7 +12421,7 @@ async function register() {
     // ⑦ 画面を最終更新
     // =========================
 
-    // Ver.0.9.41: 期間指定履歴キャッシュは新規記録で無効化。
+    // Ver.0.9.42: 期間指定履歴キャッシュは新規記録で無効化。
     invalidateHistoryRangeCaches();
     refreshHistoryDisplays();
 
@@ -18302,12 +18307,12 @@ async function initialize() {
     await loadInitialDataFromGoogle();
 
     /*
-      Ver.0.9.41
+      Ver.0.9.42
       業務開始に不要な職員マスター・評価履歴・入院期間履歴は、
       初期コア同期完了後にバックグラウンド取得する。
     */
-    scheduleInitialAuxDataLoad(
-      350
+    scheduleInitialOperationalDataLoad(
+      250
     );
 
   } catch (error) {
@@ -18332,16 +18337,16 @@ async function initialize() {
   startAutoRefresh();
 
   /*
-    Ver.0.9.41
+    Ver.0.9.42
     初期同期に失敗した場合、従来は次の30秒同期まで閲覧専用状態が続いた。
     5秒後に軽量同期を一度試し、Google側の一時的な失敗から早く復帰する。
   */
   if (!serverStateReady) {
     console.log(
-      "初期同期未完了のため5秒後に再接続します"
+      "初期同期未完了のため20秒後に再接続します"
     );
     scheduleNextAutoRefresh(
-      5000
+      20000
     );
   }
 
@@ -22373,7 +22378,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.41</strong>
+        <strong>Ver.0.9.42</strong>
       </div>
       <div>
         <span>GAS</span>
@@ -23676,26 +23681,27 @@ async function loadInitialDataFromGoogle() {
     // checks
     // =========================
 
-    checks =
-      data.checks || {};
-
-    applyPendingCheckOverrides();
+    if (data.checks && typeof data.checks === "object") {
+      checks = data.checks;
+      applyPendingCheckOverrides();
+    }
 
     // =========================
     // histories
     // =========================
 
-    fullHistoryArchiveLoaded = false;
-    historyArchiveLoadingPromise = null;
-    applyOperationalHistoryPayload(
-      data,
-      true
-    );
+    if (Array.isArray(data.histories) || Array.isArray(data.checkHistory)) {
+      fullHistoryArchiveLoaded = false;
+      historyArchiveLoadingPromise = null;
+      applyOperationalHistoryPayload(
+        data,
+        true
+      );
+    }
 
-    nurseInstructions =
-      Array.isArray(data.nurseInstructions)
-        ? data.nurseInstructions
-        : [];
+    if (Array.isArray(data.nurseInstructions)) {
+      nurseInstructions = data.nurseInstructions;
+    }
 
     bowelRecoveryStates =
       Array.isArray(data.bowelRecoveryStates)
@@ -23726,9 +23732,11 @@ async function loadInitialDataFromGoogle() {
       Ver.0.8.44
       勤務帯確認も初期データ一括取得から反映。
     */
-    applyDailyConfirmStatus(
-      data.dailyConfirms
-    );
+    if (Array.isArray(data.dailyConfirms)) {
+      applyDailyConfirmStatus(
+        data.dailyConfirms
+      );
+    }
 
     // =========================
     // 画面をまとめて更新
@@ -23828,6 +23836,120 @@ markSyncSuccess(
 }
 
 
+
+function scheduleInitialOperationalDataLoad(
+  delayMs = 300
+) {
+  if (initialOperationalLoadTimer) {
+    clearTimeout(initialOperationalLoadTimer);
+  }
+
+  initialOperationalLoadTimer =
+    setTimeout(() => {
+      initialOperationalLoadTimer = null;
+
+      if (currentRole === "") {
+        return;
+      }
+
+      if (isWriteActivityActive()) {
+        scheduleInitialOperationalDataLoad(2000);
+        return;
+      }
+
+      loadInitialOperationalDataFromGoogle()
+        .catch(error => {
+          // コア同期済みなら運用補助の失敗で画面全体を赤にしない。
+          console.warn(
+            "初期運用データのバックグラウンド取得に失敗",
+            error
+          );
+        });
+    }, Math.max(100, Number(delayMs || 300)));
+}
+
+
+async function loadInitialOperationalDataFromGoogle() {
+  if (initialOperationalLoadingPromise) {
+    return initialOperationalLoadingPromise;
+  }
+
+  initialOperationalLoadingPromise =
+    (async () => {
+      console.time("★ 初期運用データ遅延取得");
+
+      try {
+        const data =
+          await requestInitialOperationalDataFromServer();
+
+        if (data && data.error) {
+          throw new Error(
+            data.message ||
+            "初期運用データの取得に失敗しました"
+          );
+        }
+
+        verifyServerDataScope(data);
+
+        if (Number.isFinite(Number(data.initialOperationalDurationMs))) {
+          console.log(
+            "GAS初期運用処理時間:",
+            Number(data.initialOperationalDurationMs),
+            "ms"
+          );
+          if (data.operationalTimings) {
+            console.log(
+              "GAS初期運用 内訳:",
+              data.operationalTimings
+            );
+          }
+        }
+
+        if (data.checks && typeof data.checks === "object") {
+          checks = data.checks;
+          applyPendingCheckOverrides();
+        }
+
+        if (Array.isArray(data.histories) || Array.isArray(data.checkHistory)) {
+          applyOperationalHistoryPayload(data, true);
+        }
+
+        if (Array.isArray(data.nurseInstructions)) {
+          nurseInstructions = data.nurseInstructions;
+        }
+
+        if (Array.isArray(data.dailyConfirms)) {
+          applyDailyConfirmStatus(data.dailyConfirms);
+        }
+
+        renderStatusAreas();
+        updateHomeMedicineStatus();
+        refreshHistoryDisplays();
+        document.getElementById("completedList").innerHTML =
+          getCompletedListHtml();
+
+        if (document.getElementById("historyPage")?.classList.contains("active")) {
+          renderHistoryHub();
+        }
+
+        saveData();
+        return true;
+
+      } finally {
+        console.timeEnd("★ 初期運用データ遅延取得");
+        initialOperationalLoadingPromise = null;
+
+        // 重い読取を同時実行せず、運用データ終了後に補助同期へ進む。
+        if (currentRole !== "") {
+          scheduleInitialAuxDataLoad(1000);
+        }
+      }
+    })();
+
+  return initialOperationalLoadingPromise;
+}
+
+
 function scheduleInitialAuxDataLoad(
   delayMs = 500
 ) {
@@ -23851,6 +23973,11 @@ function scheduleInitialAuxDataLoad(
       }
 
       if (isWriteActivityActive()) {
+        scheduleInitialAuxDataLoad(2000);
+        return;
+      }
+
+      if (initialOperationalLoadingPromise) {
         scheduleInitialAuxDataLoad(2000);
         return;
       }
@@ -23915,6 +24042,18 @@ async function loadInitialAuxDataFromGoogle() {
 
         setMasterDataFromServer(data);
 
+        if (data.rulesV2 || data.rules) {
+          rules = normalizeRulesObject(
+            data.rulesV2 || data.rules || rules || {}
+          );
+        }
+
+        if (data.ruleCycleSnapshots) {
+          ruleCycleSnapshots = normalizeRuleCycleSnapshotsObject(
+            data.ruleCycleSnapshots
+          );
+        }
+
         if (Array.isArray(data.ruleEvaluations)) {
           ruleEvaluations = data.ruleEvaluations;
         }
@@ -23929,6 +24068,8 @@ async function loadInitialAuxDataFromGoogle() {
         }
 
         updateUserSelects();
+        updateRuleDisplays();
+        updateHomeMedicineStatus();
         updateRuleEvaluationAlerts();
         renderRuleEvaluationAdminList();
 
@@ -32089,7 +32230,7 @@ async function openHistoricalShiftRecovery(type, targetDate) {
   if (!timing) return;
 
   /*
-    Ver.0.9.41
+    Ver.0.9.42
     起動時履歴を3日へ縮小したため、過去勤務帯を開く時だけ
     対象勤務帯の履歴を期間指定APIから取得する。
     これで7日前の復旧精度を落とさず、初期同期を軽くする。
@@ -34681,15 +34822,15 @@ async function ensureFullHistoryArchiveLoaded(force = false) {
 async function requestInitialDataFromServer() {
 
   /*
-    Ver.0.9.41
+    Ver.0.9.42
     初期同期はコアデータ1回だけを待つ。
 
     0.9.40のように短いタイムアウトで同一GAS処理を連続起動すると、
     ブラウザ側がAbortしてもApps Script側の実行が残り、
     2回目・3回目と自分自身で競合する可能性がある。
 
-    コア同期は20秒まで1回待ち、タイムアウトした場合は即時再送しない。
-    initialize側の5秒後軽量同期で復旧する。
+    コア同期は35秒まで1回待ち、タイムアウトした場合は即時再送しない。
+    initialize側も20秒空けてから軽量同期を試す。
   */
   const started = performance.now();
 
@@ -34699,7 +34840,7 @@ async function requestInitialDataFromServer() {
         API_URL +
           "?action=getInitialCoreData",
         1,
-        20000
+        35000
       );
 
     const data =
@@ -34737,6 +34878,35 @@ async function requestInitialDataFromServer() {
     );
     throw error;
   }
+}
+
+
+async function requestInitialOperationalDataFromServer() {
+  const started = performance.now();
+
+  const response =
+    await fetchApi(
+      API_URL +
+        "?action=getInitialOperationalData",
+      1,
+      30000
+    );
+
+  const data = await response.json();
+
+  if (data && data.error) {
+    throw new Error(
+      data.message ||
+      "初期運用データの取得に失敗しました"
+    );
+  }
+
+  console.log(
+    "初期運用同期 通信:",
+    Math.round(performance.now() - started) + "ms"
+  );
+
+  return data;
 }
 
 
@@ -34781,7 +34951,7 @@ async function requestInitialAuxDataFromServer() {
 async function requestSyncDataFromServer() {
 
   /*
-    Ver.0.9.41
+    Ver.0.9.42
     30秒同期も動的コアデータだけを1回取得する。
     通信タイムアウト時はその場で連続再送せず、
     既存データを保持して次の自動同期へ委ねる。
@@ -34794,7 +34964,7 @@ async function requestSyncDataFromServer() {
         API_URL +
           "?action=getSyncCoreData",
         1,
-        15000
+        25000
       );
 
     const data =
@@ -37852,7 +38022,7 @@ function openPage(pageId) {
   }
 
   if (pageId === "historyPage") {
-    // Ver.0.9.41: 全履歴は取得しない。各導線が必要な期間だけ取得する。
+    // Ver.0.9.42: 全履歴は取得しない。各導線が必要な期間だけ取得する。
     renderHistoryHub();
   }
 
@@ -37939,10 +38109,9 @@ async function loadLightSyncDataFromGoogle() {
       "ms"
     );
     console.log(
-      "軽量同期 運用履歴件数:",
-      Number(data.operationalHistoryRowCount || 0),
-      "与薬履歴件数:",
-      Number(data.operationalCheckRowCount || 0)
+      "軽量同期 与薬履歴件数:",
+      Number(data.operationalCheckRowCount || 0),
+      "件（排便履歴は30秒同期対象外）"
     );
 
     if (
@@ -38032,20 +38201,17 @@ async function loadLightSyncDataFromGoogle() {
   // ルール変更を30秒以内に他端末へ反映する。
   // =========================
 
-  rules =
-    normalizeRulesObject(
-      data.rulesV2 ||
-      data.rules ||
-      rules ||
-      {}
+  if (data.rulesV2 || data.rules) {
+    rules = normalizeRulesObject(
+      data.rulesV2 || data.rules || rules || {}
     );
+  }
 
-  ruleCycleSnapshots =
-    normalizeRuleCycleSnapshotsObject(
-      data.ruleCycleSnapshots ||
-      ruleCycleSnapshots ||
-      {}
+  if (data.ruleCycleSnapshots) {
+    ruleCycleSnapshots = normalizeRuleCycleSnapshotsObject(
+      data.ruleCycleSnapshots
     );
+  }
 
   ruleEvaluations =
     Array.isArray(
@@ -38065,10 +38231,12 @@ async function loadLightSyncDataFromGoogle() {
   applyPendingCheckOverrides();
 
 
-  applyOperationalHistoryPayload(
-    data,
-    false
-  );
+  if (Array.isArray(data.histories) || Array.isArray(data.checkHistory)) {
+    applyOperationalHistoryPayload(
+      data,
+      false
+    );
+  }
 
   resolvePendingBowelOperationAfterSync();
 
