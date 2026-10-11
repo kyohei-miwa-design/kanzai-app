@@ -1043,6 +1043,31 @@ button {
   font-size: 14px;
 }
 
+.ui0934-edit-datetime {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.ui0934-edit-datetime label {
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  color:#64748b;
+  font-size:12px;
+  font-weight:700;
+}
+
+.ui0934-edit-datetime input {
+  width:100%;
+  box-sizing:border-box;
+  border:1px solid #cbd5e1;
+  border-radius:9px;
+  background:#fff;
+  padding:10px 9px;
+  font-size:15px;
+}
+
 .edit-history-label {
   margin-top: 8px;
   font-size: 17px;
@@ -7725,7 +7750,7 @@ body {
 }
 
 /* =========================
-   Ver.0.9.33 その他：押した項目の直下に展開 / ユニット別状況
+   Ver.0.9.34 その他：押した項目の直下に展開 / ユニット別状況
 ========================= */
 .other-menu-list > #otherStatusPanel.ui0915-status-panel,
 .other-menu-list > #otherInfoPanel.ui099-info-panel,
@@ -7974,7 +7999,7 @@ body {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
-/* Ver.0.9.33 看護師は排便入力・勤務確認を非表示 */
+/* Ver.0.9.34 看護師は排便入力・勤務確認を非表示 */
 .ui09-bottom-nav.nurse-four-nav.bottom-nav {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
@@ -8167,7 +8192,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.33 ルール外の個別対応作成
+   Ver.0.9.34 ルール外の個別対応作成
 ============================================================ */
 .ui0933-adhoc-create {
   display: none;
@@ -8314,7 +8339,7 @@ body {
 
 
 /* ============================================================
-   Ver.0.9.33 勤務確認を排便入力から分離
+   Ver.0.9.34 勤務確認を排便入力から分離
 ============================================================ */
 #shiftConfirmPage .ui09-page-head {
   margin-bottom: 12px;
@@ -8337,7 +8362,426 @@ body {
 }
 
 
-/* Ver.0.9.33: 看護師・管理者のルール外個別対応作成 */
+/* Ver.0.9.34: 看護師・管理者のルール外個別対応作成 */
+
+/* ============================================================
+   Ver.0.9.34 履歴刷新 / 排便実日時入力
+============================================================ */
+.ui0934-bowel-datetime{
+  margin:10px 0 12px;
+  border:1px solid #dce3ea;
+  border-radius:12px;
+  background:#f8fafc;
+  padding:10px 12px;
+}
+.ui0934-bowel-datetime-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.ui0934-bowel-datetime-row > div{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.ui0934-bowel-datetime-row span{
+  font-size:12px;
+  color:#64748b;
+}
+.ui0934-bowel-datetime-row strong{
+  font-size:14px;
+  color:#1e293b;
+}
+.ui0934-bowel-datetime-row button,
+.ui0934-now-button{
+  border:1px solid #cbd5e1;
+  background:#fff;
+  border-radius:9px;
+  padding:8px 11px;
+  font-size:13px;
+  font-weight:700;
+  color:#334155;
+}
+.ui0934-bowel-datetime-editor{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid #e2e8f0;
+}
+.ui0934-bowel-datetime-editor label{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  font-size:12px;
+  color:#64748b;
+  font-weight:700;
+}
+.ui0934-bowel-datetime-editor input{
+  width:100%;
+  box-sizing:border-box;
+  border:1px solid #cbd5e1;
+  border-radius:9px;
+  background:#fff;
+  padding:9px 8px;
+  font-size:15px;
+}
+.ui0934-now-button{
+  grid-column:1 / -1;
+  width:100%;
+}
+
+.ui0934-history-routes{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin:8px 0 14px;
+}
+.ui0934-history-routes button{
+  min-width:0;
+  border:1px solid #dbe2e8;
+  border-radius:12px;
+  background:#fff;
+  padding:10px 8px;
+  text-align:left;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  color:#334155;
+}
+.ui0934-history-routes button strong{
+  font-size:14px;
+  white-space:nowrap;
+}
+.ui0934-history-routes button span{
+  font-size:11px;
+  color:#64748b;
+  line-height:1.35;
+}
+.ui0934-history-routes button.active{
+  border-color:#4a90e2;
+  background:#eef6ff;
+  box-shadow:0 0 0 1px rgba(74,144,226,.08);
+}
+
+.ui0934-history-panel{
+  margin-top:4px;
+}
+.ui0934-history-control-card{
+  border:1px solid #dfe5eb;
+  background:#fff;
+  border-radius:12px;
+  padding:10px;
+  margin-bottom:10px;
+}
+.ui0934-filter-line{
+  display:grid;
+  grid-template-columns:90px minmax(0,1fr);
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+}
+.ui0934-filter-line:last-child{
+  margin-bottom:0;
+}
+.ui0934-filter-line label{
+  font-size:12px;
+  font-weight:700;
+  color:#475569;
+}
+.ui0934-filter-line select,
+.ui0934-filter-line input{
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  border:1px solid #cbd5e1;
+  border-radius:9px;
+  padding:9px 10px;
+  background:#fff;
+  font-size:14px;
+}
+.ui0934-date-nav{
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) 38px auto;
+  gap:6px;
+  align-items:center;
+}
+.ui0934-date-nav button{
+  min-height:40px;
+  border:1px solid #cbd5e1;
+  border-radius:9px;
+  background:#fff;
+  font-weight:800;
+  color:#334155;
+}
+.ui0934-date-nav button.today{
+  padding:0 12px;
+  font-size:12px;
+}
+.ui0934-date-nav input{
+  width:100%;
+  box-sizing:border-box;
+  border:1px solid #cbd5e1;
+  border-radius:9px;
+  padding:8px 9px;
+  font-size:14px;
+  min-height:40px;
+}
+.ui0934-end-date-label{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  font-size:10px;
+  color:#64748b;
+  font-weight:700;
+}
+.ui0934-history-caption{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:10px;
+  margin:10px 2px 8px;
+}
+.ui0934-history-caption strong{
+  font-size:15px;
+  color:#1e293b;
+}
+.ui0934-history-caption span{
+  font-size:11px;
+  color:#64748b;
+  text-align:right;
+}
+
+.ui0934-day-grid{
+  border:1px solid #dfe5eb;
+  border-radius:12px;
+  overflow:hidden;
+  background:#fff;
+}
+.ui0934-hour-row{
+  display:grid;
+  grid-template-columns:50px minmax(0,1fr);
+  min-height:46px;
+  border-bottom:1px solid #edf1f5;
+}
+.ui0934-hour-row:last-child{
+  border-bottom:none;
+}
+.ui0934-hour-label{
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding:11px 4px;
+  font-size:13px;
+  font-weight:800;
+  color:#475569;
+  background:#f8fafc;
+  border-right:1px solid #edf1f5;
+}
+.ui0934-hour-events{
+  min-width:0;
+  padding:6px 8px;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  justify-content:center;
+}
+.ui0934-hour-empty{
+  color:#c0c7d0;
+  font-size:12px;
+}
+.ui0934-hour-event{
+  display:grid;
+  grid-template-columns:46px minmax(0,1fr) auto;
+  align-items:center;
+  gap:7px;
+  width:100%;
+  box-sizing:border-box;
+  border:0;
+  border-radius:8px;
+  background:#f7f9fb;
+  padding:7px 8px;
+  text-align:left;
+}
+.ui0934-hour-event time{
+  font-size:12px;
+  font-weight:800;
+  color:#475569;
+}
+.ui0934-hour-event strong{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:14px;
+  color:#1e293b;
+}
+.ui0934-amount-chip{
+  border-radius:999px;
+  padding:3px 8px;
+  background:#eaf4ff;
+  color:#245b8d;
+  font-size:12px;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.ui0934-matrix-period{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+  margin:8px 0;
+}
+.ui0934-matrix-period button{
+  border:1px solid #cbd5e1;
+  border-radius:9px;
+  background:#fff;
+  padding:8px;
+  font-weight:800;
+  color:#475569;
+}
+.ui0934-matrix-period button.active{
+  border-color:#4a90e2;
+  background:#eef6ff;
+  color:#2563a8;
+}
+.ui0934-matrix-wrap{
+  width:100%;
+  overflow:auto;
+  border:1px solid #dfe5eb;
+  border-radius:12px;
+  background:#fff;
+  max-height:68vh;
+  -webkit-overflow-scrolling:touch;
+}
+.ui0934-matrix-table{
+  border-collapse:separate;
+  border-spacing:0;
+  min-width:max-content;
+  width:max-content;
+  font-size:12px;
+}
+.ui0934-matrix-table th,
+.ui0934-matrix-table td{
+  min-width:76px;
+  max-width:96px;
+  height:35px;
+  padding:4px 5px;
+  border-right:1px solid #e8edf2;
+  border-bottom:1px solid #e8edf2;
+  text-align:center;
+  vertical-align:middle;
+  background:#fff;
+}
+.ui0934-matrix-table thead th{
+  position:sticky;
+  top:0;
+  z-index:3;
+  background:#f4f7fa;
+  color:#334155;
+  font-weight:800;
+}
+.ui0934-matrix-table .ui0934-matrix-axis{
+  position:sticky;
+  left:0;
+  z-index:2;
+  min-width:48px;
+  width:48px;
+  max-width:48px;
+  background:#f8fafc;
+  font-weight:800;
+  color:#475569;
+}
+.ui0934-matrix-table thead .ui0934-matrix-axis{
+  z-index:4;
+}
+.ui0934-matrix-table tfoot .ui0934-matrix-axis{
+  background:#f1f5f9;
+}
+.ui0934-matrix-table tfoot td{
+  background:#fbfcfd;
+  font-weight:700;
+}
+.ui0934-matrix-cell-events{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  align-items:stretch;
+}
+.ui0934-matrix-event{
+  border:0;
+  border-radius:6px;
+  padding:3px 4px;
+  background:#eaf4ff;
+  color:#245b8d;
+  font-size:11px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.ui0934-matrix-event small{
+  display:block;
+  font-size:9px;
+  font-weight:600;
+  color:#64748b;
+}
+.ui0934-matrix-med{
+  display:block;
+  margin:1px 0;
+  border-radius:5px;
+  background:#fff4e5;
+  color:#9a5b00;
+  padding:2px 4px;
+  font-size:10px;
+  line-height:1.25;
+}
+.ui0934-matrix-established{
+  display:inline-block;
+  margin-left:2px;
+  color:#14804a;
+  font-weight:900;
+}
+.ui0934-history-empty{
+  padding:22px 12px;
+  text-align:center;
+  color:#64748b;
+  background:#fff;
+  border:1px dashed #cbd5e1;
+  border-radius:12px;
+}
+
+@media (max-width:640px){
+  .ui0934-history-routes{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:5px;
+  }
+  .ui0934-history-routes button{
+    align-items:center;
+    justify-content:center;
+    padding:9px 4px;
+    text-align:center;
+  }
+  .ui0934-history-routes button strong{
+    font-size:12px;
+  }
+  .ui0934-history-routes button span{
+    display:none;
+  }
+  .ui0934-bowel-datetime-editor{
+    grid-template-columns:1fr 1fr;
+  }
+  .ui0934-history-caption{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:2px;
+  }
+  .ui0934-history-caption span{
+    text-align:left;
+  }
+}
+
 </style>
 </head>
 
@@ -8380,7 +8824,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.33</div>
+      <div class="ui09-brand-version">Ver.0.9.34</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -8658,6 +9102,40 @@ body {
         排便量を選択してください
       </div>
 
+      <div class="ui0934-bowel-datetime">
+        <div class="ui0934-bowel-datetime-row">
+          <div>
+            <span>排便日時</span>
+            <strong id="bowelDateTimeSummary">現在時刻で登録</strong>
+          </div>
+          <button
+            id="bowelDateTimeToggleButton"
+            type="button"
+            onclick="toggleBowelDateTimeEditor()"
+          >
+            日時を変更
+          </button>
+        </div>
+
+        <div id="bowelDateTimeEditor" class="ui0934-bowel-datetime-editor hidden">
+          <label>
+            日付
+            <input id="bowelEventDate" type="date" onchange="updateBowelDateTimeSummary()">
+          </label>
+          <label>
+            時刻
+            <input id="bowelEventTime" type="time" step="60" onchange="updateBowelDateTimeSummary()">
+          </label>
+          <button
+            type="button"
+            class="ui0934-now-button"
+            onclick="resetBowelDateTimeToNow()"
+          >
+            現在時刻に戻す
+          </button>
+        </div>
+      </div>
+
       <button
         id="registerButton"
         class="ui09-primary-button"
@@ -8747,7 +9225,7 @@ body {
 
 
   <!-- =========================
-       勤務確認 Ver.0.9.33
+       勤務確認 Ver.0.9.34
   ========================== -->
   <section
     id="shiftConfirmPage"
@@ -8926,7 +9404,7 @@ body {
   </section>
 
   <!-- =========================
-       履歴 Ver.0.9
+       履歴 Ver.0.9.34
   ========================== -->
   <section
     id="historyPage"
@@ -8941,103 +9419,179 @@ body {
       <span id="historyCountPill" class="ui09-count-pill">0件</span>
     </div>
 
-    <div class="ui097-history-search-wrap">
-      <span class="ui097-search-icon" aria-hidden="true">⌕</span>
-      <input
-        id="ui09HistorySearch"
-        type="search"
-        placeholder="利用者名で検索"
-        oninput="renderHistoryView()"
-      >
-    </div>
-
-    <div class="ui09-segmented history-ui-tabs">
-      <button
-        id="historyTodayTab"
-        type="button"
-        class="active"
-        onclick="setHistoryViewMode('today')"
-      >
-        今日
+    <div class="ui0934-history-routes">
+      <button id="historyRouteList" class="active" type="button" onclick="setHistoryRoute('list')">
+        <strong>📋 履歴一覧</strong>
+        <span>すべての記録を時系列で確認</span>
       </button>
-      <button
-        id="historyPastTab"
-        type="button"
-        onclick="setHistoryViewMode('past')"
-      >
-        過去
+      <button id="historyRouteDay" type="button" onclick="setHistoryRoute('day')">
+        <strong>🕐 日別排便</strong>
+        <span>0時～23時・ユニット全体</span>
+      </button>
+      <button id="historyRouteMatrix" type="button" onclick="setHistoryRoute('matrix')">
+        <strong>📅 利用者別</strong>
+        <span>複数日を時間ごとに確認</span>
       </button>
     </div>
 
-    <details class="ui09-details compact">
-      <summary>絞り込み</summary>
+    <div id="historyListPanel" class="ui0934-history-panel">
+      <div class="ui097-history-search-wrap">
+        <span class="ui097-search-icon" aria-hidden="true">⌕</span>
+        <input
+          id="ui09HistorySearch"
+          type="search"
+          placeholder="利用者名で検索"
+          oninput="renderHistoryView()"
+        >
+      </div>
 
-      <div class="history-filter-card ui09-filter-panel">
-        <div id="historyAccountNote" class="history-account-note"></div>
+      <div class="ui09-segmented history-ui-tabs">
+        <button
+          id="historyTodayTab"
+          type="button"
+          class="active"
+          onclick="setHistoryViewMode('today')"
+        >
+          今日
+        </button>
+        <button
+          id="historyPastTab"
+          type="button"
+          onclick="setHistoryViewMode('past')"
+        >
+          過去
+        </button>
+      </div>
 
-        <div class="history-filter-grid">
-          <div class="history-filter-field">
-            <label for="historyUserFilter">利用者</label>
-            <select
-              id="historyUserFilter"
-              onchange="onHistoryFilterChange()"
+      <details class="ui09-details compact">
+        <summary>絞り込み</summary>
+
+        <div class="history-filter-card ui09-filter-panel">
+          <div id="historyAccountNote" class="history-account-note"></div>
+
+          <div class="history-filter-grid">
+            <div class="history-filter-field">
+              <label for="historyUserFilter">利用者</label>
+              <select
+                id="historyUserFilter"
+                onchange="onHistoryFilterChange()"
+              >
+                <option value="">全利用者</option>
+              </select>
+            </div>
+
+            <div
+              id="historyDateFilterWrap"
+              class="history-filter-field hidden"
             >
-              <option value="">全利用者</option>
-            </select>
+              <label for="historyDateFilter">日付</label>
+              <input
+                id="historyDateFilter"
+                type="date"
+                onchange="onHistoryFilterChange()"
+              >
+            </div>
           </div>
 
           <div
-            id="historyDateFilterWrap"
-            class="history-filter-field hidden"
+            id="historyUnitFilterWrap"
+            class="history-filter-field history-unit-filter-wrap hidden"
           >
-            <label for="historyDateFilter">日付</label>
-            <input
-              id="historyDateFilter"
-              type="date"
-              onchange="onHistoryFilterChange()"
+            <label for="historyUnitFilter">ユニット</label>
+            <select
+              id="historyUnitFilter"
+              onchange="onHistoryUnitFilterChange()"
             >
+              <option value="">全ユニット</option>
+            </select>
           </div>
-        </div>
 
-        <div
-          id="historyUnitFilterWrap"
-          class="history-filter-field history-unit-filter-wrap hidden"
-        >
-          <label for="historyUnitFilter">ユニット</label>
-          <select
-            id="historyUnitFilter"
-            onchange="onHistoryUnitFilterChange()"
+          <button
+            type="button"
+            class="history-filter-clear"
+            onclick="clearHistoryFilters(); document.getElementById('ui09HistorySearch').value='';"
           >
-            <option value="">全ユニット</option>
-          </select>
+            絞り込みを解除
+          </button>
         </div>
+      </details>
 
-        <button
-          type="button"
-          class="history-filter-clear"
-          onclick="clearHistoryFilters(); document.getElementById('ui09HistorySearch').value='';"
-        >
-          絞り込みを解除
-        </button>
+      <div class="ui097-history-summary">
+        <span id="historyListTitle">今日の記録</span>
+        <span class="ui097-history-summary-note">新しい記録が上です</span>
       </div>
-    </details>
 
-    <div class="ui097-history-summary">
-      <span id="historyListTitle">今日の記録</span>
-      <span class="ui097-history-summary-note">新しい記録が上です</span>
+      <div id="history">まだ履歴はありません</div>
+
+      <button
+        id="historyLoadMoreButton"
+        type="button"
+        class="history-load-more hidden"
+        onclick="loadMoreHistory()"
+      >
+        さらに50件表示
+        <small id="historyLoadMoreText"></small>
+      </button>
     </div>
 
-    <div id="history">まだ履歴はありません</div>
+    <div id="historyDayPanel" class="ui0934-history-panel hidden">
+      <section class="ui0934-history-control-card">
+        <div class="ui0934-date-nav">
+          <button type="button" onclick="moveHistoryDayDate(-1)">‹</button>
+          <input id="historyDayDate" type="date" onchange="renderHistoryDayView()">
+          <button type="button" onclick="moveHistoryDayDate(1)">›</button>
+          <button type="button" class="today" onclick="setHistoryDayToday()">今日</button>
+        </div>
+        <div id="historyDayUnitWrap" class="ui0934-filter-line hidden">
+          <label for="historyDayUnitFilter">ユニット</label>
+          <select id="historyDayUnitFilter" onchange="renderHistoryDayView()"></select>
+        </div>
+      </section>
 
-    <button
-      id="historyLoadMoreButton"
-      type="button"
-      class="history-load-more hidden"
-      onclick="loadMoreHistory()"
-    >
-      さらに50件表示
-      <small id="historyLoadMoreText"></small>
-    </button>
+      <div class="ui0934-history-caption">
+        <strong id="historyDayTitle">日別排便</strong>
+        <span>排便した記録だけを0時～23時で表示</span>
+      </div>
+
+      <div id="historyDayGrid" class="ui0934-day-grid"></div>
+    </div>
+
+    <div id="historyMatrixPanel" class="ui0934-history-panel hidden">
+      <section class="ui0934-history-control-card">
+        <div id="historyMatrixUnitWrap" class="ui0934-filter-line hidden">
+          <label for="historyMatrixUnitFilter">ユニット</label>
+          <select id="historyMatrixUnitFilter" onchange="onHistoryMatrixUnitChange()"></select>
+        </div>
+
+        <div class="ui0934-filter-line">
+          <label for="historyMatrixUser">利用者</label>
+          <select id="historyMatrixUser" onchange="renderHistoryMatrixView()"></select>
+        </div>
+
+        <div class="ui0934-matrix-period">
+          <button id="historyMatrix7" type="button" onclick="setHistoryMatrixDays(7)">7日</button>
+          <button id="historyMatrix15" class="active" type="button" onclick="setHistoryMatrixDays(15)">15日</button>
+          <button id="historyMatrix31" type="button" onclick="setHistoryMatrixDays(31)">1か月</button>
+        </div>
+
+        <div class="ui0934-date-nav">
+          <button type="button" onclick="moveHistoryMatrixEndDate(-historyMatrixDays)">‹</button>
+          <label class="ui0934-end-date-label">
+            表示終了日
+            <input id="historyMatrixEndDate" type="date" onchange="renderHistoryMatrixView()">
+          </label>
+          <button type="button" onclick="moveHistoryMatrixEndDate(historyMatrixDays)">›</button>
+          <button type="button" class="today" onclick="setHistoryMatrixToday()">今日</button>
+        </div>
+      </section>
+
+      <div class="ui0934-history-caption">
+        <strong id="historyMatrixTitle">利用者別排便表</strong>
+        <span>左の時刻を固定して横スクロールできます</span>
+      </div>
+
+      <div id="historyMatrixGrid" class="ui0934-matrix-wrap"></div>
+    </div>
 
   </section>
 
@@ -9368,7 +9922,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.33
+            Ver.0.9.34
           </span>
         </div>
 
@@ -9377,7 +9931,7 @@ body {
             GAS
           </span>
           <span class="other-info-value">
-            Ver.0.8.49
+            Ver.0.8.50
           </span>
         </div>
 
@@ -10030,10 +10584,14 @@ let apiSessionTokenMemory = "";
 let points = {};
 
 let histories = [];
+let checkHistory = [];
+let bowelDateTimeManual = false;
 
 // Ver.0.8.32 履歴画面
 let historyViewMode = "today";
 let historyVisiblePastCount = 50;
+let historyRouteMode = "list";
+let historyMatrixDays = 15;
 
 // Ver.0.8.32 ルール閲覧画面
 let ruleViewAllOpen = false;
@@ -11288,6 +11846,187 @@ function selectBowelUser(
 }
 
 
+
+function getLocalDateInputValue(date = new Date()) {
+  return (
+    date.getFullYear() + "-" +
+    String(date.getMonth() + 1).padStart(2, "0") + "-" +
+    String(date.getDate()).padStart(2, "0")
+  );
+}
+
+function getLocalTimeInputValue(date = new Date()) {
+  return (
+    String(date.getHours()).padStart(2, "0") + ":" +
+    String(date.getMinutes()).padStart(2, "0")
+  );
+}
+
+function setBowelDateTimeInputsNow() {
+  const now = new Date();
+  const dateInput =
+    document.getElementById("bowelEventDate");
+  const timeInput =
+    document.getElementById("bowelEventTime");
+
+  if (dateInput) {
+    dateInput.value =
+      getLocalDateInputValue(now);
+  }
+
+  if (timeInput) {
+    timeInput.value =
+      getLocalTimeInputValue(now);
+  }
+}
+
+function toggleBowelDateTimeEditor() {
+
+  const editor =
+    document.getElementById(
+      "bowelDateTimeEditor"
+    );
+
+  if (!editor) {
+    return;
+  }
+
+  if (!bowelDateTimeManual) {
+    bowelDateTimeManual = true;
+    setBowelDateTimeInputsNow();
+    editor.classList.remove("hidden");
+  } else {
+    bowelDateTimeManual = false;
+    editor.classList.add("hidden");
+  }
+
+  updateBowelDateTimeSummary();
+}
+
+function resetBowelDateTimeToNow() {
+
+  bowelDateTimeManual = false;
+
+  setBowelDateTimeInputsNow();
+
+  const editor =
+    document.getElementById(
+      "bowelDateTimeEditor"
+    );
+
+  if (editor) {
+    editor.classList.add("hidden");
+  }
+
+  updateBowelDateTimeSummary();
+}
+
+function updateBowelDateTimeSummary() {
+
+  const summary =
+    document.getElementById(
+      "bowelDateTimeSummary"
+    );
+
+  const toggle =
+    document.getElementById(
+      "bowelDateTimeToggleButton"
+    );
+
+  if (!summary) {
+    return;
+  }
+
+  if (!bowelDateTimeManual) {
+    summary.textContent =
+      "現在時刻で登録";
+
+    if (toggle) {
+      toggle.textContent =
+        "日時を変更";
+    }
+
+    return;
+  }
+
+  const date =
+    String(
+      document.getElementById(
+        "bowelEventDate"
+      )?.value || ""
+    );
+
+  const time =
+    String(
+      document.getElementById(
+        "bowelEventTime"
+      )?.value || ""
+    );
+
+  summary.textContent =
+    date && time
+      ? date.replace(/-/g, "/") +
+        " " +
+        time
+      : "日時を指定してください";
+
+  if (toggle) {
+    toggle.textContent =
+      "変更をやめる";
+  }
+}
+
+function getBowelEventDateTimeForSubmit() {
+
+  if (!bowelDateTimeManual) {
+    return "";
+  }
+
+  const date =
+    String(
+      document.getElementById(
+        "bowelEventDate"
+      )?.value || ""
+    ).trim();
+
+  const time =
+    String(
+      document.getElementById(
+        "bowelEventTime"
+      )?.value || ""
+    ).trim();
+
+  if (!date || !time) {
+    return null;
+  }
+
+  const value =
+    date + "T" + time;
+
+  const parsed =
+    new Date(
+      value + ":00"
+    );
+
+  if (
+    Number.isNaN(
+      parsed.getTime()
+    )
+  ) {
+    return null;
+  }
+
+  if (
+    parsed.getTime() >
+    Date.now() + 2 * 60 * 1000
+  ) {
+    return "FUTURE";
+  }
+
+  return value;
+}
+
+
 async function register() {
 
   if (!canStartServerWrite()) {
@@ -11299,6 +12038,9 @@ async function register() {
 
   const type =
     document.getElementById("bowelTypeSelect").value;
+
+  const eventDateTime =
+    getBowelEventDateTimeForSubmit();
 
 
   // =========================
@@ -11338,6 +12080,24 @@ async function register() {
       3000
     );
 
+    return;
+  }
+
+  if (eventDateTime === null) {
+    showToast(
+      "⚠ 排便日時を正しく入力してください",
+      "error",
+      3500
+    );
+    return;
+  }
+
+  if (eventDateTime === "FUTURE") {
+    showToast(
+      "⚠ 未来の日時では登録できません",
+      "error",
+      3500
+    );
     return;
   }
 
@@ -11410,6 +12170,7 @@ async function register() {
     );
 
   const willEstablishBowel =
+    !eventDateTime &&
     previousPoint +
       getBowelPoint(type) >=
         BOWEL_RESET_POINT;
@@ -11446,41 +12207,50 @@ async function register() {
   try {
 
     // =========================
-    // ① 新ポイント方式で加算
-    // =========================
+    // ① 現在時刻登録は即時反映。
+    // 日時変更時は履歴の途中に入る可能性があるため、
+    // GAS側の時系列再計算結果を待つ。
+    if (!eventDateTime) {
 
-    const addPoint =
-      getBowelPoint(type);
+      const addPoint =
+        getBowelPoint(type);
 
-    points[user] =
-      previousPoint +
-      addPoint;
+      points[user] =
+        previousPoint +
+        addPoint;
 
+      if (points[user] >= BOWEL_RESET_POINT) {
 
-    // =========================
-    // ② 内部6以上で排便成立
-    // =========================
+        const todayText =
+          getTodayText();
 
-    if (points[user] >= BOWEL_RESET_POINT) {
+        points[user] = 0;
 
-      const todayText =
-        getTodayText();
+        lastDates[user] =
+          todayText;
 
-      points[user] = 0;
+        document.getElementById(
+          "lastDate"
+        ).value =
+          todayText;
 
-      lastDates[user] =
-        todayText;
+        document.getElementById(
+          "result"
+        ).textContent =
+          user +
+          "　排便成立　最終排便日を今日に更新しました";
 
-      document.getElementById(
-        "lastDate"
-      ).value =
-        todayText;
+      } else {
 
-      document.getElementById(
-        "result"
-      ).textContent =
-        user +
-        "　排便成立　最終排便日を今日に更新しました";
+        document.getElementById(
+          "result"
+        ).textContent =
+          user +
+          "　排便累計：" +
+          getBowelPointText(
+            points[user]
+          );
+      }
 
     } else {
 
@@ -11488,14 +12258,10 @@ async function register() {
         "result"
       ).textContent =
         user +
-        "　排便累計：" +
-        getBowelPointText(
-          points[user]
-        );
+        "　指定日時の履歴を保存し、排便状況を再計算します";
     }
 
 
-    // =========================
     // ③ 画面を即時更新
     // =========================
 
@@ -11537,7 +12303,10 @@ async function register() {
           user,
 
         type:
-          type
+          type,
+
+        eventDateTime:
+          eventDateTime || ""
       });
 
 
@@ -11550,7 +12319,13 @@ async function register() {
     // ⑤ 返ってきた履歴を追加
     // =========================
 
-    if (result.history) {
+    if (
+      !replaceUserHistoriesFromServer(
+        user,
+        result.userHistories
+      ) &&
+      result.history
+    ) {
 
       const alreadyExists =
         histories.some(
@@ -11588,10 +12363,7 @@ async function register() {
     // ⑦ 画面を最終更新
     // =========================
 
-    document.getElementById(
-      "history"
-    ).innerHTML =
-      getHistoryHtml();
+    refreshHistoryDisplays();
 
     renderStatusAreas();
 
@@ -11643,11 +12415,16 @@ async function register() {
     // =========================
 
     clearSelectedBowelType();
+    resetBowelDateTimeToNow();
 
     showToast(
-      "✓ 登録しました",
+      result.replayed
+        ? "✓ 登録しました。排便状況を時系列で再計算しました"
+        : "✓ 登録しました",
       "success",
-      2000
+      result.replayed
+        ? 3500
+        : 2000
     );
 
     if (
@@ -15028,6 +15805,7 @@ function clearResidentScopedMemory() {
   lastDates = {};
   userUnits = {};
   histories = [];
+  checkHistory = [];
   nurseInstructions = [];
   bowelRecoveryStates = [];
   residentCareStates = [];
@@ -15048,6 +15826,7 @@ function clearResidentScopedCache() {
     "lastDates",
     "userUnits",
     "histories",
+    "checkHistory",
     "nurseInstructions",
     "bowelRecoveryStates",
     "residentCareStates",
@@ -15247,6 +16026,11 @@ function saveData() {
   );
 
   localStorage.setItem(
+    "checkHistory",
+    JSON.stringify(checkHistory)
+  );
+
+  localStorage.setItem(
     "nurseInstructions",
     JSON.stringify(nurseInstructions)
   );
@@ -15310,6 +16094,7 @@ function loadData() {
   const savedStaffMaster = localStorage.getItem("staffMaster");
   const savedUnitMaster = localStorage.getItem("unitMaster");
   const savedHistories = localStorage.getItem("histories");
+  const savedCheckHistory = localStorage.getItem("checkHistory");
   const savedNurseInstructions = localStorage.getItem("nurseInstructions");
   const savedBowelRecoveryStates = localStorage.getItem("bowelRecoveryStates");
   const savedResidentCareStates = localStorage.getItem("residentCareStates");
@@ -15378,6 +16163,14 @@ function loadData() {
     histories = JSON.parse(savedHistories);
   }
 
+  if (savedCheckHistory !== null) {
+    try {
+      checkHistory = JSON.parse(savedCheckHistory) || [];
+    } catch (_) {
+      checkHistory = [];
+    }
+  }
+
   if (savedNurseInstructions !== null) {
     nurseInstructions = JSON.parse(savedNurseInstructions);
   }
@@ -15442,7 +16235,7 @@ function loadData() {
 
   updateUnitMasterDisplays();
 
-  document.getElementById("history").innerHTML = getHistoryHtml();
+  refreshHistoryDisplays();
   renderStatusAreas();
   document.getElementById("todayTarget").innerHTML = getTodayTarget();
   updateRuleDisplays();
@@ -16729,8 +17522,7 @@ async function loadHistoriesFromGoogle() {
 
     histories = await response.json();
 
-    document.getElementById("history").innerHTML =
-      getHistoryHtml();
+    refreshHistoryDisplays();
 
   } catch (error) {
     console.error("履歴読込エラー", error);
@@ -21161,11 +21953,11 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.33</strong>
+        <strong>Ver.0.9.34</strong>
       </div>
       <div>
         <span>GAS</span>
-        <strong>Ver.0.8.49</strong>
+        <strong>Ver.0.8.50</strong>
       </div>
       <div>
         <span>ログイン範囲</span>
@@ -21884,6 +22676,7 @@ function clearCachedAppData() {
     "staffMaster",
     "unitMaster",
     "histories",
+    "checkHistory",
     "nurseInstructions",
     "bowelRecoveryStates",
     "rules",
@@ -22446,6 +23239,11 @@ async function loadInitialDataFromGoogle() {
     histories =
       data.histories || [];
 
+    checkHistory =
+      Array.isArray(data.checkHistory)
+        ? data.checkHistory
+        : [];
+
     nurseInstructions =
       Array.isArray(data.nurseInstructions)
         ? data.nurseInstructions
@@ -22499,6 +23297,12 @@ async function loadInitialDataFromGoogle() {
       "history"
     ).innerHTML =
       getHistoryHtml();
+
+    if (
+      document.getElementById("historyPage")?.classList.contains("active")
+    ) {
+      renderHistoryHub();
+    }
 
     document.getElementById(
       "completedList"
@@ -22584,8 +23388,1342 @@ function addHistory(user, type) {
     point: points[user]
   });
 
-  document.getElementById("history").innerHTML = getHistoryHtml();
+  refreshHistoryDisplays();
 }
+
+
+function setHistoryRoute(mode) {
+
+  historyRouteMode =
+    ["list", "day", "matrix"]
+      .includes(mode)
+      ? mode
+      : "list";
+
+  renderHistoryHub();
+}
+
+function getHistoryScopedUnit(
+  selectId
+) {
+
+  if (!isHistoryAllUnitAccount()) {
+    return String(
+      currentUnit || ""
+    );
+  }
+
+  const select =
+    document.getElementById(
+      selectId
+    );
+
+  return String(
+    select &&
+    select.value ||
+    ""
+  );
+}
+
+function getHistoryUnitOptionsHtml(
+  includeAll = true
+) {
+
+  const ids =
+    Object.keys(
+      unitMaster || {}
+    );
+
+  const unitIds =
+    (ids.length
+      ? ids
+      : ["1", "2", "3", "4"])
+      .map(String)
+      .sort((a, b) =>
+        a.localeCompare(b, "ja")
+      );
+
+  return (
+    includeAll
+      ? `<option value="">全ユニット</option>`
+      : ""
+  ) +
+    unitIds.map(unit => `
+      <option value="${escapeHtml(unit)}">
+        ${escapeHtml(getUnitName(unit))}
+      </option>
+    `).join("");
+}
+
+function ensureHistoryRouteControls() {
+
+  const today =
+    getLocalDateInputValue(
+      new Date()
+    );
+
+  const dayDate =
+    document.getElementById(
+      "historyDayDate"
+    );
+
+  if (
+    dayDate &&
+    !dayDate.value
+  ) {
+    dayDate.value =
+      today;
+  }
+
+  const matrixEnd =
+    document.getElementById(
+      "historyMatrixEndDate"
+    );
+
+  if (
+    matrixEnd &&
+    !matrixEnd.value
+  ) {
+    matrixEnd.value =
+      today;
+  }
+
+  const allUnit =
+    isHistoryAllUnitAccount();
+
+  for (
+    const config of [
+      {
+        wrap:
+          "historyDayUnitWrap",
+        select:
+          "historyDayUnitFilter"
+      },
+      {
+        wrap:
+          "historyMatrixUnitWrap",
+        select:
+          "historyMatrixUnitFilter"
+      }
+    ]
+  ) {
+
+    const wrap =
+      document.getElementById(
+        config.wrap
+      );
+
+    const select =
+      document.getElementById(
+        config.select
+      );
+
+    if (wrap) {
+      wrap.classList.toggle(
+        "hidden",
+        !allUnit
+      );
+    }
+
+    if (select) {
+
+      const old =
+        String(
+          select.value || ""
+        );
+
+      select.innerHTML =
+        getHistoryUnitOptionsHtml(
+          true
+        );
+
+      const exists =
+        Array.from(
+          select.options
+        ).some(option =>
+          String(option.value) === old
+        );
+
+      select.value =
+        exists
+          ? old
+          : "";
+    }
+  }
+
+  updateHistoryMatrixUserOptions();
+}
+
+function renderHistoryHub() {
+
+  ensureHistoryRouteControls();
+
+  const modes = [
+    "list",
+    "day",
+    "matrix"
+  ];
+
+  for (const mode of modes) {
+
+    const button =
+      document.getElementById(
+        mode === "list"
+          ? "historyRouteList"
+          : mode === "day"
+            ? "historyRouteDay"
+            : "historyRouteMatrix"
+      );
+
+    const panel =
+      document.getElementById(
+        mode === "list"
+          ? "historyListPanel"
+          : mode === "day"
+            ? "historyDayPanel"
+            : "historyMatrixPanel"
+      );
+
+    if (button) {
+      button.classList.toggle(
+        "active",
+        historyRouteMode === mode
+      );
+    }
+
+    if (panel) {
+      panel.classList.toggle(
+        "hidden",
+        historyRouteMode !== mode
+      );
+    }
+  }
+
+  if (historyRouteMode === "day") {
+    renderHistoryDayView();
+    return;
+  }
+
+  if (
+    historyRouteMode ===
+    "matrix"
+  ) {
+    renderHistoryMatrixView();
+    return;
+  }
+
+  renderHistoryView();
+}
+
+function replaceUserHistoriesFromServer(
+  user,
+  serverHistories
+) {
+
+  if (
+    !Array.isArray(
+      serverHistories
+    )
+  ) {
+    return false;
+  }
+
+  const target =
+    String(user || "");
+
+  histories =
+    histories
+      .filter(item =>
+        String(
+          item.user || ""
+        ) !== target
+      )
+      .concat(
+        serverHistories
+      )
+      .sort((a, b) =>
+        getHistorySortKey(b)
+          .localeCompare(
+            getHistorySortKey(a)
+          )
+      );
+
+  return true;
+}
+
+
+function refreshHistoryDisplays() {
+
+  const listArea =
+    document.getElementById(
+      "history"
+    );
+
+  if (listArea) {
+    listArea.innerHTML =
+      getHistoryHtml();
+  }
+
+  const historyPage =
+    document.getElementById(
+      "historyPage"
+    );
+
+  if (
+    historyPage &&
+    historyPage.classList.contains(
+      "active"
+    )
+  ) {
+    renderHistoryHub();
+  }
+}
+
+
+function getActiveBowelHistories() {
+
+  return histories
+    .filter(item =>
+      String(
+        item.status || "active"
+      ) !== "cancelled"
+    )
+    .filter(item =>
+      ["少", "少1", "少2", "普通", "多量"]
+        .includes(
+          String(
+            item.type || ""
+          ).trim()
+        )
+    )
+    .slice()
+    .sort((a, b) =>
+      getHistorySortKey(a)
+        .localeCompare(
+          getHistorySortKey(b)
+        )
+    );
+}
+
+function getHistoryDateObject(
+  dateText
+) {
+
+  const text =
+    String(
+      dateText || ""
+    )
+      .trim()
+      .replace(" ", "T")
+      .replace(/\//g, "-");
+
+  if (!text) {
+    return null;
+  }
+
+  const date =
+    new Date(
+      text.length <= 10
+        ? text + "T00:00:00"
+        : text
+    );
+
+  return Number.isNaN(
+    date.getTime()
+  )
+    ? null
+    : date;
+}
+
+function getHistoryUsersForUnit(
+  unit
+) {
+
+  return Object.keys(
+    userUnits || {}
+  )
+    .filter(user =>
+      !unit ||
+      String(
+        userUnits[user] || ""
+      ) === String(unit)
+    )
+    .sort((a, b) =>
+      formatResidentName(a)
+        .localeCompare(
+          formatResidentName(b),
+          "ja"
+        )
+    );
+}
+
+function moveDateText(
+  dateText,
+  days
+) {
+
+  const date =
+    getHistoryDateObject(
+      dateText
+    ) ||
+    new Date();
+
+  date.setDate(
+    date.getDate() +
+    Number(days || 0)
+  );
+
+  return getLocalDateInputValue(
+    date
+  );
+}
+
+function moveHistoryDayDate(days) {
+
+  const input =
+    document.getElementById(
+      "historyDayDate"
+    );
+
+  if (!input) {
+    return;
+  }
+
+  input.value =
+    moveDateText(
+      input.value,
+      days
+    );
+
+  renderHistoryDayView();
+}
+
+function setHistoryDayToday() {
+
+  const input =
+    document.getElementById(
+      "historyDayDate"
+    );
+
+  if (input) {
+    input.value =
+      getLocalDateInputValue(
+        new Date()
+      );
+  }
+
+  renderHistoryDayView();
+}
+
+function renderHistoryDayView() {
+
+  const area =
+    document.getElementById(
+      "historyDayGrid"
+    );
+
+  if (!area) {
+    return;
+  }
+
+  const date =
+    String(
+      document.getElementById(
+        "historyDayDate"
+      )?.value ||
+      getLocalDateInputValue(
+        new Date()
+      )
+    );
+
+  const unit =
+    getHistoryScopedUnit(
+      "historyDayUnitFilter"
+    );
+
+  const allowedUsers =
+    new Set(
+      getHistoryUsersForUnit(
+        unit
+      )
+    );
+
+  const items =
+    getActiveBowelHistories()
+      .filter(item =>
+        getHistoryDateKey(
+          item
+        ) === date &&
+        allowedUsers.has(
+          String(
+            item.user || ""
+          )
+        )
+      );
+
+  const title =
+    document.getElementById(
+      "historyDayTitle"
+    );
+
+  if (title) {
+    title.textContent =
+      date.replace(/-/g, "/") +
+      "　" +
+      (
+        unit
+          ? getUnitName(unit)
+          : "全ユニット"
+      );
+  }
+
+  const count =
+    document.getElementById(
+      "historyCountPill"
+    );
+
+  if (count) {
+    count.textContent =
+      items.length +
+      "件";
+  }
+
+  const byHour =
+    Array.from(
+      { length: 24 },
+      () => []
+    );
+
+  for (const item of items) {
+
+    const d =
+      getHistoryDateObject(
+        item.date
+      );
+
+    if (!d) {
+      continue;
+    }
+
+    byHour[
+      d.getHours()
+    ].push(item);
+  }
+
+  area.innerHTML =
+    byHour.map(
+      (hourItems, hour) => {
+
+        const sorted =
+          hourItems
+            .slice()
+            .sort((a, b) =>
+              getHistorySortKey(a)
+                .localeCompare(
+                  getHistorySortKey(b)
+                )
+            );
+
+        return `
+          <div class="ui0934-hour-row">
+            <div class="ui0934-hour-label">
+              ${hour}時
+            </div>
+            <div class="ui0934-hour-events">
+              ${
+                sorted.length
+                  ? sorted
+                    .map(item => {
+                      const d =
+                        getHistoryDateObject(
+                          item.date
+                        );
+
+                      const hhmm =
+                        d
+                          ? (
+                              String(
+                                d.getHours()
+                              ).padStart(2, "0") +
+                              ":" +
+                              String(
+                                d.getMinutes()
+                              ).padStart(2, "0")
+                            )
+                          : "";
+
+                      const safeId =
+                        String(
+                          item.id || ""
+                        )
+                          .replace(
+                            /\\/g,
+                            "\\\\"
+                          )
+                          .replace(
+                            /'/g,
+                            "\\'"
+                          );
+
+                      return `
+                        <button
+                          type="button"
+                          class="ui0934-hour-event"
+                          ${
+                            item.id
+                              ? `onclick="openHistoryMenu('${safeId}')"`
+                              : ""
+                          }
+                        >
+                          <time>${escapeHtml(hhmm)}</time>
+                          <strong>${escapeHtml(formatResidentName(item.user))}</strong>
+                          <span class="ui0934-amount-chip">${escapeHtml(getHistoryDisplayType(item.type))}</span>
+                        </button>
+                      `;
+                    })
+                    .join("")
+                  : `<span class="ui0934-hour-empty">―</span>`
+              }
+            </div>
+          </div>
+        `;
+      }
+    ).join("");
+}
+
+function updateHistoryMatrixUserOptions() {
+
+  const select =
+    document.getElementById(
+      "historyMatrixUser"
+    );
+
+  if (!select) {
+    return;
+  }
+
+  const old =
+    String(
+      select.value || ""
+    );
+
+  const unit =
+    getHistoryScopedUnit(
+      "historyMatrixUnitFilter"
+    );
+
+  const users =
+    getHistoryUsersForUnit(
+      unit
+    );
+
+  select.innerHTML =
+    users.map(user => `
+      <option value="${escapeHtml(user)}">
+        ${escapeHtml(formatResidentName(user))}
+      </option>
+    `).join("");
+
+  select.value =
+    users.includes(old)
+      ? old
+      : (
+          users[0] || ""
+        );
+}
+
+function onHistoryMatrixUnitChange() {
+  updateHistoryMatrixUserOptions();
+  renderHistoryMatrixView();
+}
+
+function setHistoryMatrixDays(days) {
+
+  historyMatrixDays =
+    [7, 15, 31]
+      .includes(
+        Number(days)
+      )
+      ? Number(days)
+      : 15;
+
+  renderHistoryMatrixView();
+}
+
+function moveHistoryMatrixEndDate(days) {
+
+  const input =
+    document.getElementById(
+      "historyMatrixEndDate"
+    );
+
+  if (!input) {
+    return;
+  }
+
+  input.value =
+    moveDateText(
+      input.value,
+      days
+    );
+
+  renderHistoryMatrixView();
+}
+
+function setHistoryMatrixToday() {
+
+  const input =
+    document.getElementById(
+      "historyMatrixEndDate"
+    );
+
+  if (input) {
+    input.value =
+      getLocalDateInputValue(
+        new Date()
+      );
+  }
+
+  renderHistoryMatrixView();
+}
+
+function getHistoryMatrixDates(
+  endDate,
+  days
+) {
+
+  const result = [];
+
+  let current =
+    moveDateText(
+      endDate,
+      -(days - 1)
+    );
+
+  for (
+    let i = 0;
+    i < days;
+    i++
+  ) {
+    result.push(current);
+    current =
+      moveDateText(
+        current,
+        1
+      );
+  }
+
+  return result;
+}
+
+function getCalendarDayDiff(
+  fromDate,
+  toDate
+) {
+
+  const from =
+    getHistoryDateObject(
+      fromDate
+    );
+
+  const to =
+    getHistoryDateObject(
+      toDate
+    );
+
+  if (!from || !to) {
+    return null;
+  }
+
+  from.setHours(0, 0, 0, 0);
+  to.setHours(0, 0, 0, 0);
+
+  return Math.max(
+    0,
+    Math.round(
+      (
+        to.getTime() -
+        from.getTime()
+      ) /
+      86400000
+    )
+  );
+}
+
+function buildUserBowelTimeline(
+  user
+) {
+
+  const items =
+    getActiveBowelHistories()
+      .filter(item =>
+        String(
+          item.user || ""
+        ) === String(user)
+      );
+
+  let point = 0;
+  let lastDate = "";
+
+  if (items.length > 0) {
+
+    point =
+      Number(
+        items[0]
+          .previousPoint || 0
+      );
+
+    lastDate =
+      String(
+        items[0]
+          .previousLastDate || ""
+      ).slice(0, 10);
+  }
+
+  const timeline = [];
+
+  for (const item of items) {
+
+    point +=
+      getBowelPoint(
+        item.type
+      );
+
+    let established = false;
+
+    if (
+      point >=
+      BOWEL_RESET_POINT
+    ) {
+      point = 0;
+      lastDate =
+        getHistoryDateKey(
+          item
+        );
+      established = true;
+    }
+
+    timeline.push({
+      ...item,
+      afterPoint: point,
+      afterLastDate: lastDate,
+      established: established
+    });
+  }
+
+  return {
+    baselineLastDate:
+      items.length
+        ? String(
+            items[0]
+              .previousLastDate || ""
+          ).slice(0, 10)
+        : "",
+    items:
+      timeline
+  };
+}
+
+function getNoBowelDaysAtDateFromTimeline(
+  timeline,
+  date
+) {
+
+  let lastDate =
+    String(
+      timeline &&
+      timeline.baselineLastDate ||
+      ""
+    ).slice(0, 10);
+
+  const endKey =
+    date + " 23:59:59";
+
+  for (
+    const item of
+    (
+      timeline &&
+      timeline.items ||
+      []
+    )
+  ) {
+
+    if (
+      getHistorySortKey(
+        item
+      ) >
+      endKey
+    ) {
+      break;
+    }
+
+    lastDate =
+      String(
+        item.afterLastDate ||
+        lastDate ||
+        ""
+      ).slice(0, 10);
+  }
+
+  if (!lastDate) {
+    return null;
+  }
+
+  return getCalendarDayDiff(
+    lastDate,
+    date
+  );
+}
+
+function getHistoryCheckLabel(
+  item
+) {
+
+  const parsed =
+    parseCheckKey(
+      String(
+        item.user || ""
+      ) +
+      "_" +
+      String(
+        item.medicine || ""
+      )
+    );
+
+  if (
+    parsed &&
+    parsed.rule
+  ) {
+
+    const timing =
+      getRuleTimingLabel(
+        parsed.rule
+      );
+
+    return (
+      parsed.rule.content +
+      (
+        timing
+          ? " " + timing
+          : ""
+      )
+    );
+  }
+
+  return String(
+    item.medicine || ""
+  );
+}
+
+function getHistoryMedicationLabels(
+  user,
+  date
+) {
+
+  const labels = [];
+
+  for (
+    const item of
+    (
+      Array.isArray(checkHistory)
+        ? checkHistory
+        : []
+    )
+  ) {
+
+    if (
+      String(
+        item.user || ""
+      ) === String(user) &&
+      String(
+        item.date || ""
+      ).slice(0, 10) === date &&
+      item.checked === true
+    ) {
+
+      labels.push(
+        getHistoryCheckLabel(
+          item
+        )
+      );
+    }
+  }
+
+  for (
+    const item of
+    (
+      Array.isArray(nurseInstructions)
+        ? nurseInstructions
+        : []
+    )
+  ) {
+
+    if (
+      String(
+        item.user || ""
+      ) !== String(user) ||
+      String(
+        item.targetDate || ""
+      ).slice(0, 10) !== date ||
+      String(
+        item.status || ""
+      ) !== "completed" ||
+      String(
+        item.kind || ""
+      ) !== "laxative"
+    ) {
+      continue;
+    }
+
+    const label =
+      String(
+        item.content || ""
+      ).trim();
+
+    if (label) {
+      labels.push(
+        label
+      );
+    }
+  }
+
+  return Array.from(
+    new Set(
+      labels.filter(Boolean)
+    )
+  );
+}
+
+function renderHistoryMatrixView() {
+
+  const area =
+    document.getElementById(
+      "historyMatrixGrid"
+    );
+
+  if (!area) {
+    return;
+  }
+
+  updateHistoryMatrixUserOptions();
+
+  const user =
+    String(
+      document.getElementById(
+        "historyMatrixUser"
+      )?.value || ""
+    );
+
+  if (!user) {
+
+    area.innerHTML = `
+      <div class="ui0934-history-empty">
+        表示できる利用者がいません
+      </div>
+    `;
+
+    return;
+  }
+
+  const endDate =
+    String(
+      document.getElementById(
+        "historyMatrixEndDate"
+      )?.value ||
+      getLocalDateInputValue(
+        new Date()
+      )
+    );
+
+  const dates =
+    getHistoryMatrixDates(
+      endDate,
+      historyMatrixDays
+    );
+
+  for (
+    const value of [7, 15, 31]
+  ) {
+
+    const button =
+      document.getElementById(
+        "historyMatrix" +
+        value
+      );
+
+    if (button) {
+      button.classList.toggle(
+        "active",
+        value ===
+          historyMatrixDays
+      );
+    }
+  }
+
+  const timeline =
+    buildUserBowelTimeline(
+      user
+    );
+
+  const records =
+    timeline.items;
+
+  const title =
+    document.getElementById(
+      "historyMatrixTitle"
+    );
+
+  if (title) {
+    title.textContent =
+      formatResidentName(user) +
+      "　" +
+      historyMatrixDays +
+      "日";
+  }
+
+  const count =
+    document.getElementById(
+      "historyCountPill"
+    );
+
+  if (count) {
+    count.textContent =
+      records
+        .filter(item =>
+          dates.includes(
+            getHistoryDateKey(
+              item
+            )
+          )
+        )
+        .length +
+      "件";
+  }
+
+  const header =
+    dates.map(date => {
+      const d =
+        getHistoryDateObject(
+          date
+        );
+
+      const weekdays =
+        ["日","月","火","水","木","金","土"];
+
+      return `
+        <th>
+          ${d ? d.getMonth() + 1 : ""}/${d ? d.getDate() : ""}
+          <br>
+          <small>(${d ? weekdays[d.getDay()] : ""})</small>
+        </th>
+      `;
+    }).join("");
+
+  const bodyRows = [];
+
+  for (
+    let hour = 0;
+    hour < 24;
+    hour++
+  ) {
+
+    const cells =
+      dates.map(date => {
+
+        const cellItems =
+          records.filter(item => {
+
+            if (
+              getHistoryDateKey(
+                item
+              ) !== date
+            ) {
+              return false;
+            }
+
+            const d =
+              getHistoryDateObject(
+                item.date
+              );
+
+            return (
+              d &&
+              d.getHours() === hour
+            );
+          });
+
+        if (
+          cellItems.length === 0
+        ) {
+          return "<td></td>";
+        }
+
+        return `
+          <td>
+            <div class="ui0934-matrix-cell-events">
+              ${
+                cellItems.map(item => {
+
+                  const d =
+                    getHistoryDateObject(
+                      item.date
+                    );
+
+                  const minute =
+                    d
+                      ? String(
+                          d.getMinutes()
+                        ).padStart(2, "0")
+                      : "";
+
+                  const safeId =
+                    String(
+                      item.id || ""
+                    )
+                      .replace(
+                        /\\/g,
+                        "\\\\"
+                      )
+                      .replace(
+                        /'/g,
+                        "\\'"
+                      );
+
+                  return `
+                    <button
+                      type="button"
+                      class="ui0934-matrix-event"
+                      ${
+                        item.id
+                          ? `onclick="openHistoryMenu('${safeId}')"`
+                          : ""
+                      }
+                    >
+                      ${escapeHtml(getHistoryDisplayType(item.type))}
+                      ${
+                        item.established
+                          ? `<span class="ui0934-matrix-established">✓</span>`
+                          : ""
+                      }
+                      <small>${minute}分</small>
+                    </button>
+                  `;
+                }).join("")
+              }
+            </div>
+          </td>
+        `;
+      }).join("");
+
+    bodyRows.push(`
+      <tr>
+        <th class="ui0934-matrix-axis">${hour}時</th>
+        ${cells}
+      </tr>
+    `);
+  }
+
+  const totalCells =
+    dates.map(date => {
+
+      const total =
+        records
+          .filter(item =>
+            getHistoryDateKey(
+              item
+            ) === date
+          )
+          .reduce(
+            (sum, item) =>
+              sum +
+              getBowelPoint(
+                item.type
+              ),
+            0
+          );
+
+      return `
+        <td>
+          ${
+            total > 0
+              ? total + "pt"
+              : "―"
+          }
+        </td>
+      `;
+    }).join("");
+
+  const dayCells =
+    dates.map(date => {
+
+      const days =
+        getNoBowelDaysAtDateFromTimeline(
+          timeline,
+          date
+        );
+
+      return `
+        <td>
+          ${
+            days === null
+              ? "―"
+              : days + "日目"
+          }
+        </td>
+      `;
+    }).join("");
+
+  const medicineCells =
+    dates.map(date => {
+
+      const labels =
+        getHistoryMedicationLabels(
+          user,
+          date
+        );
+
+      return `
+        <td>
+          ${
+            labels.length
+              ? labels.map(label =>
+                  `<span class="ui0934-matrix-med">${escapeHtml(label)}</span>`
+                ).join("")
+              : "―"
+          }
+        </td>
+      `;
+    }).join("");
+
+  area.innerHTML = `
+    <table class="ui0934-matrix-table">
+      <thead>
+        <tr>
+          <th class="ui0934-matrix-axis">時刻</th>
+          ${header}
+        </tr>
+      </thead>
+      <tbody>
+        ${bodyRows.join("")}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th class="ui0934-matrix-axis">計</th>
+          ${totalCells}
+        </tr>
+        <tr>
+          <th class="ui0934-matrix-axis">何日目</th>
+          ${dayCells}
+        </tr>
+        <tr>
+          <th class="ui0934-matrix-axis">下剤</th>
+          ${medicineCells}
+        </tr>
+      </tfoot>
+    </table>
+  `;
+}
+
 
 function getHistoryDateKey(value) {
 
@@ -23462,7 +25600,8 @@ function openHistoryMenu(recordId) {
 
   const history = histories.find(
     item =>
-      String(item.id) === String(recordId)
+      String(item.id) ===
+      String(recordId)
   );
 
   if (!history) {
@@ -23471,7 +25610,50 @@ function openHistoryMenu(recordId) {
   }
 
   const safeRecordId =
-    String(history.id).replace(/'/g, "\\'");
+    String(history.id)
+      .replace(/\\/g, "\\\\")
+      .replace(/'/g, "\\'");
+
+  const registeredAt =
+    String(
+      history.registeredAt || ""
+    ).trim();
+
+  const registeredBy =
+    String(
+      history.registeredByName || ""
+    ).trim();
+
+  const entryMode =
+    String(
+      history.entryMode || "normal"
+    ).trim();
+
+  const isActiveHistory =
+    String(
+      history.status || "active"
+    ) !== "cancelled";
+
+  const isEditableBowelHistory =
+    ["少", "少1", "少2", "普通", "多量"]
+      .includes(
+        String(
+          history.type || ""
+        ).trim()
+      );
+
+  let entryNote = "";
+
+  if (entryMode === "manual") {
+    entryNote =
+      "実際の排便日時を指定して登録";
+  } else if (entryMode === "edit") {
+    entryNote =
+      "修正記録（元記録は取消済みで保持）";
+  } else if (entryMode === "retro") {
+    entryNote =
+      "勤務帯復旧からの遡及記録";
+  }
 
   openCommonModal({
 
@@ -23481,48 +25663,84 @@ function openHistoryMenu(recordId) {
       <div class="history-modal-detail">
 
         <strong style="font-size:22px;">
-          ${history.user}
+          ${escapeHtml(formatResidentName(history.user))}
         </strong>
 
         <br><br>
 
-        排便種類：
-        <strong>${getHistoryDisplayType(history.type)}</strong>
+        排便量：
+        <strong>${escapeHtml(getHistoryDisplayType(history.type))}</strong>
 
         <br>
 
-        日時：${history.date}
+        実際の排便日時：
+        <strong>${escapeHtml(String(history.date || ""))}</strong>
 
         ${
           isHistoryAllUnitAccount()
             ? `
               <br>
-              ユニット：${getUnitName(userUnits[history.user] || "")}
+              ユニット：${escapeHtml(getUnitName(userUnits[history.user] || ""))}
             `
             : ""
         }
 
         <br>
 
-        排便累計：${getBowelPointText(history.point)}
+        排便累計：${escapeHtml(getBowelPointText(history.point))}
+
+        ${
+          registeredAt ||
+          registeredBy
+            ? `
+              <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:12px;color:#64748b;line-height:1.6;">
+                入力日時：${escapeHtml(registeredAt || "―")}
+                ${registeredBy ? `<br>入力者：${escapeHtml(registeredBy)}` : ""}
+              </div>
+            `
+            : ""
+        }
+
+        ${
+          entryNote
+            ? `
+              <div style="margin-top:8px;padding:8px 10px;border-radius:8px;background:#f8fafc;color:#475569;font-size:12px;line-height:1.5;">
+                ${escapeHtml(entryNote)}
+              </div>
+            `
+            : ""
+        }
 
       </div>
     `,
 
     buttonsHtml: `
-      <button
-        class="modal-action-edit"
-        onclick="startEditHistory('${safeRecordId}')"
-      >
-        ✏ 修正
-      </button>
+      ${
+        isActiveHistory &&
+        isEditableBowelHistory
+          ? `
+            <button
+              class="modal-action-edit"
+              onclick="startEditHistory('${safeRecordId}')"
+            >
+              ✏ 日時・排便量を修正
+            </button>
+          `
+          : ""
+      }
 
-      <button
-        class="modal-action-cancel"
-        onclick="startCancelHistory('${safeRecordId}')"
-      >
-        ❌ 取消
-      </button>
+      ${
+        isActiveHistory
+          ? `
+            <button
+              class="modal-action-cancel"
+              onclick="startCancelHistory('${safeRecordId}')"
+            >
+              ❌ 取消
+            </button>
+          `
+          : ""
+      }
 
       <button
         class="modal-action-close"
@@ -30079,7 +32297,13 @@ async function tryResolvePendingBowelOperationDirect() {
         返却値だけで画面を先に復旧し、
         次の同期で全体を揃える。
       */
-      if (status.history) {
+      if (
+        !replaceUserHistoriesFromServer(
+          pending.user,
+          status.userHistories
+        ) &&
+        status.history
+      ) {
 
         const alreadyExists =
           histories.some(
@@ -30115,10 +32339,7 @@ async function tryResolvePendingBowelOperationDirect() {
 
       saveData();
 
-      document.getElementById(
-        "history"
-      ).innerHTML =
-        getHistoryHtml();
+      refreshHistoryDisplays();
 
       document.getElementById(
         "status"
@@ -31379,7 +33600,8 @@ async function getBowelOperationStatusRobust({
 async function registerBowelWithRecovery({
   operationId,
   user,
-  type
+  type,
+  eventDateTime = ""
 }) {
 
   let lastError = null;
@@ -31412,7 +33634,10 @@ async function registerBowelWithRecovery({
               user,
 
             type:
-              type
+              type,
+
+            eventDateTime:
+              eventDateTime
           },
           20000
         );
@@ -31848,10 +34073,39 @@ function closeCommonModalByOverlay(event) {
   }
 }
 
+function getHistoryEditDateTimeParts(history) {
+
+  const date =
+    getHistoryDateObject(
+      history && history.date
+    );
+
+  if (!date) {
+    return {
+      date: getLocalDateInputValue(
+        new Date()
+      ),
+      time: getLocalTimeInputValue(
+        new Date()
+      )
+    };
+  }
+
+  return {
+    date:
+      getLocalDateInputValue(date),
+    time:
+      getLocalTimeInputValue(date)
+  };
+}
+
+
 function startEditHistory(recordId) {
 
   const history = histories.find(
-    item => String(item.id) === String(recordId)
+    item =>
+      String(item.id) ===
+      String(recordId)
   );
 
   if (!history) {
@@ -31859,8 +34113,43 @@ function startEditHistory(recordId) {
     return;
   }
 
+  if (
+    String(history.status || "") ===
+    "cancelled"
+  ) {
+    showToast(
+      "⚠ 取消済みの記録は修正できません",
+      "warning",
+      3000
+    );
+    return;
+  }
+
+  if (
+    !["少", "少1", "少2", "普通", "多量"]
+      .includes(
+        String(
+          history.type || ""
+        ).trim()
+      )
+  ) {
+    showToast(
+      "⚠ 日時・排便量の修正は排便記録のみ行えます",
+      "warning",
+      3500
+    );
+    return;
+  }
+
   const safeRecordId =
-    String(history.id).replace(/'/g, "\\'");
+    String(history.id)
+      .replace(/\\/g, "\\\\")
+      .replace(/'/g, "\\'");
+
+  const parts =
+    getHistoryEditDateTimeParts(
+      history
+    );
 
   openCommonModal({
 
@@ -31870,11 +34159,30 @@ function startEditHistory(recordId) {
       <div class="history-edit-form">
 
         <div class="edit-history-user">
-          ${history.user}
+          ${escapeHtml(formatResidentName(history.user))}
         </div>
 
-        <div class="edit-history-date">
-          ${history.date}
+        <label class="edit-history-label">
+          実際の排便日時
+        </label>
+
+        <div class="ui0934-edit-datetime">
+          <label>
+            日付
+            <input
+              id="editHistoryDate"
+              type="date"
+              value="${escapeHtml(parts.date)}"
+            >
+          </label>
+          <label>
+            時刻
+            <input
+              id="editHistoryTime"
+              type="time"
+              value="${escapeHtml(parts.time)}"
+            >
+          </label>
         </div>
 
         <label class="edit-history-label">
@@ -31926,8 +34234,10 @@ function startEditHistory(recordId) {
         </div>
 
         <div class="edit-history-note">
-          ※修正前の記録は削除せず、
-          取消済み記録として保存されます。
+          ※現場職員も日時・排便量を修正できます。<br>
+          ※元記録は削除せず「取消済み」として残し、
+          誰がいつ修正したかを監査履歴へ保存します。<br>
+          ※保存後は、この利用者の排便状態を時系列で再計算します。
         </div>
 
       </div>
@@ -32020,6 +34330,10 @@ function startCancelHistory(recordId) {
 
 async function saveEditedHistory(recordId) {
 
+  if (!canStartServerWrite()) {
+    return;
+  }
+
   const selected =
     document.querySelector(
       'input[name="editHistoryType"]:checked'
@@ -32033,13 +34347,6 @@ async function saveEditedHistory(recordId) {
     );
     return;
   }
-
-  const newType = selected.value;
-
-
-  // =========================
-  // 修正対象の元履歴
-  // =========================
 
   const originalHistory =
     histories.find(
@@ -32057,182 +34364,78 @@ async function saveEditedHistory(recordId) {
     return;
   }
 
+  const date =
+    String(
+      document.getElementById(
+        "editHistoryDate"
+      )?.value || ""
+    ).trim();
+
+  const time =
+    String(
+      document.getElementById(
+        "editHistoryTime"
+      )?.value || ""
+    ).trim();
+
+  if (!date || !time) {
+    showToast(
+      "⚠ 排便日時を入力してください",
+      "error",
+      3000
+    );
+    return;
+  }
+
+  const parsed =
+    new Date(
+      date + "T" + time + ":00"
+    );
+
+  if (
+    Number.isNaN(
+      parsed.getTime()
+    )
+  ) {
+    showToast(
+      "⚠ 排便日時が正しくありません",
+      "error",
+      3000
+    );
+    return;
+  }
+
+  if (
+    parsed.getTime() >
+    Date.now() + 2 * 60 * 1000
+  ) {
+    showToast(
+      "⚠ 未来の日時には変更できません",
+      "error",
+      3500
+    );
+    return;
+  }
+
+  const newType =
+    selected.value;
+
+  const newDateTime =
+    date + "T" + time;
+
   const user =
     originalHistory.user;
 
+  beginWriteActivity();
+  closeCommonModal();
 
-  // =========================
-  // 失敗時の復元用バックアップ
-  // =========================
-
-  const backupPoint =
-    Number(points[user] || 0);
-
-  const backupLastDate =
-    lastDates[user] || "";
-
-  const backupHistories =
-    JSON.parse(
-      JSON.stringify(histories)
-    );
-
+  showToast(
+    "修正を保存し、排便状態を再計算中…",
+    "saving",
+    0
+  );
 
   try {
-
-    // =========================
-    // ① 仮の修正版履歴を作る
-    // =========================
-
-    const temporaryHistory = {
-      ...originalHistory,
-
-      id:
-        "temp-" + Date.now(),
-
-      type:
-        newType,
-
-      status:
-        "active",
-
-      originalId:
-        recordId
-    };
-
-
-    // =========================
-    // ② 既存ロジックで再計算
-    // =========================
-
-    const recalculated =
-      recalculateBowelStatusFromHistory(
-        originalHistory,
-        temporaryHistory
-      );
-
-    points[user] =
-      Number(
-        recalculated.point || 0
-      );
-
-    lastDates[user] =
-      recalculated.lastDate
-        ? String(
-            recalculated.lastDate
-          ).slice(0, 10)
-        : "";
-
-
-    // =========================
-    // ③ 元履歴を画面上で取消扱い
-    // =========================
-
-    histories =
-      histories.map(
-        history => {
-
-          if (
-            String(history.id) ===
-            String(recordId)
-          ) {
-
-            return {
-              ...history,
-              status: "cancelled"
-            };
-          }
-
-          return history;
-        }
-      );
-
-
-    // =========================
-    // ④ 仮の修正版を画面へ追加
-    // =========================
-
-    histories.unshift(
-      temporaryHistory
-    );
-
-
-    // =========================
-    // ⑤ 基本画面を即時更新
-    // =========================
-
-    renderStatusAreas();
-
-    document.getElementById(
-      "todayTarget"
-    ).innerHTML =
-      getTodayTarget();
-
-    document.getElementById(
-      "history"
-    ).innerHTML =
-      getHistoryHtml();
-
-    document.getElementById(
-      "result"
-    ).textContent =
-      user +
-      "　排便累計：" +
-      getBowelPointText(points[user]);
-
-
-    // =========================
-    // ★ 排便集計をリアルタイム更新
-    // =========================
-
-    const dayResult =
-      document.getElementById(
-        "bowelCheckResult"
-      );
-
-    if (
-      dayResult &&
-      dayResult.innerHTML.trim() !== ""
-    ) {
-      checkTodayBowelStatus();
-    }
-
-
-    const nightResult =
-      document.getElementById(
-        "nightBowelCheckResult"
-      );
-
-    if (
-      nightResult &&
-      nightResult.innerHTML.trim() !== ""
-    ) {
-      checkNightBowelStatus();
-    }
-
-
-    // =========================
-    // ★ ホーム投薬状況を更新
-    // =========================
-
-    updateHomeMedicineStatus();
-
-
-    saveData();
-
-
-    // モーダルはすぐ閉じる
-    closeCommonModal();
-
-    showToast(
-      "修正を保存中…",
-      "saving",
-      0
-    );
-
-
-    // =========================
-    // ⑥ Googleへ1回だけPOST
-    // =========================
 
     console.time(
       "履歴修正一括保存"
@@ -32243,96 +34446,68 @@ async function saveEditedHistory(recordId) {
         API_URL,
         {
           method: "POST",
-
           headers: {
             "Content-Type":
               "text/plain;charset=utf-8"
           },
-
           body: jsonBodyWithSession({
-
             action:
               "editHistoryFast",
-
             recordId:
               recordId,
-
             newType:
               newType,
-
-            /*
-              再計算後の現在状態
-            */
-            point:
-              points[user],
-
-            lastDate:
-              lastDates[user] || "",
-
-            /*
-              修正版履歴のE列に
-              保存するポイント
-            */
-            historyPoint:
-              Number(
-                temporaryHistory.point || 0
-              )
+            newDateTime:
+              newDateTime
           }),
-
           cache: "no-store"
         }
       );
 
-
     if (!response.ok) {
-
       throw new Error(
         "履歴修正失敗：HTTP " +
         response.status
       );
     }
 
-
     const result =
       await response.json();
 
-
     if (!result.ok) {
-
       throw new Error(
         result.message ||
         "履歴の修正に失敗しました"
       );
     }
 
-
     console.timeEnd(
       "履歴修正一括保存"
     );
 
+    if (
+      !replaceUserHistoriesFromServer(
+        user,
+        result.userHistories
+      )
+    ) {
+      histories =
+        histories.map(item =>
+          String(item.id) ===
+          String(recordId)
+            ? {
+                ...item,
+                status: "cancelled"
+              }
+            : item
+        );
 
-    // =========================
-    // ⑦ 仮履歴を本物へ交換
-    // =========================
-
-    histories =
-      histories.filter(
-        history =>
-          String(history.id) !==
-          String(temporaryHistory.id)
-      );
-
-    if (result.history) {
-
-      histories.unshift(
-        result.history
-      );
+      if (result.history) {
+        histories.unshift(
+          result.history
+        );
+      }
     }
-
-
-    // =========================
-    // ⑧ Google側の確定値を反映
-    // =========================
 
     points[user] =
       Number(
@@ -32346,111 +34521,33 @@ async function saveEditedHistory(recordId) {
           ).slice(0, 10)
         : "";
 
-
-    // =========================
-    // ⑨ 最終画面更新
-    // =========================
-
     renderStatusAreas();
 
-    document.getElementById(
-      "todayTarget"
-    ).innerHTML =
-      getTodayTarget();
+    const todayTarget =
+      document.getElementById(
+        "todayTarget"
+      );
 
-    document.getElementById(
-      "history"
-    ).innerHTML =
-      getHistoryHtml();
-
-    document.getElementById(
-      "result"
-    ).textContent =
-      user +
-      "　排便累計：" +
-      getBowelPointText(points[user]);
-
-
-    // =========================
-    // ★ Google確定後にも再更新
-    // =========================
-
-    if (
-      dayResult &&
-      dayResult.innerHTML.trim() !== ""
-    ) {
-      checkTodayBowelStatus();
+    if (todayTarget) {
+      todayTarget.innerHTML =
+        getTodayTarget();
     }
 
-    if (
-      nightResult &&
-      nightResult.innerHTML.trim() !== ""
-    ) {
-      checkNightBowelStatus();
+    const resultArea =
+      document.getElementById(
+        "result"
+      );
+
+    if (resultArea) {
+      resultArea.textContent =
+        user +
+        "　排便累計：" +
+        getBowelPointText(
+          points[user]
+        );
     }
 
-    updateHomeMedicineStatus();
-
-
-    saveData();
-
-
-    // =========================
-    // ⑩ 完了
-    // =========================
-
-    showToast(
-      "✓ 排便記録を修正しました",
-      "success",
-      2000
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      "排便記録修正エラー:",
-      error
-    );
-
-
-    // =========================
-    // 保存失敗 → 元へ戻す
-    // =========================
-
-    points[user] =
-      backupPoint;
-
-    lastDates[user] =
-      backupLastDate;
-
-    histories =
-      backupHistories;
-
-
-    renderStatusAreas();
-
-    document.getElementById(
-      "todayTarget"
-    ).innerHTML =
-      getTodayTarget();
-
-    document.getElementById(
-      "history"
-    ).innerHTML =
-      getHistoryHtml();
-
-    document.getElementById(
-      "result"
-    ).textContent =
-      user +
-      "　排便累計：" +
-      getBowelPointText(points[user]);
-
-
-    // =========================
-    // ★ 失敗時も表示を元へ戻す
-    // =========================
+    refreshHistoryDisplays();
 
     const dayResult =
       document.getElementById(
@@ -32464,7 +34561,6 @@ async function saveEditedHistory(recordId) {
       checkTodayBowelStatus();
     }
 
-
     const nightResult =
       document.getElementById(
         "nightBowelCheckResult"
@@ -32477,18 +34573,35 @@ async function saveEditedHistory(recordId) {
       checkNightBowelStatus();
     }
 
-
     updateHomeMedicineStatus();
-
     saveData();
 
+    showToast(
+      "✓ 排便日時・排便量を修正し、時系列で再計算しました",
+      "success",
+      3500
+    );
+
+  } catch (error) {
+
+    console.error(
+      "排便記録修正エラー:",
+      error
+    );
 
     showToast(
       "⚠ 修正を保存できませんでした：" +
       error.message,
       "error",
-      4000
+      4500
     );
+
+    scheduleFullSyncAfterWrite(
+      1000
+    );
+
+  } finally {
+    endWriteActivity();
   }
 }
 
@@ -32996,9 +35109,9 @@ function testRecalculateBowelStatus(user) {
 
 async function confirmCancelHistory(recordId) {
 
-  // =========================
-  // 取消対象を取得
-  // =========================
+  if (!canStartServerWrite()) {
+    return;
+  }
 
   const history =
     histories.find(
@@ -33008,199 +35121,89 @@ async function confirmCancelHistory(recordId) {
     );
 
   if (!history) {
-
     showToast(
       "⚠ 取消対象の履歴が見つかりません",
       "error",
       3000
     );
-
     return;
   }
 
   const user =
     history.user;
 
-  const previousLastDate =
-    history.previousLastDate || "";
+  beginWriteActivity();
+  closeCommonModal();
 
-
-  // =========================
-  // 失敗時の復元用バックアップ
-  // =========================
-
-  const backupPoint =
-    Number(points[user] || 0);
-
-  const backupLastDate =
-    lastDates[user] || "";
-
-  const backupHistories =
-    JSON.parse(
-      JSON.stringify(histories)
-    );
-
+  showToast(
+    "取消を保存し、排便状態を再計算中…",
+    "saving",
+    0
+  );
 
   try {
-
-    // =========================
-    // ① 画面上で先に取消扱い
-    // =========================
-
-    histories =
-      histories.map(
-        item => {
-
-          if (
-            String(item.id) ===
-            String(recordId)
-          ) {
-
-            return {
-              ...item,
-              status: "cancelled"
-            };
-          }
-
-          return item;
-        }
-      );
-
-
-    // =========================
-    // ② 有効履歴だけで再計算
-    // =========================
-
-    const recalculated =
-      recalculateBowelStatusAfterCancel(
-        history
-      );
-
-    points[user] =
-      Number(
-        recalculated.point || 0
-      );
-
-    lastDates[user] =
-      recalculated.lastDate
-        ? String(
-            recalculated.lastDate
-          ).slice(0, 10)
-        : "";
-
-
-    // =========================
-    // ③ 画面を即時更新
-    // =========================
-
-    renderStatusAreas();
-
-    document.getElementById(
-      "todayTarget"
-    ).innerHTML =
-      getTodayTarget();
-
-    document.getElementById(
-      "history"
-    ).innerHTML =
-      getHistoryHtml();
-
-    document.getElementById(
-      "result"
-    ).textContent =
-      user +
-      "　排便累計：" +
-      getBowelPointText(
-        points[user]
-      );
-
-    saveData();
-
-
-    // モーダルは即閉じる
-    closeCommonModal();
-
-
-    showToast(
-      "取消を保存中…",
-      "saving",
-      0
-    );
-
-
-    // =========================
-    // ④ Googleへ1回だけPOST
-    // =========================
 
     console.time(
       "履歴取消一括保存"
     );
-
 
     const response =
       await fetch(
         API_URL,
         {
           method: "POST",
-
           headers: {
             "Content-Type":
               "text/plain;charset=utf-8"
           },
-
           body: jsonBodyWithSession({
-
             action:
               "cancelHistoryFast",
-
             recordId:
-              recordId,
-
-            point:
-              Number(
-                points[user] || 0
-              ),
-
-            lastDate:
-              lastDates[user] || ""
-
+              recordId
           }),
-
           cache: "no-store"
         }
       );
 
-
     if (!response.ok) {
-
       throw new Error(
         "履歴取消失敗：HTTP " +
         response.status
       );
     }
 
-
     const result =
       await response.json();
 
-
     if (!result.ok) {
-
       throw new Error(
         result.message ||
         "履歴の取消に失敗しました"
       );
     }
 
-
     console.timeEnd(
       "履歴取消一括保存"
     );
 
-
-    // =========================
-    // ⑤ Google側の確定値を反映
-    // =========================
+    if (
+      !replaceUserHistoriesFromServer(
+        user,
+        result.userHistories
+      )
+    ) {
+      histories =
+        histories.map(item =>
+          String(item.id) ===
+          String(recordId)
+            ? {
+                ...item,
+                status: "cancelled"
+              }
+            : item
+        );
+    }
 
     points[user] =
       Number(
@@ -33214,36 +35217,33 @@ async function confirmCancelHistory(recordId) {
           ).slice(0, 10)
         : "";
 
-
-    // =========================
-    // ⑥ 最終画面更新
-    // =========================
-
     renderStatusAreas();
 
-    document.getElementById(
-      "todayTarget"
-    ).innerHTML =
-      getTodayTarget();
-
-    document.getElementById(
-      "history"
-    ).innerHTML =
-      getHistoryHtml();
-
-    document.getElementById(
-      "result"
-    ).textContent =
-      user +
-      "　排便累計：" +
-      getBowelPointText(
-        points[user]
+    const todayTarget =
+      document.getElementById(
+        "todayTarget"
       );
 
+    if (todayTarget) {
+      todayTarget.innerHTML =
+        getTodayTarget();
+    }
 
-    // =========================
-    // ⑥-2 開いている集計画面を更新
-    // =========================
+    const resultArea =
+      document.getElementById(
+        "result"
+      );
+
+    if (resultArea) {
+      resultArea.textContent =
+        user +
+        "　排便累計：" +
+        getBowelPointText(
+          points[user]
+        );
+    }
+
+    refreshHistoryDisplays();
 
     const dayResult =
       document.getElementById(
@@ -33254,11 +35254,8 @@ async function confirmCancelHistory(recordId) {
       dayResult &&
       dayResult.innerHTML.trim() !== ""
     ) {
-
       checkTodayBowelStatus();
-
     }
-
 
     const nightResult =
       document.getElementById(
@@ -33269,25 +35266,17 @@ async function confirmCancelHistory(recordId) {
       nightResult &&
       nightResult.innerHTML.trim() !== ""
     ) {
-
       checkNightBowelStatus();
-
     }
 
-
+    updateHomeMedicineStatus();
     saveData();
 
-
-    // =========================
-    // ⑦ 完了
-    // =========================
-
     showToast(
-      "✓ 排便記録を取り消しました",
+      "✓ 排便記録を取り消し、時系列で再計算しました",
       "success",
-      2000
+      3200
     );
-
 
   } catch (error) {
 
@@ -33296,87 +35285,19 @@ async function confirmCancelHistory(recordId) {
       error
     );
 
-
-    // =========================
-    // 保存失敗 → 操作前へ復元
-    // =========================
-
-    points[user] =
-      backupPoint;
-
-    lastDates[user] =
-      backupLastDate;
-
-    histories =
-      backupHistories;
-
-
-    renderStatusAreas();
-
-    document.getElementById(
-      "todayTarget"
-    ).innerHTML =
-      getTodayTarget();
-
-    document.getElementById(
-      "history"
-    ).innerHTML =
-      getHistoryHtml();
-
-    document.getElementById(
-      "result"
-    ).textContent =
-      user +
-      "　排便累計：" +
-      getBowelPointText(
-        points[user]
-      );
-
-
-    // =========================
-    // 失敗時も開いている集計を
-    // 元の状態で再描画
-    // =========================
-
-    const dayResult =
-      document.getElementById(
-        "bowelCheckResult"
-      );
-
-    if (
-      dayResult &&
-      dayResult.innerHTML.trim() !== ""
-    ) {
-
-      checkTodayBowelStatus();
-
-    }
-
-
-    const nightResult =
-      document.getElementById(
-        "nightBowelCheckResult"
-      );
-
-    if (
-      nightResult &&
-      nightResult.innerHTML.trim() !== ""
-    ) {
-
-      checkNightBowelStatus();
-
-    }
-
-
-    saveData();
-
-
     showToast(
       "⚠ 取消を保存できませんでした：" +
       error.message,
       "error",
-      4000
+      4500
     );
+
+    scheduleFullSyncAfterWrite(
+      1000
+    );
+
+  } finally {
+    endWriteActivity();
   }
 }
 
@@ -34691,7 +36612,7 @@ function getTodayText() {
 
 function openPage(pageId) {
 
-  // Ver.0.9.33 看護師は排便入力・勤務確認を使用しない
+  // Ver.0.9.34 看護師は排便入力・勤務確認を使用しない
   if (
     currentRole === "nurse" &&
     (
@@ -34758,7 +36679,7 @@ function openPage(pageId) {
   }
 
   if (pageId === "historyPage") {
-    renderHistoryView();
+    renderHistoryHub();
   }
 
   if (pageId === "residentDetailPage") {
@@ -34961,6 +36882,11 @@ async function loadLightSyncDataFromGoogle() {
       ? data.histories
       : [];
 
+  checkHistory =
+    Array.isArray(data.checkHistory)
+      ? data.checkHistory
+      : [];
+
 
   resolvePendingBowelOperationAfterSync();
 
@@ -35010,10 +36936,7 @@ async function loadLightSyncDataFromGoogle() {
     getTodayTarget();
 
 
-  document.getElementById(
-    "history"
-  ).innerHTML =
-    getHistoryHtml();
+  refreshHistoryDisplays();
 
 
   document.getElementById(
@@ -35153,6 +37076,11 @@ async function loadSyncDataFromGoogle() {
   histories =
     data.histories || [];
 
+  checkHistory =
+    Array.isArray(data.checkHistory)
+      ? data.checkHistory
+      : [];
+
   /*
     Ver.0.8.24
     前回「保存結果不明」になったoperationIdを、
@@ -35201,10 +37129,7 @@ async function loadSyncDataFromGoogle() {
     getTodayTarget();
 
 
-  document.getElementById(
-    "history"
-  ).innerHTML =
-    getHistoryHtml();
+  refreshHistoryDisplays();
 
 
   document.getElementById(
