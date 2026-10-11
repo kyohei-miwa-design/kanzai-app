@@ -8365,6 +8365,8 @@ body {
 /* Ver.0.9.34: 看護師・管理者のルール外個別対応作成 */
 
 /* ============================================================
+   Ver.0.9.36 利用者別「計」：排便成立なしは空欄表示
+   Ver.0.9.35 利用者別「計」を排便成立回数のローマ数字表示 / 翌朝予定を終日表示
    Ver.0.9.34 履歴刷新 / 排便実日時入力
 ============================================================ */
 .ui0934-bowel-datetime{
@@ -8824,7 +8826,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.34</div>
+      <div class="ui09-brand-version">Ver.0.9.36</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -9225,7 +9227,7 @@ body {
 
 
   <!-- =========================
-       勤務確認 Ver.0.9.34
+       勤務確認 Ver.0.9.36
   ========================== -->
   <section
     id="shiftConfirmPage"
@@ -9404,7 +9406,7 @@ body {
   </section>
 
   <!-- =========================
-       履歴 Ver.0.9.34
+       履歴 Ver.0.9.36
   ========================== -->
   <section
     id="historyPage"
@@ -9922,7 +9924,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.34
+            Ver.0.9.36
           </span>
         </div>
 
@@ -13586,27 +13588,27 @@ function getActionPendingData() {
       });
     }
 
-    if (hour >= 16) {
+    // Ver.0.9.36
+    // 翌朝の緩下剤予定は時刻に関係なく一日中表示する。
+    // 日中に排便成立して未排便日数が変われば、次回描画時に予定から外れる。
+    const tomorrowDays =
+      todayDays + 1;
 
-      const tomorrowDays =
-        todayDays + 1;
-
-      for (
-        const rule of
-        getRulesForDay(
-          user,
-          tomorrowDays
-        )
-        .filter(rule =>
-          rule.timing === "morning"
-        )
-      ) {
-        tomorrow.push({
-          user,
-          days: tomorrowDays,
-          rule
-        });
-      }
+    for (
+      const rule of
+      getRulesForDay(
+        user,
+        tomorrowDays
+      )
+      .filter(rule =>
+        rule.timing === "morning"
+      )
+    ) {
+      tomorrow.push({
+        user,
+        days: tomorrowDays,
+        rule
+      });
     }
   }
 
@@ -21953,7 +21955,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.34</strong>
+        <strong>Ver.0.9.36</strong>
       </div>
       <div>
         <span>GAS</span>
@@ -24623,31 +24625,30 @@ function renderHistoryMatrixView() {
     `);
   }
 
+  // Ver.0.9.36
+  // 「計」はポイント合計ではなく、その日に排便成立した回数を
+  // I / II / III ... のローマ数字で表示する。
   const totalCells =
     dates.map(date => {
 
-      const total =
+      const establishedCount =
         records
           .filter(item =>
             getHistoryDateKey(
               item
-            ) === date
+            ) === date &&
+            item.established === true
           )
-          .reduce(
-            (sum, item) =>
-              sum +
-              getBowelPoint(
-                item.type
-              ),
-            0
-          );
+          .length;
 
       return `
         <td>
           ${
-            total > 0
-              ? total + "pt"
-              : "―"
+            establishedCount > 0
+              ? toRomanNumeral(
+                  establishedCount
+                )
+              : ""
           }
         </td>
       `;
@@ -24722,6 +24723,49 @@ function renderHistoryMatrixView() {
       </tfoot>
     </table>
   `;
+}
+
+
+function toRomanNumeral(value) {
+
+  let number =
+    Math.max(
+      0,
+      Math.floor(
+        Number(value) || 0
+      )
+    );
+
+  if (number <= 0) {
+    return "";
+  }
+
+  const pairs = [
+    [1000, "M"],
+    [900, "CM"],
+    [500, "D"],
+    [400, "CD"],
+    [100, "C"],
+    [90, "XC"],
+    [50, "L"],
+    [40, "XL"],
+    [10, "X"],
+    [9, "IX"],
+    [5, "V"],
+    [4, "IV"],
+    [1, "I"]
+  ];
+
+  let result = "";
+
+  for (const [amount, symbol] of pairs) {
+    while (number >= amount) {
+      result += symbol;
+      number -= amount;
+    }
+  }
+
+  return result;
 }
 
 
