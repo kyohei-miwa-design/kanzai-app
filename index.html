@@ -8365,7 +8365,7 @@ body {
 /* Ver.0.9.34: 看護師・管理者のルール外個別対応作成 */
 
 /* ============================================================
-   Ver.0.9.37 排便成立後24時間ルール / 成立後追加便の別枠累積
+   Ver.0.9.38 排便成立後24時間ルール / 成立後追加便の別枠累積
    Ver.0.9.35 利用者別「計」を排便成立回数のローマ数字表示 / 翌朝予定を終日表示
    Ver.0.9.34 履歴刷新 / 排便実日時入力
 ============================================================ */
@@ -8826,7 +8826,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.37</div>
+      <div class="ui09-brand-version">Ver.0.9.39</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -9227,7 +9227,7 @@ body {
 
 
   <!-- =========================
-       勤務確認 Ver.0.9.37
+       勤務確認 Ver.0.9.38
   ========================== -->
   <section
     id="shiftConfirmPage"
@@ -9406,7 +9406,7 @@ body {
   </section>
 
   <!-- =========================
-       履歴 Ver.0.9.37
+       履歴 Ver.0.9.38
   ========================== -->
   <section
     id="historyPage"
@@ -9924,7 +9924,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.37
+            Ver.0.9.39
           </span>
         </div>
 
@@ -9933,7 +9933,7 @@ body {
             GAS
           </span>
           <span class="other-info-value">
-            Ver.0.8.51
+            Ver.0.8.53
           </span>
         </div>
 
@@ -10589,6 +10589,25 @@ let points = {};
 let histories = [];
 let checkHistory = [];
 let bowelDateTimeManual = false;
+
+// Ver.0.9.39
+// 起動/自動同期は直近の運用データだけ。
+// 履歴画面は「必要な利用者・必要な期間」だけを都度取得し、セッション中だけキャッシュする。
+let fullHistoryArchiveLoaded = false;      // 旧0.9.38互換（0.9.39では通常使わない）
+let historyArchiveLoadingPromise = null;  // 旧0.9.38互換
+const OPERATIONAL_MEMORY_RETENTION_DAYS = 10;
+const OPERATIONAL_CACHE_RETENTION_DAYS = 3;
+const HISTORY_LIST_CHUNK_DAYS = 7;
+let operationalHistorySince = "";
+let operationalHistorySignature = "";
+let operationalCheckHistorySignature = "";
+let operationalHistorySignatureSince = "";
+let operationalCheckHistorySignatureSince = "";
+let historyRangeCache = new Map();
+let historyRangeLoadingPromises = new Map();
+let historyRangeCacheGeneration = 0;
+let historyListOldestLoadedDate = "";
+let historyListHasEarlier = true;
 
 // Ver.0.8.32 履歴画面
 let historyViewMode = "today";
@@ -12193,7 +12212,7 @@ async function register() {
     );
 
   /*
-    Ver.0.9.37
+    Ver.0.9.38
     排便成立後24時間ルールでは、単純な previousPoint + 今回点数だけでは
     成立判定できない。
     そのため、未実施の緩下剤候補は先に控えておき、
@@ -12294,6 +12313,22 @@ async function register() {
       "排便登録一括保存"
     );
 
+    if (
+      result &&
+      Number.isFinite(
+        Number(result.serverDurationMs)
+      )
+    ) {
+      console.log(
+        "排便保存 GAS処理時間:",
+        Number(result.serverDurationMs),
+        "ms / fastPath:",
+        Boolean(result.fastPath),
+        "/ replayed:",
+        Boolean(result.replayed)
+      );
+    }
+
 
     // =========================
     // ⑤ 返ってきた履歴を追加
@@ -12377,6 +12412,8 @@ async function register() {
     // ⑦ 画面を最終更新
     // =========================
 
+    // Ver.0.9.39: 期間指定履歴キャッシュは新規記録で無効化。
+    invalidateHistoryRangeCaches();
     refreshHistoryDisplays();
 
     renderStatusAreas();
@@ -13600,7 +13637,7 @@ function getActionPendingData() {
       });
     }
 
-    // Ver.0.9.37
+    // Ver.0.9.38
     // 翌朝の緩下剤予定は時刻に関係なく一日中表示する。
     // 日中に排便成立して未排便日数が変われば、次回描画時に予定から外れる。
     const tomorrowDays =
@@ -15290,7 +15327,7 @@ async function resolveRecoveryAttention(encodedUser) {
     }, 20000);
     if (!result || result.ok !== true) throw new Error(result?.message || "確認状態の更新に失敗しました");
     closeCommonModal();
-    await loadInitialDataFromGoogle();
+    await loadLightSyncDataFromGoogle();
     showToast("✓ 排便復旧の確認を完了しました", "success", 3500);
   } catch (error) {
     showToast("⚠ 確認状態の更新に失敗しました", "error", 5000);
@@ -15820,6 +15857,18 @@ function clearResidentScopedMemory() {
   userUnits = {};
   histories = [];
   checkHistory = [];
+  fullHistoryArchiveLoaded = false;
+  historyArchiveLoadingPromise = null;
+  operationalHistorySince = "";
+  operationalHistorySignature = "";
+  operationalCheckHistorySignature = "";
+  operationalHistorySignatureSince = "";
+  operationalCheckHistorySignatureSince = "";
+  historyRangeCacheGeneration++;
+  historyRangeCache.clear();
+  historyRangeLoadingPromises.clear();
+  historyListOldestLoadedDate = "";
+  historyListHasEarlier = true;
   nurseInstructions = [];
   bowelRecoveryStates = [];
   residentCareStates = [];
@@ -15841,6 +15890,8 @@ function clearResidentScopedCache() {
     "userUnits",
     "histories",
     "checkHistory",
+    "historiesOperationalV2",
+    "checkHistoryOperationalV2",
     "nurseInstructions",
     "bowelRecoveryStates",
     "residentCareStates",
@@ -15992,6 +16043,391 @@ function verifyServerDataScope(
 }
 
 
+function getLocalDateKeyDaysAgo(days) {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - Math.max(0, Number(days || 0)));
+  return getLocalDateInputValue(d);
+}
+
+function getRecentHistoryCacheSubset(source, days) {
+  const cutoff = getLocalDateKeyDaysAgo(days);
+  return (Array.isArray(source) ? source : [])
+    .filter(item => getHistoryDateKey(item && item.date) >= cutoff);
+}
+
+function getRecentCheckHistoryCacheSubset(source, days) {
+  const cutoff = getLocalDateKeyDaysAgo(days);
+  return (Array.isArray(source) ? source : [])
+    .filter(item => String(item && item.date || "").slice(0, 10) >= cutoff);
+}
+
+
+function getHistoryRangeCacheKey(options) {
+  const source = options && typeof options === "object" ? options : {};
+  return [
+    String(source.startDate || ""),
+    String(source.endDate || ""),
+    String(source.user || ""),
+    source.includeChecks ? "checks" : "",
+    source.timeline ? "timeline" : ""
+  ].join("|");
+}
+
+function getCachedHistoryRange(options) {
+  return historyRangeCache.get(
+    getHistoryRangeCacheKey(options)
+  ) || null;
+}
+
+function isHistoryRangeLoading(options) {
+  return historyRangeLoadingPromises.has(
+    getHistoryRangeCacheKey(options)
+  );
+}
+
+function mergeHistoryRecordsIntoMemory(incoming) {
+  const fresh = Array.isArray(incoming) ? incoming : [];
+  if (!fresh.length) return;
+
+  const byId = new Map();
+  for (const item of fresh.concat(Array.isArray(histories) ? histories : [])) {
+    const id = String(item && item.id || "");
+    const fallback = [
+      String(item && item.date || ""),
+      String(item && item.user || ""),
+      String(item && item.type || ""),
+      String(item && item.operationId || "")
+    ].join("|");
+    const key = id || fallback;
+    if (!byId.has(key)) byId.set(key, item);
+  }
+
+  histories = Array.from(byId.values()).sort((a, b) =>
+    getHistorySortKey(b).localeCompare(getHistorySortKey(a))
+  );
+}
+
+function mergeCheckHistoryRecordsIntoMemory(incoming) {
+  const fresh = Array.isArray(incoming) ? incoming : [];
+  if (!fresh.length) return;
+
+  const seen = new Set();
+  const merged = [];
+
+  for (const item of fresh.concat(Array.isArray(checkHistory) ? checkHistory : [])) {
+    const key = [
+      String(item && item.date || ""),
+      String(item && item.user || ""),
+      String(item && item.medicine || ""),
+      String(Boolean(item && item.checked))
+    ].join("|");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(item);
+  }
+
+  checkHistory = merged.sort((a, b) =>
+    String(b.date || "").localeCompare(String(a.date || ""))
+  );
+}
+
+function mergeHistoryRangePayload(data) {
+  if (!data || typeof data !== "object") return;
+  mergeHistoryRecordsIntoMemory(data.histories);
+  mergeCheckHistoryRecordsIntoMemory(data.checkHistory);
+}
+
+function invalidateHistoryRangeCaches() {
+  historyRangeCacheGeneration++;
+  historyRangeCache.clear();
+  historyRangeLoadingPromises.clear();
+  historyListOldestLoadedDate = "";
+  historyListHasEarlier = true;
+}
+
+function isHistoryDateOperationallyLoaded(dateText) {
+  const date = String(dateText || "").slice(0, 10);
+  const floor = String(
+    operationalHistorySince || getLocalDateKeyDaysAgo(OPERATIONAL_MEMORY_RETENTION_DAYS)
+  ).slice(0, 10);
+  return Boolean(date && floor && date >= floor);
+}
+
+async function requestHistoryRangeFromServer(options, retries = 2) {
+  const source = options && typeof options === "object" ? options : {};
+  const query = [
+    "action=getHistoryRange",
+    "startDate=" + encodeURIComponent(String(source.startDate || "")),
+    "endDate=" + encodeURIComponent(String(source.endDate || ""))
+  ];
+
+  if (source.user) {
+    query.push("user=" + encodeURIComponent(String(source.user)));
+  }
+  if (source.includeChecks) {
+    query.push("includeChecks=1");
+  }
+  if (source.timeline) {
+    query.push("timeline=1");
+  }
+
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= Math.max(1, Number(retries || 1)); attempt++) {
+    try {
+      const response = await fetchApi(
+        API_URL + "?" + query.join("&"),
+        2,
+        30000
+      );
+      const data = await response.json();
+
+      if (data && data.error) {
+        const error = new Error(data.message || "履歴の取得に失敗しました");
+        error.code = String(data.code || "");
+        error.retryable = Boolean(data.retryable);
+        error.transient = error.retryable;
+        throw error;
+      }
+
+      verifyServerDataScope(data);
+      return data;
+
+    } catch (error) {
+      lastError = error;
+      if (!isTransientApiError(error) || attempt >= retries) {
+        throw error;
+      }
+      await wait(getRetryBackoffMs(attempt));
+    }
+  }
+
+  throw lastError || new Error("履歴を取得できませんでした");
+}
+
+
+async function ensureHistoryRangeLoaded(options, force = false) {
+  const normalized = {
+    startDate: String(options && options.startDate || "").slice(0, 10),
+    endDate: String(options && options.endDate || "").slice(0, 10),
+    user: String(options && options.user || ""),
+    includeChecks: Boolean(options && options.includeChecks),
+    timeline: Boolean(options && options.timeline)
+  };
+
+  const key = getHistoryRangeCacheKey(normalized);
+
+  if (!force && historyRangeCache.has(key)) {
+    return historyRangeCache.get(key);
+  }
+
+  if (historyRangeLoadingPromises.has(key)) {
+    return historyRangeLoadingPromises.get(key);
+  }
+
+  if (isWriteActivityActive()) {
+    // 保存と読込をぶつけず、保存完了後に同じ範囲を自動で再試行する。
+    await wait(800);
+    return ensureHistoryRangeLoaded(normalized, force);
+  }
+
+  const requestGeneration = historyRangeCacheGeneration;
+
+  const promise = (async () => {
+    const started = performance.now();
+    try {
+      const data = await requestHistoryRangeFromServer(normalized);
+
+      if (requestGeneration !== historyRangeCacheGeneration) {
+        // 取得中に保存が完了した場合、古い応答は採用せず新しい世代で取り直す。
+        return ensureHistoryRangeLoaded(normalized, true);
+      }
+
+      historyRangeCache.set(key, data);
+      mergeHistoryRangePayload(data);
+
+      console.log(
+        "期間指定履歴取得:",
+        normalized.startDate + "～" + normalized.endDate,
+        normalized.user || "全利用者",
+        Number(data.historyRowCount || 0) + "件",
+        normalized.includeChecks
+          ? "/ 与薬 " + Number(data.checkRowCount || 0) + "件"
+          : "",
+        "/ GAS " + Number(data.historyRangeDurationMs || 0) + "ms",
+        "/ 通信全体 " + Math.round(performance.now() - started) + "ms"
+      );
+
+      return data;
+    } finally {
+      historyRangeLoadingPromises.delete(key);
+    }
+  })();
+
+  historyRangeLoadingPromises.set(key, promise);
+  return promise;
+}
+
+function mergeOperationalHistories(incoming, sinceDate, reset = false) {
+  const fresh = Array.isArray(incoming) ? incoming : [];
+  if (reset) {
+    histories = fresh.slice();
+    return;
+  }
+
+  const since = String(sinceDate || "").slice(0, 10);
+  const memoryFloor = getLocalDateKeyDaysAgo(OPERATIONAL_MEMORY_RETENTION_DAYS);
+  const preserved = (Array.isArray(histories) ? histories : [])
+    .filter(item => {
+      const key = getHistoryDateKey(item && item.date);
+      if (!key) return false;
+      if (since && key >= since) return false;
+      return fullHistoryArchiveLoaded || historyRangeCache.size > 0 || key >= memoryFloor;
+    });
+
+  const byId = new Map();
+  for (const item of fresh.concat(preserved)) {
+    const id = String(item && item.id || "");
+    const fallback = [
+      String(item && item.date || ""),
+      String(item && item.user || ""),
+      String(item && item.type || ""),
+      String(item && item.operationId || "")
+    ].join("|");
+    const key = id || fallback;
+    if (!byId.has(key)) byId.set(key, item);
+  }
+
+  histories = Array.from(byId.values()).sort((a, b) =>
+    getHistorySortKey(b).localeCompare(getHistorySortKey(a))
+  );
+}
+
+function mergeOperationalCheckHistory(incoming, sinceDate, reset = false) {
+  const fresh = Array.isArray(incoming) ? incoming : [];
+  if (reset) {
+    checkHistory = fresh.slice();
+    return;
+  }
+
+  const since = String(sinceDate || "").slice(0, 10);
+  const memoryFloor = getLocalDateKeyDaysAgo(OPERATIONAL_MEMORY_RETENTION_DAYS);
+  const preserved = (Array.isArray(checkHistory) ? checkHistory : [])
+    .filter(item => {
+      const key = String(item && item.date || "").slice(0, 10);
+      if (!key) return false;
+      if (since && key >= since) return false;
+      return fullHistoryArchiveLoaded || historyRangeCache.size > 0 || key >= memoryFloor;
+    });
+
+  const seen = new Set();
+  const merged = [];
+  for (const item of fresh.concat(preserved)) {
+    const key = [
+      String(item && item.date || ""),
+      String(item && item.user || ""),
+      String(item && item.medicine || ""),
+      String(Boolean(item && item.checked))
+    ].join("|");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(item);
+  }
+  checkHistory = merged.sort((a, b) =>
+    String(b.date || "").localeCompare(String(a.date || ""))
+  );
+}
+
+
+function getOperationalHistorySignature(source) {
+  return (Array.isArray(source) ? source : [])
+    .map(item => [
+      String(item && item.id || ""),
+      String(item && item.date || ""),
+      String(item && item.user || ""),
+      String(item && item.type || ""),
+      String(item && item.status || ""),
+      String(item && item.point || "")
+    ].join("~"))
+    .join("||");
+}
+
+function getOperationalCheckHistorySignature(source) {
+  return (Array.isArray(source) ? source : [])
+    .map(item => [
+      String(item && item.date || ""),
+      String(item && item.user || ""),
+      String(item && item.medicine || ""),
+      String(Boolean(item && item.checked))
+    ].join("~"))
+    .join("||");
+}
+
+function applyOperationalHistoryPayload(data, reset = false) {
+  const incomingHistorySince =
+    String(data && data.operationalHistorySince || "").slice(0, 10);
+
+  const incomingCheckSince =
+    String(data && data.operationalCheckHistorySince || "").slice(0, 10);
+
+  if (incomingHistorySince) {
+    // 起動時10日分を保持した後、30秒同期の2日分で狭めない。
+    if (!operationalHistorySince || incomingHistorySince < operationalHistorySince) {
+      operationalHistorySince = incomingHistorySince;
+    }
+  }
+
+  const nextHistorySignature =
+    getOperationalHistorySignature(
+      data && data.histories
+    );
+
+  const nextCheckSignature =
+    getOperationalCheckHistorySignature(
+      data && data.checkHistory
+    );
+
+  const operationalChanged =
+    !reset &&
+    (
+      (
+        operationalHistorySignature &&
+        operationalHistorySignatureSince === incomingHistorySince &&
+        nextHistorySignature !== operationalHistorySignature
+      ) ||
+      (
+        operationalCheckHistorySignature &&
+        operationalCheckHistorySignatureSince === incomingCheckSince &&
+        nextCheckSignature !== operationalCheckHistorySignature
+      )
+    );
+
+  if (reset || operationalChanged) {
+    historyRangeCacheGeneration++;
+    historyRangeCache.clear();
+    historyRangeLoadingPromises.clear();
+    historyListOldestLoadedDate = "";
+    historyListHasEarlier = true;
+  }
+
+  operationalHistorySignature = nextHistorySignature;
+  operationalCheckHistorySignature = nextCheckSignature;
+  operationalHistorySignatureSince = incomingHistorySince;
+  operationalCheckHistorySignatureSince = incomingCheckSince;
+
+  mergeOperationalHistories(
+    data && data.histories,
+    data && data.operationalHistorySince,
+    reset
+  );
+  mergeOperationalCheckHistory(
+    data && data.checkHistory,
+    data && data.operationalCheckHistorySince,
+    reset
+  );
+}
+
 function saveData() {
 
   const dataScopeKey =
@@ -16035,14 +16471,28 @@ function saveData() {
   );
 
   localStorage.setItem(
-    "histories",
-    JSON.stringify(histories)
+    "historiesOperationalV2",
+    JSON.stringify(
+      getRecentHistoryCacheSubset(
+        histories,
+        OPERATIONAL_CACHE_RETENTION_DAYS
+      )
+    )
   );
 
   localStorage.setItem(
-    "checkHistory",
-    JSON.stringify(checkHistory)
+    "checkHistoryOperationalV2",
+    JSON.stringify(
+      getRecentCheckHistoryCacheSubset(
+        checkHistory,
+        OPERATIONAL_CACHE_RETENTION_DAYS
+      )
+    )
   );
+
+  // 旧版の全履歴キャッシュは起動時間を悪化させるので破棄。
+  localStorage.removeItem("histories");
+  localStorage.removeItem("checkHistory");
 
   localStorage.setItem(
     "nurseInstructions",
@@ -16107,8 +16557,12 @@ function loadData() {
   const savedUserUnits = localStorage.getItem("userUnits");
   const savedStaffMaster = localStorage.getItem("staffMaster");
   const savedUnitMaster = localStorage.getItem("unitMaster");
-  const savedHistories = localStorage.getItem("histories");
-  const savedCheckHistory = localStorage.getItem("checkHistory");
+  const savedHistories = localStorage.getItem("historiesOperationalV2");
+  const savedCheckHistory = localStorage.getItem("checkHistoryOperationalV2");
+
+  // 0.9.37以前の巨大な全履歴キャッシュは読み込まず削除する。
+  localStorage.removeItem("histories");
+  localStorage.removeItem("checkHistory");
   const savedNurseInstructions = localStorage.getItem("nurseInstructions");
   const savedBowelRecoveryStates = localStorage.getItem("bowelRecoveryStates");
   const savedResidentCareStates = localStorage.getItem("residentCareStates");
@@ -16821,22 +17275,20 @@ async function saveUsersToGoogle(showAlert = true) {
 
   try {
 
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       API_URL,
       {
         method: "POST",
-
         headers: {
           "Content-Type": "text/plain;charset=utf-8"
         },
-
         body: jsonBodyWithSession({
           action: "saveUsers",
           users: users
         }),
-
         cache: "no-store"
-      }
+      },
+      20000
     );
 
     const result = await response.text();
@@ -17327,6 +17779,7 @@ async function tryResolvePendingCheckOperation(
       );
 
       saveData();
+      invalidateHistoryRangeCaches();
       refreshCheckRelatedUI();
 
       showToast(
@@ -17394,6 +17847,7 @@ async function tryResolvePendingCheckOperation(
           );
 
           saveData();
+          invalidateHistoryRangeCaches();
           refreshCheckRelatedUI();
 
           showToast(
@@ -17592,6 +18046,7 @@ async function addHistoryToGoogle(history) {
       );
     }
 
+    invalidateHistoryRangeCaches();
     return true;
 
   } catch (error) {
@@ -17646,6 +18101,7 @@ async function addNoBowelHistoriesBatchToGoogle(
   }
 
   console.log("勤務帯 排便なし一括保存:", result);
+  invalidateHistoryRangeCaches();
   return result;
 }
 
@@ -17750,6 +18206,37 @@ function shouldRunFullSync() {
     lastFullSyncCompletedAt >=
     FULL_SYNC_INTERVAL_MS
   );
+}
+
+
+/*
+  Ver.0.9.38
+  保存結果が不明になった時の復旧同期。
+  名前は旧版互換で残すが、実際には重い全履歴同期を行わず、
+  現在の軽量運用同期だけを遅延実行する。
+*/
+function scheduleFullSyncAfterWrite(delayMs = 1000) {
+
+  const safeDelay = Math.max(
+    300,
+    Number(delayMs || 1000)
+  );
+
+  setTimeout(() => {
+
+    if (currentRole === "") {
+      return;
+    }
+
+    refreshFromGoogle({
+      source: "write-recovery"
+    }).catch(error => {
+      console.warn(
+        "保存後の復旧同期に失敗",
+        error
+      );
+    });
+  }, safeDelay);
 }
 
 
@@ -17919,56 +18406,10 @@ async function refreshFromGoogle(
       getAppDataSnapshot();
 
 
-    // =========================
-    // Ver.0.8.44
-    // 通常は軽量同期。
-    // 5分ごとだけ全同期を行う。
-    // =========================
-
-    const runFullSync =
-      shouldRunFullSync();
-
-
-    if (runFullSync) {
-
-      console.log(
-        "5分周期の全同期を実行します"
-      );
-
-
-      try {
-
-        await loadSyncDataFromGoogle();
-
-      } catch (fullSyncError) {
-
-        /*
-          全同期だけが一時的に失敗した場合、
-          現場で変わるデータだけは軽量同期で更新する。
-        */
-        if (
-          isTransientApiError(
-            fullSyncError
-          )
-        ) {
-
-          console.warn(
-            "全同期に失敗したため軽量同期へフォールバックします",
-            fullSyncError
-          );
-
-          await loadLightSyncDataFromGoogle();
-
-        } else {
-
-          throw fullSyncError;
-        }
-      }
-
-    } else {
-
-      await loadLightSyncDataFromGoogle();
-    }
+    // Ver.0.9.38
+    // 自動同期で全履歴を再取得しない。
+    // マスターを含む軽量運用同期だけを実行する。
+    await loadLightSyncDataFromGoogle();
 
 
     const afterData =
@@ -18781,31 +19222,19 @@ async function saveNurseInstructionFromModal(user) {
 
   try {
 
-    const response = await fetch(
-      API_URL,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8"
-        },
-        body: jsonBodyWithSession({
-          action: "saveNurseInstruction",
-          sourceRole: currentRole,
-          user: user,
-          kind: kind,
-          content: content,
-          timing: timing,
-          targetDate: targetDate,
-          nurseStaffId: nurseStaffId,
-          note: note
-        }),
-        cache: "no-store"
-      }
-    );
+    const result = await postJsonApiOnce({
+      action: "saveNurseInstruction",
+      sourceRole: currentRole,
+      user: user,
+      kind: kind,
+      content: content,
+      timing: timing,
+      targetDate: targetDate,
+      nurseStaffId: nurseStaffId,
+      note: note
+    }, 20000);
 
-    const result = await parseApiJsonResponse(response, "API");
-
-    if (!response.ok || !result.ok) {
+    if (!result.ok) {
       throw new Error(result.message || "個別対応を保存できませんでした");
     }
 
@@ -18890,25 +19319,15 @@ async function cancelNurseInstructionFromModal(instructionId) {
   try {
     showToast("個別対応を取消中…", "saving", 0);
 
-    const response = await fetch(
-      API_URL,
-      {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: jsonBodyWithSession({
-          action: "setNurseInstructionStatus",
-          statusAction: "cancel",
-          instructionId: instructionId,
-          sourceRole: currentRole,
-          nurseStaffId: nurseStaffId,
-          cancelReason: cancelReason
-        }),
-        cache: "no-store"
-      }
-    );
-
-    const result = await parseApiJsonResponse(response, "API");
-    if (!response.ok || !result.ok) {
+    const result = await postJsonApiOnce({
+      action: "setNurseInstructionStatus",
+      statusAction: "cancel",
+      instructionId: instructionId,
+      sourceRole: currentRole,
+      nurseStaffId: nurseStaffId,
+      cancelReason: cancelReason
+    }, 20000);
+    if (!result.ok) {
       throw new Error(result.message || "個別対応を取り消せませんでした");
     }
 
@@ -18932,23 +19351,13 @@ async function setNurseInstructionExecution(instructionId, statusAction) {
       0
     );
 
-    const response = await fetch(
-      API_URL,
-      {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: jsonBodyWithSession({
-          action: "setNurseInstructionStatus",
-          statusAction: statusAction,
-          instructionId: instructionId,
-          sourceRole: currentRole
-        }),
-        cache: "no-store"
-      }
-    );
-
-    const result = await parseApiJsonResponse(response, "API");
-    if (!response.ok || !result.ok) {
+    const result = await postJsonApiOnce({
+      action: "setNurseInstructionStatus",
+      statusAction: statusAction,
+      instructionId: instructionId,
+      sourceRole: currentRole
+    }, 20000);
+    if (!result.ok) {
       throw new Error(result.message || "保存できませんでした");
     }
 
@@ -21929,11 +22338,11 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.37</strong>
+        <strong>Ver.0.9.39</strong>
       </div>
       <div>
         <span>GAS</span>
-        <strong>Ver.0.8.51</strong>
+        <strong>Ver.0.8.53</strong>
       </div>
       <div>
         <span>ログイン範囲</span>
@@ -22653,6 +23062,8 @@ function clearCachedAppData() {
     "unitMaster",
     "histories",
     "checkHistory",
+    "historiesOperationalV2",
+    "checkHistoryOperationalV2",
     "nurseInstructions",
     "bowelRecoveryStates",
     "rules",
@@ -23115,6 +23526,12 @@ async function loadInitialDataFromGoogle() {
         Number(data.initialDataDurationMs),
         "ms"
       );
+      console.log(
+        "初期同期 運用履歴件数:",
+        Number(data.operationalHistoryRowCount || 0),
+        "与薬履歴件数:",
+        Number(data.operationalCheckRowCount || 0)
+      );
     }
 
 
@@ -23212,13 +23629,12 @@ async function loadInitialDataFromGoogle() {
     // histories
     // =========================
 
-    histories =
-      data.histories || [];
-
-    checkHistory =
-      Array.isArray(data.checkHistory)
-        ? data.checkHistory
-        : [];
+    fullHistoryArchiveLoaded = false;
+    historyArchiveLoadingPromise = null;
+    applyOperationalHistoryPayload(
+      data,
+      true
+    );
 
     nurseInstructions =
       Array.isArray(data.nurseInstructions)
@@ -23607,6 +24023,14 @@ function replaceUserHistoriesFromServer(
   const target =
     String(user || "");
 
+  const incoming =
+    fullHistoryArchiveLoaded
+      ? serverHistories
+      : getRecentHistoryCacheSubset(
+          serverHistories,
+          OPERATIONAL_MEMORY_RETENTION_DAYS
+        );
+
   histories =
     histories
       .filter(item =>
@@ -23615,7 +24039,7 @@ function replaceUserHistoriesFromServer(
         ) !== target
       )
       .concat(
-        serverHistories
+        incoming
       )
       .sort((a, b) =>
         getHistorySortKey(b)
@@ -23817,26 +24241,6 @@ function renderHistoryDayView() {
       "historyDayUnitFilter"
     );
 
-  const allowedUsers =
-    new Set(
-      getHistoryUsersForUnit(
-        unit
-      )
-    );
-
-  const items =
-    getActiveBowelHistories()
-      .filter(item =>
-        getHistoryDateKey(
-          item
-        ) === date &&
-        allowedUsers.has(
-          String(
-            item.user || ""
-          )
-        )
-      );
-
   const title =
     document.getElementById(
       "historyDayTitle"
@@ -23852,6 +24256,97 @@ function renderHistoryDayView() {
           : "全ユニット"
       );
   }
+
+  const rangeOptions = {
+    startDate: date,
+    endDate: date
+  };
+
+  const cached =
+    getCachedHistoryRange(
+      rangeOptions
+    );
+
+  if (
+    !isHistoryDateOperationallyLoaded(date) &&
+    !cached
+  ) {
+    const count =
+      document.getElementById(
+        "historyCountPill"
+      );
+
+    if (count) {
+      count.textContent =
+        isHistoryRangeLoading(rangeOptions)
+          ? "取得中…"
+          : "読込中";
+    }
+
+    area.innerHTML = `
+      <div class="ui0934-history-empty">
+        ${
+          isHistoryRangeLoading(rangeOptions)
+            ? "指定日の履歴を取得しています…"
+            : "指定日の履歴を読み込みます…"
+        }
+      </div>
+    `;
+
+    if (!isHistoryRangeLoading(rangeOptions)) {
+      ensureHistoryRangeLoaded(rangeOptions)
+        .then(() => {
+          if (historyRouteMode === "day") renderHistoryDayView();
+        })
+        .catch(error => {
+          console.warn("日別履歴取得エラー", error);
+          area.innerHTML = `
+            <div class="ui0934-history-empty">
+              履歴を取得できませんでした。もう一度日付を選び直してください。
+            </div>
+          `;
+          showToast("⚠ 日別履歴を取得できませんでした", "warning", 3500);
+        });
+    }
+
+    return;
+  }
+
+  const sourceHistories =
+    cached && Array.isArray(cached.histories)
+      ? cached.histories
+      : histories;
+
+  const allowedUsers =
+    new Set(
+      getHistoryUsersForUnit(
+        unit
+      )
+    );
+
+  const items =
+    (Array.isArray(sourceHistories) ? sourceHistories : [])
+      .filter(item =>
+        String(item && item.status || "active") !== "cancelled"
+      )
+      .filter(item =>
+        ["少", "少1", "少2", "普通", "多量"]
+          .includes(
+            String(
+              item && item.type || ""
+            ).trim()
+          )
+      )
+      .filter(item =>
+        getHistoryDateKey(
+          item
+        ) === date &&
+        allowedUsers.has(
+          String(
+            item.user || ""
+          )
+        )
+      );
 
   const count =
     document.getElementById(
@@ -23966,6 +24461,7 @@ function renderHistoryDayView() {
       }
     ).join("");
 }
+
 
 function updateHistoryMatrixUserOptions() {
 
@@ -24615,7 +25111,8 @@ function getHistoryCheckLabel(
 
 function getHistoryMedicationLabels(
   user,
-  date
+  date,
+  sourceChecks = checkHistory
 ) {
 
   const labels = [];
@@ -24623,8 +25120,8 @@ function getHistoryMedicationLabels(
   for (
     const item of
     (
-      Array.isArray(checkHistory)
-        ? checkHistory
+      Array.isArray(sourceChecks)
+        ? sourceChecks
         : []
     )
   ) {
@@ -24758,14 +25255,6 @@ function renderHistoryMatrixView() {
     }
   }
 
-  const timeline =
-    buildUserBowelTimeline(
-      user
-    );
-
-  const records =
-    timeline.items;
-
   const title =
     document.getElementById(
       "historyMatrixTitle"
@@ -24779,6 +25268,77 @@ function renderHistoryMatrixView() {
       "日";
   }
 
+  const rangeOptions = {
+    startDate: dates[0],
+    endDate: dates[dates.length - 1],
+    user: user,
+    includeChecks: true,
+    timeline: true
+  };
+
+  const cached =
+    getCachedHistoryRange(
+      rangeOptions
+    );
+
+  if (!cached) {
+    const count =
+      document.getElementById(
+        "historyCountPill"
+      );
+
+    if (count) {
+      count.textContent =
+        isHistoryRangeLoading(rangeOptions)
+          ? "取得中…"
+          : "読込中";
+    }
+
+    area.innerHTML = `
+      <div class="ui0934-history-empty">
+        ${
+          isHistoryRangeLoading(rangeOptions)
+            ? escapeHtml(formatResidentName(user)) + "さんの" + historyMatrixDays + "日分を取得しています…"
+            : "表示期間の履歴を読み込みます…"
+        }
+      </div>
+    `;
+
+    if (!isHistoryRangeLoading(rangeOptions)) {
+      ensureHistoryRangeLoaded(rangeOptions)
+        .then(() => {
+          if (historyRouteMode === "matrix") renderHistoryMatrixView();
+        })
+        .catch(error => {
+          console.warn("利用者別履歴取得エラー", error);
+          area.innerHTML = `
+            <div class="ui0934-history-empty">
+              履歴を取得できませんでした。期間または利用者を選び直してください。
+            </div>
+          `;
+          showToast("⚠ 利用者別履歴を取得できませんでした", "warning", 3500);
+        });
+    }
+
+    return;
+  }
+
+  const records =
+    Array.isArray(cached.timelineItems)
+      ? cached.timelineItems
+      : [];
+
+  const dailyNoBowelDays =
+    cached.dailyNoBowelDays &&
+    typeof cached.dailyNoBowelDays === "object"
+      ? cached.dailyNoBowelDays
+      : {};
+
+  const rangeCheckHistory =
+    Array.isArray(cached.checkHistory)
+      ? cached.checkHistory
+      : [];
+
   const count =
     document.getElementById(
       "historyCountPill"
@@ -24786,15 +25346,7 @@ function renderHistoryMatrixView() {
 
   if (count) {
     count.textContent =
-      records
-        .filter(item =>
-          dates.includes(
-            getHistoryDateKey(
-              item
-            )
-          )
-        )
-        .length +
+      records.length +
       "件";
   }
 
@@ -24921,9 +25473,7 @@ function renderHistoryMatrixView() {
     `);
   }
 
-  // Ver.0.9.37
-  // 「計」はポイント合計ではなく、その日に排便成立した回数を
-  // I / II / III ... のローマ数字で表示する。
+  // 「計」はその日に排便成立した回数を I / II / III ... で表示。
   const totalCells =
     dates.map(date => {
 
@@ -24953,18 +25503,23 @@ function renderHistoryMatrixView() {
   const dayCells =
     dates.map(date => {
 
-      const days =
-        getNoBowelDaysAtDateFromTimeline(
-          timeline,
+      const hasValue =
+        Object.prototype.hasOwnProperty.call(
+          dailyNoBowelDays,
           date
         );
+
+      const days =
+        hasValue
+          ? dailyNoBowelDays[date]
+          : null;
 
       return `
         <td>
           ${
-            days === null
+            days === null || days === undefined
               ? "―"
-              : days + "日目"
+              : Number(days) + "日目"
           }
         </td>
       `;
@@ -24976,7 +25531,8 @@ function renderHistoryMatrixView() {
       const labels =
         getHistoryMedicationLabels(
           user,
-          date
+          date,
+          rangeCheckHistory
         );
 
       return `
@@ -25426,6 +25982,22 @@ function getFilteredHistoriesForView() {
         ) {
           return false;
         }
+
+        if (!selectedDate) {
+          const loadedFloor =
+            historyListOldestLoadedDate ||
+            operationalHistorySince ||
+            getLocalDateKeyDaysAgo(
+              OPERATIONAL_MEMORY_RETENTION_DAYS
+            );
+
+          if (
+            loadedFloor &&
+            dateKey < loadedFloor
+          ) {
+            return false;
+          }
+        }
       }
 
 
@@ -25439,6 +26011,71 @@ function getFilteredHistoriesForView() {
     );
 }
 
+
+function getHistoryListSelectedDate() {
+  return String(
+    document.getElementById("historyDateFilter")?.value || ""
+  ).slice(0, 10);
+}
+
+function scheduleHistoryListRouteData() {
+  if (historyViewMode !== "past") return;
+
+  const selectedDate = getHistoryListSelectedDate();
+
+  if (selectedDate) {
+    if (isHistoryDateOperationallyLoaded(selectedDate)) return;
+
+    const options = {
+      startDate: selectedDate,
+      endDate: selectedDate
+    };
+
+    if (getCachedHistoryRange(options) || isHistoryRangeLoading(options)) return;
+
+    ensureHistoryRangeLoaded(options)
+      .then(() => {
+        if (historyRouteMode === "list") renderHistoryView();
+      })
+      .catch(error => {
+        console.warn("指定日の履歴取得に失敗", error);
+        showToast("⚠ 過去履歴を取得できませんでした", "warning", 3500);
+      });
+    return;
+  }
+
+  if (historyListOldestLoadedDate) return;
+
+  const endDate = moveDateText(
+    getLocalDateInputValue(new Date()),
+    -1
+  );
+  const startDate = moveDateText(
+    endDate,
+    -(HISTORY_LIST_CHUNK_DAYS - 1)
+  );
+  const options = {startDate, endDate};
+
+  if (getCachedHistoryRange(options)) {
+    const cached = getCachedHistoryRange(options);
+    historyListOldestLoadedDate = startDate;
+    historyListHasEarlier = Boolean(cached.hasEarlierHistories);
+    return;
+  }
+
+  if (isHistoryRangeLoading(options)) return;
+
+  ensureHistoryRangeLoaded(options)
+    .then(data => {
+      historyListOldestLoadedDate = startDate;
+      historyListHasEarlier = Boolean(data.hasEarlierHistories);
+      if (historyRouteMode === "list") renderHistoryView();
+    })
+    .catch(error => {
+      console.warn("履歴一覧の追加取得に失敗", error);
+      showToast("⚠ 過去履歴を取得できませんでした", "warning", 3500);
+    });
+}
 
 function setHistoryViewMode(mode) {
 
@@ -25513,9 +26150,45 @@ function clearHistoryFilters() {
 }
 
 
-function loadMoreHistory() {
+async function loadMoreHistory() {
 
   historyVisiblePastCount += 50;
+
+  if (
+    historyViewMode === "past" &&
+    !getHistoryListSelectedDate()
+  ) {
+    const currentlyFiltered = getFilteredHistoriesForView();
+
+    if (
+      currentlyFiltered.length < historyVisiblePastCount &&
+      historyListHasEarlier
+    ) {
+      // 初回30日がまだ取得されていなければ、先にそれを待つ。
+      if (!historyListOldestLoadedDate) {
+        scheduleHistoryListRouteData();
+        renderHistoryView();
+        return;
+      }
+
+      const endDate = moveDateText(historyListOldestLoadedDate, -1);
+      const startDate = moveDateText(
+        endDate,
+        -(HISTORY_LIST_CHUNK_DAYS - 1)
+      );
+      const options = {startDate, endDate};
+
+      try {
+        const data = await ensureHistoryRangeLoaded(options);
+        historyListOldestLoadedDate = startDate;
+        historyListHasEarlier = Boolean(data.hasEarlierHistories);
+      } catch (error) {
+        console.warn("さらに過去の履歴取得に失敗", error);
+        showToast("⚠ さらに過去の履歴を取得できませんでした", "warning", 3500);
+      }
+    }
+  }
+
   renderHistoryView();
 }
 
@@ -25533,6 +26206,8 @@ function renderHistoryView() {
 
   historyElement.innerHTML =
     getHistoryHtml();
+
+  scheduleHistoryListRouteData();
 }
 
 
@@ -25749,10 +26424,22 @@ function getHistoryHtml() {
 
   if (loadMoreButton) {
 
-    const hasMore =
+    const selectedDate =
+      getHistoryListSelectedDate();
+
+    const hasLocalMore =
       historyViewMode === "past" &&
       totalCount >
         historyVisiblePastCount;
+
+    const canFetchOlder =
+      historyViewMode === "past" &&
+      !selectedDate &&
+      historyListHasEarlier;
+
+    const hasMore =
+      hasLocalMore ||
+      canFetchOlder;
 
     loadMoreButton.classList.toggle(
       "hidden",
@@ -25764,12 +26451,14 @@ function getHistoryHtml() {
       loadMoreText
     ) {
       loadMoreText.textContent =
-        "残り " +
-        (
-          totalCount -
-          historyVisiblePastCount
-        ) +
-        "件";
+        hasLocalMore
+          ? "残り " +
+            Math.max(
+              0,
+              totalCount - historyVisiblePastCount
+            ) +
+            "件"
+          : "さらに過去" + HISTORY_LIST_CHUNK_DAYS + "日を取得";
     }
   }
 
@@ -29162,6 +29851,7 @@ async function toggleCheck(key) {
     );
 
     saveData();
+    invalidateHistoryRangeCaches();
     refreshCheckRelatedUI();
 
     showToast(
@@ -29731,6 +30421,7 @@ async function cancelCompletedCheck(key) {
     );
 
     saveData();
+    invalidateHistoryRangeCaches();
     refreshCheckRelatedUI();
 
     showToast(
@@ -31360,7 +32051,8 @@ async function submitHistoricalShiftRecovery(type, targetDate) {
     if (!confirmSaved) throw new Error("勤務帯確定の保存に失敗しました");
 
     closeCommonModal();
-    await loadInitialDataFromGoogle();
+    invalidateHistoryRangeCaches();
+    await loadLightSyncDataFromGoogle();
     showToast("✓ 過去勤務帯の照合を保存しました", "success", 4000);
     alert(
       "過去勤務帯の照合を保存しました" +
@@ -33647,6 +34339,79 @@ async function postJsonApiOnce(
 
 
 /*
+  Ver.0.9.38
+  過去履歴はアプリ起動を待たせず、履歴画面を開いた時だけ取得する。
+*/
+async function requestHistoryArchiveFromServer(retries = 2) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await fetchApi(
+        API_URL + "?action=getHistoryArchive",
+        1,
+        30000
+      );
+      const data = await response.json();
+      if (data && data.error) {
+        const error = new Error(data.message || "過去履歴の取得に失敗しました");
+        error.code = String(data.code || "");
+        error.retryable = Boolean(data.retryable);
+        error.transient = error.retryable;
+        throw error;
+      }
+      return data;
+    } catch (error) {
+      lastError = error;
+      if (!isTransientApiError(error) || attempt >= retries) throw error;
+      await wait(getRetryBackoffMs(attempt));
+    }
+  }
+
+  throw lastError || new Error("過去履歴を取得できませんでした");
+}
+
+async function ensureFullHistoryArchiveLoaded(force = false) {
+  if (currentRole === "") return false;
+  if (fullHistoryArchiveLoaded && !force) return true;
+  if (historyArchiveLoadingPromise) return historyArchiveLoadingPromise;
+
+  if (isWriteActivityActive()) {
+    return false;
+  }
+
+  historyArchiveLoadingPromise = (async () => {
+    console.time("★ 過去履歴遅延取得");
+    try {
+      const data = await requestHistoryArchiveFromServer();
+      verifyServerDataScope(data);
+
+      histories = Array.isArray(data.histories) ? data.histories : [];
+      checkHistory = Array.isArray(data.checkHistory) ? data.checkHistory : [];
+      fullHistoryArchiveLoaded = true;
+
+      console.log(
+        "過去履歴取得:",
+        Number(data.historyRowCount || histories.length),
+        "件 / 与薬履歴",
+        Number(data.checkRowCount || checkHistory.length),
+        "件 / GAS",
+        Number(data.historyArchiveDurationMs || 0),
+        "ms"
+      );
+
+      refreshHistoryDisplays();
+      return true;
+    } finally {
+      console.timeEnd("★ 過去履歴遅延取得");
+      historyArchiveLoadingPromise = null;
+    }
+  })();
+
+  return historyArchiveLoadingPromise;
+}
+
+/*
   Ver.0.9.15 初期同期安定化。
 
   getInitialData は読み取り専用のため GET を使用する。
@@ -34296,6 +35061,7 @@ async function fetchApi(
 
       return {
         ok: true,
+        byteLength: text.length,
 
         text:
           async () => text,
@@ -34781,38 +35547,13 @@ async function saveEditedHistory(recordId) {
       "履歴修正一括保存"
     );
 
-    const response =
-      await fetch(
-        API_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "text/plain;charset=utf-8"
-          },
-          body: jsonBodyWithSession({
-            action:
-              "editHistoryFast",
-            recordId:
-              recordId,
-            newType:
-              newType,
-            newDateTime:
-              newDateTime
-          }),
-          cache: "no-store"
-        }
-      );
-
-    if (!response.ok) {
-      throw new Error(
-        "履歴修正失敗：HTTP " +
-        response.status
-      );
-    }
-
     const result =
-      await response.json();
+      await postJsonApiOnce({
+        action: "editHistoryFast",
+        recordId: recordId,
+        newType: newType,
+        newDateTime: newDateTime
+      }, 30000);
 
     if (!result.ok) {
       throw new Error(
@@ -34887,6 +35628,7 @@ async function saveEditedHistory(recordId) {
         );
     }
 
+    invalidateHistoryRangeCaches();
     refreshHistoryDisplays();
 
     const dayResult =
@@ -35399,34 +36141,11 @@ async function confirmCancelHistory(recordId) {
       "履歴取消一括保存"
     );
 
-    const response =
-      await fetch(
-        API_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "text/plain;charset=utf-8"
-          },
-          body: jsonBodyWithSession({
-            action:
-              "cancelHistoryFast",
-            recordId:
-              recordId
-          }),
-          cache: "no-store"
-        }
-      );
-
-    if (!response.ok) {
-      throw new Error(
-        "履歴取消失敗：HTTP " +
-        response.status
-      );
-    }
-
     const result =
-      await response.json();
+      await postJsonApiOnce({
+        action: "cancelHistoryFast",
+        recordId: recordId
+      }, 30000);
 
     if (!result.ok) {
       throw new Error(
@@ -35495,6 +36214,7 @@ async function confirmCancelHistory(recordId) {
         );
     }
 
+    invalidateHistoryRangeCaches();
     refreshHistoryDisplays();
 
     const dayResult =
@@ -36931,6 +37651,7 @@ function openPage(pageId) {
   }
 
   if (pageId === "historyPage") {
+    // Ver.0.9.39: 全履歴は取得しない。各導線が必要な期間だけ取得する。
     renderHistoryHub();
   }
 
@@ -37015,6 +37736,12 @@ async function loadLightSyncDataFromGoogle() {
         data.syncDataDurationMs
       ),
       "ms"
+    );
+    console.log(
+      "軽量同期 運用履歴件数:",
+      Number(data.operationalHistoryRowCount || 0),
+      "与薬履歴件数:",
+      Number(data.operationalCheckRowCount || 0)
     );
   }
 
@@ -37127,18 +37854,10 @@ async function loadLightSyncDataFromGoogle() {
   applyPendingCheckOverrides();
 
 
-  histories =
-    Array.isArray(
-      data.histories
-    )
-      ? data.histories
-      : [];
-
-  checkHistory =
-    Array.isArray(data.checkHistory)
-      ? data.checkHistory
-      : [];
-
+  applyOperationalHistoryPayload(
+    data,
+    false
+  );
 
   resolvePendingBowelOperationAfterSync();
 
@@ -37165,6 +37884,13 @@ async function loadLightSyncDataFromGoogle() {
     Array.isArray(data.residentHospitalizationPeriods)
       ? data.residentHospitalizationPeriods
       : residentHospitalizationPeriods;
+
+  if (
+    Array.isArray(data.staffMaster) ||
+    Array.isArray(data.unitMaster)
+  ) {
+    setMasterDataFromServer(data);
+  }
 
   applyDailyConfirmStatus(
     data.dailyConfirms
@@ -37325,13 +38051,10 @@ async function loadSyncDataFromGoogle() {
 
   applyPendingCheckOverrides();
 
-  histories =
-    data.histories || [];
-
-  checkHistory =
-    Array.isArray(data.checkHistory)
-      ? data.checkHistory
-      : [];
+  applyOperationalHistoryPayload(
+    data,
+    false
+  );
 
   /*
     Ver.0.8.24
