@@ -8784,6 +8784,113 @@ body {
   }
 }
 
+
+
+/* ============================================================
+   Ver.0.9.44 対応解除の見える化
+   排便成立で「現在」リストから外れた利用者を、確認するまで緑カードで残す。
+============================================================ */
+.ui0944-resolution-wrap {
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid #9fd9c8;
+  border-radius: 14px;
+  background: #eefaf6;
+  box-shadow: 0 4px 12px rgba(0, 110, 88, 0.06);
+}
+
+.ui0944-resolution-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.ui0944-resolution-title {
+  font-weight: 800;
+  color: #08745f;
+  font-size: 15px;
+}
+
+.ui0944-resolution-count {
+  flex: 0 0 auto;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #d9f3ea;
+  color: #08745f;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.ui0944-resolution-help {
+  margin: 0 0 9px;
+  color: #45655d;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ui0944-resolution-item {
+  padding: 9px 10px;
+  margin-top: 7px;
+  border-radius: 11px;
+  background: #fff;
+  border-left: 4px solid #20a486;
+}
+
+.ui0944-resolution-user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 800;
+  color: #173f35;
+}
+
+.ui0944-resolution-time {
+  flex: 0 0 auto;
+  color: #6d827d;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ui0944-resolution-actions {
+  margin-top: 5px;
+  color: #38574f;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ui0944-resolution-reason {
+  margin-top: 4px;
+  color: #08745f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ui0944-resolution-ack {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 11px;
+  background: #0d8f77;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: 520px) {
+  .ui0944-resolution-wrap {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .ui0944-resolution-user {
+    align-items: flex-start;
+  }
+}
+
 </style>
 </head>
 
@@ -8826,7 +8933,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.42</div>
+      <div class="ui09-brand-version">Ver.0.9.44</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -9380,6 +9487,7 @@ body {
     </div>
 
     <div id="actionCurrentPanel" class="action-ui-panel">
+      <div id="actionResolvedNotice"></div>
       <div id="todayTarget">現在の対応を確認しています...</div>
     </div>
 
@@ -9924,7 +10032,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.42
+            Ver.0.9.44
           </span>
         </div>
 
@@ -9933,7 +10041,7 @@ body {
             GAS
           </span>
           <span class="other-info-value">
-            Ver.0.8.55
+            Ver.0.8.56
           </span>
         </div>
 
@@ -10590,7 +10698,7 @@ let histories = [];
 let checkHistory = [];
 let bowelDateTimeManual = false;
 
-// Ver.0.9.42
+// Ver.0.9.43
 // 起動/自動同期は直近の運用データだけ。
 // 履歴画面は「必要な利用者・必要な期間」だけを都度取得し、セッション中だけキャッシュする。
 let fullHistoryArchiveLoaded = false;      // 旧0.9.38互換（0.9.39では通常使わない）
@@ -10686,11 +10794,11 @@ const FULL_SYNC_INTERVAL_MS =
 let syncConsecutiveFailureCount = 0;
 let lastFullSyncCompletedAt = 0;
 
-// Ver.0.9.42: 起動に不要な補助データは初期画面の後で遅延取得する。
+// Ver.0.9.43: 起動に不要な補助データは初期画面の後で遅延取得する。
 let initialAuxLoadingPromise = null;
 let initialAuxLoadTimer = null;
 
-// Ver.0.9.42: 初期コア後に運用履歴/与薬/勤務確認を別通信で取得する。
+// Ver.0.9.43: 初期コア後に運用履歴/与薬/勤務確認を別通信で取得する。
 let initialOperationalLoadingPromise = null;
 let initialOperationalLoadTimer = null;
 
@@ -12421,7 +12529,7 @@ async function register() {
     // ⑦ 画面を最終更新
     // =========================
 
-    // Ver.0.9.42: 期間指定履歴キャッシュは新規記録で無効化。
+    // Ver.0.9.43: 期間指定履歴キャッシュは新規記録で無効化。
     invalidateHistoryRangeCaches();
     refreshHistoryDisplays();
 
@@ -12491,6 +12599,12 @@ async function register() {
       result.established === true &&
       pendingLaxativesBeforeReset.length > 0
     ) {
+      recordDirectBowelActionResolution(
+        user,
+        pendingLaxativesBeforeReset,
+        result
+      );
+
       showBowelResetMedicationRemovalAlert(
         user,
         pendingLaxativesBeforeReset
@@ -13584,6 +13698,333 @@ function getNoBowelDays(user) {
 let actionPageMode = "current";
 
 
+/* ============================================================
+   Ver.0.9.44 対応解除の見える化
+
+   「現在の対応」にいた利用者が権威同期後に消え、かつ最終排便日が進んだ場合、
+   排便成立（または最終排便更新）によって対応不要になったと判断する。
+
+   端末をまたいだ入力でも、看護師端末が次回同期した時に旧スナップショットとの差分を検出。
+   緑の確認カードは、その端末で「確認して閉じる」を押すまで残す。
+============================================================ */
+var ACTION_RESOLUTION_SNAPSHOT_KEY = "laxative_action_snapshot_v0944";
+var ACTION_RESOLUTION_NOTICE_KEY = "laxative_action_resolution_v0944";
+var ACTION_RESOLUTION_SNAPSHOT_MAX_AGE_MS = 48 * 60 * 60 * 1000;
+var ACTION_RESOLUTION_NOTICE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+function getActionResolutionScopeKey() {
+  return [
+    String(currentRole || ""),
+    String(currentUnit || "")
+  ].join("|");
+}
+
+function safeReadLocalJson(key, fallbackValue) {
+  try {
+    const text = localStorage.getItem(key);
+    if (!text) return fallbackValue;
+    const value = JSON.parse(text);
+    return value == null ? fallbackValue : value;
+  } catch (error) {
+    console.warn("対応解除ローカル読込失敗:", key, error);
+    return fallbackValue;
+  }
+}
+
+function safeWriteLocalJson(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn("対応解除ローカル保存失敗:", key, error);
+  }
+}
+
+function getCurrentActionSnapshotForResolution() {
+  const items = [];
+  const data = getActionPendingData();
+
+  for (const item of (data.regular || [])) {
+    const rule = normalizeRuleItem(item.rule || {});
+    items.push({
+      id: "regular|" + String(item.key || ""),
+      source: "regular",
+      user: String(item.user || ""),
+      content: String(rule.content || "緩下剤"),
+      timing: String(getRuleTimingLabel(rule) || ""),
+      lastDate: String(lastDates[item.user] || ""),
+      point: Number(points[item.user] || 0)
+    });
+  }
+
+  for (const item of getActionCurrentNurseItems()) {
+    items.push({
+      id: "nurse|" + String(item.instructionId || [item.user, item.content, item.targetDate].join("|")),
+      source: "nurse",
+      user: String(item.user || ""),
+      content: String(item.content || getNurseInstructionKindLabel(item) || "個別対応"),
+      timing: String(getNurseInstructionTimingLabel(item) || ""),
+      lastDate: String(lastDates[item.user] || ""),
+      point: Number(points[item.user] || 0)
+    });
+  }
+
+  return {
+    scope: getActionResolutionScopeKey(),
+    capturedAt: Date.now(),
+    items: items
+  };
+}
+
+function loadActionResolutionNotices() {
+  const now = Date.now();
+  const scope = getActionResolutionScopeKey();
+  const all = safeReadLocalJson(ACTION_RESOLUTION_NOTICE_KEY, []);
+
+  return (Array.isArray(all) ? all : [])
+    .filter(item => item && item.scope === scope)
+    .filter(item => now - Number(item.detectedAt || 0) <= ACTION_RESOLUTION_NOTICE_MAX_AGE_MS)
+    .slice(-20);
+}
+
+function saveActionResolutionNotices(items) {
+  const scope = getActionResolutionScopeKey();
+  const all = safeReadLocalJson(ACTION_RESOLUTION_NOTICE_KEY, []);
+  const keepOtherScopes = (Array.isArray(all) ? all : [])
+    .filter(item => item && item.scope !== scope)
+    .filter(item => Date.now() - Number(item.detectedAt || 0) <= ACTION_RESOLUTION_NOTICE_MAX_AGE_MS);
+
+  safeWriteLocalJson(
+    ACTION_RESOLUTION_NOTICE_KEY,
+    keepOtherScopes.concat((Array.isArray(items) ? items : []).slice(-20))
+  );
+}
+
+function formatActionResolutionClock(value) {
+  const date = new Date(Number(value || 0));
+  if (Number.isNaN(date.getTime())) return "";
+  return String(date.getHours()).padStart(2, "0") + ":" +
+    String(date.getMinutes()).padStart(2, "0");
+}
+
+function formatActionResolutionDate(value) {
+  const text = String(value || "");
+  const parts = text.split("-");
+  if (parts.length !== 3) return text;
+  return Number(parts[1]) + "/" + Number(parts[2]);
+}
+
+function renderActionResolutionNotice() {
+  const area = document.getElementById("actionResolvedNotice");
+  if (!area) return;
+
+  const notices = loadActionResolutionNotices();
+  if (!notices.length) {
+    area.innerHTML = "";
+    return;
+  }
+
+  const grouped = new Map();
+  for (const notice of notices) {
+    const key = String(notice.user || "") + "|" + String(notice.lastDate || "");
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        user: notice.user,
+        lastDate: notice.lastDate,
+        detectedAt: notice.detectedAt,
+        actions: []
+      });
+    }
+    const group = grouped.get(key);
+    group.detectedAt = Math.max(Number(group.detectedAt || 0), Number(notice.detectedAt || 0));
+    for (const action of (notice.actions || [])) {
+      if (!group.actions.some(existing =>
+        existing.id === action.id ||
+        (
+          String(existing.content || "") === String(action.content || "") &&
+          String(existing.timing || "") === String(action.timing || "")
+        )
+      )) {
+        group.actions.push(action);
+      }
+    }
+  }
+
+  const groups = Array.from(grouped.values())
+    .sort((a, b) => Number(b.detectedAt || 0) - Number(a.detectedAt || 0));
+
+  area.innerHTML = `
+    <section class="ui0944-resolution-wrap">
+      <div class="ui0944-resolution-head">
+        <div class="ui0944-resolution-title">✓ 排便確認で対応リストから解除</div>
+        <div class="ui0944-resolution-count">${groups.length}名</div>
+      </div>
+      <div class="ui0944-resolution-help">
+        排便成立・最終排便更新により、直前まで表示されていた対応が不要になりました。
+      </div>
+      ${groups.map(group => `
+        <div class="ui0944-resolution-item">
+          <div class="ui0944-resolution-user">
+            <span>${escapeHtml(formatResidentName(group.user))}</span>
+            <span class="ui0944-resolution-time">${escapeHtml(formatActionResolutionClock(group.detectedAt))}</span>
+          </div>
+          <div class="ui0944-resolution-actions">
+            ${(group.actions || []).map(action =>
+              `${action.timing ? escapeHtml(action.timing) + " ／ " : ""}${escapeHtml(action.content)}`
+            ).join("<br>")}
+          </div>
+          <div class="ui0944-resolution-reason">
+            → 最終排便 ${escapeHtml(formatActionResolutionDate(group.lastDate))} に更新・対応不要
+          </div>
+        </div>
+      `).join("")}
+      <button type="button" class="ui0944-resolution-ack" onclick="acknowledgeActionResolutionNotices()">
+        確認して閉じる
+      </button>
+    </section>
+  `;
+}
+
+function acknowledgeActionResolutionNotices() {
+  saveActionResolutionNotices([]);
+  renderActionResolutionNotice();
+  showToast("✓ 対応解除を確認済みにしました", "success", 2000);
+}
+
+function addActionResolutionNotices(groups, options = {}) {
+  if (!Array.isArray(groups) || !groups.length) return;
+
+  const existing = loadActionResolutionNotices();
+  const existingIds = new Set(existing.map(item => String(item.noticeId || "")));
+  let addedCount = 0;
+
+  for (const group of groups) {
+    const noticeId = String(group.noticeId || [group.user, group.lastDate, (group.actions || []).map(a => a.id).join(",")].join("|"));
+    if (existingIds.has(noticeId)) continue;
+
+    existing.push({
+      noticeId: noticeId,
+      scope: getActionResolutionScopeKey(),
+      user: String(group.user || ""),
+      lastDate: String(group.lastDate || ""),
+      detectedAt: Number(group.detectedAt || Date.now()),
+      actions: Array.isArray(group.actions) ? group.actions : []
+    });
+    existingIds.add(noticeId);
+    addedCount++;
+  }
+
+  if (!addedCount) return;
+
+  saveActionResolutionNotices(existing);
+  renderActionResolutionNotice();
+
+  if (options.toast !== false) {
+    const names = groups.map(group => formatResidentName(group.user)).filter(Boolean);
+    const message = names.length === 1
+      ? `✓ ${names[0]}：排便確認により対応リストから外れました`
+      : `✓ ${names.length}名が排便確認により対応リストから外れました`;
+    showToast(message, "success", 6000);
+  }
+}
+
+function trackActionResolutionChanges() {
+  const next = getCurrentActionSnapshotForResolution();
+  const previous = safeReadLocalJson(ACTION_RESOLUTION_SNAPSHOT_KEY, null);
+
+  // まず最新スナップショットは必ず保存する。
+  safeWriteLocalJson(ACTION_RESOLUTION_SNAPSHOT_KEY, next);
+
+  if (!previous || !Array.isArray(previous.items)) {
+    renderActionResolutionNotice();
+    return;
+  }
+
+  if (previous.scope !== next.scope) {
+    renderActionResolutionNotice();
+    return;
+  }
+
+  const age = Date.now() - Number(previous.capturedAt || 0);
+  if (age < 0 || age > ACTION_RESOLUTION_SNAPSHOT_MAX_AGE_MS) {
+    renderActionResolutionNotice();
+    return;
+  }
+
+  const nextIds = new Set((next.items || []).map(item => String(item.id || "")));
+  const removed = (previous.items || []).filter(item => !nextIds.has(String(item.id || "")));
+  if (!removed.length) {
+    renderActionResolutionNotice();
+    return;
+  }
+
+  const grouped = new Map();
+
+  for (const item of removed) {
+    const user = String(item.user || "");
+    if (!user) continue;
+
+    const beforeLastDate = String(item.lastDate || "");
+    const afterLastDate = String(lastDates[user] || "");
+
+    // 「実施済み」「時間帯終了」「ルール変更」ではなく、最終排便が進んだ時だけ対象。
+    if (!afterLastDate || afterLastDate === beforeLastDate) continue;
+    if (beforeLastDate && afterLastDate < beforeLastDate) continue;
+
+    const key = user + "|" + afterLastDate;
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        noticeId: "sync|" + key + "|" + Number(previous.capturedAt || 0),
+        user: user,
+        lastDate: afterLastDate,
+        detectedAt: Date.now(),
+        actions: []
+      });
+    }
+
+    grouped.get(key).actions.push({
+      id: String(item.id || ""),
+      content: String(item.content || "対応"),
+      timing: String(item.timing || "")
+    });
+  }
+
+  addActionResolutionNotices(Array.from(grouped.values()));
+  renderActionResolutionNotice();
+}
+
+function recordDirectBowelActionResolution(user, actionItems, result) {
+  if (!result || result.established !== true) return;
+  if (!Array.isArray(actionItems) || !actionItems.length) return;
+
+  const actions = actionItems.map((item, index) => ({
+    id: "direct|" + String(item.source || "regular") + "|" + String(item.timing || "") + "|" + String(item.content || "") + "|" + index,
+    content: String(item.content || "対応"),
+    timing: String(item.timing || "")
+  }));
+
+  addActionResolutionNotices([{
+    noticeId: "direct|" + String(user || "") + "|" + String(result.lastDate || "") + "|" + String(result.lastEstablishedAt || "") + "|" + actions.map(a => a.id).join(","),
+    user: String(user || ""),
+    lastDate: String(result.lastDate || lastDates[user] || ""),
+    detectedAt: Date.now(),
+    actions: actions
+  }]);
+}
+
+function renderCurrentActionList(options = {}) {
+  const target = document.getElementById("todayTarget");
+  if (target) {
+    target.innerHTML = getTodayTarget();
+  }
+
+  if (options.track === false) {
+    renderActionResolutionNotice();
+  } else {
+    trackActionResolutionChanges();
+  }
+}
+
+
 function getActionPendingData() {
 
   const now = new Date();
@@ -14473,8 +14914,7 @@ function renderActionPage() {
     );
 
   if (pending) {
-    pending.innerHTML =
-      getTodayTarget();
+    renderCurrentActionList();
   }
 
   if (completed) {
@@ -16714,7 +17154,7 @@ function loadData() {
 
   refreshHistoryDisplays();
   renderStatusAreas();
-  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+  renderCurrentActionList();
   updateRuleDisplays();
   document.getElementById("completedList").innerHTML = getCompletedListHtml();
 
@@ -16744,7 +17184,7 @@ async function loadUsersFromGoogle() {
 
   updateUserSelects();
   renderStatusAreas();
-  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+  renderCurrentActionList();
 }
 
 async function loadRulesFromGoogle() {
@@ -18307,7 +18747,7 @@ async function initialize() {
     await loadInitialDataFromGoogle();
 
     /*
-      Ver.0.9.42
+      Ver.0.9.43
       業務開始に不要な職員マスター・評価履歴・入院期間履歴は、
       初期コア同期完了後にバックグラウンド取得する。
     */
@@ -18337,7 +18777,7 @@ async function initialize() {
   startAutoRefresh();
 
   /*
-    Ver.0.9.42
+    Ver.0.9.43
     初期同期に失敗した場合、従来は次の30秒同期まで閲覧専用状態が続いた。
     5秒後に軽量同期を一度試し、Google側の一時的な失敗から早く復帰する。
   */
@@ -18556,8 +18996,7 @@ async function addUser() {
 
   renderStatusAreas();
 
-  document.getElementById("todayTarget").innerHTML =
-    getTodayTarget();
+  renderCurrentActionList();
 
   updateUserSelects();
 
@@ -21190,7 +21629,7 @@ async function deleteUser() {
   }
 
   renderStatusAreas();
-  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+  renderCurrentActionList();
 
   saveData();
 
@@ -21949,7 +22388,7 @@ async function changeUserUnit() {
   await saveUsersToGoogle();
 
   renderStatusAreas();
-  document.getElementById("todayTarget").innerHTML = getTodayTarget();
+  renderCurrentActionList();
   updateRuleDisplays();
 
   updateUserSelects();
@@ -22378,11 +22817,11 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.42</strong>
+        <strong>Ver.0.9.44</strong>
       </div>
       <div>
         <span>GAS</span>
-        <strong>Ver.0.8.55</strong>
+        <strong>Ver.0.8.56</strong>
       </div>
       <div>
         <span>ログイン範囲</span>
@@ -23385,8 +23824,7 @@ async function login() {
 
     renderStatusAreas();
 
-    document.getElementById("todayTarget").innerHTML =
-      getTodayTarget();
+    renderCurrentActionList();
 
     updateRuleDisplays();
     updateHomeMedicineStatus();
@@ -23537,8 +23975,7 @@ function restoreLogin() {
 
   renderStatusAreas();
 
-  document.getElementById("todayTarget").innerHTML =
-    getTodayTarget();
+  renderCurrentActionList();
 
   updateRuleDisplays();
 
@@ -32230,7 +32667,7 @@ async function openHistoricalShiftRecovery(type, targetDate) {
   if (!timing) return;
 
   /*
-    Ver.0.9.42
+    Ver.0.9.43
     起動時履歴を3日へ縮小したため、過去勤務帯を開く時だけ
     対象勤務帯の履歴を期間指定APIから取得する。
     これで7日前の復旧精度を落とさず、初期同期を軽くする。
@@ -34819,10 +35256,72 @@ async function ensureFullHistoryArchiveLoaded(force = false) {
   抑えるため、1回の待機上限も20秒へ短縮する。
 */
 
+
+/*
+  Ver.0.9.43
+  Apps Script ContentService は script.googleusercontent.com への一時リダイレクトを使う。
+  まれにGAS処理自体は完了していても、そのリダイレクト先だけ404になることがある。
+
+  タイムアウト時に即再送するとGAS実行が重複するため再送しない。
+  一方、HTTP 404 / 429 / 5xx / 瞬間的なNetworkErrorは、元のGAS実行が終了済みで
+  応答経路だけ失敗している可能性が高いため、短い待機後に1回だけ再取得する。
+*/
+function isReadRetryWithoutTimeoutError(error) {
+  if (!error) return false;
+
+  const message = String(error.message || "");
+  if (message.includes("タイムアウト")) return false;
+
+  const status = Number(error.httpStatus || 0);
+  if ([404, 408, 425, 429, 500, 502, 503, 504].includes(status)) {
+    return true;
+  }
+
+  return (
+    message.includes("Failed to fetch") ||
+    message.includes("NetworkError") ||
+    message.includes("Load failed") ||
+    message.includes("APIからHTMLが返されました")
+  );
+}
+
+async function fetchReadApiStable(url, timeoutMs = 30000, oneShotRetry = true) {
+  let lastError = null;
+  const maxAttempts = oneShotRetry ? 2 : 1;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fetchApi(url, 1, timeoutMs);
+    } catch (error) {
+      lastError = error;
+
+      if (
+        attempt >= maxAttempts ||
+        !isReadRetryWithoutTimeoutError(error)
+      ) {
+        throw error;
+      }
+
+      const statusText = error && error.httpStatus
+        ? `HTTP ${error.httpStatus}`
+        : String(error && error.message || "通信エラー");
+
+      console.warn(
+        `読み取り通信の一時失敗 (${statusText})。Google応答経路だけを1回再取得します`
+      );
+
+      // 同時再送を避けるため少し揺らして待つ。
+      await wait(700 + Math.floor(Math.random() * 500));
+    }
+  }
+
+  throw lastError || new Error("読み取り通信に失敗しました");
+}
+
 async function requestInitialDataFromServer() {
 
   /*
-    Ver.0.9.42
+    Ver.0.9.43
     初期同期はコアデータ1回だけを待つ。
 
     0.9.40のように短いタイムアウトで同一GAS処理を連続起動すると、
@@ -34836,11 +35335,11 @@ async function requestInitialDataFromServer() {
 
   try {
     const response =
-      await fetchApi(
+      await fetchReadApiStable(
         API_URL +
           "?action=getInitialCoreData",
-        1,
-        35000
+        35000,
+        true
       );
 
     const data =
@@ -34885,11 +35384,11 @@ async function requestInitialOperationalDataFromServer() {
   const started = performance.now();
 
   const response =
-    await fetchApi(
+    await fetchReadApiStable(
       API_URL +
         "?action=getInitialOperationalData",
-      1,
-      30000
+      30000,
+      true
     );
 
   const data = await response.json();
@@ -34914,11 +35413,11 @@ async function requestInitialAuxDataFromServer() {
   const started = performance.now();
 
   const response =
-    await fetchApi(
+    await fetchReadApiStable(
       API_URL +
         "?action=getInitialAuxData",
-      1,
-      30000
+      30000,
+      true
     );
 
   const data =
@@ -34951,7 +35450,7 @@ async function requestInitialAuxDataFromServer() {
 async function requestSyncDataFromServer() {
 
   /*
-    Ver.0.9.42
+    Ver.0.9.43
     30秒同期も動的コアデータだけを1回取得する。
     通信タイムアウト時はその場で連続再送せず、
     既存データを保持して次の自動同期へ委ねる。
@@ -34960,11 +35459,11 @@ async function requestSyncDataFromServer() {
 
   try {
     const response =
-      await fetchApi(
+      await fetchReadApiStable(
         API_URL +
           "?action=getSyncCoreData",
-        1,
-        25000
+        25000,
+        true
       );
 
     const data =
@@ -35981,8 +36480,7 @@ async function saveEditedHistory(recordId) {
       );
 
     if (todayTarget) {
-      todayTarget.innerHTML =
-        getTodayTarget();
+      renderCurrentActionList();
     }
 
     const resultArea =
@@ -36567,8 +37065,7 @@ async function confirmCancelHistory(recordId) {
       );
 
     if (todayTarget) {
-      todayTarget.innerHTML =
-        getTodayTarget();
+      renderCurrentActionList();
     }
 
     const resultArea =
@@ -38022,7 +38519,7 @@ function openPage(pageId) {
   }
 
   if (pageId === "historyPage") {
-    // Ver.0.9.42: 全履歴は取得しない。各導線が必要な期間だけ取得する。
+    // Ver.0.9.43: 全履歴は取得しない。各導線が必要な期間だけ取得する。
     renderHistoryHub();
   }
 
