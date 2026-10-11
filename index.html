@@ -8365,7 +8365,7 @@ body {
 /* Ver.0.9.34: 看護師・管理者のルール外個別対応作成 */
 
 /* ============================================================
-   Ver.0.9.36 利用者別「計」：排便成立なしは空欄表示
+   Ver.0.9.37 排便成立後24時間ルール / 成立後追加便の別枠累積
    Ver.0.9.35 利用者別「計」を排便成立回数のローマ数字表示 / 翌朝予定を終日表示
    Ver.0.9.34 履歴刷新 / 排便実日時入力
 ============================================================ */
@@ -8826,7 +8826,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.36</div>
+      <div class="ui09-brand-version">Ver.0.9.37</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -9227,7 +9227,7 @@ body {
 
 
   <!-- =========================
-       勤務確認 Ver.0.9.36
+       勤務確認 Ver.0.9.37
   ========================== -->
   <section
     id="shiftConfirmPage"
@@ -9406,7 +9406,7 @@ body {
   </section>
 
   <!-- =========================
-       履歴 Ver.0.9.36
+       履歴 Ver.0.9.37
   ========================== -->
   <section
     id="historyPage"
@@ -9924,7 +9924,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.36
+            Ver.0.9.37
           </span>
         </div>
 
@@ -9933,7 +9933,7 @@ body {
             GAS
           </span>
           <span class="other-info-value">
-            Ver.0.8.50
+            Ver.0.8.51
           </span>
         </div>
 
@@ -10518,6 +10518,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzq9qSuPmvSzAbv_uLFbIrX
 // =========================
 const BOWEL_POINT_RULE_VERSION = 2;
 const BOWEL_RESET_POINT = 6;
+const BOWEL_POST_RESET_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 let ruleCycleSnapshots = {};
 let ruleEvaluations = [];
@@ -11600,6 +11601,19 @@ function updateBowelTargetUI(
       points[user] || 0
     );
 
+  const bowelTimeline =
+    buildUserBowelTimeline(user);
+
+  const isPostResetWindow =
+    Boolean(
+      bowelTimeline.postResetWindowActive
+    );
+
+  const postResetPoint =
+    Number(
+      bowelTimeline.postResetPoint || 0
+    );
+
   const lastDate =
     String(
       lastDates[user] || ""
@@ -11619,7 +11633,14 @@ function updateBowelTargetUI(
 
   if (pointArea) {
     pointArea.textContent =
-      getBowelPointText(point);
+      isPostResetWindow
+        ? (
+            "成立後 " +
+            getBowelPointText(
+              postResetPoint
+            )
+          )
+        : getBowelPointText(point);
   }
 
   if (lastArea) {
@@ -12171,19 +12192,18 @@ async function register() {
       ) || 0
     );
 
-  const willEstablishBowel =
-    !eventDateTime &&
-    previousPoint +
-      getBowelPoint(type) >=
-        BOWEL_RESET_POINT;
-
+  /*
+    Ver.0.9.37
+    排便成立後24時間ルールでは、単純な previousPoint + 今回点数だけでは
+    成立判定できない。
+    そのため、未実施の緩下剤候補は先に控えておき、
+    GASが返す established=true のときだけ警告する。
+  */
   const pendingLaxativesBeforeReset =
-    willEstablishBowel
-      ? getPendingLaxativeRemovalItems(
-          user,
-          noBowelDaysBeforeReset
-        )
-      : [];
+    getPendingLaxativeRemovalItems(
+      user,
+      noBowelDaysBeforeReset
+    );
 
 
   // =========================
@@ -12209,59 +12229,17 @@ async function register() {
   try {
 
     // =========================
-    // ① 現在時刻登録は即時反映。
-    // 日時変更時は履歴の途中に入る可能性があるため、
-    // GAS側の時系列再計算結果を待つ。
-    if (!eventDateTime) {
+    // ① 24時間ルールはGASを正本として判定
+    // =========================
 
-      const addPoint =
-        getBowelPoint(type);
-
-      points[user] =
-        previousPoint +
-        addPoint;
-
-      if (points[user] >= BOWEL_RESET_POINT) {
-
-        const todayText =
-          getTodayText();
-
-        points[user] = 0;
-
-        lastDates[user] =
-          todayText;
-
-        document.getElementById(
-          "lastDate"
-        ).value =
-          todayText;
-
-        document.getElementById(
-          "result"
-        ).textContent =
-          user +
-          "　排便成立　最終排便日を今日に更新しました";
-
-      } else {
-
-        document.getElementById(
-          "result"
-        ).textContent =
-          user +
-          "　排便累計：" +
-          getBowelPointText(
-            points[user]
-          );
-      }
-
-    } else {
-
-      document.getElementById(
-        "result"
-      ).textContent =
-        user +
-        "　指定日時の履歴を保存し、排便状況を再計算します";
-    }
+    document.getElementById(
+      "result"
+    ).textContent =
+      eventDateTime
+        ? user +
+          "　指定日時の履歴を保存し、排便状況を再計算します"
+        : user +
+          "　排便を保存して判定中です";
 
 
     // ③ 画面を即時更新
@@ -12360,6 +12338,40 @@ async function register() {
           ).slice(0, 10)
         : "";
 
+    const resultArea =
+      document.getElementById(
+        "result"
+      );
+
+    if (resultArea) {
+      if (result.established === true) {
+        resultArea.textContent =
+          user +
+          "　排便成立　最終排便日を更新しました";
+      } else if (
+        result.postResetWindowActive === true
+      ) {
+        resultArea.textContent =
+          user +
+          "　成立後24時間中：追加便 " +
+          getBowelPointText(
+            Number(
+              result.postResetPoint || 0
+            )
+          ) +
+          "（正式累積には含めません）";
+      } else {
+        resultArea.textContent =
+          user +
+          "　排便累計：" +
+          getBowelPointText(
+            Number(
+              result.point || 0
+            )
+          );
+      }
+    }
+
 
     // =========================
     // ⑦ 画面を最終更新
@@ -12430,7 +12442,7 @@ async function register() {
     );
 
     if (
-      willEstablishBowel &&
+      result.established === true &&
       pendingLaxativesBeforeReset.length > 0
     ) {
       showBowelResetMedicationRemovalAlert(
@@ -13588,7 +13600,7 @@ function getActionPendingData() {
       });
     }
 
-    // Ver.0.9.36
+    // Ver.0.9.37
     // 翌朝の緩下剤予定は時刻に関係なく一日中表示する。
     // 日中に排便成立して未排便日数が変われば、次回描画時に予定から外れる。
     const tomorrowDays =
@@ -20415,103 +20427,48 @@ function getUserRulesDetailHtml(user) {
 
 function getCurrentBowelCycleHistories(user) {
 
-  /*
-    「現在の排便状況」だけを追うため、
-    最後に内部6点へ到達して排便成立した記録を境界にする。
+  const timeline =
+    buildUserBowelTimeline(user);
 
-    取消済み記録はポイント計算には含めないが、
-    最初のpreviousPointを正しく拾うため
-    時系列そのものには残しておく。
-  */
-
-  const userHistories =
-    histories
-      .filter(history =>
-        history.user === user
-      )
-      .slice()
-      .sort(
-        (a, b) =>
-          new Date(a.date) -
-          new Date(b.date)
-      );
-
-
-  if (userHistories.length === 0) {
+  if (!timeline.items.length) {
     return [];
   }
 
-
-  let currentPoint =
-    Number(
-      userHistories[0].previousPoint || 0
-    );
-
-  let lastEstablishedIndex =
-    -1;
-
-  const calculated = [];
-
+  let lastEstablishedIndex = -1;
 
   for (
     let i = 0;
-    i < userHistories.length;
+    i < timeline.items.length;
     i++
   ) {
-
-    const history =
-      userHistories[i];
-
-    const isCancelled =
-      String(
-        history.status || ""
-      ).trim() === "cancelled";
-
-
-    if (isCancelled) {
-      continue;
-    }
-
-
-    currentPoint +=
-      getBowelPoint(
-        history.type
-      );
-
-
-    let established =
-      false;
-
-
-    if (currentPoint >= BOWEL_RESET_POINT) {
-
-      currentPoint = 0;
-      established = true;
+    if (
+      timeline.items[i]
+        .established === true
+    ) {
       lastEstablishedIndex = i;
     }
-
-
-    calculated.push({
-      history: history,
-      sourceIndex: i,
-      pointAfter: currentPoint,
-      established: established
-    });
   }
 
-
-  return calculated
-    .filter(item =>
-      item.sourceIndex >
-      lastEstablishedIndex
+  return timeline.items
+    .filter((item, index) =>
+      index > lastEstablishedIndex
     )
     .map(item => ({
-      ...item.history,
+      ...item,
       cyclePoint:
-        item.pointAfter
+        item.postResetWindow
+          ? Number(
+              item.postResetPointAfter || 0
+            )
+          : Number(
+              item.afterPoint || 0
+            ),
+      cyclePointMode:
+        item.postResetWindow
+          ? "post_reset"
+          : "normal"
     }));
 }
-
 
 function getUserRecentHistoryHtml(user) {
 
@@ -20552,7 +20509,11 @@ function getUserRecentHistoryHtml(user) {
         <br>
 
         <span style="color:#607d8b;font-size:13px;">
-          この時点：
+          ${
+            history.cyclePointMode === "post_reset"
+              ? "成立後24時間："
+              : "正式累積："
+          }
           ${escapeHtml(
             getBowelPointText(
               history.cyclePoint
@@ -20589,6 +20550,21 @@ function openUserStatusDetail(user) {
   const uncertain =
     isBowelCountUncertain(user);
 
+  const detailTimeline =
+    buildUserBowelTimeline(user);
+
+  const detailPointText =
+    detailTimeline.postResetWindowActive
+      ? (
+          "成立後 " +
+          getBowelPointText(
+            detailTimeline.postResetPoint
+          )
+        )
+      : getBowelPointText(
+          info.point
+        );
+
 
   const alertHtml =
     info.state === "nurse"
@@ -20623,9 +20599,7 @@ function openUserStatusDetail(user) {
             ${escapeHtml(
               hospitalized || uncertain
                 ? "—"
-                : getBowelPointText(
-                    info.point
-                  )
+                : detailPointText
             )}
           </strong>
         </div>
@@ -21955,11 +21929,11 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.36</strong>
+        <strong>Ver.0.9.37</strong>
       </div>
       <div>
         <span>GAS</span>
-        <strong>Ver.0.8.50</strong>
+        <strong>Ver.0.8.51</strong>
       </div>
       <div>
         <span>ログイン範囲</span>
@@ -24152,6 +24126,158 @@ function getCalendarDayDiff(
   );
 }
 
+function applyBowelEventToCycleStateClient_(
+  state,
+  item
+) {
+
+  const eventDate =
+    getHistoryDateObject(
+      item && item.date
+    );
+
+  const next = {
+    point:
+      Number(
+        state && state.point || 0
+      ),
+    lastDate:
+      String(
+        state && state.lastDate || ""
+      ).slice(0, 10),
+    lastEstablishedAt:
+      state && state.lastEstablishedAt instanceof Date
+        ? new Date(
+            state.lastEstablishedAt.getTime()
+          )
+        : null,
+    postResetPoint:
+      Number(
+        state && state.postResetPoint || 0
+      )
+  };
+
+  if (!eventDate) {
+    return {
+      ...next,
+      established: false,
+      postResetWindow: false
+    };
+  }
+
+  const addPoint =
+    getBowelPoint(
+      item && item.type
+    );
+
+  let postResetWindow = false;
+  let established = false;
+
+  if (next.lastEstablishedAt) {
+
+    const elapsed =
+      eventDate.getTime() -
+      next.lastEstablishedAt.getTime();
+
+    postResetWindow =
+      elapsed >= 0 &&
+      elapsed <
+        BOWEL_POST_RESET_WINDOW_MS;
+
+    if (
+      !postResetWindow &&
+      elapsed >=
+        BOWEL_POST_RESET_WINDOW_MS
+    ) {
+      next.postResetPoint = 0;
+    }
+  }
+
+  if (postResetWindow) {
+
+    next.postResetPoint +=
+      addPoint;
+
+    if (
+      next.postResetPoint >=
+      BOWEL_RESET_POINT
+    ) {
+      established = true;
+      next.point = 0;
+      next.postResetPoint = 0;
+      next.lastEstablishedAt =
+        new Date(
+          eventDate.getTime()
+        );
+      next.lastDate =
+        getHistoryDateKey(item);
+    }
+
+  } else {
+
+    next.point +=
+      addPoint;
+
+    if (
+      next.point >=
+      BOWEL_RESET_POINT
+    ) {
+      established = true;
+      next.point = 0;
+      next.postResetPoint = 0;
+      next.lastEstablishedAt =
+        new Date(
+          eventDate.getTime()
+        );
+      next.lastDate =
+        getHistoryDateKey(item);
+    }
+  }
+
+  return {
+    ...next,
+    established: established,
+    postResetWindow: postResetWindow
+  };
+}
+
+
+function getCurrentExternalBowelBaselineClient_(user) {
+
+  const care =
+    getResidentCareState(user);
+
+  const mode =
+    String(
+      care && care.lastReturnBowelMode || ""
+    );
+
+  const lastDate =
+    String(
+      care && care.outsideBowelDate || ""
+    ).slice(0, 10);
+
+  const cutoffAt =
+    getHistoryDateObject(
+      care && care.returnedAt || ""
+    );
+
+  if (
+    !["known_reset", "known_reset_late"]
+      .includes(mode) ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(lastDate) ||
+    !cutoffAt
+  ) {
+    return null;
+  }
+
+  return {
+    cutoffAt: cutoffAt,
+    lastDate: lastDate
+  };
+}
+
+
 function buildUserBowelTimeline(
   user
 ) {
@@ -24164,53 +24290,133 @@ function buildUserBowelTimeline(
         ) === String(user)
       );
 
-  let point = 0;
-  let lastDate = "";
+  let state = {
+    point: 0,
+    lastDate: "",
+    lastEstablishedAt: null,
+    postResetPoint: 0
+  };
 
   if (items.length > 0) {
 
-    point =
+    state.point =
       Number(
         items[0]
           .previousPoint || 0
       );
 
-    lastDate =
+    state.lastDate =
       String(
         items[0]
           .previousLastDate || ""
       ).slice(0, 10);
   }
 
+  const externalBaseline =
+    getCurrentExternalBowelBaselineClient_(
+      user
+    );
+
+  let externalBaselineApplied = false;
+
   const timeline = [];
 
   for (const item of items) {
 
-    point +=
-      getBowelPoint(
-        item.type
+    const itemDate =
+      getHistoryDateObject(
+        item.date
       );
 
-    let established = false;
-
     if (
-      point >=
-      BOWEL_RESET_POINT
+      externalBaseline &&
+      !externalBaselineApplied &&
+      itemDate &&
+      itemDate >=
+        externalBaseline.cutoffAt
     ) {
-      point = 0;
-      lastDate =
-        getHistoryDateKey(
-          item
-        );
-      established = true;
+      state = {
+        point: 0,
+        lastDate:
+          externalBaseline.lastDate,
+        lastEstablishedAt: null,
+        postResetPoint: 0
+      };
+      externalBaselineApplied = true;
     }
+
+    const beforePoint =
+      state.point;
+
+    const beforeLastDate =
+      state.lastDate;
+
+    const result =
+      applyBowelEventToCycleStateClient_(
+        state,
+        item
+      );
+
+    state = {
+      point:
+        Number(
+          result.point || 0
+        ),
+      lastDate:
+        String(
+          result.lastDate || ""
+        ).slice(0, 10),
+      lastEstablishedAt:
+        result.lastEstablishedAt,
+      postResetPoint:
+        Number(
+          result.postResetPoint || 0
+        )
+    };
 
     timeline.push({
       ...item,
-      afterPoint: point,
-      afterLastDate: lastDate,
-      established: established
+      beforePoint:
+        beforePoint,
+      beforeLastDate:
+        beforeLastDate,
+      afterPoint:
+        state.point,
+      afterLastDate:
+        state.lastDate,
+      established:
+        Boolean(
+          result.established
+        ),
+      postResetWindow:
+        Boolean(
+          result.postResetWindow
+        ),
+      postResetPointAfter:
+        state.postResetPoint,
+      lastEstablishedAt:
+        state.lastEstablishedAt
+          ? new Date(
+              state.lastEstablishedAt.getTime()
+            )
+          : null
     });
+  }
+
+  if (
+    externalBaseline &&
+    !externalBaselineApplied &&
+    externalBaseline.cutoffAt <=
+      new Date()
+  ) {
+    state = {
+      point: 0,
+      lastDate:
+        externalBaseline.lastDate,
+      lastEstablishedAt: null,
+      postResetPoint: 0
+    };
+    externalBaselineApplied = true;
   }
 
   return {
@@ -24221,6 +24427,44 @@ function buildUserBowelTimeline(
               .previousLastDate || ""
           ).slice(0, 10)
         : "",
+    baselinePoint:
+      items.length
+        ? Number(
+            items[0]
+              .previousPoint || 0
+          )
+        : 0,
+    externalBaselineCutoff:
+      externalBaseline
+        ? externalBaseline.cutoffAt
+        : null,
+    externalBaselineLastDate:
+      externalBaseline
+        ? externalBaseline.lastDate
+        : "",
+    finalPoint:
+      Number(
+        state.point || 0
+      ),
+    lastDate:
+      String(
+        state.lastDate || ""
+      ).slice(0, 10),
+    lastEstablishedAt:
+      state.lastEstablishedAt,
+    postResetPoint:
+      Number(
+        state.postResetPoint || 0
+      ),
+    postResetWindowActive:
+      Boolean(
+        state.lastEstablishedAt &&
+        Date.now() -
+          state.lastEstablishedAt.getTime() >= 0 &&
+        Date.now() -
+          state.lastEstablishedAt.getTime() <
+            BOWEL_POST_RESET_WINDOW_MS
+      ),
     items:
       timeline
   };
@@ -24241,6 +24485,21 @@ function getNoBowelDaysAtDateFromTimeline(
   const endKey =
     date + " 23:59:59";
 
+  const externalCutoff =
+    timeline &&
+    timeline.externalBaselineCutoff instanceof Date
+      ? timeline.externalBaselineCutoff
+      : null;
+
+  const externalLastDate =
+    String(
+      timeline &&
+      timeline.externalBaselineLastDate ||
+      ""
+    ).slice(0, 10);
+
+  let externalApplied = false;
+
   for (
     const item of
     (
@@ -24259,12 +24518,49 @@ function getNoBowelDaysAtDateFromTimeline(
       break;
     }
 
+    const itemDate =
+      getHistoryDateObject(
+        item.date
+      );
+
+    if (
+      externalCutoff &&
+      !externalApplied &&
+      itemDate &&
+      itemDate >= externalCutoff
+    ) {
+      if (externalLastDate) {
+        lastDate =
+          externalLastDate;
+      }
+      externalApplied = true;
+    }
+
     lastDate =
       String(
         item.afterLastDate ||
         lastDate ||
         ""
       ).slice(0, 10);
+  }
+
+  if (
+    externalCutoff &&
+    !externalApplied
+  ) {
+    const endDate =
+      getHistoryDateObject(
+        endKey
+      );
+
+    if (
+      endDate &&
+      externalCutoff <= endDate &&
+      externalLastDate
+    ) {
+      lastDate =
+        externalLastDate;
+    }
   }
 
   if (!lastDate) {
@@ -24625,7 +24921,7 @@ function renderHistoryMatrixView() {
     `);
   }
 
-  // Ver.0.9.36
+  // Ver.0.9.37
   // 「計」はポイント合計ではなく、その日に排便成立した回数を
   // I / II / III ... のローマ数字で表示する。
   const totalCells =
@@ -34651,116 +34947,28 @@ async function saveEditedHistory(recordId) {
 
 function recalculateBowelStatus(user) {
 
-  /*
-    現在の状態を0から再計算する
-  */
-  let currentPoint = 0;
-
-  let lastBowelDate = "";
-
-
-  /*
-    対象利用者のactive履歴だけ取得
-  */
-  const userHistories =
-    histories
-      .filter(history => {
-
-        if (
-          history.user !== user
-        ) {
-          return false;
-        }
-
-        if (
-          String(
-            history.status
-          ).trim() === "cancelled"
-        ) {
-          return false;
-        }
-
-        return true;
-      })
-      .sort(
-        (a, b) =>
-          new Date(a.date) -
-          new Date(b.date)
-      );
-
-
-  /*
-    Ver.0.8.22
-    最初の履歴より前に保持していた状態がある場合も、
-    histories の previousPoint / previousLastDate を基準にする。
-    GAS側の移行処理で新基準へそろえられている。
-  */
-  if (userHistories.length > 0) {
-
-    currentPoint =
-      Number(
-        userHistories[0].previousPoint || 0
-      );
-
-    lastBowelDate =
-      userHistories[0].previousLastDate
-        ? String(
-            userHistories[0].previousLastDate
-          ).slice(0, 10)
-        : "";
-  }
-
-
-  /*
-    古い履歴から順番に再計算
-  */
-  for (
-    const history of userHistories
-  ) {
-
-    /*
-      新ポイント方式
-
-      少   = 1
-      少1  = 2
-      少2  = 4
-      普通 = 6
-
-      旧データの「多量」も
-      getBowelPoint() 内で6として扱う
-    */
-    const addPoint =
-      getBowelPoint(
-        history.type
-      );
-
-    currentPoint +=
-      addPoint;
-
-
-    /*
-      内部ポイント6以上で排便成立
-    */
-    if (
-      currentPoint >= BOWEL_RESET_POINT
-    ) {
-
-      currentPoint = 0;
-
-      lastBowelDate =
-        String(
-          history.date
-        ).slice(0, 10);
-    }
-  }
-
+  const timeline =
+    buildUserBowelTimeline(user);
 
   return {
     point:
-      currentPoint,
-
+      Number(
+        timeline.finalPoint || 0
+      ),
     lastDate:
-      lastBowelDate
+      String(
+        timeline.lastDate || ""
+      ).slice(0, 10),
+    postResetPoint:
+      Number(
+        timeline.postResetPoint || 0
+      ),
+    postResetWindowActive:
+      Boolean(
+        timeline.postResetWindowActive
+      ),
+    lastEstablishedAt:
+      timeline.lastEstablishedAt || null
   };
 }
 
