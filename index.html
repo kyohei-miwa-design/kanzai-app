@@ -10798,7 +10798,7 @@ let syncConsecutiveFailureCount = 0;
 let lastFullSyncCompletedAt = 0;
 
 /*
-  Ver.0.9.48 起動時manifest差分同期。
+  Ver.0.9.49 起動時manifest差分同期。
   端末キャッシュは正本ではなく、manifestが一致した場合だけ
   「サーバーで変更なし」と確認して初期データ取得を省略する。
 */
@@ -10817,7 +10817,772 @@ const SYNC_MANIFEST_DOMAINS = Object.freeze([
   "master"
 ]);
 
+
 let pendingSyncCacheBuild = null;
+
+/*
+  Ver.0.9.49 7日BCPバックアップ。
+  通常キャッシュとは完全分離し、IndexedDBへ保存する。
+  current更新はtransactionで行い、前回完全版をpreviousとして残す。
+*/
+const BCP_BACKUP_DB_NAME = "laxativeBcpBackupV1";
+const BCP_BACKUP_DB_VERSION = 1;
+const BCP_BACKUP_STORE_NAME = "snapshots";
+const BCP_BACKUP_SCHEMA_VERSION = 1;
+const BCP_BACKUP_INTERVAL_MS = 5 * 60 * 1000;
+const BCP_BACKUP_AFTER_WRITE_DELAY_MS = 30 * 1000;
+const BCP_BACKUP_RETRY_DELAY_MS = 30 * 1000;
+const BCP_BACKUP_MIN_REQUEST_GAP_MS = 5 * 60 * 1000;
+
+let bcpBackupTimer = null;
+let bcpBackupInFlight = null;
+let bcpBackupLastRequestAt = 0;
+let bcpBackupFirstSuccessNotified = false;
+let bcpBackupStorageWarningShown = false;
+
+function getBcpBackupRecordId(scopeKey, slot = "current") {
+  return [
+    String(scopeKey || "").trim(),
+    String(slot || "current")
+  ].join("::");
+}
+
+function openBcpBackupDb() {
+  return new Promise((resolve, reject) => {
+    if (!("indexedDB" in window)) {
+      reject(
+        new Error(
+          "この端末ではIndexedDBを使用できません"
+        )
+      );
+      return;
+    }
+
+    const request =
+      indexedDB.open(
+        BCP_BACKUP_DB_NAME,
+        BCP_BACKUP_DB_VERSION
+      );
+
+    request.onupgradeneeded = event => {
+      const db = event.target.result;
+      if (
+        !db.objectStoreNames.contains(
+          BCP_BACKUP_STORE_NAME
+        )
+      ) {
+        db.createObjectStore(
+          BCP_BACKUP_STORE_NAME,
+          {keyPath: "id"}
+        );
+      }
+    };
+
+    request.onsuccess = () =>
+      resolve(request.result);
+
+    request.onerror = () =>
+      reject(
+        request.error ||
+        new Error(
+          "障害対策保存領域を開けませんでした"
+        )
+      );
+  });
+}
+
+async function readCurrentBcpBackup() {
+  const scopeKey =
+    getCurrentDataScopeKey();
+
+  if (!scopeKey) {
+    return null;
+  }
+
+  const db = await openBcpBackupDb();
+
+  try {
+    return await new Promise(
+      (resolve, reject) => {
+        const tx =
+          db.transaction(
+            BCP_BACKUP_STORE_NAME,
+            "readonly"
+          );
+        const store =
+          tx.objectStore(
+            BCP_BACKUP_STORE_NAME
+          );
+        const request =
+          store.get(
+            getBcpBackupRecordId(
+              scopeKey,
+              "current"
+            )
+          );
+
+        request.onsuccess = () =>
+          resolve(
+            request.result || null
+          );
+
+        request.onerror = () =>
+          reject(
+            request.error ||
+            new Error(
+              "障害対策バックアップを読めませんでした"
+            )
+          );
+      }
+    );
+  } finally {
+    db.close();
+  }
+}
+
+
+async function deleteBcpBackupForScope(
+  scopeKey
+) {
+  const normalized =
+    String(scopeKey || "").trim();
+
+  if (!normalized) {
+    return false;
+  }
+
+  const db = await openBcpBackupDb();
+
+  try {
+    await new Promise(
+      (resolve, reject) => {
+        const tx =
+          db.transaction(
+            BCP_BACKUP_STORE_NAME,
+            "readwrite"
+          );
+        const store =
+          tx.objectStore(
+            BCP_BACKUP_STORE_NAME
+          );
+
+        store.delete(
+          getBcpBackupRecordId(
+            normalized,
+            "current"
+          )
+        );
+        store.delete(
+          getBcpBackupRecordId(
+            normalized,
+            "previous"
+          )
+        );
+
+        tx.oncomplete = () =>
+          resolve();
+
+        tx.onerror = () =>
+          reject(
+            tx.error ||
+            new Error(
+              "障害対策バックアップを削除できませんでした"
+            )
+          );
+
+        tx.onabort = () =>
+          reject(
+            tx.error ||
+            new Error(
+              "障害対策バックアップ削除が中断されました"
+            )
+          );
+      }
+    );
+    return true;
+  } finally {
+    db.close();
+  }
+}
+
+async function commitBcpBackupSnapshot(payload) {
+  const scopeKey =
+    getCurrentDataScopeKey();
+
+  if (!scopeKey) {
+    throw new Error(
+      "障害対策バックアップのデータ範囲を特定できません"
+    );
+  }
+
+  const db = await openBcpBackupDb();
+
+  try {
+    await new Promise((resolve, reject) => {
+      const tx =
+        db.transaction(
+          BCP_BACKUP_STORE_NAME,
+          "readwrite"
+        );
+      const store =
+        tx.objectStore(
+          BCP_BACKUP_STORE_NAME
+        );
+      const currentId =
+        getBcpBackupRecordId(
+          scopeKey,
+          "current"
+        );
+      const previousId =
+        getBcpBackupRecordId(
+          scopeKey,
+          "previous"
+        );
+
+      /*
+        同じtransaction内で
+        旧current→previous、新snapshot→current。
+        transaction失敗時はどちらも更新されない。
+      */
+      const oldRequest =
+        store.get(currentId);
+
+      oldRequest.onsuccess = () => {
+        const old =
+          oldRequest.result || null;
+
+        if (old && old.complete === true) {
+          store.put({
+            ...old,
+            id: previousId,
+            slot: "previous",
+            preservedAt:
+              getLocalDateTimeText()
+          });
+        }
+
+        store.put({
+          id: currentId,
+          slot: "current",
+          scopeKey: scopeKey,
+          complete: true,
+          backupSchemaVersion:
+            BCP_BACKUP_SCHEMA_VERSION,
+          savedAtLocal:
+            getLocalDateTimeText(),
+          lastVerifiedAt:
+            getLocalDateTimeText(),
+          serverTime:
+            String(payload.serverTime || ""),
+          globalRevision:
+            Number(
+              payload.globalRevision || 0
+            ),
+          revisions:
+            payload.revisions || {},
+          range:
+            payload.range || {},
+          counts:
+            payload.counts || {},
+          data:
+            payload
+        });
+      };
+
+      oldRequest.onerror = () => {
+        try { tx.abort(); } catch (_) {}
+      };
+
+      tx.oncomplete = () =>
+        resolve();
+
+      tx.onerror = () =>
+        reject(
+          tx.error ||
+          new Error(
+            "障害対策バックアップの保存に失敗しました"
+          )
+        );
+
+      tx.onabort = () =>
+        reject(
+          tx.error ||
+          new Error(
+            "障害対策バックアップの保存が中断されました"
+          )
+        );
+    });
+  } finally {
+    db.close();
+  }
+}
+
+async function touchBcpBackupVerified(serverTime = "") {
+  const scopeKey =
+    getCurrentDataScopeKey();
+
+  if (!scopeKey) {
+    return false;
+  }
+
+  const db = await openBcpBackupDb();
+
+  try {
+    return await new Promise(
+      (resolve, reject) => {
+        const tx =
+          db.transaction(
+            BCP_BACKUP_STORE_NAME,
+            "readwrite"
+          );
+        const store =
+          tx.objectStore(
+            BCP_BACKUP_STORE_NAME
+          );
+        const id =
+          getBcpBackupRecordId(
+            scopeKey,
+            "current"
+          );
+        const request =
+          store.get(id);
+
+        request.onsuccess = () => {
+          const current =
+            request.result || null;
+
+          if (!current) {
+            resolve(false);
+            return;
+          }
+
+          store.put({
+            ...current,
+            lastVerifiedAt:
+              getLocalDateTimeText(),
+            lastVerifiedServerTime:
+              String(serverTime || "")
+          });
+        };
+
+        request.onerror = () =>
+          reject(
+            request.error ||
+            new Error(
+              "障害対策バックアップ確認日時を更新できませんでした"
+            )
+          );
+
+        tx.oncomplete = () =>
+          resolve(true);
+
+        tx.onerror = () =>
+          reject(
+            tx.error ||
+            new Error(
+              "障害対策バックアップ確認日時を保存できませんでした"
+            )
+          );
+      }
+    );
+  } finally {
+    db.close();
+  }
+}
+
+function validateBcpBackupPayload(data) {
+  if (
+    !data ||
+    data.ok !== true ||
+    data.complete !== true ||
+    Number(
+      data.backupSchemaVersion || 0
+    ) !== BCP_BACKUP_SCHEMA_VERSION
+  ) {
+    return false;
+  }
+
+  const range =
+    data.range &&
+    typeof data.range === "object"
+      ? data.range
+      : null;
+
+  if (
+    !range ||
+    Number(range.days || 0) !== 7 ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(
+      String(range.startDate || "")
+    ) ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(
+      String(range.endDate || "")
+    )
+  ) {
+    return false;
+  }
+
+  return (
+    Array.isArray(data.users) &&
+    Array.isArray(data.histories) &&
+    Array.isArray(data.checkHistory) &&
+    Array.isArray(data.nurseInstructions) &&
+    Array.isArray(data.dailyConfirms) &&
+    Array.isArray(data.residentCareStates) &&
+    Array.isArray(data.bowelRecoveryStates) &&
+    Array.isArray(
+      data.residentHospitalizationPeriods
+    )
+  );
+}
+
+async function requestBcpBackupDataFromServer(
+  knownGlobalRevision = 0
+) {
+  const url =
+    API_URL +
+    "?action=getBcpBackupData" +
+    "&knownGlobalRevision=" +
+    encodeURIComponent(
+      String(
+        Math.max(
+          0,
+          Number(
+            knownGlobalRevision || 0
+          ) || 0
+        )
+      )
+    );
+
+  const response =
+    await fetchReadApiStable(
+      url,
+      35000,
+      true
+    );
+
+  const data =
+    await response.json();
+
+  if (data && data.error) {
+    const error =
+      new Error(
+        data.message ||
+        "障害対策バックアップを取得できませんでした"
+      );
+    error.code =
+      String(data.code || "");
+    error.retryable =
+      Boolean(data.retryable);
+    error.transient =
+      error.retryable;
+    throw error;
+  }
+
+  verifyServerDataScope(data);
+  return data;
+}
+
+async function requestPersistentBcpStorageBestEffort() {
+  const key =
+    "bcpPersistentStorageRequestedV1";
+
+  if (
+    localStorage.getItem(key) === "1"
+  ) {
+    return;
+  }
+
+  localStorage.setItem(key, "1");
+
+  try {
+    if (
+      navigator.storage &&
+      typeof navigator.storage.persist ===
+        "function"
+    ) {
+      const persisted =
+        await navigator.storage.persist();
+
+      localStorage.setItem(
+        "bcpPersistentStorageGrantedV1",
+        persisted ? "1" : "0"
+      );
+    }
+  } catch (error) {
+    console.warn(
+      "永続ストレージ要求を実行できませんでした",
+      error
+    );
+  }
+}
+
+async function refreshBcpBackup(
+  options = {}
+) {
+  if (
+    currentRole === "" ||
+    !serverStateReady
+  ) {
+    return false;
+  }
+
+  if (bcpBackupInFlight) {
+    return bcpBackupInFlight;
+  }
+
+  if (isWriteActivityActive()) {
+    scheduleBcpBackupRefresh(
+      BCP_BACKUP_RETRY_DELAY_MS
+    );
+    return false;
+  }
+
+  const force =
+    Boolean(options.force);
+
+  const elapsed =
+    Date.now() -
+    bcpBackupLastRequestAt;
+
+  if (
+    !force &&
+    bcpBackupLastRequestAt > 0 &&
+    elapsed <
+      BCP_BACKUP_MIN_REQUEST_GAP_MS
+  ) {
+    scheduleBcpBackupRefresh(
+      BCP_BACKUP_MIN_REQUEST_GAP_MS -
+      elapsed
+    );
+    return false;
+  }
+
+  bcpBackupLastRequestAt =
+    Date.now();
+
+  bcpBackupInFlight =
+    (async () => {
+      let current = null;
+
+      try {
+        current =
+          await readCurrentBcpBackup();
+      } catch (error) {
+        console.warn(
+          "既存BCPバックアップ読込失敗",
+          error
+        );
+      }
+
+      const knownRevision =
+        current &&
+        current.complete === true
+          ? Number(
+              current.globalRevision || 0
+            )
+          : 0;
+
+      const started =
+        performance.now();
+
+      const data =
+        await requestBcpBackupDataFromServer(
+          knownRevision
+        );
+
+      if (
+        data &&
+        data.notModified === true
+      ) {
+        try {
+          await touchBcpBackupVerified(
+            data.serverTime || ""
+          );
+        } catch (error) {
+          console.warn(
+            "BCP確認日時更新失敗",
+            error
+          );
+        }
+
+        console.log(
+          "BCPバックアップ: 変更なし",
+          "revision",
+          Number(
+            data.globalRevision || 0
+          )
+        );
+        return true;
+      }
+
+      if (
+        !validateBcpBackupPayload(
+          data
+        )
+      ) {
+        throw new Error(
+          "障害対策バックアップの内容が不完全です"
+        );
+      }
+
+      await commitBcpBackupSnapshot(
+        data
+      );
+
+      requestPersistentBcpStorageBestEffort();
+
+      console.log(
+        "BCPバックアップ更新:",
+        String(
+          data.range.startDate || ""
+        ) +
+        "～" +
+        String(
+          data.range.endDate || ""
+        ),
+        Number(
+          data.counts &&
+          data.counts.histories || 0
+        ) + "件",
+        "/ 与薬 " +
+        Number(
+          data.counts &&
+          data.counts.checkHistory || 0
+        ) + "件",
+        "/ " +
+        Math.round(
+          performance.now() -
+          started
+        ) + "ms"
+      );
+
+      if (
+        !bcpBackupFirstSuccessNotified
+      ) {
+        bcpBackupFirstSuccessNotified =
+          true;
+        showToast(
+          "✅ 障害対策バックアップを更新しました（直近7日分）",
+          "success",
+          3500
+        );
+      }
+
+      return true;
+    })()
+      .catch(error => {
+        console.warn(
+          "BCPバックアップ更新失敗",
+          error
+        );
+
+        if (
+          String(
+            error &&
+            error.code || ""
+          ) === "BUSY"
+        ) {
+          /*
+            保存処理と重なっただけなら、
+            5分間隔制限に引っかけず30秒後に再試行する。
+          */
+          bcpBackupLastRequestAt = 0;
+        }
+
+        if (
+          String(
+            error &&
+            error.code || ""
+          ) !== "BUSY" &&
+          !bcpBackupStorageWarningShown &&
+          (
+            String(
+              error &&
+              error.message || ""
+            ).includes("IndexedDB") ||
+            String(
+              error &&
+              error.message || ""
+            ).includes("保存領域")
+          )
+        ) {
+          bcpBackupStorageWarningShown =
+            true;
+          showToast(
+            "⚠ 障害対策バックアップを端末へ保存できません",
+            "warning",
+            5000
+          );
+        }
+
+        scheduleBcpBackupRefresh(
+          BCP_BACKUP_RETRY_DELAY_MS
+        );
+        return false;
+      })
+      .finally(() => {
+        bcpBackupInFlight = null;
+      });
+
+  return bcpBackupInFlight;
+}
+
+function clearBcpBackupTimer() {
+  if (bcpBackupTimer) {
+    clearTimeout(
+      bcpBackupTimer
+    );
+    bcpBackupTimer = null;
+  }
+}
+
+function scheduleBcpBackupRefresh(
+  delayMs =
+    BCP_BACKUP_INTERVAL_MS
+) {
+  clearBcpBackupTimer();
+
+  if (currentRole === "") {
+    return;
+  }
+
+  bcpBackupTimer =
+    setTimeout(
+      async () => {
+        bcpBackupTimer = null;
+        await refreshBcpBackup({
+          source: "timer"
+        });
+
+        if (
+          !bcpBackupTimer &&
+          currentRole !== ""
+        ) {
+          scheduleBcpBackupRefresh(
+            BCP_BACKUP_INTERVAL_MS
+          );
+        }
+      },
+      Math.max(
+        1000,
+        Number(
+          delayMs ||
+          BCP_BACKUP_INTERVAL_MS
+        )
+      )
+    );
+}
+
+function startBcpBackupScheduler() {
+  scheduleBcpBackupRefresh(
+    15000
+  );
+}
+
+function stopBcpBackupScheduler() {
+  clearBcpBackupTimer();
+}
+
 
 // Ver.0.9.43: 起動に不要な補助データは初期画面の後で遅延取得する。
 let initialAuxLoadingPromise = null;
@@ -10920,6 +11685,19 @@ function endWriteActivity() {
       0,
       activeWriteCount - 1
     );
+
+  /*
+    保存完了後は30秒待ってBCPバックアップ候補。
+    連続保存中はtimerが後ろへ延びるため、通常保存を邪魔しない。
+  */
+  if (
+    activeWriteCount === 0 &&
+    currentRole !== ""
+  ) {
+    scheduleBcpBackupRefresh(
+      BCP_BACKUP_AFTER_WRITE_DELAY_MS
+    );
+  }
 }
 
 function isWriteActivityActive() {
@@ -18861,6 +19639,13 @@ async function initialize() {
   startAutoRefresh();
 
   /*
+    Ver.0.9.49
+    通常同期とは独立して7日BCPバックアップを開始。
+    初回は15秒後、以後は5分間隔。変更なしならGAS側で即終了する。
+  */
+  startBcpBackupScheduler();
+
+  /*
     Ver.0.9.43
     初期同期に失敗した場合、従来は次の30秒同期まで閲覧専用状態が続いた。
     5秒後に軽量同期を一度試し、Google側の一時的な失敗から早く復帰する。
@@ -22901,7 +23686,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.48</strong>
+        <strong>Ver.0.9.49</strong>
       </div>
       <div>
         <span>GAS</span>
@@ -31431,6 +32216,25 @@ async function logout() {
   /*
     共有端末へ利用者データを残さない。
   */
+  /*
+    明示的ログアウト時は共有端末にBCPデータを残さない。
+    ブラウザ終了・再起動では消さず、通常の障害対策用途は維持する。
+  */
+  const logoutScopeKey =
+    getCurrentDataScopeKey();
+
+  try {
+    await deleteBcpBackupForScope(
+      logoutScopeKey
+    );
+  } catch (error) {
+    console.warn(
+      "ログアウト時BCPバックアップ削除失敗",
+      error
+    );
+  }
+
+
   clearResidentScopedCache();
 
   clearLocalLoginSession();
@@ -31440,6 +32244,7 @@ async function logout() {
   serverStateReady = false;
 
   stopAutoRefresh();
+  stopBcpBackupScheduler();
 
   document.getElementById(
     "appArea"
@@ -35592,7 +36397,7 @@ async function requestInitialAuxDataFromServer() {
 */
 
 /*
-  Ver.0.9.48
+  Ver.0.9.49
   起動時manifest差分同期。
   Current Snapshot本体は既存localStorageを利用し、
   manifestだけを別メタデータとして保存する。
@@ -36056,8 +36861,8 @@ async function runManifestAwareInitialSync() {
 
 
 /*
-  Ver.0.9.48
-  GAS 0.8.58の同期manifest取得。
+  Ver.0.9.49
+  GAS 0.8.60の同期manifest取得。
   起動時に端末キャッシュとのrevision比較へ使用する。
 */
 async function requestSyncManifestFromServer() {
