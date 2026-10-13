@@ -10797,6 +10797,28 @@ const FULL_SYNC_INTERVAL_MS =
 let syncConsecutiveFailureCount = 0;
 let lastFullSyncCompletedAt = 0;
 
+/*
+  Ver.0.9.48 起動時manifest差分同期。
+  端末キャッシュは正本ではなく、manifestが一致した場合だけ
+  「サーバーで変更なし」と確認して初期データ取得を省略する。
+*/
+const SYNC_CACHE_SCHEMA_VERSION = 1;
+const SYNC_CACHE_MANIFEST_KEY = "syncCacheManifestV1";
+const SYNC_MANIFEST_DOMAINS = Object.freeze([
+  "users",
+  "history",
+  "checks",
+  "nurse",
+  "confirm",
+  "care",
+  "recovery",
+  "rules",
+  "evaluation",
+  "master"
+]);
+
+let pendingSyncCacheBuild = null;
+
 // Ver.0.9.43: 起動に不要な補助データは初期画面の後で遅延取得する。
 let initialAuxLoadingPromise = null;
 let initialAuxLoadTimer = null;
@@ -16353,6 +16375,10 @@ function clearResidentScopedCache() {
     "ruleEvaluations",
     "checks",
     "checkDate",
+    "latestDailyConfirms",
+    "operationalHistorySince",
+    "operationalCheckHistorySince",
+    SYNC_CACHE_MANIFEST_KEY,
     DATA_SCOPE_CACHE_KEY
   ];
 
@@ -16994,6 +17020,25 @@ function saveData() {
     "checkDate",
     checkDate
   );
+
+  localStorage.setItem(
+    "latestDailyConfirms",
+    JSON.stringify(
+      Array.isArray(latestDailyConfirms)
+        ? latestDailyConfirms
+        : []
+    )
+  );
+
+  localStorage.setItem(
+    "operationalHistorySince",
+    String(operationalHistorySince || "")
+  );
+
+  localStorage.setItem(
+    "operationalCheckHistorySince",
+    String(operationalCheckHistorySignatureSince || "")
+  );
 }
 
 function loadData() {
@@ -17030,6 +17075,30 @@ function loadData() {
     );
   const savedChecks = localStorage.getItem("checks");
   const savedCheckDate = localStorage.getItem("checkDate");
+  const savedDailyConfirms =
+    localStorage.getItem("latestDailyConfirms");
+  const savedOperationalHistorySince =
+    localStorage.getItem("operationalHistorySince");
+  const savedOperationalCheckHistorySince =
+    localStorage.getItem("operationalCheckHistorySince");
+
+  if (savedDailyConfirms !== null) {
+    try {
+      latestDailyConfirms =
+        JSON.parse(savedDailyConfirms) || [];
+    } catch (_) {
+      latestDailyConfirms = [];
+    }
+  }
+
+  operationalHistorySince =
+    String(savedOperationalHistorySince || "")
+      .slice(0, 10);
+  operationalHistorySignatureSince =
+    operationalHistorySince;
+  operationalCheckHistorySignatureSince =
+    String(savedOperationalCheckHistorySince || "")
+      .slice(0, 10);
 
   const todayText = new Date().toISOString().slice(0, 10);
 
@@ -17090,6 +17159,11 @@ function loadData() {
       checkHistory = [];
     }
   }
+
+  operationalHistorySignature =
+    getOperationalHistorySignature(histories);
+  operationalCheckHistorySignature =
+    getOperationalCheckHistorySignature(checkHistory);
 
   if (savedNurseInstructions !== null) {
     nurseInstructions = JSON.parse(savedNurseInstructions);
@@ -18747,16 +18821,23 @@ async function initialize() {
 
   try {
 
-    await loadInitialDataFromGoogle();
+    restoreCachedPostLoginUI();
 
-    /*
-      Ver.0.9.43
-      業務開始に不要な職員マスター・評価履歴・入院期間履歴は、
-      初期コア同期完了後にバックグラウンド取得する。
-    */
-    scheduleInitialOperationalDataLoad(
-      250
-    );
+    const initialSyncResult =
+      await runManifestAwareInitialSync();
+
+    if (
+      initialSyncResult &&
+      initialSyncResult.needsBackground
+    ) {
+      /*
+        初回・旧キャッシュ時は従来どおり、
+        コア成功後に運用→補助をバックグラウンド取得する。
+      */
+      scheduleInitialOperationalDataLoad(
+        250
+      );
+    }
 
   } catch (error) {
 
@@ -22820,7 +22901,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.45</strong>
+        <strong>Ver.0.9.48</strong>
       </div>
       <div>
         <span>GAS</span>
@@ -23548,9 +23629,17 @@ function clearCachedAppData() {
     "checkHistoryOperationalV2",
     "nurseInstructions",
     "bowelRecoveryStates",
+    "residentCareStates",
+    "residentHospitalizationPeriods",
     "rules",
+    "ruleCycleSnapshots",
+    "ruleEvaluations",
     "checks",
     "checkDate",
+    "latestDailyConfirms",
+    "operationalHistorySince",
+    "operationalCheckHistorySince",
+    SYNC_CACHE_MANIFEST_KEY,
     DATA_SCOPE_CACHE_KEY
   ];
 
@@ -23854,7 +23943,17 @@ async function login() {
     */
     try {
 
-      await loadInitialDataFromGoogle();
+      restoreCachedPostLoginUI();
+
+      const initialSyncResult =
+        await runManifestAwareInitialSync();
+
+      if (
+        initialSyncResult &&
+        initialSyncResult.needsBackground
+      ) {
+        scheduleInitialOperationalDataLoad(250);
+      }
 
     } catch (syncError) {
 
@@ -23986,9 +24085,16 @@ function restoreLogin() {
   updateHomeMedicineStatus();
 }
 
-async function loadInitialDataFromGoogle() {
+async function loadInitialDataFromGoogle(options = {}) {
 
   console.time("初期データ一括取得");
+
+  const deferReady =
+    Boolean(options && options.deferReady);
+  const suppressErrorStatus =
+    Boolean(
+      options && options.suppressErrorStatus
+    );
 
   try {
 
@@ -24216,9 +24322,11 @@ renderRuleEvaluationAdminList();
 
 saveData();
 
-markSyncSuccess(
-  data.serverTime || ""
-);
+if (!deferReady) {
+  markSyncSuccess(
+    data.serverTime || ""
+  );
+}
 
     if (
       data.pointMigration &&
@@ -24265,7 +24373,9 @@ markSyncSuccess(
       error
     );
 
-    markSyncError();
+    if (!suppressErrorStatus) {
+      markSyncError();
+    }
 
     console.timeEnd(
       "初期データ一括取得"
@@ -24309,10 +24419,13 @@ function scheduleInitialOperationalDataLoad(
 }
 
 
-async function loadInitialOperationalDataFromGoogle() {
+async function loadInitialOperationalDataFromGoogle(options = {}) {
   if (initialOperationalLoadingPromise) {
     return initialOperationalLoadingPromise;
   }
+
+  const scheduleAux =
+    !options || options.scheduleAux !== false;
 
   initialOperationalLoadingPromise =
     (async () => {
@@ -24373,14 +24486,28 @@ async function loadInitialOperationalDataFromGoogle() {
         }
 
         saveData();
+
+        if (pendingSyncCacheBuild) {
+          pendingSyncCacheBuild.operationalOk = true;
+        }
+
         return true;
+
+      } catch (error) {
+        if (pendingSyncCacheBuild) {
+          pendingSyncCacheBuild = null;
+        }
+        throw error;
 
       } finally {
         console.timeEnd("★ 初期運用データ遅延取得");
         initialOperationalLoadingPromise = null;
 
         // 重い読取を同時実行せず、運用データ終了後に補助同期へ進む。
-        if (currentRole !== "") {
+        if (
+          scheduleAux &&
+          currentRole !== ""
+        ) {
           scheduleInitialAuxDataLoad(1000);
         }
       }
@@ -24531,7 +24658,21 @@ async function loadInitialAuxDataFromGoogle() {
           Date.now();
 
         saveData();
+
+        if (
+          pendingSyncCacheBuild &&
+          pendingSyncCacheBuild.operationalOk
+        ) {
+          await finalizePendingSyncCacheBuild();
+        }
+
         return true;
+
+      } catch (error) {
+        if (pendingSyncCacheBuild) {
+          pendingSyncCacheBuild = null;
+        }
+        throw error;
 
       } finally {
         console.timeEnd(
@@ -35451,9 +35592,473 @@ async function requestInitialAuxDataFromServer() {
 */
 
 /*
-  Ver.0.9.46
-  GAS 0.8.57の同期manifest取得。
-  今版では既存の初期同期/30秒同期へまだ組み込まず、次段階の差分同期用基盤として追加する。
+  Ver.0.9.48
+  起動時manifest差分同期。
+  Current Snapshot本体は既存localStorageを利用し、
+  manifestだけを別メタデータとして保存する。
+  manifestが一致しない／壊れている場合は必ずサーバー取得へ戻る。
+*/
+function loadCachedSyncManifest() {
+  try {
+    const raw =
+      localStorage.getItem(
+        SYNC_CACHE_MANIFEST_KEY
+      );
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object"
+      ? parsed
+      : null;
+  } catch (error) {
+    console.warn(
+      "同期manifestキャッシュ読込失敗",
+      error
+    );
+    return null;
+  }
+}
+
+function clearCachedSyncManifest() {
+  try {
+    localStorage.removeItem(
+      SYNC_CACHE_MANIFEST_KEY
+    );
+  } catch (_) {
+  }
+}
+
+function getSyncManifestScopeKey(manifest) {
+  return String(
+    manifest &&
+    manifest.dataScope &&
+    manifest.dataScope.scopeKey
+      ? manifest.dataScope.scopeKey
+      : manifest && manifest.scopeKey
+        ? manifest.scopeKey
+        : ""
+  ).trim();
+}
+
+function normalizeSyncManifestRevisions(manifest) {
+  const source =
+    manifest &&
+    manifest.revisions &&
+    typeof manifest.revisions === "object"
+      ? manifest.revisions
+      : {};
+  const out = {};
+
+  for (const domain of SYNC_MANIFEST_DOMAINS) {
+    const value = Number(source[domain]);
+    if (!Number.isFinite(value) || value < 0) {
+      return null;
+    }
+    out[domain] = value;
+  }
+
+  return out;
+}
+
+function isCachedSyncManifestCompatible(
+  cached,
+  serverManifest
+) {
+  if (!cached || !serverManifest) {
+    return false;
+  }
+
+  if (
+    Number(cached.cacheSchemaVersion || 0) !==
+      SYNC_CACHE_SCHEMA_VERSION ||
+    Number(cached.syncEpoch || 0) !==
+      Number(serverManifest.syncEpoch || 0) ||
+    Number(cached.revisionSchemaVersion || 0) !==
+      Number(serverManifest.revisionSchemaVersion || 0)
+  ) {
+    return false;
+  }
+
+  const expectedScope =
+    getCurrentDataScopeKey();
+  const cachedScope =
+    getSyncManifestScopeKey(cached);
+  const serverScope =
+    getSyncManifestScopeKey(serverManifest);
+
+  if (
+    !expectedScope ||
+    cachedScope !== expectedScope ||
+    serverScope !== expectedScope
+  ) {
+    return false;
+  }
+
+  return Boolean(
+    normalizeSyncManifestRevisions(cached) &&
+    normalizeSyncManifestRevisions(serverManifest)
+  );
+}
+
+function getChangedSyncManifestDomains(
+  cached,
+  serverManifest
+) {
+  const cachedRevisions =
+    normalizeSyncManifestRevisions(cached);
+  const serverRevisions =
+    normalizeSyncManifestRevisions(serverManifest);
+
+  if (!cachedRevisions || !serverRevisions) {
+    return SYNC_MANIFEST_DOMAINS.slice();
+  }
+
+  return SYNC_MANIFEST_DOMAINS.filter(
+    domain =>
+      Number(cachedRevisions[domain]) !==
+      Number(serverRevisions[domain])
+  );
+}
+
+function areSyncManifestsSameRevision(a, b) {
+  if (!a || !b) return false;
+  if (
+    Number(a.syncEpoch || 0) !==
+      Number(b.syncEpoch || 0) ||
+    Number(a.revisionSchemaVersion || 0) !==
+      Number(b.revisionSchemaVersion || 0) ||
+    getSyncManifestScopeKey(a) !==
+      getSyncManifestScopeKey(b)
+  ) {
+    return false;
+  }
+
+  const ar = normalizeSyncManifestRevisions(a);
+  const br = normalizeSyncManifestRevisions(b);
+  if (!ar || !br) return false;
+
+  return SYNC_MANIFEST_DOMAINS.every(
+    domain =>
+      Number(ar[domain]) ===
+      Number(br[domain])
+  );
+}
+
+function saveStableSyncCacheManifest(manifest) {
+  const revisions =
+    normalizeSyncManifestRevisions(manifest);
+  const scopeKey =
+    getSyncManifestScopeKey(manifest);
+
+  if (!revisions || !scopeKey) {
+    clearCachedSyncManifest();
+    return false;
+  }
+
+  /*
+    古いmanifestを先に無効化する。
+    saveData途中で容量不足等が起きても、次回起動で
+    中途半端なキャッシュを「最新」と誤認しない。
+  */
+  clearCachedSyncManifest();
+
+  // manifestと同じ瞬間の端末状態を先に永続化する。
+  saveData();
+
+  const stored = {
+    cacheSchemaVersion:
+      SYNC_CACHE_SCHEMA_VERSION,
+    syncEpoch:
+      Number(manifest.syncEpoch || 0),
+    revisionSchemaVersion:
+      Number(
+        manifest.revisionSchemaVersion || 0
+      ),
+    globalRevision:
+      Number(manifest.globalRevision || 0),
+    revisions: revisions,
+    scopeKey: scopeKey,
+    serverTime:
+      String(manifest.serverTime || ""),
+    savedAt:
+      getLocalDateTimeText()
+  };
+
+  localStorage.setItem(
+    SYNC_CACHE_MANIFEST_KEY,
+    JSON.stringify(stored)
+  );
+  return true;
+}
+
+async function requestStableSyncManifest(
+  attempts = 3
+) {
+  let lastError = null;
+
+  for (let attempt = 1;
+       attempt <= Math.max(1, attempts);
+       attempt++) {
+    try {
+      return await requestSyncManifestFromServer();
+    } catch (error) {
+      lastError = error;
+      if (
+        !error ||
+        !error.retryable ||
+        attempt >= attempts
+      ) {
+        throw error;
+      }
+      await wait(
+        Math.min(1800, 350 * attempt)
+      );
+    }
+  }
+
+  throw lastError ||
+    new Error("同期manifestを確認できませんでした");
+}
+
+function getInitialSyncGroupPlan(changedDomains) {
+  const changed =
+    new Set(
+      Array.isArray(changedDomains)
+        ? changedDomains
+        : []
+    );
+
+  // usersの追加・削除・ユニット変更は各領域のスコープ内容を変えるため全取得。
+  if (changed.has("users")) {
+    return {
+      core: true,
+      operational: true,
+      aux: true
+    };
+  }
+
+  return {
+    core:
+      ["rules", "care", "recovery"]
+        .some(domain => changed.has(domain)),
+    operational:
+      ["history", "checks", "nurse", "confirm"]
+        .some(domain => changed.has(domain)),
+    aux:
+      ["master", "evaluation", "care"]
+        .some(domain => changed.has(domain))
+  };
+}
+
+function restoreCachedPostLoginUI() {
+  if (Array.isArray(latestDailyConfirms)) {
+    applyDailyConfirmStatus(
+      latestDailyConfirms
+    );
+  }
+  updateNurseAlerts();
+  updateHomeMedicineStatus();
+  updateRuleEvaluationAlerts();
+  renderRuleEvaluationAdminList();
+}
+
+async function runManifestDeltaInitialSync(
+  cachedManifest,
+  firstServerManifest
+) {
+  let serverManifest = firstServerManifest;
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const changedDomains =
+      getChangedSyncManifestDomains(
+        cachedManifest,
+        serverManifest
+      );
+
+    if (changedDomains.length === 0) {
+      restoreCachedPostLoginUI();
+      saveStableSyncCacheManifest(
+        serverManifest
+      );
+      lastFullSyncCompletedAt = Date.now();
+      markSyncSuccess(
+        serverManifest.serverTime || ""
+      );
+      console.log(
+        "起動同期: manifest一致のため端末キャッシュを採用"
+      );
+      return {
+        mode: "cache-hit",
+        changedDomains: []
+      };
+    }
+
+    const plan =
+      getInitialSyncGroupPlan(
+        changedDomains
+      );
+
+    console.log(
+      "起動同期: 変更領域",
+      changedDomains,
+      "取得計画",
+      plan
+    );
+
+    if (plan.core) {
+      await loadInitialDataFromGoogle({
+        deferReady: true,
+        suppressErrorStatus: true
+      });
+    }
+
+    if (plan.operational) {
+      await loadInitialOperationalDataFromGoogle({
+        scheduleAux: false
+      });
+    }
+
+    if (plan.aux) {
+      await loadInitialAuxDataFromGoogle();
+    }
+
+    const afterManifest =
+      await requestStableSyncManifest(3);
+
+    if (
+      areSyncManifestsSameRevision(
+        serverManifest,
+        afterManifest
+      )
+    ) {
+      saveStableSyncCacheManifest(
+        afterManifest
+      );
+      lastFullSyncCompletedAt = Date.now();
+      markSyncSuccess(
+        afterManifest.serverTime || ""
+      );
+      return {
+        mode: "delta",
+        changedDomains: changedDomains
+      };
+    }
+
+    console.warn(
+      "起動差分同期中にサーバー更新を検知。再照合します",
+      attempt
+    );
+    serverManifest = afterManifest;
+  }
+
+  throw new Error(
+    "同期中に更新が続いているため最新状態を確定できませんでした"
+  );
+}
+
+async function finalizePendingSyncCacheBuild() {
+  const pending = pendingSyncCacheBuild;
+  if (
+    !pending ||
+    !pending.startManifest ||
+    !pending.operationalOk
+  ) {
+    return false;
+  }
+
+  try {
+    const endManifest =
+      await requestStableSyncManifest(2);
+
+    if (
+      areSyncManifestsSameRevision(
+        pending.startManifest,
+        endManifest
+      )
+    ) {
+      saveStableSyncCacheManifest(
+        endManifest
+      );
+      console.log(
+        "起動キャッシュmanifestを確定しました"
+      );
+      pendingSyncCacheBuild = null;
+      return true;
+    }
+
+    console.log(
+      "初期段階取得中に更新があったためmanifestキャッシュ確定を見送ります"
+    );
+    pendingSyncCacheBuild = null;
+    return false;
+  } catch (error) {
+    console.warn(
+      "起動キャッシュmanifest確定失敗",
+      error
+    );
+    pendingSyncCacheBuild = null;
+    return false;
+  }
+}
+
+async function runManifestAwareInitialSync() {
+  const cachedManifest =
+    loadCachedSyncManifest();
+  let serverManifest = null;
+
+  try {
+    serverManifest =
+      await requestStableSyncManifest(3);
+  } catch (manifestError) {
+    console.warn(
+      "manifest確認失敗のため従来初期同期へフォールバック",
+      manifestError
+    );
+  }
+
+  if (
+    serverManifest &&
+    serverManifest.directEditGuardReady === true &&
+    isCachedSyncManifestCompatible(
+      cachedManifest,
+      serverManifest
+    )
+  ) {
+    return await runManifestDeltaInitialSync(
+      cachedManifest,
+      serverManifest
+    );
+  }
+
+  if (
+    serverManifest &&
+    serverManifest.directEditGuardReady !== true
+  ) {
+    console.warn(
+      "直接編集revision保険を確認できないため高速起動を使用しません"
+    );
+  }
+
+  // 初回・旧キャッシュ・epoch変更・直接編集revision保険未確認時は従来の安全な初期コア同期。
+  pendingSyncCacheBuild =
+    serverManifest
+      ? {
+          startManifest: serverManifest,
+          operationalOk: false
+        }
+      : null;
+
+  await loadInitialDataFromGoogle();
+  return {
+    mode: "legacy",
+    needsBackground: true
+  };
+}
+
+
+/*
+  Ver.0.9.48
+  GAS 0.8.58の同期manifest取得。
+  起動時に端末キャッシュとのrevision比較へ使用する。
 */
 async function requestSyncManifestFromServer() {
   const started = performance.now();
