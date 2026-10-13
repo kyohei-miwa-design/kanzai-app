@@ -8933,7 +8933,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.44</div>
+      <div class="ui09-brand-version">Ver.0.9.46</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -10032,7 +10032,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.44
+            Ver.0.9.45
           </span>
         </div>
 
@@ -10659,8 +10659,10 @@ let serverStateReady = false;
   ensureServerWriteReady() → CLIENT_WRITE_ACTIONS を参照する。
   const の Temporal Dead Zone を避けるため、起動処理より前に初期化する。
 */
+// Ver.0.9.46: 現行の全書込みactionを初期同期完了前ブロック対象へ統一。
 const CLIENT_WRITE_ACTIONS = new Set([
   "addHistory",
+  "addNoBowelHistoriesBatch",
   "cancelHistoryFast",
   "editHistoryFast",
   "registerBowel",
@@ -10668,6 +10670,7 @@ const CLIENT_WRITE_ACTIONS = new Set([
   "setBowelUncertain",
   "resolveBowelRecoveryState",
   "setResidentHospitalized",
+  "correctResidentHospitalizedAt",
   "returnResidentFromHospital",
   "applyResidentOutsideBowelBaseline",
   "resolveResidentMedicationReview",
@@ -22817,7 +22820,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.44</strong>
+        <strong>Ver.0.9.45</strong>
       </div>
       <div>
         <span>GAS</span>
@@ -35447,6 +35450,45 @@ async function requestInitialAuxDataFromServer() {
   初期同期と同じ認証経路を使用し、POST本文認証の揺らぎを避ける。
 */
 
+/*
+  Ver.0.9.46
+  GAS 0.8.57の同期manifest取得。
+  今版では既存の初期同期/30秒同期へまだ組み込まず、次段階の差分同期用基盤として追加する。
+*/
+async function requestSyncManifestFromServer() {
+  const started = performance.now();
+
+  const response = await fetchReadApiStable(
+    API_URL + "?action=getSyncManifest",
+    8000,
+    true
+  );
+
+  const data = await response.json();
+
+  if (data && data.error) {
+    const error = new Error(
+      data.message || "同期manifestの取得に失敗しました"
+    );
+    error.code = String(data.code || "");
+    error.retryable = Boolean(data.retryable);
+    error.transient = error.retryable;
+    throw error;
+  }
+
+  verifyServerDataScope(data);
+
+  console.log(
+    "同期manifest 通信:",
+    Math.round(performance.now() - started) + "ms",
+    "globalRevision:",
+    Number(data.globalRevision || 0)
+  );
+
+  return data;
+}
+
+
 async function requestSyncDataFromServer() {
 
   /*
@@ -38583,6 +38625,305 @@ function openPage(pageId) {
   });
 }
 
+
+/* ============================================================
+   Ver.0.9.45 自動同期中の入力状態保護
+
+   30秒同期の通信中にも現場操作は続けられるため、
+   サーバー応答後・画面再描画の直前に現在の入力状態を退避し、
+   再描画後に「まだ画面上に存在する項目だけ」復元する。
+
+   対象：
+   ・排便入力：利用者 / 排便量 / 指定日時
+   ・日中帯確認：排便なしチェック / 確認者
+   ・夜勤帯確認：排便なしチェック / 確認者
+
+   他端末で排便登録されて未入力リストから消えた利用者など、
+   最新データ上で項目自体が消えた場合は復元しない。
+   ============================================================ */
+
+function captureSelectValueForSyncProtection(
+  selectId
+) {
+  const select =
+    document.getElementById(
+      selectId
+    );
+
+  return select
+    ? String(select.value || "")
+    : "";
+}
+
+
+function captureCheckedValuesForSyncProtection(
+  selector
+) {
+  return Array.from(
+    document.querySelectorAll(
+      selector + ":checked"
+    )
+  ).map(input =>
+    String(input.value || "")
+  );
+}
+
+
+function captureTransientInputState() {
+
+  return {
+    bowel: {
+      user:
+        captureSelectValueForSyncProtection(
+          "userSelect"
+        ),
+      type:
+        captureSelectValueForSyncProtection(
+          "bowelTypeSelect"
+        ),
+      dateTimeManual:
+        Boolean(
+          bowelDateTimeManual
+        ),
+      eventDate:
+        String(
+          document.getElementById(
+            "bowelEventDate"
+          )?.value || ""
+        ),
+      eventTime:
+        String(
+          document.getElementById(
+            "bowelEventTime"
+          )?.value || ""
+        )
+    },
+
+    day: {
+      open:
+        Boolean(
+          document.getElementById(
+            "bowelCheckResult"
+          )?.innerHTML.trim()
+        ),
+      checkedUsers:
+        captureCheckedValuesForSyncProtection(
+          ".noBowelCheck"
+        ),
+      confirmerId:
+        captureSelectValueForSyncProtection(
+          "dayConfirmerSelect"
+        )
+    },
+
+    night: {
+      open:
+        Boolean(
+          document.getElementById(
+            "nightBowelCheckResult"
+          )?.innerHTML.trim()
+        ),
+      checkedUsers:
+        captureCheckedValuesForSyncProtection(
+          ".nightNoBowelCheck"
+        ),
+      confirmerId:
+        captureSelectValueForSyncProtection(
+          "nightConfirmerSelect"
+        )
+    }
+  };
+}
+
+
+function restoreSelectValueForSyncProtection(
+  selectId,
+  value
+) {
+
+  const select =
+    document.getElementById(
+      selectId
+    );
+
+  const target =
+    String(value || "");
+
+  if (
+    !select ||
+    !target
+  ) {
+    return false;
+  }
+
+  const exists =
+    Array.from(
+      select.options
+    ).some(option =>
+      String(option.value) ===
+      target
+    );
+
+  if (!exists) {
+    return false;
+  }
+
+  select.value = target;
+  return true;
+}
+
+
+function restoreCheckedValuesForSyncProtection(
+  selector,
+  values
+) {
+
+  const checkedSet =
+    new Set(
+      Array.isArray(values)
+        ? values.map(value =>
+            String(value || "")
+          )
+        : []
+    );
+
+  document
+    .querySelectorAll(selector)
+    .forEach(input => {
+      input.checked =
+        checkedSet.has(
+          String(input.value || "")
+        );
+    });
+}
+
+
+function restoreBowelInputStateAfterSync(
+  state
+) {
+
+  if (!state) {
+    return;
+  }
+
+  const userRestored =
+    restoreSelectValueForSyncProtection(
+      "userSelect",
+      state.user
+    );
+
+  /*
+    利用者が最新データ上から操作対象外になった場合は、
+    以前の排便量だけ別利用者へ残さない。
+  */
+  if (userRestored) {
+    restoreSelectValueForSyncProtection(
+      "bowelTypeSelect",
+      state.type
+    );
+  } else if (state.user) {
+    const typeSelect =
+      document.getElementById(
+        "bowelTypeSelect"
+      );
+
+    if (typeSelect) {
+      typeSelect.value = "";
+    }
+  }
+
+  bowelDateTimeManual =
+    Boolean(
+      state.dateTimeManual
+    );
+
+  const dateInput =
+    document.getElementById(
+      "bowelEventDate"
+    );
+
+  const timeInput =
+    document.getElementById(
+      "bowelEventTime"
+    );
+
+  const editor =
+    document.getElementById(
+      "bowelDateTimeEditor"
+    );
+
+  if (dateInput) {
+    dateInput.value =
+      String(
+        state.eventDate || ""
+      );
+  }
+
+  if (timeInput) {
+    timeInput.value =
+      String(
+        state.eventTime || ""
+      );
+  }
+
+  if (editor) {
+    editor.classList.toggle(
+      "hidden",
+      !bowelDateTimeManual
+    );
+  }
+
+  updateBowelDateTimeSummary();
+  updateBowelTargetUI({
+    updateResult: true
+  });
+}
+
+
+function restoreTransientInputState(
+  state
+) {
+
+  if (!state) {
+    return;
+  }
+
+  restoreBowelInputStateAfterSync(
+    state.bowel
+  );
+
+  if (
+    state.day &&
+    state.day.open
+  ) {
+    restoreCheckedValuesForSyncProtection(
+      ".noBowelCheck",
+      state.day.checkedUsers
+    );
+
+    restoreSelectValueForSyncProtection(
+      "dayConfirmerSelect",
+      state.day.confirmerId
+    );
+  }
+
+  if (
+    state.night &&
+    state.night.open
+  ) {
+    restoreCheckedValuesForSyncProtection(
+      ".nightNoBowelCheck",
+      state.night.checkedUsers
+    );
+
+    restoreSelectValueForSyncProtection(
+      "nightConfirmerSelect",
+      state.night.confirmerId
+    );
+  }
+}
+
+
 async function loadLightSyncDataFromGoogle() {
 
   const data =
@@ -38651,6 +38992,15 @@ async function loadLightSyncDataFromGoogle() {
   verifyServerDataScope(
     data
   );
+
+
+  /*
+    Ver.0.9.45
+    通信待ちの間に職員が操作した内容も拾えるよう、
+    サーバー応答後・データ反映直前に退避する。
+  */
+  const transientInputState =
+    captureTransientInputState();
 
 
   // =========================
@@ -38829,6 +39179,16 @@ async function loadLightSyncDataFromGoogle() {
   ) {
     checkNightBowelStatus();
   }
+
+
+  /*
+    Ver.0.9.45
+    最新サーバーデータの再描画後、入力途中の状態を復元する。
+    ただし最新データ上で消えた項目は復元しない。
+  */
+  restoreTransientInputState(
+    transientInputState
+  );
 
 
   markSyncSuccess(
