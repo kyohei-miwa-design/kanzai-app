@@ -9042,7 +9042,7 @@ body {
           id="homeDayConfirmCard"
           type="button"
           class="home-shift-card ui09-shift-card"
-          onclick="openPage('shiftConfirmPage'); checkTodayBowelStatus();"
+          onclick="openPage('shiftConfirmPage'); openShiftBowelStatusWithFreshHistory('day');"
         >
           <div>
             <div class="home-shift-name">☀️ 日中帯</div>
@@ -9055,7 +9055,7 @@ body {
           id="homeNightConfirmCard"
           type="button"
           class="home-shift-card ui09-shift-card"
-          onclick="openPage('shiftConfirmPage'); checkNightBowelStatus();"
+          onclick="openPage('shiftConfirmPage'); openShiftBowelStatusWithFreshHistory('night');"
         >
           <div>
             <div class="home-shift-name">🌙 夜勤帯</div>
@@ -9374,7 +9374,7 @@ body {
           <button
             type="button"
             class="ui09-secondary-button"
-            onclick="checkTodayBowelStatus()"
+            onclick="openShiftBowelStatusWithFreshHistory('day')"
           >
             日中帯の排便状況を確認
           </button>
@@ -9396,7 +9396,7 @@ body {
           <button
             type="button"
             class="ui09-secondary-button"
-            onclick="checkNightBowelStatus()"
+            onclick="openShiftBowelStatusWithFreshHistory('night')"
           >
             夜勤帯の排便状況を確認
           </button>
@@ -10798,7 +10798,7 @@ let syncConsecutiveFailureCount = 0;
 let lastFullSyncCompletedAt = 0;
 
 /*
-  Ver.0.9.49 起動時manifest差分同期。
+  Ver.0.9.50 起動時manifest差分同期。
   端末キャッシュは正本ではなく、manifestが一致した場合だけ
   「サーバーで変更なし」と確認して初期データ取得を省略する。
 */
@@ -10821,7 +10821,7 @@ const SYNC_MANIFEST_DOMAINS = Object.freeze([
 let pendingSyncCacheBuild = null;
 
 /*
-  Ver.0.9.49 7日BCPバックアップ。
+  Ver.0.9.50 7日BCPバックアップ。
   通常キャッシュとは完全分離し、IndexedDBへ保存する。
   current更新はtransactionで行い、前回完全版をpreviousとして残す。
 */
@@ -19639,7 +19639,7 @@ async function initialize() {
   startAutoRefresh();
 
   /*
-    Ver.0.9.49
+    Ver.0.9.50
     通常同期とは独立して7日BCPバックアップを開始。
     初回は15秒後、以後は5分間隔。変更なしならGAS側で即終了する。
   */
@@ -23686,7 +23686,7 @@ function renderAdminSystemPanel() {
       </div>
       <div>
         <span>HTML</span>
-        <strong>Ver.0.9.49</strong>
+        <strong>Ver.0.9.50</strong>
       </div>
       <div>
         <span>GAS</span>
@@ -32941,11 +32941,10 @@ function openShiftConfirmationFromAlert(type, targetDate) {
   }
 
   openPage("shiftConfirmPage");
-  if (type === "day") {
-    checkTodayBowelStatus(targetDate);
-  } else {
-    checkNightBowelStatus(targetDate);
-  }
+  openShiftBowelStatusWithFreshHistory(
+    type,
+    targetDate
+  );
 
   requestAnimationFrame(() => requestAnimationFrame(() => {
     const target = document.getElementById(
@@ -33021,6 +33020,314 @@ function updateShiftOverdueAlert(
     今から確認して確定できます。<br>
     勤務帯終了後の確定は「遅延確認」として記録されます。
   `);
+}
+
+
+/* ============================================================
+   Ver.0.9.50 勤務帯確定前の正本履歴再照合
+
+   30秒軽量同期では排便履歴本体を取得しないため、
+   勤務帯確認を開く時と「確定」直前だけ対象期間をGASから再取得する。
+   通常同期の通信量は増やさない。
+
+   確定直前の再取得で未入力者一覧が変化した場合は、
+   そのまま保存せず一覧を更新して職員へ再確認を求める。
+   ============================================================ */
+
+function getShiftHistoryRangeForConfirmation(
+  type,
+  targetDateText
+) {
+  const timing =
+    getShiftTiming(
+      type,
+      targetDateText
+    );
+
+  if (!timing) {
+    return null;
+  }
+
+  return {
+    timing: timing,
+    startDate:
+      getLocalDateText(
+        timing.shiftStart
+      ),
+    endDate:
+      getLocalDateText(
+        timing.shiftEnd
+      )
+  };
+}
+
+
+async function refreshShiftHistoriesForConfirmation(
+  type,
+  targetDateText,
+  options = {}
+) {
+  const range =
+    getShiftHistoryRangeForConfirmation(
+      type,
+      targetDateText
+    );
+
+  if (!range) {
+    return false;
+  }
+
+  const showLoading =
+    options.showLoading === true;
+
+  const resultId =
+    type === "day"
+      ? "bowelCheckResult"
+      : "nightBowelCheckResult";
+
+  const resultArea =
+    document.getElementById(
+      resultId
+    );
+
+  if (showLoading && resultArea) {
+    resultArea.innerHTML = `
+      <div class="user-card">
+        <strong>🔄 最新の排便履歴を確認しています…</strong><br>
+        <small>
+          ${escapeHtml(
+            formatDateTime(
+              range.timing.shiftStart
+            )
+          )}
+          ～
+          ${escapeHtml(
+            formatDateTime(
+              range.timing.shiftEnd
+            )
+          )}
+        </small>
+      </div>
+    `;
+  }
+
+  try {
+    /*
+      force=true:
+      履歴画面用セッションキャッシュがあっても、
+      勤務帯確定では必ずGAS正本を再確認する。
+    */
+    await ensureHistoryRangeLoaded(
+      {
+        startDate:
+          range.startDate,
+        endDate:
+          range.endDate,
+        includeChecks: false,
+        timeline: false
+      },
+      true
+    );
+
+    return true;
+
+  } catch (error) {
+    console.error(
+      "勤務帯確定用の最新履歴取得エラー",
+      error
+    );
+
+    if (resultArea) {
+      resultArea.innerHTML = `
+        <div class="user-card">
+          <strong>⚠ 最新の排便履歴を確認できませんでした</strong><br><br>
+          通信状態を確認して、もう一度「排便状況を確認」を押してください。<br>
+          <small>
+            最新履歴を確認できない状態では勤務帯を確定しません。
+          </small>
+        </div>
+      `;
+    }
+
+    return false;
+  }
+}
+
+
+async function openShiftBowelStatusWithFreshHistory(
+  type,
+  targetDateText = ""
+) {
+  const normalizedType =
+    type === "night"
+      ? "night"
+      : "day";
+
+  const resolvedTargetDate =
+    String(
+      targetDateText ||
+      (
+        normalizedType === "night"
+          ? getDefaultNightTargetDateText()
+          : getTodayText()
+      )
+    ).slice(0, 10);
+
+  const refreshed =
+    await refreshShiftHistoriesForConfirmation(
+      normalizedType,
+      resolvedTargetDate,
+      {showLoading: true}
+    );
+
+  if (!refreshed) {
+    return false;
+  }
+
+  if (normalizedType === "night") {
+    checkNightBowelStatus(
+      resolvedTargetDate
+    );
+  } else {
+    checkTodayBowelStatus(
+      resolvedTargetDate
+    );
+  }
+
+  return true;
+}
+
+
+function getShiftPendingUsersFromDom(
+  type
+) {
+  const selector =
+    type === "night"
+      ? ".nightNoBowelCheck"
+      : ".noBowelCheck";
+
+  return Array.from(
+    document.querySelectorAll(
+      selector
+    )
+  )
+    .map(input =>
+      String(input.value || "")
+    )
+    .filter(Boolean)
+    .sort();
+}
+
+
+function areSameShiftPendingUsers(
+  before,
+  after
+) {
+  const a =
+    Array.isArray(before)
+      ? before.slice().sort()
+      : [];
+
+  const b =
+    Array.isArray(after)
+      ? after.slice().sort()
+      : [];
+
+  return (
+    a.length === b.length &&
+    a.every(
+      (value, index) =>
+        value === b[index]
+    )
+  );
+}
+
+
+async function revalidateShiftHistoriesBeforeConfirm(
+  type,
+  targetDateText
+) {
+  const selector =
+    type === "night"
+      ? ".nightNoBowelCheck"
+      : ".noBowelCheck";
+
+  const confirmerId =
+    type === "night"
+      ? "nightConfirmerSelect"
+      : "dayConfirmerSelect";
+
+  const beforePending =
+    getShiftPendingUsersFromDom(
+      type
+    );
+
+  const beforeChecked =
+    captureCheckedValuesForSyncProtection(
+      selector
+    );
+
+  const beforeConfirmer =
+    captureSelectValueForSyncProtection(
+      confirmerId
+    );
+
+  const refreshed =
+    await refreshShiftHistoriesForConfirmation(
+      type,
+      targetDateText,
+      {showLoading: false}
+    );
+
+  if (!refreshed) {
+    alert(
+      "最新の排便履歴を確認できないため、確定処理を中止しました。\n\n" +
+      "通信状態を確認して再度お試しください。"
+    );
+    return false;
+  }
+
+  /* 最新履歴で必ず一度描画し直す。 */
+  if (type === "night") {
+    checkNightBowelStatus(
+      targetDateText
+    );
+  } else {
+    checkTodayBowelStatus(
+      targetDateText
+    );
+  }
+
+  const afterPending =
+    getShiftPendingUsersFromDom(
+      type
+    );
+
+  if (
+    !areSameShiftPendingUsers(
+      beforePending,
+      afterPending
+    )
+  ) {
+    alert(
+      "別端末の排便登録などにより、未入力者一覧が更新されました。\n\n" +
+      "最新の一覧を表示しましたので、内容をもう一度確認してから確定してください。"
+    );
+    return false;
+  }
+
+  /* 一覧が同じなら、職員が付けた確認チェックと確認者を戻す。 */
+  restoreCheckedValuesForSyncProtection(
+    selector,
+    beforeChecked
+  );
+
+  restoreSelectValueForSyncProtection(
+    confirmerId,
+    beforeConfirmer
+  );
+
+  return true;
 }
 
 
@@ -33266,6 +33573,16 @@ async function confirmNoBowelUsers(
     alert(
       "日中帯の確認は15:00から確定できます。"
     );
+    return;
+  }
+
+  const historiesReady =
+    await revalidateShiftHistoriesBeforeConfirm(
+      "day",
+      targetDateText
+    );
+
+  if (!historiesReady) {
     return;
   }
 
@@ -34817,6 +35134,16 @@ async function confirmNightShift(
     alert(
       "夜勤帯の確認は5:00から確定できます。"
     );
+    return;
+  }
+
+  const historiesReady =
+    await revalidateShiftHistoriesBeforeConfirm(
+      "night",
+      targetDateText
+    );
+
+  if (!historiesReady) {
     return;
   }
 
@@ -36397,7 +36724,7 @@ async function requestInitialAuxDataFromServer() {
 */
 
 /*
-  Ver.0.9.49
+  Ver.0.9.50
   起動時manifest差分同期。
   Current Snapshot本体は既存localStorageを利用し、
   manifestだけを別メタデータとして保存する。
@@ -36861,7 +37188,7 @@ async function runManifestAwareInitialSync() {
 
 
 /*
-  Ver.0.9.49
+  Ver.0.9.50
   GAS 0.8.60の同期manifest取得。
   起動時に端末キャッシュとのrevision比較へ使用する。
 */
