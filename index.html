@@ -8787,6 +8787,118 @@ body {
 
 
 /* ============================================================
+   Ver.0.9.51 排便カウント差異確認
+============================================================ */
+.ui0951-count-review-wrap{
+  margin:0 0 16px;
+}
+.ui0951-count-review-card{
+  border:2px solid #d98c16;
+  background:#fff9ed;
+  border-radius:14px;
+  padding:14px;
+  box-shadow:0 2px 8px rgba(0,0,0,.05);
+  margin-bottom:10px;
+}
+.ui0951-count-review-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+}
+.ui0951-count-review-title{
+  font-weight:800;
+  color:#7a4300;
+  font-size:16px;
+}
+.ui0951-count-review-badge{
+  flex:0 0 auto;
+  background:#d97706;
+  color:#fff;
+  border-radius:999px;
+  padding:4px 9px;
+  font-size:12px;
+  font-weight:700;
+}
+.ui0951-count-review-user{
+  font-size:18px;
+  font-weight:800;
+  margin:4px 0 8px;
+}
+.ui0951-count-review-reason{
+  line-height:1.55;
+  color:#5f4525;
+  margin-bottom:10px;
+}
+.ui0951-count-review-compare{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:12px;
+}
+.ui0951-count-review-side{
+  background:#fff;
+  border:1px solid #ead7b4;
+  border-radius:10px;
+  padding:9px 10px;
+}
+.ui0951-count-review-side span{
+  display:block;
+  font-size:12px;
+  color:#725d45;
+  margin-bottom:3px;
+}
+.ui0951-count-review-side strong{
+  display:block;
+  font-size:14px;
+}
+.ui0951-count-review-buttons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.ui0951-count-review-buttons button{
+  min-height:46px;
+  border-radius:10px;
+  border:1px solid #c9c9c9;
+  background:#fff;
+  font-weight:700;
+  cursor:pointer;
+}
+.ui0951-count-review-buttons .app{
+  border-color:#356aa0;
+  color:#24507b;
+}
+.ui0951-count-review-buttons .field{
+  border-color:#b45309;
+  background:#fff3df;
+  color:#7c3905;
+}
+.ui0951-count-review-buttons .history{
+  grid-column:1 / -1;
+  border-color:#777;
+}
+.ui0951-count-review-loading{
+  border:1px dashed #d4a45d;
+  background:#fffaf1;
+  color:#76532a;
+  border-radius:12px;
+  padding:10px 12px;
+  margin-bottom:12px;
+  font-size:13px;
+}
+@media(max-width:560px){
+  .ui0951-count-review-compare,
+  .ui0951-count-review-buttons{
+    grid-template-columns:1fr;
+  }
+  .ui0951-count-review-buttons .history{
+    grid-column:auto;
+  }
+}
+
+/* ============================================================
    Ver.0.9.44 対応解除の見える化
    排便成立で「現在」リストから外れた利用者を、確認するまで緑カードで残す。
 ============================================================ */
@@ -8891,6 +9003,259 @@ body {
   }
 }
 
+
+/* ============================================================
+   Ver.0.9.52 障害対策（BCP）閲覧・A3印刷
+   ============================================================ */
+.bcp-page-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+.bcp-back-button {
+  border:1px solid #d7dce3;
+  background:#fff;
+  border-radius:10px;
+  padding:9px 12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.bcp-status-card,
+.bcp-panel {
+  background:#fff;
+  border:1px solid #dfe4ea;
+  border-radius:16px;
+  padding:16px;
+  margin-bottom:14px;
+  box-shadow:0 4px 14px rgba(0,0,0,.04);
+}
+.bcp-status-top {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+  justify-content:space-between;
+}
+.bcp-status-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+  background:#eef6ff;
+  color:#0b5cab;
+}
+.bcp-status-badge.warning {
+  background:#fff4db;
+  color:#8a5a00;
+}
+.bcp-status-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px 12px;
+  margin-top:12px;
+}
+.bcp-status-grid div {
+  background:#f7f8fa;
+  border-radius:10px;
+  padding:9px 10px;
+}
+.bcp-status-grid span {
+  display:block;
+  color:#68707b;
+  font-size:11px;
+  margin-bottom:2px;
+}
+.bcp-status-grid strong {
+  font-size:13px;
+  word-break:break-word;
+}
+.bcp-warning-note {
+  margin-top:10px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:#fff8e8;
+  color:#6f5200;
+  font-size:12px;
+  line-height:1.6;
+}
+.bcp-control-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+.bcp-control-grid label {
+  display:block;
+  font-size:12px;
+  font-weight:800;
+  color:#505966;
+}
+.bcp-control-grid select {
+  width:100%;
+  margin-top:6px;
+}
+.bcp-action-row {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:12px;
+}
+.bcp-action-row button {
+  flex:1 1 160px;
+  border:0;
+  border-radius:10px;
+  padding:11px 12px;
+  font-weight:800;
+  cursor:pointer;
+}
+.bcp-refresh-button { background:#edf3f8; color:#31445b; }
+.bcp-print-button { background:#1769aa; color:#fff; }
+.bcp-print-button.secondary { background:#334155; }
+.bcp-print-button:disabled { opacity:.45; cursor:not-allowed; }
+.bcp-resident-title {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:12px;
+}
+.bcp-resident-name { font-size:20px; font-weight:900; }
+.bcp-resident-unit { color:#667085; font-size:12px; margin-top:2px; }
+.bcp-last-bowel {
+  padding:12px;
+  border-radius:12px;
+  background:#f4f8fc;
+  margin-bottom:14px;
+}
+.bcp-last-bowel span { display:block; font-size:11px; color:#667085; }
+.bcp-last-bowel strong { font-size:18px; }
+.bcp-history-strip {
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:6px;
+  overflow-x:auto;
+  margin-bottom:14px;
+}
+.bcp-day-card {
+  min-width:74px;
+  border:1px solid #dfe4ea;
+  border-radius:10px;
+  padding:8px 6px;
+  text-align:center;
+  background:#fff;
+}
+.bcp-day-card.today { border-color:#1769aa; background:#f0f7ff; }
+.bcp-day-date { font-size:11px; font-weight:800; margin-bottom:6px; }
+.bcp-day-events { min-height:36px; font-size:12px; line-height:1.45; }
+.bcp-day-empty { color:#9aa3ad; }
+.bcp-rule-list { display:grid; gap:7px; }
+.bcp-rule-row {
+  display:grid;
+  grid-template-columns:68px 1fr;
+  gap:8px;
+  align-items:start;
+  padding:9px 10px;
+  background:#f8fafc;
+  border-radius:10px;
+}
+.bcp-rule-day { font-weight:900; color:#1f4b73; }
+.bcp-rule-content { font-size:13px; line-height:1.5; }
+.bcp-empty {
+  padding:24px 12px;
+  text-align:center;
+  color:#68707b;
+  background:#f8fafc;
+  border-radius:12px;
+}
+
+#bcpPrintRoot { display:none; }
+
+@media (max-width:640px) {
+  .bcp-status-grid,
+  .bcp-control-grid { grid-template-columns:1fr; }
+  .bcp-history-strip { grid-template-columns:repeat(7,86px); }
+}
+
+@media print {
+  @page { size:A3 landscape; margin:7mm; }
+  body.bcp-printing { background:#fff !important; }
+  body.bcp-printing > * { display:none !important; }
+  body.bcp-printing > #bcpPrintRoot { display:block !important; }
+  #bcpPrintRoot {
+    color:#000;
+    font-family:"Yu Gothic","Meiryo",sans-serif;
+    font-size:9pt;
+  }
+  .bcp-print-sheet {
+    width:100%;
+    box-sizing:border-box;
+    break-after:page;
+    page-break-after:always;
+  }
+  .bcp-print-sheet:last-child {
+    break-after:auto;
+    page-break-after:auto;
+  }
+  .bcp-print-header {
+    display:grid;
+    grid-template-columns:1.4fr 1fr 1fr;
+    border:2px solid #000;
+    border-bottom:0;
+  }
+  .bcp-print-header > div { padding:5px 7px; border-right:1px solid #000; }
+  .bcp-print-header > div:last-child { border-right:0; }
+  .bcp-print-title { font-size:15pt; font-weight:900; }
+  .bcp-print-name { font-size:13pt; font-weight:900; }
+  .bcp-print-meta { font-size:8pt; line-height:1.4; }
+  .bcp-print-legend {
+    border:2px solid #000;
+    border-bottom:0;
+    padding:4px 7px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    font-size:8pt;
+  }
+  .bcp-print-grid {
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    border:2px solid #000;
+  }
+  .bcp-print-grid th,
+  .bcp-print-grid td {
+    border:1px solid #000;
+    text-align:center;
+    vertical-align:middle;
+    padding:1px 2px;
+  }
+  .bcp-print-grid th { background:#eef1f4; font-weight:900; }
+  .bcp-print-grid .time-col { width:13mm; font-weight:900; background:#f4f4f4; }
+  .bcp-print-grid .hour-row td { height:6.1mm; }
+  .bcp-print-grid .source-day { background:#fafafa; }
+  .bcp-print-grid .today-day { background:#eef7ff; }
+  .bcp-print-grid .future-day { background:#fff; }
+  .bcp-print-cell-events { font-size:8pt; line-height:1.1; font-weight:800; white-space:normal; }
+  .bcp-print-bottom-row td { height:8mm; font-size:8pt; }
+  .bcp-print-rules {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0;
+    border:2px solid #000;
+    border-top:0;
+  }
+  .bcp-print-rules > div { padding:5px 7px; border-right:1px solid #000; }
+  .bcp-print-rules > div:last-child { border-right:0; }
+  .bcp-print-rule-title { font-weight:900; margin-bottom:3px; }
+  .bcp-print-rule-lines { font-size:8.5pt; line-height:1.45; }
+  .bcp-print-note { font-size:7.5pt; line-height:1.45; }
+  .bcp-corner-mark { font-size:12pt; font-weight:900; letter-spacing:1px; }
+}
+
 </style>
 </head>
 
@@ -8933,7 +9298,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.46</div>
+      <div class="ui09-brand-version">Ver.0.9.52</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -9847,6 +10212,53 @@ body {
   </section>
 
 
+
+  <!-- =========================
+       障害対策 Ver.0.9.52
+  ========================== -->
+  <section
+    id="bcpPage"
+    class="app-page ui09-page"
+  >
+    <div class="bcp-page-head">
+      <div>
+        <div class="ui09-kicker">端末保存データ</div>
+        <h2>障害対策</h2>
+      </div>
+      <button type="button" class="bcp-back-button" onclick="openPage('otherPage')">← その他へ</button>
+    </div>
+
+    <section class="bcp-status-card">
+      <div class="bcp-status-top">
+        <strong>BCPバックアップ</strong>
+        <span id="bcpStatusBadge" class="bcp-status-badge warning">確認中</span>
+      </div>
+      <div id="bcpStatusContent" class="bcp-empty">端末保存データを確認しています...</div>
+    </section>
+
+    <section id="bcpControlsPanel" class="bcp-panel" style="display:none;">
+      <div class="bcp-control-grid">
+        <label id="bcpUnitControlWrap">
+          表示ユニット
+          <select id="bcpUnitSelect" onchange="onBcpUnitChange()"></select>
+        </label>
+        <label>
+          利用者
+          <select id="bcpResidentSelect" onchange="onBcpResidentChange()"></select>
+        </label>
+      </div>
+      <div class="bcp-action-row">
+        <button type="button" class="bcp-refresh-button" onclick="refreshBcpBackupFromPage()">最新バックアップを確認</button>
+        <button type="button" class="bcp-print-button" onclick="printCurrentBcpResident()">この利用者をA3印刷</button>
+        <button id="bcpPrintUnitButton" type="button" class="bcp-print-button secondary" onclick="printCurrentBcpUnit()">表示ユニット全員をA3印刷</button>
+      </div>
+    </section>
+
+    <section id="bcpResidentPanel" class="bcp-panel" style="display:none;">
+      <div id="bcpResidentContent"></div>
+    </section>
+  </section>
+
   <!-- =========================
        その他 Ver.0.9.9
   ========================== -->
@@ -9949,6 +10361,26 @@ body {
       </button>
 
 
+
+      <button
+        class="other-menu-row"
+        onclick="openBcpPage()"
+      >
+        <div class="other-menu-left">
+          <div class="other-menu-icon ui099-system-icon">▣</div>
+          <div>
+            <div class="other-menu-title">
+              障害対策
+            </div>
+            <div class="other-menu-sub">
+              端末保存データの確認・A3印刷
+            </div>
+          </div>
+        </div>
+        <div class="other-menu-chevron">›</div>
+      </button>
+
+
       <button
         id="otherInfoToggleButton"
         class="other-menu-row"
@@ -10032,7 +10464,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.45
+            Ver.0.9.52
           </span>
         </div>
 
@@ -10041,7 +10473,7 @@ body {
             GAS
           </span>
           <span class="other-info-value">
-            Ver.0.8.56
+            Ver.0.8.62
           </span>
         </div>
 
@@ -10617,6 +11049,8 @@ body {
 
 </div>
 
+<div id="bcpPrintRoot" aria-hidden="true"></div>
+
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzq9qSuPmvSzAbv_uLFbIrXmVJ3DNHkpdxJKYIExyPgti-N3gU1iT7W1eWa2KRCJurE/exec";
 
@@ -10669,6 +11103,7 @@ const CLIENT_WRITE_ACTIONS = new Set([
   "registerRetroBowel",
   "setBowelUncertain",
   "resolveBowelRecoveryState",
+  "resolveBowelCountDiscrepancy",
   "setResidentHospitalized",
   "correctResidentHospitalizedAt",
   "returnResidentFromHospital",
@@ -10770,6 +11205,16 @@ let latestHomeActionMetrics = {
   remainingNurse: 0
 };
 
+
+// Ver.0.9.51 排便成立後24時間ルールと現場カウントの差異確認。
+// 30秒同期には載せず、対応画面を開いた時だけ必要な利用者を問い合わせる。
+let bowelCountDiscrepancies = [];
+let bowelCountDiscrepancyLoading = false;
+let bowelCountDiscrepancyPromise = null;
+let bowelCountDiscrepancyLastLoadedAt = 0;
+let bowelCountDiscrepancyUserSignature = "";
+const BOWEL_COUNT_DISCREPANCY_REFRESH_MS = 60 * 1000;
+
 let checks = {};
 
 let checkDate = "";
@@ -10798,7 +11243,7 @@ let syncConsecutiveFailureCount = 0;
 let lastFullSyncCompletedAt = 0;
 
 /*
-  Ver.0.9.50 起動時manifest差分同期。
+  Ver.0.9.51 起動時manifest差分同期。
   端末キャッシュは正本ではなく、manifestが一致した場合だけ
   「サーバーで変更なし」と確認して初期データ取得を省略する。
 */
@@ -10839,6 +11284,12 @@ let bcpBackupInFlight = null;
 let bcpBackupLastRequestAt = 0;
 let bcpBackupFirstSuccessNotified = false;
 let bcpBackupStorageWarningShown = false;
+
+// Ver.0.9.52 BCP閲覧・印刷専用状態。正本や通常同期とは分離する。
+let bcpViewSnapshot = null;
+let bcpViewSelectedUnit = "";
+let bcpViewSelectedUser = "";
+let bcpViewLoading = false;
 
 function getBcpBackupRecordId(scopeKey, slot = "current") {
   return [
@@ -14828,6 +15279,224 @@ function renderCurrentActionList(options = {}) {
 }
 
 
+
+function getBowelCountDiscrepancyTargetUsers() {
+  const pending = getActionPendingData();
+  return Array.from(
+    new Set(
+      (pending.regular || [])
+        .map(item => String(item.user || "").trim())
+        .filter(Boolean)
+    )
+  ).sort((a,b)=>a.localeCompare(b,"ja"));
+}
+
+function getVisibleBowelCountDiscrepancies() {
+  const targets = new Set(getBowelCountDiscrepancyTargetUsers());
+  return (Array.isArray(bowelCountDiscrepancies) ? bowelCountDiscrepancies : [])
+    .filter(item => targets.has(String(item.user || "")));
+}
+
+async function refreshBowelCountDiscrepancies(options = {}) {
+  const force = options.force === true;
+  const users = getBowelCountDiscrepancyTargetUsers();
+  const signature = users.join("\u0001");
+
+  if (!users.length) {
+    bowelCountDiscrepancies = [];
+    bowelCountDiscrepancyUserSignature = "";
+    bowelCountDiscrepancyLastLoadedAt = Date.now();
+    if (document.getElementById("medicinePage")?.classList.contains("active")) {
+      renderCurrentActionList({track:false});
+    }
+    return [];
+  }
+
+  if (
+    !force &&
+    signature === bowelCountDiscrepancyUserSignature &&
+    Date.now() - bowelCountDiscrepancyLastLoadedAt < BOWEL_COUNT_DISCREPANCY_REFRESH_MS
+  ) {
+    return bowelCountDiscrepancies;
+  }
+
+  if (bowelCountDiscrepancyPromise) return bowelCountDiscrepancyPromise;
+
+  bowelCountDiscrepancyLoading = true;
+  if (document.getElementById("medicinePage")?.classList.contains("active")) {
+    renderCurrentActionList({track:false});
+  }
+
+  bowelCountDiscrepancyPromise = (async () => {
+    let lastError = null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const result = await postJsonApiOnce({
+          action: "getBowelCountDiscrepancies",
+          users: users
+        }, 20000);
+        if (!result || result.ok !== true) {
+          throw new Error(result?.message || "排便カウント差異を取得できませんでした");
+        }
+        bowelCountDiscrepancies = Array.isArray(result.items) ? result.items : [];
+        bowelCountDiscrepancyUserSignature = signature;
+        bowelCountDiscrepancyLastLoadedAt = Date.now();
+        return bowelCountDiscrepancies;
+      } catch (error) {
+        lastError = error;
+        if (attempt >= 2 || !isTransientApiError(error)) throw error;
+        await wait(700);
+      }
+    }
+    throw lastError || new Error("排便カウント差異を取得できませんでした");
+  })()
+    .catch(error => {
+      console.warn("排便カウント差異取得エラー", error);
+      showToast("⚠ 排便カウント差異の確認に失敗しました。通常の対応判定は変更していません", "warning", 4500);
+      return bowelCountDiscrepancies;
+    })
+    .finally(() => {
+      bowelCountDiscrepancyLoading = false;
+      bowelCountDiscrepancyPromise = null;
+      if (document.getElementById("medicinePage")?.classList.contains("active")) {
+        renderCurrentActionList({track:false});
+      }
+    });
+
+  return bowelCountDiscrepancyPromise;
+}
+
+function getBowelCountDiscrepancyHtml() {
+  const items = getVisibleBowelCountDiscrepancies();
+  const loadingHtml = bowelCountDiscrepancyLoading
+    ? `<div class="ui0951-count-review-loading">排便カウント差異を最新確認しています…</div>`
+    : "";
+
+  if (!items.length) return loadingHtml;
+
+  return loadingHtml + `
+    <div class="ui0951-count-review-wrap">
+      ${items.map(item => {
+        const safeUser = encodeURIComponent(String(item.user || ""));
+        const safeRecord = encodeURIComponent(String(item.candidateRecordId || ""));
+        const safeFingerprint = encodeURIComponent(String(item.fingerprint || ""));
+        return `
+          <section class="ui0951-count-review-card">
+            <div class="ui0951-count-review-head">
+              <div class="ui0951-count-review-title">⚠ 排便カウントの確認が必要です</div>
+              <span class="ui0951-count-review-badge">最優先確認</span>
+            </div>
+            <div class="ui0951-count-review-user">${escapeHtml(formatResidentName(item.user || ""))}</div>
+            <div class="ui0951-count-review-reason">
+              排便成立後24時間以内の排便を正式累積に含めないルールにより、現場の手計算とアプリ判定に差があります。<br>
+              現場カウントでは <strong>${escapeHtml(String(item.candidateDateTime || "-"))}</strong> の記録時点で排便成立相当です。
+            </div>
+            <div class="ui0951-count-review-compare">
+              <div class="ui0951-count-review-side">
+                <span>アプリ判定</span>
+                <strong>最終排便 ${escapeHtml(String(item.appLastDate || "未設定"))} ／ ${escapeHtml(getBowelPointText(Number(item.appPoint || 0)))}</strong>
+              </div>
+              <div class="ui0951-count-review-side">
+                <span>現場カウント</span>
+                <strong>最終排便 ${escapeHtml(String(item.fieldLastDate || "未設定"))} ／ ${escapeHtml(getBowelPointText(Number(item.fieldPoint || 0)))}</strong>
+              </div>
+            </div>
+            <div class="ui0951-count-review-buttons">
+              <button class="app" type="button" onclick="openBowelCountDecisionConfirm(decodeURIComponent('${safeUser}'),decodeURIComponent('${safeRecord}'),decodeURIComponent('${safeFingerprint}'),'app')">アプリ判定を採用</button>
+              <button class="field" type="button" onclick="openBowelCountDecisionConfirm(decodeURIComponent('${safeUser}'),decodeURIComponent('${safeRecord}'),decodeURIComponent('${safeFingerprint}'),'field')">現場カウントを採用</button>
+              <button class="history" type="button" onclick="openBowelCountDiscrepancyHistory(decodeURIComponent('${safeUser}'))">個別履歴を確認</button>
+            </div>
+          </section>`;
+      }).join("")}
+    </div>`;
+}
+
+function openBowelCountDecisionConfirm(user, candidateRecordId, fingerprint, decision) {
+  const isField = decision === "field";
+  const safeUser = encodeURIComponent(String(user || ""));
+  const safeRecord = encodeURIComponent(String(candidateRecordId || ""));
+  const safeFingerprint = encodeURIComponent(String(fingerprint || ""));
+  openCommonModal({
+    title: isField ? "現場カウントを採用" : "アプリ判定を採用",
+    bodyHtml: `
+      <div class="rule-form-note">
+        ${isField
+          ? "24時間ルールで除外された排便も今回の正式判定に含め、現場カウントで成立した時点を正式な排便成立として再計算します。対応リストや未排便日数が変わる可能性があります。"
+          : "現在の24時間ルールによるアプリ判定を今回の正式判断として記録します。現在のポイント・最終排便日は変更しません。"}
+      </div>
+      <div style="margin-top:10px;font-weight:700;">${escapeHtml(formatResidentName(user))}</div>
+    `,
+    buttonsHtml: `
+      <button class="modal-action-secondary" onclick="closeCommonModal()">戻る</button>
+      <button class="${isField ? 'modal-action-primary' : 'modal-action-primary'}" onclick="submitBowelCountDecision(decodeURIComponent('${safeUser}'),decodeURIComponent('${safeRecord}'),decodeURIComponent('${safeFingerprint}'),'${isField ? 'field' : 'app'}')">この判定を採用する</button>
+    `
+  });
+}
+
+async function submitBowelCountDecision(user, candidateRecordId, fingerprint, decision) {
+  if (!canStartServerWrite()) return;
+  closeCommonModal();
+  beginWriteActivity();
+  showToast("排便判定を保存中…", "saving", 0);
+  try {
+    const result = await postJsonApiOnce({
+      action: "resolveBowelCountDiscrepancy",
+      user: user,
+      candidateRecordId: candidateRecordId,
+      fingerprint: fingerprint,
+      decision: decision
+    }, 20000);
+    if (!result || result.ok !== true) {
+      throw new Error(result?.message || "排便判定を保存できませんでした");
+    }
+    if (result.stale === true) {
+      showToast("⚠ 状態が更新されていたため保存していません。最新判定を再確認します", "warning", 4500);
+    } else {
+      if (Number.isFinite(Number(result.point))) points[user] = Number(result.point || 0);
+      if (result.lastDate !== undefined) lastDates[user] = String(result.lastDate || "").slice(0,10);
+      if (Array.isArray(result.recoveryStates)) bowelRecoveryStates = result.recoveryStates;
+      invalidateHistoryRangeCaches();
+      if (Array.isArray(result.medicationDifferences) && result.medicationDifferences.length) {
+        showToast("⚠ 現場カウントを反映しました。過去の与薬日数に差異があるため要確認として表示します", "warning", 5000);
+      } else {
+        showToast(decision === "field" ? "✓ 現場カウントを正式判定として反映しました" : "✓ アプリ判定を正式判断として記録しました", "success", 3500);
+      }
+    }
+    bowelCountDiscrepancyLastLoadedAt = 0;
+    await refreshBowelCountDiscrepancies({force:true});
+    renderStatusAreas();
+    renderActionPage();
+    saveData();
+  } catch (error) {
+    console.error("排便カウント判定保存エラー", error);
+    showToast("⚠ 排便判定の保存に失敗しました。状態は変更していません", "error", 4500);
+  } finally {
+    endWriteActivity();
+  }
+}
+
+function openBowelCountDiscrepancyHistory(user) {
+  openPage("historyPage");
+  historyRouteMode = "matrix";
+  historyMatrixDays = 7;
+  ensureHistoryRouteControls();
+  const unitSelect = document.getElementById("historyMatrixUnitFilter");
+  if (unitSelect && isHistoryAllUnitAccount()) {
+    unitSelect.value = String(userUnits[user] || "");
+  }
+  updateHistoryMatrixUserOptions();
+  const userSelect = document.getElementById("historyMatrixUser");
+  if (userSelect) userSelect.value = String(user || "");
+  const endInput = document.getElementById("historyMatrixEndDate");
+  if (endInput) endInput.value = getLocalDateInputValue(new Date());
+  renderHistoryHub();
+  requestAnimationFrame(() => {
+    const select = document.getElementById("historyMatrixUser");
+    if (select) select.value = String(user || "");
+    setHistoryMatrixDays(7);
+  });
+}
+
 function getActionPendingData() {
 
   const now = new Date();
@@ -16042,8 +16711,10 @@ function getTodayTarget() {
   );
 
 
+  const discrepancyHtml = getBowelCountDiscrepancyHtml();
+
   if (entries.length === 0) {
-    return `
+    return discrepancyHtml + `
       <div class="ui096-action-empty">
         <div class="ui096-empty-icon">✓</div>
         <strong>現在、対応が必要なものはありません</strong>
@@ -16052,7 +16723,7 @@ function getTodayTarget() {
     `;
   }
 
-  return renderActionTimingGroups(entries);
+  return discrepancyHtml + renderActionTimingGroups(entries);
 }
 
 function updateHomeDashboardMeta() {
@@ -17400,6 +18071,8 @@ function invalidateHistoryRangeCaches() {
   historyRangeLoadingPromises.clear();
   historyListOldestLoadedDate = "";
   historyListHasEarlier = true;
+  // Ver.0.9.51: 排便履歴が変わったら、次に対応画面を開く時は差異判定も再確認する。
+  bowelCountDiscrepancyLastLoadedAt = 0;
 }
 
 function isHistoryDateOperationallyLoaded(dateText) {
@@ -40212,6 +40885,478 @@ function renderResidentDetail() {
 }
 
 
+
+/* ============================================================
+   Ver.0.9.52 障害対策 閲覧・A3印刷
+   ・IndexedDBのcurrent snapshotだけを参照
+   ・ユニットアカウントは自ユニット固定
+   ・看護師/管理者は全ユニット閲覧可
+   ・通常同期/30秒同期には追加通信しない
+   ============================================================ */
+
+function isBcpAllUnitAccount() {
+  return currentRole === "nurse" || currentRole === "admin";
+}
+
+function getBcpSnapshotData() {
+  return bcpViewSnapshot && bcpViewSnapshot.complete === true
+    ? (bcpViewSnapshot.data || null)
+    : null;
+}
+
+function getBcpUsers() {
+  const data = getBcpSnapshotData();
+  return data && Array.isArray(data.users) ? data.users : [];
+}
+
+function getBcpAvailableUnits() {
+  return Array.from(new Set(
+    getBcpUsers()
+      .map(item => String(item && item.unit || "").trim())
+      .filter(Boolean)
+  )).sort((a,b)=>String(getUnitName(a)).localeCompare(String(getUnitName(b)),"ja"));
+}
+
+function getBcpEffectiveRules(data, userItem) {
+  const name = String(userItem && userItem.name || "").trim();
+  const lastDate = String(userItem && userItem.lastDate || "").trim().slice(0,10);
+  const snapshot = lastDate
+    ? data?.ruleCycleSnapshots?.[name]?.[lastDate]
+    : null;
+  if (snapshot && snapshot.rules && typeof snapshot.rules === "object") {
+    return snapshot.rules;
+  }
+  return data?.rulesV2?.[name] || {};
+}
+
+function getBcpRuleLines(data, userItem) {
+  const ruleMap = getBcpEffectiveRules(data, userItem);
+  const dayKeys = Object.keys(ruleMap || {})
+    .filter(key => /^\d+$/.test(String(key)))
+    .sort((a,b)=>Number(a)-Number(b));
+  const lines = [];
+  dayKeys.forEach(day => {
+    const entries = Array.isArray(ruleMap[day]) ? ruleMap[day] : [];
+    entries.forEach(raw => {
+      const item = typeof normalizeRuleItem === "function" ? normalizeRuleItem(raw) : raw;
+      const content = String(item && item.content || "").trim();
+      const timing = String(item && item.timing || "").trim();
+      if (!content) return;
+      const timingLabel = (typeof RULE_TIMING_LABELS !== "undefined" && RULE_TIMING_LABELS[timing])
+        ? RULE_TIMING_LABELS[timing]
+        : timing;
+      lines.push({day:Number(day), timing:timingLabel, content:content});
+    });
+  });
+  return lines;
+}
+
+function parseBcpHistoryDateTime(value) {
+  const text = String(value || "").trim().replace("T"," ");
+  const match = text.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{1,2}):(\d{2})/);
+  if (!match) return null;
+  return {
+    date: match[1],
+    hour: Math.max(0, Math.min(23, Number(match[2]))),
+    minute: String(match[3]).padStart(2,"0")
+  };
+}
+
+function getBcpBowelSymbol(type) {
+  const value = String(type || "").trim();
+  if (value === "少") return "△";
+  if (value === "少1") return "①";
+  if (value === "少2") return "②";
+  if (value === "普通") return "○";
+  if (value === "多量" || value === "多") return "◎";
+  return value;
+}
+
+function getBcpActiveHistoriesForUser(data, user) {
+  return (Array.isArray(data && data.histories) ? data.histories : [])
+    .filter(item =>
+      String(item && item.user || "").trim() === String(user || "").trim() &&
+      String(item && item.status || "active").trim() !== "cancelled" &&
+      String(item && item.type || "").trim() !== "なし"
+    );
+}
+
+function getBcpDayEvents(data, user, date) {
+  return getBcpActiveHistoriesForUser(data, user)
+    .map(item => ({item:item, parsed:parseBcpHistoryDateTime(item && item.date)}))
+    .filter(x => x.parsed && x.parsed.date === date)
+    .sort((a,b) => String(a.item.date || "").localeCompare(String(b.item.date || "")))
+    .map(x => ({
+      time: String(x.parsed.hour).padStart(2,"0") + ":" + x.parsed.minute,
+      hour: x.parsed.hour,
+      symbol: getBcpBowelSymbol(x.item.type),
+      type: String(x.item.type || "")
+    }));
+}
+
+function addDaysToIsoDate(dateText, days) {
+  const m = String(dateText || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return "";
+  const d = new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+  d.setDate(d.getDate() + Number(days || 0));
+  return [d.getFullYear(), String(d.getMonth()+1).padStart(2,"0"), String(d.getDate()).padStart(2,"0")].join("-");
+}
+
+function formatBcpShortDate(dateText) {
+  const m = String(dateText || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${Number(m[2])}/${Number(m[3])}` : String(dateText || "-");
+}
+
+function getBcpFilteredUsers() {
+  const users = getBcpUsers();
+  if (!isBcpAllUnitAccount()) {
+    return users.filter(item => String(item.unit || "") === String(currentUnit || ""));
+  }
+  if (bcpViewSelectedUnit) {
+    return users.filter(item => String(item.unit || "") === String(bcpViewSelectedUnit));
+  }
+  return users.slice();
+}
+
+async function openBcpPage() {
+  openPage("bcpPage");
+}
+
+async function loadBcpViewSnapshot() {
+  if (bcpViewLoading) return;
+  bcpViewLoading = true;
+  try {
+    bcpViewSnapshot = await readCurrentBcpBackup();
+  } catch (error) {
+    console.warn("BCP閲覧データ読込失敗", error);
+    bcpViewSnapshot = null;
+  } finally {
+    bcpViewLoading = false;
+  }
+}
+
+async function renderBcpPage() {
+  const badge = document.getElementById("bcpStatusBadge");
+  const status = document.getElementById("bcpStatusContent");
+  const controls = document.getElementById("bcpControlsPanel");
+  const residentPanel = document.getElementById("bcpResidentPanel");
+  if (!badge || !status) return;
+
+  badge.textContent = "確認中";
+  badge.classList.add("warning");
+  status.className = "bcp-empty";
+  status.textContent = "端末保存データを確認しています...";
+  if (controls) controls.style.display = "none";
+  if (residentPanel) residentPanel.style.display = "none";
+
+  await loadBcpViewSnapshot();
+  const snapshot = bcpViewSnapshot;
+  const data = getBcpSnapshotData();
+  if (!snapshot || !data || !validateBcpBackupPayload(data)) {
+    badge.textContent = "保存データなし";
+    badge.classList.add("warning");
+    status.innerHTML = `
+      <div class="bcp-empty">
+        このログイン範囲の障害対策バックアップが端末にありません。<br>
+        通信可能な状態で「最新バックアップを確認」を実行してください。
+      </div>
+      <div class="bcp-action-row">
+        <button type="button" class="bcp-refresh-button" onclick="refreshBcpBackupFromPage()">最新バックアップを確認</button>
+      </div>`;
+    return;
+  }
+
+  badge.textContent = "端末保存済み";
+  badge.classList.remove("warning");
+  status.className = "";
+  const scopeText = isBcpAllUnitAccount()
+    ? "全ユニット権限"
+    : getUnitName(currentUnit);
+  status.innerHTML = `
+    <div class="bcp-status-grid">
+      <div><span>端末保存日時</span><strong>${escapeHtml(String(snapshot.savedAtLocal || "-"))}</strong></div>
+      <div><span>最終サーバー確認</span><strong>${escapeHtml(String(snapshot.lastVerifiedAt || snapshot.savedAtLocal || "-"))}</strong></div>
+      <div><span>保存データ期間</span><strong>${escapeHtml(String(data.range?.startDate || "-"))} ～ ${escapeHtml(String(data.range?.endDate || "-"))}</strong></div>
+      <div><span>閲覧範囲</span><strong>${escapeHtml(scopeText)}</strong></div>
+    </div>
+    <div class="bcp-warning-note">⚠ これは端末に最後に保存された障害時参照用データです。通信障害中は、保存日時以降の情報が含まれていない可能性があります。</div>`;
+
+  if (controls) controls.style.display = "block";
+  if (residentPanel) residentPanel.style.display = "block";
+  syncBcpSelectors();
+  renderBcpResidentDetail();
+}
+
+function syncBcpSelectors() {
+  const unitWrap = document.getElementById("bcpUnitControlWrap");
+  const unitSelect = document.getElementById("bcpUnitSelect");
+  const userSelect = document.getElementById("bcpResidentSelect");
+  if (!unitSelect || !userSelect) return;
+
+  const units = getBcpAvailableUnits();
+  if (isBcpAllUnitAccount()) {
+    if (unitWrap) unitWrap.style.display = "block";
+    const valid = bcpViewSelectedUnit === "" || units.includes(String(bcpViewSelectedUnit));
+    if (!valid) bcpViewSelectedUnit = "";
+    unitSelect.innerHTML = `<option value="">全ユニット</option>` + units.map(unit =>
+      `<option value="${escapeHtml(unit)}">${escapeHtml(getUnitName(unit))}</option>`
+    ).join("");
+    unitSelect.value = bcpViewSelectedUnit;
+  } else {
+    bcpViewSelectedUnit = String(currentUnit || "");
+    if (unitWrap) unitWrap.style.display = "none";
+    unitSelect.innerHTML = `<option value="${escapeHtml(bcpViewSelectedUnit)}">${escapeHtml(getUnitName(bcpViewSelectedUnit))}</option>`;
+  }
+
+  const users = getBcpFilteredUsers().sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""),"ja"));
+  if (!users.some(item => String(item.name || "") === String(bcpViewSelectedUser || ""))) {
+    bcpViewSelectedUser = users.length ? String(users[0].name || "") : "";
+  }
+  userSelect.innerHTML = users.length
+    ? users.map(item => `<option value="${escapeHtml(String(item.name || ""))}">${escapeHtml(formatResidentName(item.name || ""))}</option>`).join("")
+    : `<option value="">対象者なし</option>`;
+  userSelect.value = bcpViewSelectedUser;
+
+  const printUnitButton = document.getElementById("bcpPrintUnitButton");
+  if (printUnitButton) {
+    const canPrintUnit = users.length > 0 && (!isBcpAllUnitAccount() || Boolean(bcpViewSelectedUnit));
+    printUnitButton.disabled = !canPrintUnit;
+    printUnitButton.textContent = isBcpAllUnitAccount() && !bcpViewSelectedUnit
+      ? "ユニットを選択して全員印刷"
+      : "表示ユニット全員をA3印刷";
+  }
+}
+
+function onBcpUnitChange() {
+  const select = document.getElementById("bcpUnitSelect");
+  if (!select || !isBcpAllUnitAccount()) return;
+  bcpViewSelectedUnit = String(select.value || "");
+  bcpViewSelectedUser = "";
+  syncBcpSelectors();
+  renderBcpResidentDetail();
+}
+
+function onBcpResidentChange() {
+  const select = document.getElementById("bcpResidentSelect");
+  bcpViewSelectedUser = select ? String(select.value || "") : "";
+  renderBcpResidentDetail();
+}
+
+function renderBcpResidentDetail() {
+  const target = document.getElementById("bcpResidentContent");
+  const data = getBcpSnapshotData();
+  if (!target || !data) return;
+  const userItem = getBcpFilteredUsers().find(item => String(item.name || "") === String(bcpViewSelectedUser || ""));
+  if (!userItem) {
+    target.innerHTML = `<div class="bcp-empty">表示できる利用者がいません。</div>`;
+    return;
+  }
+
+  const startDate = String(data.range?.startDate || "");
+  const endDate = String(data.range?.endDate || "");
+  const dates = [];
+  for (let i=0;i<7;i++) dates.push(addDaysToIsoDate(startDate,i));
+  const rules = getBcpRuleLines(data, userItem);
+  target.innerHTML = `
+    <div class="bcp-resident-title">
+      <div>
+        <div class="bcp-resident-name">${escapeHtml(formatResidentName(userItem.name || ""))}</div>
+        <div class="bcp-resident-unit">${escapeHtml(getUnitName(userItem.unit || ""))}</div>
+      </div>
+    </div>
+    <div class="bcp-last-bowel">
+      <span>最終排便日</span>
+      <strong>${escapeHtml(String(userItem.lastDate || "未設定"))}</strong>
+    </div>
+    <div class="ui09-kicker">直近7日間の排便状況</div>
+    <div class="bcp-history-strip">
+      ${dates.map(date => {
+        const events = getBcpDayEvents(data, userItem.name, date);
+        return `<div class="bcp-day-card ${date===endDate?'today':''}">
+          <div class="bcp-day-date">${escapeHtml(formatBcpShortDate(date))}</div>
+          <div class="bcp-day-events">${events.length
+            ? events.map(e => `${escapeHtml(e.time)} ${escapeHtml(e.symbol)}`).join("<br>")
+            : `<span class="bcp-day-empty">記録なし</span>`}</div>
+        </div>`;
+      }).join("")}
+    </div>
+    <div class="ui09-kicker">緩下剤ルール</div>
+    <div class="bcp-rule-list">
+      ${rules.length ? rules.map(rule => `<div class="bcp-rule-row">
+        <div class="bcp-rule-day">${escapeHtml(String(rule.day))}日目</div>
+        <div class="bcp-rule-content">${escapeHtml(String(rule.timing || ""))}　${escapeHtml(rule.content)}</div>
+      </div>`).join("") : `<div class="bcp-empty">登録済みルールなし</div>`}
+    </div>`;
+}
+
+async function refreshBcpBackupFromPage() {
+  if (bcpViewLoading) return;
+  if (!serverStateReady) {
+    showToast("⚠ 現在サーバー最新状態を確認できていません。端末保存データをそのまま表示します", "warning", 4500);
+    await renderBcpPage();
+    return;
+  }
+  showToast("障害対策バックアップを確認中…", "saving", 0);
+  const ok = await refreshBcpBackup({force:true});
+  if (ok) {
+    bcpViewSnapshot = null;
+    showToast("✓ 障害対策バックアップを確認しました", "success", 3000);
+  } else {
+    showToast("⚠ 最新バックアップを取得できませんでした。端末保存済みデータを表示します", "warning", 4500);
+  }
+  await renderBcpPage();
+}
+
+function getBcpPrintDates(data) {
+  const start = String(data?.range?.startDate || "");
+  const savedDates = [];
+  for (let i=0;i<7;i++) savedDates.push(addDaysToIsoDate(start,i));
+  const lastSaved = savedDates[savedDates.length-1] || String(data?.range?.endDate || "");
+  const future = [];
+  for (let i=1;i<=7;i++) future.push(addDaysToIsoDate(lastSaved,i));
+  return savedDates.concat(future);
+}
+
+function buildBcpPrintSheet(data, userItem) {
+  const allDates = getBcpPrintDates(data);
+  const savedEnd = String(data?.range?.endDate || "");
+  const events = getBcpActiveHistoriesForUser(data, userItem.name)
+    .map(item => ({item:item, parsed:parseBcpHistoryDateTime(item.date)}))
+    .filter(x => x.parsed);
+  const byDateHour = new Map();
+  events.forEach(x => {
+    const key = `${x.parsed.date}|${x.parsed.hour}`;
+    if (!byDateHour.has(key)) byDateHour.set(key, []);
+    byDateHour.get(key).push({
+      minute:x.parsed.minute,
+      symbol:getBcpBowelSymbol(x.item.type)
+    });
+  });
+  const rules = getBcpRuleLines(data, userItem);
+  const ruleLines = rules.length
+    ? rules.map(r => `${r.day}日目 ${r.timing ? r.timing + " " : ""}${r.content}`).join("<br>")
+    : "登録済みルールなし";
+  const sheetId = [
+    "BCP",
+    String(userItem.unit || "U"),
+    String(userItem.name || "").replace(/\s/g,""),
+    String(bcpViewSnapshot?.globalRevision || 0),
+    String(data?.range?.endDate || "").replace(/-/g,"")
+  ].join("-");
+
+  const headDates = allDates.map(date => {
+    const cls = date < savedEnd ? "source-day" : (date === savedEnd ? "today-day" : "future-day");
+    const tag = date <= savedEnd ? "保存" : "手書き";
+    return `<th class="${cls}">${escapeHtml(formatBcpShortDate(date))}<br><small>${tag}</small></th>`;
+  }).join("");
+
+  let rows = "";
+  for (let hour=0;hour<24;hour++) {
+    const cells = allDates.map(date => {
+      const key = `${date}|${hour}`;
+      const list = byDateHour.get(key) || [];
+      const content = list.map(e => `${escapeHtml(e.minute)} ${escapeHtml(e.symbol)}`).join(" / ");
+      const cls = date < savedEnd ? "source-day" : (date === savedEnd ? "today-day" : "future-day");
+      return `<td class="${cls}"><div class="bcp-print-cell-events">${content}</div></td>`;
+    }).join("");
+    rows += `<tr class="hour-row"><td class="time-col">${hour}</td>${cells}</tr>`;
+  }
+
+  const blankCells = allDates.map(()=>"<td></td>").join("");
+  return `
+    <section class="bcp-print-sheet">
+      <div class="bcp-print-header">
+        <div>
+          <div class="bcp-print-title">緩下剤管理表（障害時）</div>
+          <div class="bcp-print-name">${escapeHtml(formatResidentName(userItem.name || ""))}</div>
+          <div>${escapeHtml(getUnitName(userItem.unit || ""))}</div>
+        </div>
+        <div>
+          <strong>最終排便日</strong><br>
+          <span style="font-size:13pt;font-weight:900;">${escapeHtml(String(userItem.lastDate || "未設定"))}</span><br>
+          <span class="bcp-print-meta">保存期間：${escapeHtml(String(data?.range?.startDate || "-"))} ～ ${escapeHtml(String(data?.range?.endDate || "-"))}</span>
+        </div>
+        <div class="bcp-print-meta">
+          <span class="bcp-corner-mark">■　　　　　　　　　■</span><br>
+          帳票ID：${escapeHtml(sheetId)}<br>
+          端末保存：${escapeHtml(String(bcpViewSnapshot?.savedAtLocal || "-"))}<br>
+          最終確認：${escapeHtml(String(bcpViewSnapshot?.lastVerifiedAt || bcpViewSnapshot?.savedAtLocal || "-"))}
+        </div>
+      </div>
+      <div class="bcp-print-legend">
+        <strong>記入記号：</strong>
+        <span>△＝少</span><span>①＝少1</span><span>②＝少2</span><span>○＝普通</span><span>◎＝多量（旧記録）</span>
+        <span>※「保存」は端末保存済み、「手書き」は障害中の継続記入欄</span>
+      </div>
+      <table class="bcp-print-grid">
+        <thead><tr><th class="time-col">時刻</th>${headDates}</tr></thead>
+        <tbody>
+          ${rows}
+          <tr class="bcp-print-bottom-row"><td class="time-col">計</td>${blankCells}</tr>
+          <tr class="bcp-print-bottom-row"><td class="time-col">何日目</td>${blankCells}</tr>
+          <tr class="bcp-print-bottom-row"><td class="time-col">下剤</td>${blankCells}</tr>
+        </tbody>
+      </table>
+      <div class="bcp-print-rules">
+        <div>
+          <div class="bcp-print-rule-title">緩下剤ルール</div>
+          <div class="bcp-print-rule-lines">${ruleLines}</div>
+        </div>
+        <div class="bcp-print-note">
+          <div class="bcp-print-rule-title">障害時の運用</div>
+          端末保存済みの記録を確認し、この用紙へ継続して記入してください。<br>
+          復旧後のアプリ反映が完了するまで、この用紙を原本として保管してください。<br><br>
+          <span class="bcp-corner-mark">■　　　　　　　　　　　　　　　　　　　　　　　　　　　■</span>
+        </div>
+      </div>
+    </section>`;
+}
+
+function printBcpUsers(userItems) {
+  const data = getBcpSnapshotData();
+  const root = document.getElementById("bcpPrintRoot");
+  if (!data || !root || !Array.isArray(userItems) || !userItems.length) {
+    showToast("印刷できる障害対策データがありません", "warning", 3500);
+    return;
+  }
+  root.innerHTML = userItems.map(item => buildBcpPrintSheet(data,item)).join("");
+  root.setAttribute("aria-hidden","false");
+  document.body.classList.add("bcp-printing");
+
+  const cleanup = () => {
+    document.body.classList.remove("bcp-printing");
+    root.setAttribute("aria-hidden","true");
+    window.removeEventListener("afterprint", cleanup);
+  };
+  window.addEventListener("afterprint", cleanup);
+  window.print();
+  setTimeout(() => {
+    if (document.body.classList.contains("bcp-printing")) cleanup();
+  }, 3000);
+}
+
+function printCurrentBcpResident() {
+  const item = getBcpFilteredUsers().find(x => String(x.name || "") === String(bcpViewSelectedUser || ""));
+  if (!item) {
+    showToast("利用者を選択してください", "warning", 3000);
+    return;
+  }
+  printBcpUsers([item]);
+}
+
+function printCurrentBcpUnit() {
+  const users = getBcpFilteredUsers();
+  if (isBcpAllUnitAccount() && !bcpViewSelectedUnit) {
+    showToast("全員印刷はユニットを1つ選択してから実行してください", "warning", 3500);
+    return;
+  }
+  if (!users.length) {
+    showToast("印刷対象の利用者がいません", "warning", 3000);
+    return;
+  }
+  printBcpUsers(users);
+}
+
 function getTodayText() {
 
   const today = new Date();
@@ -40295,6 +41440,11 @@ function openPage(pageId) {
     showActionPageMode(
       actionPageMode
     );
+
+    // Ver.0.9.51: 30秒同期とは分離し、対応画面を開いた時だけ差異確認。
+    refreshBowelCountDiscrepancies().catch(error => {
+      console.warn("排便カウント差異確認エラー", error);
+    });
   }
 
   if (pageId === "historyPage") {
@@ -40327,6 +41477,15 @@ function openPage(pageId) {
   if (pageId === "rulePage") {
     updateRuleDisplays();
     updateRuleEvaluationAlerts();
+  }
+
+
+  // Ver.0.9.52 障害対策画面は端末IndexedDBだけを読み直す。
+  if (pageId === "bcpPage") {
+    renderBcpPage().catch(error => {
+      console.warn("障害対策画面描画エラー", error);
+      showToast("⚠ 障害対策データを表示できませんでした", "warning", 4000);
+    });
   }
 
 
