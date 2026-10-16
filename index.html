@@ -9256,6 +9256,85 @@ body {
   .bcp-corner-mark { font-size:12pt; font-weight:900; letter-spacing:1px; }
 }
 
+
+
+/* ============================================================
+   Ver.0.9.55 対応履歴
+   ============================================================ */
+.history-domain-tabs {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin:12px 0 16px;
+}
+.history-domain-tabs button {
+  margin:0;
+  background:#eceff1;
+  color:#455a64;
+  font-weight:800;
+}
+.history-domain-tabs button.active {
+  background:#1976d2;
+  color:#fff;
+}
+.action-history-controls {
+  margin:12px 0 14px;
+  padding:12px;
+  border:1px solid #d7e2e7;
+  border-radius:12px;
+  background:#f8fbfc;
+}
+.action-history-controls label {
+  display:block;
+  margin:6px 0 4px;
+  color:#455a64;
+  font-size:13px;
+  font-weight:800;
+}
+.action-history-card {
+  margin:10px 0;
+  padding:13px 14px;
+  border:1px solid #dbe4e8;
+  border-left:5px solid #1976d2;
+  border-radius:12px;
+  background:#fff;
+}
+.action-history-card.procedure { border-left-color:#7b1fa2; }
+.action-history-card.cancelled {
+  border-left-color:#c62828;
+  background:#fafafa;
+}
+.action-history-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+.action-history-user { font-size:18px; font-weight:800; }
+.action-history-status {
+  flex-shrink:0;
+  padding:3px 8px;
+  border-radius:999px;
+  background:#e8f5e9;
+  color:#2e7d32;
+  font-size:12px;
+  font-weight:800;
+}
+.action-history-card.cancelled .action-history-status {
+  background:#ffebee;
+  color:#c62828;
+}
+.action-history-main { margin-top:8px; font-size:16px; font-weight:800; }
+.action-history-meta { margin-top:7px; color:#607d8b; font-size:13px; line-height:1.7; }
+.action-history-empty {
+  padding:22px 14px;
+  border:1px dashed #cfd8dc;
+  border-radius:12px;
+  color:#78909c;
+  text-align:center;
+  background:#fafcfd;
+}
+
 </style>
 </head>
 
@@ -9298,7 +9377,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.54</div>
+      <div class="ui09-brand-version">Ver.0.9.55</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -9894,6 +9973,13 @@ body {
       <span id="historyCountPill" class="ui09-count-pill">0件</span>
     </div>
 
+    <div class="history-domain-tabs">
+      <button id="historyDomainBowel" class="active" type="button" onclick="setHistoryDomain('bowel')">排便履歴</button>
+      <button id="historyDomainAction" type="button" onclick="setHistoryDomain('action')">対応履歴</button>
+    </div>
+
+    <div id="bowelHistoryHub">
+
     <div class="ui0934-history-routes">
       <button id="historyRouteList" class="active" type="button" onclick="setHistoryRoute('list')">
         <strong>📋 履歴一覧</strong>
@@ -10066,6 +10152,56 @@ body {
       </div>
 
       <div id="historyMatrixGrid" class="ui0934-matrix-wrap"></div>
+    </div>
+
+    </div><!-- /bowelHistoryHub -->
+
+    <div id="actionHistoryHub" class="hidden">
+      <div class="ui0934-history-routes">
+        <button id="actionHistoryRouteList" class="active" type="button" onclick="setActionHistoryMode('list')">
+          <strong>📋 一覧</strong>
+          <span>最近の対応を時系列で確認</span>
+        </button>
+        <button id="actionHistoryRouteDay" type="button" onclick="setActionHistoryMode('day')">
+          <strong>🗓 日付指定</strong>
+          <span>指定日の対応を確認</span>
+        </button>
+        <button id="actionHistoryRouteUser" type="button" onclick="setActionHistoryMode('user')">
+          <strong>👤 利用者別</strong>
+          <span>利用者ごとの対応を確認</span>
+        </button>
+      </div>
+
+      <div id="actionHistoryListPanel">
+        <div class="ui097-history-summary">
+          <span>最近30日の対応</span>
+          <span class="ui097-history-summary-note">新しい対応が上です</span>
+        </div>
+        <div id="actionHistoryList"></div>
+        <button id="actionHistoryLoadMore" type="button" class="history-load-more" onclick="loadMoreActionHistory()">
+          さらに30日前まで表示
+        </button>
+      </div>
+
+      <div id="actionHistoryDayPanel" class="hidden">
+        <div class="action-history-controls">
+          <label for="actionHistoryDate">日付</label>
+          <input id="actionHistoryDate" type="date" onchange="renderActionHistoryHub(true)">
+        </div>
+        <div id="actionHistoryDayList"></div>
+      </div>
+
+      <div id="actionHistoryUserPanel" class="hidden">
+        <div class="action-history-controls">
+          <label for="actionHistoryUser">利用者</label>
+          <select id="actionHistoryUser" onchange="renderActionHistoryHub(true)"></select>
+          <label for="actionHistoryUserStart">開始日</label>
+          <input id="actionHistoryUserStart" type="date" onchange="renderActionHistoryHub(true)">
+          <label for="actionHistoryUserEnd">終了日</label>
+          <input id="actionHistoryUserEnd" type="date" onchange="renderActionHistoryHub(true)">
+        </div>
+        <div id="actionHistoryUserList"></div>
+      </div>
     </div>
 
   </section>
@@ -10464,7 +10600,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.54
+            Ver.0.9.55
           </span>
         </div>
 
@@ -10473,7 +10609,7 @@ body {
             GAS
           </span>
           <span class="other-info-value">
-            Ver.0.8.63
+            Ver.0.8.64
           </span>
         </div>
 
@@ -11179,6 +11315,14 @@ let historyViewMode = "today";
 let historyVisiblePastCount = 50;
 let historyRouteMode = "list";
 let historyMatrixDays = 15;
+
+// Ver.0.9.55 対応履歴。通常同期には載せず、履歴画面を開いた時だけ期間指定で取得する。
+let historyDomain = "bowel";
+let actionHistoryMode = "list";
+let actionHistoryItems = [];
+let actionHistoryListDays = 30;
+let actionHistoryLoadingKey = "";
+let actionHistoryLoadedKey = "";
 
 // Ver.0.8.32 ルール閲覧画面
 let ruleViewAllOpen = false;
@@ -14153,6 +14297,26 @@ function getRuleCompletionPermission(rule) {
     allowedRoles,
     message: ""
   };
+}
+
+
+// Ver.0.9.55 取消権限は実施権限と別概念として扱う。
+// 初期運用では同じ職種を許可し、将来cancelPolicyを独立変更できる入口を残す。
+function getRuleCancellationPermission(rule) {
+  const permission = getRuleCompletionPermission(rule);
+  if (permission.allowed) return permission;
+  return {
+    ...permission,
+    message: permission.message
+      ? permission.message.replace("実施権限", "取消権限").replace("が配薬する対応です", "が取消できる対応です").replace("が実施する対応です", "が取消できる対応です")
+      : "この対応を取り消す権限がありません"
+  };
+}
+
+function getNurseInstructionCancellationPermission(item) {
+  const kind = String(item?.kind || "").trim();
+  if (!["laxative", "procedure"].includes(kind)) return {allowed:true, message:""};
+  return getRuleCancellationPermission(item);
 }
 
 function getNurseInstructionCompletionLabel(item) {
@@ -21719,6 +21883,16 @@ async function setNurseInstructionExecution(instructionId, statusAction) {
     }
   }
 
+  if (statusAction === "reopen") {
+    const permission =
+      getNurseInstructionCancellationPermission(item);
+
+    if (!permission.allowed) {
+      showToast("🔒 " + permission.message, "warning", 4500);
+      return;
+    }
+  }
+
   try {
     showToast(
       statusAction === "complete"
@@ -21739,6 +21913,7 @@ async function setNurseInstructionExecution(instructionId, statusAction) {
     }
 
     await refreshFromGoogle();
+    invalidateActionHistoryCache();
 
     showToast(
       statusAction === "complete"
@@ -26701,9 +26876,208 @@ function ensureHistoryRouteControls() {
   updateHistoryMatrixUserOptions();
 }
 
+
+function setHistoryDomain(domain) {
+  historyDomain = domain === "action" ? "action" : "bowel";
+  renderHistoryHub();
+}
+
+function setActionHistoryMode(mode) {
+  actionHistoryMode = ["list", "day", "user"].includes(mode) ? mode : "list";
+  renderActionHistoryHub(false);
+}
+
+function invalidateActionHistoryCache() {
+  actionHistoryLoadedKey = "";
+}
+
+function loadMoreActionHistory() {
+  actionHistoryListDays = Math.min(3650, actionHistoryListDays + 30);
+  renderActionHistoryHub(true);
+}
+
+function getActionHistoryDateMinus(days) {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() - Math.max(0, Number(days || 0)));
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function ensureActionHistoryControls() {
+  const today = getTodayText();
+  const dayInput = document.getElementById("actionHistoryDate");
+  if (dayInput && !dayInput.value) dayInput.value = today;
+
+  const startInput = document.getElementById("actionHistoryUserStart");
+  const endInput = document.getElementById("actionHistoryUserEnd");
+  if (startInput && !startInput.value) startInput.value = getActionHistoryDateMinus(89);
+  if (endInput && !endInput.value) endInput.value = today;
+
+  const userSelect = document.getElementById("actionHistoryUser");
+  if (userSelect) {
+    const old = String(userSelect.value || "");
+    const unit = currentUnit === "all" ? "" : currentUnit;
+    const users = getHistoryUsersForUnit(unit);
+    userSelect.innerHTML = users.length
+      ? users.map(user => `<option value="${escapeHtml(user)}">${escapeHtml(formatResidentName(user))}</option>`).join("")
+      : `<option value="">利用者なし</option>`;
+    if (users.includes(old)) userSelect.value = old;
+  }
+}
+
+function getActionHistoryQuery() {
+  const today = getTodayText();
+  if (actionHistoryMode === "day") {
+    const date = String(document.getElementById("actionHistoryDate")?.value || today);
+    return { startDate: date, endDate: date, user: "" };
+  }
+  if (actionHistoryMode === "user") {
+    return {
+      startDate: String(document.getElementById("actionHistoryUserStart")?.value || getActionHistoryDateMinus(89)),
+      endDate: String(document.getElementById("actionHistoryUserEnd")?.value || today),
+      user: String(document.getElementById("actionHistoryUser")?.value || "")
+    };
+  }
+  return { startDate: getActionHistoryDateMinus(actionHistoryListDays - 1), endDate: today, user: "" };
+}
+
+function getActionHistoryStatusLabel(item) {
+  if (String(item.status || "") === "cancelled") return "取消済み";
+  return String(item.completionType || "") === "dispensing" ? "配薬済み" : "実施済み";
+}
+
+function getActionHistoryKindLabel(item) {
+  return String(item.kind || "") === "procedure" ? "排便処置" : "緩下剤";
+}
+
+function getActionHistoryTimingLabel(item) {
+  return RULE_TIMING_LABELS[String(item.timing || "")] || String(item.timing || "");
+}
+
+function getActionHistoryHtml(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return `<div class="action-history-empty">該当する対応履歴はありません</div>`;
+  }
+
+  return items.map(item => {
+    const cancelled = String(item.status || "") === "cancelled";
+    const kind = String(item.kind || "") === "procedure" ? "procedure" : "laxative";
+    const actor = String(item.completedByName || getCompletionRoleLabel(item.completedByRole) || "").trim();
+    const cancelledBy = String(item.cancelledByName || getCompletionRoleLabel(item.cancelledByRole) || "").trim();
+    return `
+      <div class="action-history-card ${kind} ${cancelled ? "cancelled" : ""}">
+        <div class="action-history-head">
+          <div>
+            <div class="action-history-user">${escapeHtml(formatResidentName(item.user || ""))}</div>
+            <div class="action-history-meta">対応日：${escapeHtml(item.targetDate || "")}</div>
+          </div>
+          <span class="action-history-status">${escapeHtml(getActionHistoryStatusLabel(item))}</span>
+        </div>
+        <div class="action-history-main">
+          ${kind === "procedure" ? "🩺" : "💊"}
+          ${escapeHtml(item.content || "")}
+          ${item.timing ? ` <span class="medicine-time ${escapeHtml(item.timing)}">${escapeHtml(getActionHistoryTimingLabel(item))}</span>` : ""}
+        </div>
+        <div class="action-history-meta">
+          ${escapeHtml(getActionHistoryKindLabel(item))}
+          ${item.procedureType && kind === "procedure" ? ` ／ ${escapeHtml(PROCEDURE_TYPE_LABELS[normalizeProcedureType(item.procedureType)] || "未分類")}` : ""}<br>
+          ${item.completedAt ? `完了：${escapeHtml(item.completedAt)}` : "完了時刻：記録なし"}
+          ${actor ? ` ／ ${escapeHtml(actor)}` : ""}
+          ${cancelled ? `<br>取消：${escapeHtml(item.cancelledAt || "")}${cancelledBy ? ` ／ ${escapeHtml(cancelledBy)}` : ""}` : ""}
+          ${item.sourceType === "nurseInstruction" ? `<br>📌 今回限りの個別対応` : ""}
+        </div>
+      </div>`;
+  }).join("");
+}
+
+async function loadActionHistoryForQuery(query, force = false) {
+  const key = JSON.stringify(query || {});
+  if (!force && actionHistoryLoadedKey === key) return;
+  if (actionHistoryLoadingKey === key) return;
+  actionHistoryLoadingKey = key;
+
+  try {
+    const result = await postJsonApiOnce({
+      action: "getActionHistoryRange",
+      startDate: query.startDate,
+      endDate: query.endDate,
+      user: query.user || ""
+    }, 20000);
+
+    if (!result || result.ok === false) {
+      throw new Error(result && result.message ? result.message : "対応履歴を取得できませんでした");
+    }
+
+    actionHistoryItems = Array.isArray(result.items) ? result.items : [];
+    actionHistoryLoadedKey = key;
+  } catch (error) {
+    console.error("対応履歴取得エラー", error);
+    showToast("⚠ 対応履歴を取得できませんでした", "warning", 4000);
+    actionHistoryItems = [];
+  } finally {
+    actionHistoryLoadingKey = "";
+  }
+}
+
+async function renderActionHistoryHub(force = false) {
+  ensureActionHistoryControls();
+
+  for (const mode of ["list", "day", "user"]) {
+    const button = document.getElementById(
+      mode === "list" ? "actionHistoryRouteList" : mode === "day" ? "actionHistoryRouteDay" : "actionHistoryRouteUser"
+    );
+    const panel = document.getElementById(
+      mode === "list" ? "actionHistoryListPanel" : mode === "day" ? "actionHistoryDayPanel" : "actionHistoryUserPanel"
+    );
+    if (button) button.classList.toggle("active", actionHistoryMode === mode);
+    if (panel) panel.classList.toggle("hidden", actionHistoryMode !== mode);
+  }
+
+  const targetId = actionHistoryMode === "list"
+    ? "actionHistoryList"
+    : actionHistoryMode === "day"
+      ? "actionHistoryDayList"
+      : "actionHistoryUserList";
+  const target = document.getElementById(targetId);
+  if (!target) return;
+
+  const listSummary = document.querySelector("#actionHistoryListPanel .ui097-history-summary span:first-child");
+  if (listSummary) listSummary.textContent = `最近${actionHistoryListDays}日の対応`;
+
+  const query = getActionHistoryQuery();
+  if (actionHistoryMode === "user" && !query.user) {
+    target.innerHTML = `<div class="action-history-empty">利用者を選択してください</div>`;
+    return;
+  }
+
+  target.innerHTML = `<div class="action-history-empty">対応履歴を読み込んでいます…</div>`;
+  await loadActionHistoryForQuery(query, force);
+  target.innerHTML = getActionHistoryHtml(actionHistoryItems);
+
+  const pill = document.getElementById("historyCountPill");
+  if (pill) pill.textContent = `${actionHistoryItems.length}件`;
+}
+
 function renderHistoryHub() {
 
   ensureHistoryRouteControls();
+
+  const bowelButton = document.getElementById("historyDomainBowel");
+  const actionButton = document.getElementById("historyDomainAction");
+  const bowelHub = document.getElementById("bowelHistoryHub");
+  const actionHub = document.getElementById("actionHistoryHub");
+  if (bowelButton) bowelButton.classList.toggle("active", historyDomain === "bowel");
+  if (actionButton) actionButton.classList.toggle("active", historyDomain === "action");
+  if (bowelHub) bowelHub.classList.toggle("hidden", historyDomain !== "bowel");
+  if (actionHub) actionHub.classList.toggle("hidden", historyDomain !== "action");
+
+  if (historyDomain === "action") {
+    renderActionHistoryHub(false);
+    return;
+  }
 
   const modes = [
     "list",
@@ -32888,6 +33262,7 @@ async function toggleCheck(key) {
 
     saveData();
     invalidateHistoryRangeCaches();
+    invalidateActionHistoryCache();
     refreshCheckRelatedUI();
 
     showToast(
@@ -33099,6 +33474,9 @@ function getCompletedListHtml() {
         key
       );
 
+    const cancelPermission =
+      getRuleCancellationPermission(rule);
+
     entries.push({
       timing: rule.timing,
       when: getRuleTimingLabel(rule),
@@ -33150,6 +33528,11 @@ function getCompletedListHtml() {
               `
               : ""
           }
+          ${
+            !isPending && !cancelPermission.allowed
+              ? `<div class="ui096-pending-warning">🔒 ${escapeHtml(cancelPermission.message)}</div>`
+              : ""
+          }
 
           <div class="ui096-completed-tools">
             <button
@@ -33164,12 +33547,14 @@ function getCompletedListHtml() {
               type="button"
               class="ui096-cancel-link"
               onclick="openCancelCompletedModal('${safeKey}')"
-              ${isPending ? "disabled" : ""}
+              ${isPending || !cancelPermission.allowed ? "disabled" : ""}
             >
               ${
                 isPending
                   ? "確認中"
-                  : getRuleCompletionCancelLabel(rule)
+                  : !cancelPermission.allowed
+                    ? "🔒 取消不可"
+                    : getRuleCompletionCancelLabel(rule)
               }
             </button>
           </div>
@@ -33190,6 +33575,9 @@ function getCompletedListHtml() {
       encodeURIComponent(
         item.user
       );
+
+    const cancelPermission =
+      getNurseInstructionCancellationPermission(item);
 
     entries.push({
       timing: item.timing,
@@ -33234,6 +33622,12 @@ function getCompletedListHtml() {
             }
           </div>
 
+          ${
+            !cancelPermission.allowed
+              ? `<div class="ui096-pending-warning">🔒 ${escapeHtml(cancelPermission.message)}</div>`
+              : ""
+          }
+
           <div class="ui096-completed-tools">
             <button
               type="button"
@@ -33247,8 +33641,9 @@ function getCompletedListHtml() {
               type="button"
               class="ui096-cancel-link"
               onclick="setNurseInstructionExecution(decodeURIComponent('${safeId}'), 'reopen')"
-            >
-              ${escapeHtml(getNurseInstructionCompletionLabel(item))}を取消
+            
+              ${!cancelPermission.allowed ? "disabled" : ""}>
+              ${cancelPermission.allowed ? escapeHtml(getNurseInstructionCompletionLabel(item)) + "を取消" : "🔒 取消不可"}
             </button>
           </div>
         </div>
@@ -33320,6 +33715,12 @@ function openCancelCompletedModal(key) {
 
 
   const rule = data.rule;
+
+  const cancelPermission = getRuleCancellationPermission(rule);
+  if (!cancelPermission.allowed) {
+    showToast("🔒 " + cancelPermission.message, "warning", 4500);
+    return;
+  }
 
   const completionLabel =
     getRuleCompletionLabel(rule);
@@ -33400,6 +33801,17 @@ async function cancelCompletedCheck(key) {
     getRuleCompletionLabel(
       checkData && checkData.rule
     );
+
+  const cancelPermission =
+    getRuleCancellationPermission(
+      checkData && checkData.rule
+    );
+
+  if (!cancelPermission.allowed) {
+    closeCommonModal();
+    showToast("🔒 " + cancelPermission.message, "warning", 4500);
+    return;
+  }
 
   if (
     hasPendingCheckOperation(
@@ -33483,6 +33895,7 @@ async function cancelCompletedCheck(key) {
 
     saveData();
     invalidateHistoryRangeCaches();
+    invalidateActionHistoryCache();
     refreshCheckRelatedUI();
 
     showToast(
