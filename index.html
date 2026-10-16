@@ -9298,7 +9298,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.52</div>
+      <div class="ui09-brand-version">Ver.0.9.53</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -9861,7 +9861,7 @@ body {
     </div>
 
     <div id="actionCompletedPanel" class="action-ui-panel hidden">
-      <div id="completedList">まだ実施記録はありません</div>
+      <div id="completedList">まだ本日の完了記録はありません</div>
     </div>
 
     <details class="ui09-details compact">
@@ -10464,7 +10464,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.52
+            Ver.0.9.53
           </span>
         </div>
 
@@ -14154,6 +14154,23 @@ function getRuleKindIcon(rule) {
   return rule.kind === "procedure" ? "🩺" : "💊";
 }
 
+// Ver.0.9.53
+// 緩下剤は「配薬済み」、排便処置は「実施済み」として扱う。
+// 内部のchecks / setCheckは正式導入前の安全性を優先して変更しない。
+function getRuleCompletionLabel(rule) {
+  return rule && rule.kind === "procedure"
+    ? "実施済み"
+    : "配薬済み";
+}
+
+function getRuleCompletionActionLabel(rule) {
+  return getRuleCompletionLabel(rule) + "にする";
+}
+
+function getRuleCompletionCancelLabel(rule) {
+  return getRuleCompletionLabel(rule) + "を取消";
+}
+
 function isRuleActiveNow(rule, hour) {
 
   if (rule.timing === "morning") {
@@ -15742,7 +15759,7 @@ function updateActionModeGuide() {
 
   if (actionPageMode === "completed") {
     guide.textContent =
-      "本日の実施済み記録です。保存確認中の記録はオレンジで表示します";
+      "本日の完了記録です。緩下剤は「配薬済み」、排便処置は「実施済み」として表示します。保存確認中の記録はオレンジで表示します";
     return;
   }
 
@@ -16616,7 +16633,7 @@ function getTodayTarget() {
               class="ui096-execute-button"
               onclick="toggleCheck('${safeKey}')"
             >
-              実施済みにする
+              ${escapeHtml(getRuleCompletionActionLabel(rule))}
             </button>
 
             <button
@@ -19720,6 +19737,14 @@ async function tryResolvePendingCheckOperation(
   key
 ) {
 
+  const checkData =
+    parseCheckKey(key);
+
+  const completionLabel =
+    getRuleCompletionLabel(
+      checkData && checkData.rule
+    );
+
   const pending =
     getPendingCheckOperation(
       key
@@ -19761,8 +19786,8 @@ async function tryResolvePendingCheckOperation(
 
       showToast(
         status.checked
-          ? "✓ 実施済みの保存を確認しました"
-          : "✓ 実施済み取消の保存を確認しました",
+          ? "✓ " + completionLabel + "の保存を確認しました"
+          : "✓ " + completionLabel + "取消の保存を確認しました",
         "success",
         3500
       );
@@ -19829,8 +19854,8 @@ async function tryResolvePendingCheckOperation(
 
           showToast(
             result.checked
-              ? "✓ 実施済みを保存しました"
-              : "✓ 実施済み取消を保存しました",
+              ? "✓ " + completionLabel + "を保存しました"
+              : "✓ " + completionLabel + "取消を保存しました",
             "success",
             3500
           );
@@ -32126,6 +32151,14 @@ async function deleteRuleByIndex(
 
 async function toggleCheck(key) {
 
+  const checkData =
+    parseCheckKey(key);
+
+  const completionLabel =
+    getRuleCompletionLabel(
+      checkData && checkData.rule
+    );
+
   if (!canStartServerWrite()) {
     return;
   }
@@ -32137,7 +32170,7 @@ async function toggleCheck(key) {
   ) {
 
     showToast(
-      "🟠 この実施記録は保存結果を確認中です",
+      "🟠 この対応記録は保存結果を確認中です",
       "warning",
       4000
     );
@@ -32197,7 +32230,7 @@ async function toggleCheck(key) {
   saveData();
 
   showToast(
-    "実施済みを保存中…",
+    completionLabel + "を保存中…",
     "saving",
     0
   );
@@ -32228,7 +32261,7 @@ async function toggleCheck(key) {
     refreshCheckRelatedUI();
 
     showToast(
-      "✓ 実施済みを保存しました",
+      "✓ " + completionLabel + "を保存しました",
       "success",
       3000
     );
@@ -32251,7 +32284,7 @@ async function toggleCheck(key) {
       refreshCheckRelatedUI();
 
       showToast(
-        "🟠 実施済みです。通信が不安定なため保存結果を確認中です",
+        "🟠 " + completionLabel + "です。通信が不安定なため保存結果を確認中です",
         "warning",
         7000
       );
@@ -32283,7 +32316,7 @@ async function toggleCheck(key) {
       );
 
       showToast(
-        "⚠ 実施記録を保存できませんでした。責任者へ確認してください",
+        "⚠ 対応記録を保存できませんでした。責任者へ確認してください",
         "error",
         6000
       );
@@ -32449,7 +32482,7 @@ function getCompletedListHtml() {
               ${
                 isPending
                   ? "🟠 保存確認中"
-                  : "✓ 実施済み"
+                  : "✓ " + getRuleCompletionLabel(rule)
               }
             </span>
           </div>
@@ -32492,7 +32525,7 @@ function getCompletedListHtml() {
               ${
                 isPending
                   ? "確認中"
-                  : "実施済みを取消"
+                  : getRuleCompletionCancelLabel(rule)
               }
             </button>
           </div>
@@ -32590,7 +32623,7 @@ function getCompletedListHtml() {
     return `
       <div class="ui096-action-empty">
         <div class="ui096-empty-icon">○</div>
-        <strong>まだ本日の実施記録はありません</strong>
+        <strong>まだ本日の完了記録はありません</strong>
       </div>
     `;
   }
@@ -32618,7 +32651,7 @@ function openCancelCompletedModal(key) {
   if (!checks[key]) {
 
     showToast(
-      "この実施記録はすでに取り消されています",
+      "この対応記録はすでに取り消されています",
       "info",
       3000
     );
@@ -32633,7 +32666,7 @@ function openCancelCompletedModal(key) {
   if (!data) {
 
     showToast(
-      "実施記録の情報を読み取れませんでした",
+      "対応記録の情報を読み取れませんでした",
       "error",
       3500
     );
@@ -32644,6 +32677,9 @@ function openCancelCompletedModal(key) {
 
   const rule = data.rule;
 
+  const completionLabel =
+    getRuleCompletionLabel(rule);
+
   const safeKey =
     String(key)
       .replace(/\\/g, "\\\\")
@@ -32653,7 +32689,7 @@ function openCancelCompletedModal(key) {
   openCommonModal({
 
     title:
-      "実施済みを取消",
+      completionLabel + "を取消",
 
     bodyHtml: `
       <div class="completed-cancel-form">
@@ -32684,7 +32720,7 @@ function openCancelCompletedModal(key) {
         </div>
 
         <div class="completed-cancel-warning">
-          この実施済みチェックを取り消します。<br>
+          この${escapeHtml(completionLabel)}チェックを取り消します。<br>
           取り消すと、本日の対応対象に再び表示されます。
         </div>
 
@@ -32697,7 +32733,7 @@ function openCancelCompletedModal(key) {
         class="modal-action-cancel"
         onclick="cancelCompletedCheck('${safeKey}')"
       >
-        実施済みを取り消す
+        ${escapeHtml(completionLabel)}を取り消す
       </button>
 
       <button
@@ -32712,6 +32748,14 @@ function openCancelCompletedModal(key) {
 }
 
 async function cancelCompletedCheck(key) {
+
+  const checkData =
+    parseCheckKey(key);
+
+  const completionLabel =
+    getRuleCompletionLabel(
+      checkData && checkData.rule
+    );
 
   if (
     hasPendingCheckOperation(
@@ -32798,7 +32842,7 @@ async function cancelCompletedCheck(key) {
     refreshCheckRelatedUI();
 
     showToast(
-      "✓ 実施済みを取り消しました",
+      "✓ " + completionLabel + "を取り消しました",
       "success",
       3000
     );
@@ -32820,7 +32864,7 @@ async function cancelCompletedCheck(key) {
       refreshCheckRelatedUI();
 
       showToast(
-        "🟠 取消の保存結果を確認中です。確定するまで実施済みとして表示します",
+        "🟠 取消の保存結果を確認中です。確定するまで" + completionLabel + "として表示します",
         "warning",
         7000
       );
@@ -32842,7 +32886,7 @@ async function cancelCompletedCheck(key) {
       refreshCheckRelatedUI();
 
       showToast(
-        "⚠ 取消を保存できませんでした。実施済みのまま維持します",
+        "⚠ 取消を保存できませんでした。" + completionLabel + "のまま維持します",
         "error",
         6000
       );
