@@ -9377,7 +9377,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.55</div>
+      <div class="ui09-brand-version">Ver.0.9.56</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -10600,7 +10600,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.55
+            Ver.0.9.56
           </span>
         </div>
 
@@ -13734,7 +13734,7 @@ async function register() {
   /*
     Ver.0.9.25
     今回の排便入力で「排便成立」になる場合だけ、
-    成立前に未実施だった緩下剤を控える。
+    成立前の緩下剤を、配薬済み／未配薬の状態ごと控える。
     保存成功後のセット外し警告に使う。
   */
   const noBowelDaysBeforeReset =
@@ -13749,7 +13749,7 @@ async function register() {
     Ver.0.9.38
     排便成立後24時間ルールでは、単純な previousPoint + 今回点数だけでは
     成立判定できない。
-    そのため、未実施の緩下剤候補は先に控えておき、
+    そのため、配薬状態を含む緩下剤候補を先に控えておき、
     GASが返す established=true のときだけ警告する。
   */
   const pendingLaxativesBeforeReset =
@@ -15014,12 +15014,17 @@ function isRuleChecked(user, day, rule) {
 
 
 /* ============================================================
-   Ver.0.9.25 排便成立時の未実施緩下剤警告
+   Ver.0.9.56 排便成立時の緩下剤取り外し警告
 
-   排便成立で自動判定から外れる直前に、現在サイクルで
-   「まだ実施済みになっていない緩下剤」を控えておく。
-   実際の保存成功後だけ「セット済みなら外す」注意を表示する。
+   排便成立で自動判定から外れる直前に、現在サイクルの緩下剤を
+   配薬済み／未配薬の状態ごと控える。
+   実際の保存成功後だけ取り外し確認を表示する。
 ============================================================ */
+// ============================================================
+// Ver.0.9.56 排便成立時の緩下剤取り外し確認
+// 「配薬済み」は与薬済みではないため、チェック済み緩下剤も除外しない。
+// 旧関数名は互換性のため維持する。
+// ============================================================
 function getPendingLaxativeRemovalItems(
   user,
   noBowelDays
@@ -15038,19 +15043,28 @@ function getPendingLaxativeRemovalItems(
     const normalized =
       normalizeRuleItem(rule);
 
-    if (
-      normalized.kind !== "laxative" ||
+    if (normalized.kind !== "laxative") {
+      continue;
+    }
+
+    const dispensed =
       isRuleChecked(
         user,
         noBowelDays,
         normalized
-      )
-    ) {
-      continue;
-    }
+      );
 
     items.push({
+      id:
+        "regular|" +
+        getCheckKeyForRule(
+          user,
+          noBowelDays,
+          normalized
+        ),
       source: "regular",
+      kind: "laxative",
+      dispensed: dispensed,
       content: normalized.content,
       timing:
         getRuleTimingLabel(
@@ -15070,19 +15084,30 @@ function getPendingLaxativeRemovalItems(
       .map(normalizeNurseInstruction)
       .filter(item =>
         item.user === user &&
-        item.status === "pending" &&
+        (
+          item.status === "pending" ||
+          item.status === "completed"
+        ) &&
         isNurseInstructionCurrentCycle(item) &&
         (
           !item.targetDate ||
           item.targetDate <= todayText
         ) &&
-        item.kind !== "procedure" &&
-        item.kind !== "observe"
+        item.kind === "laxative"
       );
 
   for (const item of nurseItems) {
     items.push({
+      id:
+        "nurse|" +
+        String(
+          item.instructionId ||
+          [item.user, item.content, item.targetDate].join("|")
+        ),
       source: "nurse",
+      kind: "laxative",
+      dispensed:
+        item.status === "completed",
       content:
         item.content ||
         "個別対応",
@@ -15099,7 +15124,8 @@ function getPendingLaxativeRemovalItems(
     const key = [
       item.source,
       item.timing,
-      item.content
+      item.content,
+      item.dispensed ? "dispensed" : "pending"
     ].join("|");
 
     if (seen.has(key)) {
@@ -15126,17 +15152,35 @@ function showBowelResetMedicationRemovalAlert(
     return;
   }
 
+  const hasDispensed =
+    safeItems.some(item => item && item.dispensed === true);
+
   const listHtml =
     safeItems
-      .map(item => `
-        <div class="ui09-panel" style="margin:8px 0;padding:12px;box-shadow:none;">
-          <strong>
-            ${item.source === "nurse" ? "📌 個別対応" : "💊 緩下剤"}
-          </strong><br>
-          ${item.timing ? escapeHtml(item.timing) + " ／ " : ""}
-          ${escapeHtml(item.content)}
-        </div>
-      `)
+      .map(item => {
+        const dispensed = item && item.dispensed === true;
+        return `
+          <div class="ui09-panel" style="margin:8px 0;padding:12px;box-shadow:none;">
+            <strong>
+              ${item.source === "nurse" ? "📌 個別対応" : "💊 緩下剤"}
+            </strong>
+            <span style="display:inline-block;margin-left:8px;padding:2px 7px;border-radius:999px;font-size:12px;font-weight:800;${dispensed ? "background:#fff3e0;color:#e65100;border:1px solid #ffcc80;" : "background:#f5f5f5;color:#616161;border:1px solid #ddd;"}">
+              ${dispensed ? "配薬済み" : "未配薬"}
+            </span><br>
+            ${item.timing ? escapeHtml(item.timing) + " ／ " : ""}
+            ${escapeHtml(item.content)}
+            ${dispensed ? `
+              <div style="margin-top:7px;color:#b71c1c;font-weight:800;">
+                まだ服薬介助前なら、薬を取り外してください。
+              </div>
+            ` : `
+              <div style="margin-top:7px;color:#6d4c41;">
+                記録上は未配薬です。実際にセット済みなら取り外してください。
+              </div>
+            `}
+          </div>
+        `;
+      })
       .join("");
 
   openCommonModal({
@@ -15145,12 +15189,14 @@ function showBowelResetMedicationRemovalAlert(
       <div class="ui0913-recovery-warning">
         <strong>${escapeHtml(formatResidentName(user))}</strong>は排便成立となり、
         緩下剤の自動対象から外れました。<br><br>
-        下記は排便登録直前に<strong>未実施</strong>だった緩下剤です。<br>
-        <strong>すでに薬をセットしている場合は、取り外してください。</strong>
+        ${hasDispensed
+          ? "<strong>配薬済みの緩下剤があります。</strong><br>まだ服薬介助していない場合は、セットした薬を取り外してください。"
+          : "下記の緩下剤について、実際に薬をセットしている場合は取り外してください。"
+        }
       </div>
       ${listHtml}
       <div class="ui0918-care-note" style="margin-top:12px;">
-        実際にはすでに与薬済みだった場合は、実施済み記録も確認してください。
+        「配薬済み」は「与薬済み」を意味しません。すでに服薬介助済みの場合は取り外し不要ですが、与薬状況を確認してください。
       </div>
     `,
     buttonsHtml: `
@@ -15367,15 +15413,29 @@ function safeWriteLocalJson(key, value) {
   }
 }
 
+// Ver.0.9.56
+// 対応解除スナップショットには「現在の未完了対応」に加え、
+// 配薬済みの緩下剤も保持する。別端末で排便成立した場合でも
+// 次回同期時に取り外し確認へ繋げるため。
 function getCurrentActionSnapshotForResolution() {
   const items = [];
+  const itemIds = new Set();
   const data = getActionPendingData();
+
+  const pushItem = item => {
+    const id = String(item && item.id || "");
+    if (!id || itemIds.has(id)) return;
+    itemIds.add(id);
+    items.push(item);
+  };
 
   for (const item of (data.regular || [])) {
     const rule = normalizeRuleItem(item.rule || {});
-    items.push({
+    pushItem({
       id: "regular|" + String(item.key || ""),
       source: "regular",
+      kind: String(rule.kind || ""),
+      dispensed: false,
       user: String(item.user || ""),
       content: String(rule.content || "緩下剤"),
       timing: String(getRuleTimingLabel(rule) || ""),
@@ -15384,12 +15444,70 @@ function getCurrentActionSnapshotForResolution() {
     });
   }
 
+  // 現在サイクルで配薬済みになっている緩下剤も明示的に保存する。
+  const now = new Date();
+  const hour = now.getHours() + now.getMinutes() / 60;
+
+  for (const user in lastDates) {
+    if (isResidentAutoJudgmentPaused(user)) continue;
+    if (currentUnit !== "all" && userUnits[user] !== currentUnit) continue;
+
+    const days = getNoBowelDays(user);
+    const currentRules =
+      getRulesForDay(user, days)
+        .map(normalizeRuleItem)
+        .filter(rule =>
+          rule.kind === "laxative" &&
+          isRuleActiveNow(rule, hour) &&
+          isRuleChecked(user, days, rule)
+        );
+
+    for (const rule of currentRules) {
+      const key = getCheckKeyForRule(user, days, rule);
+      pushItem({
+        id: "regular|" + String(key || ""),
+        source: "regular",
+        kind: "laxative",
+        dispensed: true,
+        user: String(user || ""),
+        content: String(rule.content || "緩下剤"),
+        timing: String(getRuleTimingLabel(rule) || ""),
+        lastDate: String(lastDates[user] || ""),
+        point: Number(points[user] || 0)
+      });
+    }
+  }
+
   for (const item of getActionCurrentNurseItems()) {
-    items.push({
+    pushItem({
       id: "nurse|" + String(item.instructionId || [item.user, item.content, item.targetDate].join("|")),
       source: "nurse",
+      kind: String(item.kind || ""),
+      dispensed: false,
       user: String(item.user || ""),
       content: String(item.content || getNurseInstructionKindLabel(item) || "個別対応"),
+      timing: String(getNurseInstructionTimingLabel(item) || ""),
+      lastDate: String(lastDates[item.user] || ""),
+      point: Number(points[item.user] || 0)
+    });
+  }
+
+  // 今回限りの緩下剤で配薬済みのものも保持する。
+  for (const item of (Array.isArray(nurseInstructions) ? nurseInstructions : [])
+    .map(normalizeNurseInstruction)
+    .filter(item =>
+      item.status === "completed" &&
+      item.kind === "laxative" &&
+      isNurseInstructionCurrentCycle(item) &&
+      (currentUnit === "all" || userUnits[item.user] === currentUnit)
+    )) {
+    pushItem({
+      id: "nurse|" + String(item.instructionId || [item.user, item.content, item.targetDate].join("|")),
+      source: "nurse",
+      kind: "laxative",
+      dispensed: true,
+      user: String(item.user || ""),
+      content: String(item.content || "個別対応"),
       timing: String(getNurseInstructionTimingLabel(item) || ""),
       lastDate: String(lastDates[item.user] || ""),
       point: Number(points[item.user] || 0)
@@ -15496,10 +15614,24 @@ function renderActionResolutionNotice() {
             <span class="ui0944-resolution-time">${escapeHtml(formatActionResolutionClock(group.detectedAt))}</span>
           </div>
           <div class="ui0944-resolution-actions">
-            ${(group.actions || []).map(action =>
-              `${action.timing ? escapeHtml(action.timing) + " ／ " : ""}${escapeHtml(action.content)}`
-            ).join("<br>")}
+            ${(group.actions || []).map(action => {
+              const isLaxative = String(action.kind || "") === "laxative";
+              const status = isLaxative
+                ? (action.dispensed === true ? "【配薬済み】" : "【未配薬】")
+                : "";
+              return `${status}${action.timing ? escapeHtml(action.timing) + " ／ " : ""}${escapeHtml(action.content)}`;
+            }).join("<br>")}
           </div>
+          ${(group.actions || []).some(action => String(action.kind || "") === "laxative" && action.dispensed === true) ? `
+            <div class="ui0944-resolution-reason" style="color:#b71c1c;font-weight:800;">
+              ⚠ 配薬済みです。まだ服薬介助前なら、セットした薬を取り外してください。
+            </div>
+          ` : ""}
+          ${(group.actions || []).some(action => String(action.kind || "") === "laxative" && action.dispensed !== true) ? `
+            <div class="ui0944-resolution-reason">
+              未配薬でも、実際に薬をセット済みなら取り外してください。
+            </div>
+          ` : ""}
           <div class="ui0944-resolution-reason">
             → 最終排便 ${escapeHtml(formatActionResolutionDate(group.lastDate))} に更新・対応不要
           </div>
@@ -15611,6 +15743,8 @@ function trackActionResolutionChanges() {
 
     grouped.get(key).actions.push({
       id: String(item.id || ""),
+      kind: String(item.kind || ""),
+      dispensed: item.dispensed === true,
       content: String(item.content || "対応"),
       timing: String(item.timing || "")
     });
@@ -15625,7 +15759,9 @@ function recordDirectBowelActionResolution(user, actionItems, result) {
   if (!Array.isArray(actionItems) || !actionItems.length) return;
 
   const actions = actionItems.map((item, index) => ({
-    id: "direct|" + String(item.source || "regular") + "|" + String(item.timing || "") + "|" + String(item.content || "") + "|" + index,
+    id: String(item.id || ("direct|" + String(item.source || "regular") + "|" + String(item.timing || "") + "|" + String(item.content || "") + "|" + index)),
+    kind: String(item.kind || "laxative"),
+    dispensed: item.dispensed === true,
     content: String(item.content || "対応"),
     timing: String(item.timing || "")
   }));
