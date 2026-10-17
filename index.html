@@ -9377,7 +9377,7 @@ body {
   <header class="app-header ui09-header">
     <div class="ui09-brand">
       <div class="ui09-brand-title">緩下剤管理アプリ</div>
-      <div class="ui09-brand-version">Ver.0.9.56</div>
+      <div class="ui09-brand-version">Ver.0.9.57</div>
     </div>
     <div id="ui09HeaderUnit" class="ui09-header-unit"></div>
   </header>
@@ -10600,7 +10600,7 @@ body {
             HTML
           </span>
           <span class="other-info-value">
-            Ver.0.9.56
+            Ver.0.9.57
           </span>
         </div>
 
@@ -10609,7 +10609,7 @@ body {
             GAS
           </span>
           <span class="other-info-value">
-            Ver.0.8.64
+            Ver.0.8.65
           </span>
         </div>
 
@@ -10901,6 +10901,17 @@ body {
         <div class="rule-form-note">
           朝：0:00～10:00 ／ 昼・夕・日中：9:00～18:30<br>
           排便処置を選ぶと、時間帯は「日中」を初期選択します。
+        </div>
+
+        <p>配薬・実施担当</p>
+        <select id="ruleCompletionRoleOverride">
+          <option value="" selected>施設の標準設定を使用（推奨）</option>
+          <option value="caregiver">介護職に上書き</option>
+          <option value="nurse">看護師に上書き</option>
+        </select>
+        <div class="rule-form-note">
+          通常は「施設の標準設定」を使用します。<br>
+          経管栄養など、個別に担当職種が異なる場合だけ上書きしてください。
         </div>
 
         <p>適用時期</p>
@@ -14255,12 +14266,62 @@ function getCompletionRoleLabel(role) {
   return "職員";
 }
 
+// Ver.0.9.57 施設標準を基本にしつつ、個別ルールだけ担当職種を上書きできる。
+function normalizeCompletionRoleOverride(value) {
+  const text = String(value || "").trim();
+  if (text === "caregiver" || text === "介護職") return "caregiver";
+  if (text === "nurse" || text === "看護師") return "nurse";
+  return "";
+}
+
+function getCompletionRoleOverrideLabel(value) {
+  const role = normalizeCompletionRoleOverride(value);
+  return role ? getCompletionRoleLabel(role) : "施設標準";
+}
+
+function getRuleCompletionRoleOverrideNote(rule) {
+  const normalized = normalizeRuleItem(rule || {});
+  const role = normalizeCompletionRoleOverride(normalized.completionRoleOverride);
+  if (!role) return "";
+  const action = normalized.kind === "laxative" ? "配薬" : "実施";
+  return "個別設定：" + getCompletionRoleLabel(role) + "が" + action + "する対応です";
+}
+
+function completionRoleOverrideOptionsHtml(selected) {
+  const value = normalizeCompletionRoleOverride(selected);
+  const options = [
+    ["", "施設の標準設定を使用（推奨）"],
+    ["caregiver", "介護職に上書き"],
+    ["nurse", "看護師に上書き"]
+  ];
+  return options.map(([optionValue, label]) => `
+    <option value="${optionValue}" ${value === optionValue ? "selected" : ""}>${label}</option>
+  `).join("");
+}
+
 function getRuleCompletionPermission(rule) {
   const normalized = normalizeRuleItem(rule || {});
   const actorRole = getCurrentCompletionActorRole();
   let allowedRoles = [];
 
-  if (normalized.kind === "laxative") {
+  // 未分類の排便処置は、個別上書きがあっても安全上実施不可。
+  if (normalized.kind === "procedure" && normalizeProcedureType(normalized.procedureType) === "unknown") {
+    return {
+      allowed: false,
+      actorRole,
+      allowedRoles: [],
+      message: "排便処置種別が未分類のため実施できません"
+    };
+  }
+
+  const overrideRole =
+    normalizeCompletionRoleOverride(
+      normalized.completionRoleOverride
+    );
+
+  if (overrideRole) {
+    allowedRoles = [overrideRole];
+  } else if (normalized.kind === "laxative") {
     allowedRoles = Array.isArray(completionPolicy?.laxative?.[normalized.timing])
       ? completionPolicy.laxative[normalized.timing]
       : [];
@@ -14404,6 +14465,10 @@ function normalizeRuleItem(item) {
           : "",
       content: content,
       timing: timing,
+      completionRoleOverride:
+        normalizeCompletionRoleOverride(
+          item.completionRoleOverride
+        ),
       legacyText:
         String(item.legacyText || "").trim()
     };
@@ -14453,6 +14518,7 @@ function normalizeRuleItem(item) {
         : "",
     content: content,
     timing: timing,
+    completionRoleOverride: "",
     legacyText: raw
   };
 }
@@ -16629,6 +16695,12 @@ function renderActionPlannedPanel() {
               ／ 未排便${item.days}日目
             </div>
 
+            ${getRuleCompletionRoleOverrideNote(rule) ? `
+              <div class="rule-form-note" style="margin:10px 0 0;color:#a85d00;font-weight:700;">
+                👤 ${escapeHtml(getRuleCompletionRoleOverrideNote(rule))}
+              </div>
+            ` : ""}
+
             <button
               type="button"
               class="ui096-detail-link"
@@ -16660,7 +16732,9 @@ function getActionRuleDetailPayload(
       kind: rule.kind,
       procedureType: rule.procedureType || "",
       content: rule.content,
-      timing: rule.timing
+      timing: rule.timing,
+      completionRoleOverride:
+        rule.completionRoleOverride || ""
     })
   );
 }
@@ -16691,7 +16765,9 @@ function openActionRuleDetail(
     kind: data.kind,
     procedureType: data.procedureType,
     content: data.content,
-    timing: data.timing
+    timing: data.timing,
+    completionRoleOverride:
+      data.completionRoleOverride
   });
 
   openCommonModal({
@@ -16712,6 +16788,14 @@ function openActionRuleDetail(
           <div class="action-detail-label">時間帯</div>
           <div class="action-detail-value">
             ${escapeHtml(getRuleTimingLabel(rule))}
+          </div>
+        </div>
+        <div class="action-detail-row">
+          <div class="action-detail-label">配薬・実施担当</div>
+          <div class="action-detail-value">
+            ${rule.completionRoleOverride
+              ? escapeHtml(getCompletionRoleOverrideLabel(rule.completionRoleOverride) + "（個別設定）")
+              : "施設の標準設定"}
           </div>
         </div>
         ${rule.kind === "procedure" ? `
@@ -17136,6 +17220,12 @@ function getTodayTarget() {
             ${rule.kind === "procedure" ? " ／ " + escapeHtml(getProcedureTypeLabel(rule)) : ""}
             ／ 未排便${item.days}日目
           </div>
+
+          ${getRuleCompletionRoleOverrideNote(rule) ? `
+            <div class="rule-form-note" style="margin:10px 0 0;color:#a85d00;font-weight:700;">
+              👤 ${escapeHtml(getRuleCompletionRoleOverrideNote(rule))}
+            </div>
+          ` : ""}
 
           ${
             completionPermission.allowed
@@ -30494,6 +30584,11 @@ async function openRuleReevaluationEditor(evaluationId) {
               <option value="daytime" ${rule.timing === "daytime" ? "selected" : ""}>日中</option>
             </select>
           </div>
+          <div><div class="nurse-form-label">配薬・実施担当</div>
+            <select id="reevaluationCompletionRoleOverride">
+              ${completionRoleOverrideOptionsHtml(rule.completionRoleOverride)}
+            </select>
+          </div>
           <div><div class="nurse-form-label">次回評価日</div><input type="date" id="reevaluationDate"></div>
           <div class="rule-form-note">新しいルールを今日から再評価します。後で破棄した場合は、最初の評価開始前ルールへ戻します。</div>
         </div>`,
@@ -30514,6 +30609,9 @@ async function submitRuleReevaluation(evaluationId) {
   const procedureType = kind === "procedure"
     ? String(document.getElementById("reevaluationProcedureType")?.value || "").trim()
     : "";
+  const completionRoleOverride = normalizeCompletionRoleOverride(
+    document.getElementById("reevaluationCompletionRoleOverride")?.value || ""
+  );
   const evaluationDate = String(document.getElementById("reevaluationDate")?.value || "").trim();
   if (day === "" || !kind || !content || !timing || !evaluationDate) {
     showToast("すべての項目を入力してください","error",3000);
@@ -30525,7 +30623,13 @@ async function submitRuleReevaluation(evaluationId) {
   }
   await resolveRuleEvaluation(evaluationId,"reevaluate",{
     trialDay:day,
-    trialRule:{kind:kind, procedureType:procedureType, content:content, timing:timing},
+    trialRule:{
+      kind:kind,
+      procedureType:procedureType,
+      content:content,
+      timing:timing,
+      completionRoleOverride:completionRoleOverride
+    },
     evaluationDate:evaluationDate
   });
 }
@@ -30628,6 +30732,12 @@ function openRuleEditModal(user, day, index) {
             <option value="daytime" ${rule.timing === "daytime" ? "selected" : ""}>日中</option>
           </select>
         </div>
+        <div><div class="nurse-form-label">配薬・実施担当</div>
+          <select id="ruleEditCompletionRoleOverride">
+            ${completionRoleOverrideOptionsHtml(rule.completionRoleOverride)}
+          </select>
+          <div class="rule-form-note">通常は施設標準。例外時だけ上書きします。</div>
+        </div>
         <div><div class="nurse-form-label">適用時期</div>
           <select id="ruleEditApplyMode">
             <option value="next" selected>次回の排便成立後から（推奨）</option>
@@ -30672,6 +30782,9 @@ async function saveRuleEdit(user, encodedOldDay, index) {
   const procedureType = kind === "procedure"
     ? String(document.getElementById("ruleEditProcedureType")?.value || "").trim()
     : "";
+  const completionRoleOverride = normalizeCompletionRoleOverride(
+    document.getElementById("ruleEditCompletionRoleOverride")?.value || ""
+  );
   const applyMode = String(document.getElementById("ruleEditApplyMode")?.value || "next") === "current" ? "current" : "next";
   const changeMode = String(document.getElementById("ruleEditChangeMode")?.value || "formal") === "evaluate" ? "evaluate" : "formal";
   const evaluationDate = String(document.getElementById("ruleEditEvaluationDate")?.value || "").trim();
@@ -30689,7 +30802,13 @@ async function saveRuleEdit(user, encodedOldDay, index) {
     return;
   }
 
-  const newRule = {kind:kind, procedureType:procedureType, content:content, timing:timing};
+  const newRule = {
+    kind:kind,
+    procedureType:procedureType,
+    content:content,
+    timing:timing,
+    completionRoleOverride:completionRoleOverride
+  };
   const previousRules = JSON.parse(JSON.stringify(rules));
   const previousSnapshots = JSON.parse(JSON.stringify(ruleCycleSnapshots));
   const activeRulesBefore = cloneRuleDayMap(getEffectiveRulesForUser(user));
@@ -30786,6 +30905,13 @@ async function saveRule() {
         ).trim()
       : "";
 
+  const completionRoleOverride =
+    normalizeCompletionRoleOverride(
+      document.getElementById(
+        "ruleCompletionRoleOverride"
+      )?.value || ""
+    );
+
   const applyMode =
     getRuleApplyMode();
 
@@ -30847,7 +30973,9 @@ async function saveRule() {
         ? procedureType
         : "",
     content: content,
-    timing: timing
+    timing: timing,
+    completionRoleOverride:
+      completionRoleOverride
   };
 
   const previousRules =
@@ -30991,6 +31119,15 @@ async function saveRule() {
 
     if (procedureTypeInput) {
       procedureTypeInput.value = "";
+    }
+
+    const completionOverrideInput =
+      document.getElementById(
+        "ruleCompletionRoleOverride"
+      );
+
+    if (completionOverrideInput) {
+      completionOverrideInput.value = "";
     }
 
     const evalDateInput =
@@ -31964,6 +32101,13 @@ function openPlannedRuleEdit(
           </select>
         </div>
 
+        <div>
+          <div class="nurse-form-label">配薬・実施担当</div>
+          <select id="plannedRuleEditCompletionRoleOverride">
+            ${completionRoleOverrideOptionsHtml(rule.completionRoleOverride)}
+          </select>
+        </div>
+
         <div class="rule-form-note">
           この修正は「次回の排便成立後から」の予定だけを変更します。
           現在進行中のサイクルには影響しません。
@@ -32058,6 +32202,13 @@ async function savePlannedRuleEdit(
         ).trim()
       : "";
 
+  const completionRoleOverride =
+    normalizeCompletionRoleOverride(
+      document.getElementById(
+        "plannedRuleEditCompletionRoleOverride"
+      )?.value || ""
+    );
+
   if (
     newDay === "" ||
     !kind ||
@@ -32137,7 +32288,9 @@ async function savePlannedRuleEdit(
       kind: kind,
       procedureType: procedureType,
       content: content,
-      timing: timing
+      timing: timing,
+      completionRoleOverride:
+        completionRoleOverride
     });
 
     rules =
@@ -32178,7 +32331,9 @@ async function savePlannedRuleEdit(
                 kind: kind,
                 procedureType: procedureType,
                 content: content,
-                timing: timing
+                timing: timing,
+                completionRoleOverride:
+                  completionRoleOverride
               }
             }
           : null
@@ -32885,6 +33040,11 @@ function getRuleListHtml(editable = true) {
                 ) +
                 "</small>"
               : "") +
+            (normalizeCompletionRoleOverride(rule.completionRoleOverride)
+              ? " <small style='display:inline-block;margin-left:6px;padding:2px 7px;border-radius:999px;background:#fff3e0;color:#a85d00;font-weight:800;'>👤 " +
+                escapeHtml(getCompletionRoleOverrideLabel(rule.completionRoleOverride)) +
+                "対応</small>"
+              : "") +
             "</span>" +
             "</div>" +
             "<span class='medicine-time rule-list-time " +
@@ -32976,6 +33136,7 @@ function renderCompletionPolicyAdmin() {
   area.innerHTML = `
     <div class="rule-form-note" style="margin-bottom:12px;">
       完了登録できる職種を施設共通で設定します。未設定は安全のため実施不可です。<br>
+      個別ルールで担当職種を上書きした場合は、そのルールの設定を優先します。<br>
       管理者アカウント自身は、ここで設定しても実施者にはなりません。
     </div>
     ${rows.map(([id, label, roles]) => `
